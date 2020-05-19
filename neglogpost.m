@@ -12,11 +12,11 @@ end
 xold = [exp(x0(1 : end))];
 xnew = [exp(x(1 : end))];
 %
-% ibad = find(xnew > 5*xold | xnew < 1/5*xold);
-% x(ibad) = x0(ibad);
+ibad = find(xnew > 5*xold | xnew < 1/5*xold);
+x(ibad) = x0(ibad);
 x0 = x;
 %+++++++++restore the parameter values back to their original ones.
-% xnew = [exp(x(1 : end))];
+xnew = [exp(x(1 : end))];
 fprintf('current parameter is:  \n');
 for ii = 1 : length(x)
     fprintf('%3.3e;  ',xnew(ii));
