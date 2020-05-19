@@ -1,4 +1,5 @@
-*.slurm.*
+*.slurm
+slurm.*
 *.txt
 *.log
 *.err
