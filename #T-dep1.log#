@@ -1,0 +1,758 @@
+I ran on:
+c-9-29
+
+                            < M A T L A B (R) >
+                  Copyright 1984-2017 The MathWorks, Inc.
+                   R2017b (9.3.0.713579) 64-bit (glnxa64)
+                             September 14, 2017
+
+ 
+To get started, type one of these: helpwin, helpdesk, or demo.
+For product information, visit www.mathworks.com.
+ 
+current parameter is:  
+9.750e-01;  1.015e+00;  7.824e-08;  9.151e-03;  4.807e-01;  4.048e+03;  9.569e-09;  5.294e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 19.178590 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.403464 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.387148 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               1.4114e-03        0  
+         1          2.9247e-07       0  
+         2          5.3994e-09       0  
+         3          1.4304e-10       0  
+current objective function value is 6.029e-03 
+current parameter is:  
+9.750e-01;  1.015e+00;  7.824e-08;  9.151e-03;  4.807e-01;  4.048e+03;  9.569e-09;  5.294e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 18.692315 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.380193 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.379863 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6222e-07        0  
+         1          4.1041e-11       0  
+current objective function value is 6.029e-03 
+current parameter is:  
+9.750e-01;  1.015e+00;  7.824e-08;  9.151e-03;  4.807e-01;  4.048e+03;  9.569e-09;  5.294e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 18.113133 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 1.095830 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.856174 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6222e-07        0  
+         1          4.1037e-11       0  
+current objective function value is 6.029e-03 
+current parameter is:  
+9.750e-01;  1.015e+00;  7.824e-08;  9.151e-03;  4.807e-01;  4.048e+03;  9.569e-09;  5.294e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 18.327779 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.374140 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.374241 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6219e-07        0  
+         1          4.1039e-11       0  
+current objective function value is 6.029e-03 
+current parameter is:  
+9.750e-01;  1.015e+00;  7.824e-08;  9.151e-03;  4.807e-01;  4.048e+03;  9.569e-09;  5.294e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 17.356707 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.382609 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.374760 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6221e-07        0  
+         1          4.1038e-11       0  
+current objective function value is 6.029e-03 
+current parameter is:  
+9.750e-01;  1.015e+00;  7.824e-08;  9.151e-03;  4.807e-01;  4.048e+03;  9.569e-09;  5.294e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 18.845404 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.375443 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.373852 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6218e-07        0  
+         1          4.1038e-11       0  
+current objective function value is 6.029e-03 
+current parameter is:  
+9.750e-01;  1.015e+00;  7.824e-08;  9.151e-03;  4.807e-01;  4.048e+03;  9.569e-09;  5.294e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 17.204708 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.378654 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.373169 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6221e-07        0  
+         1          4.1039e-11       0  
+current objective function value is 6.029e-03 
+current parameter is:  
+9.750e-01;  1.015e+00;  7.824e-08;  9.151e-03;  4.807e-01;  4.048e+03;  9.569e-09;  5.294e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 19.164293 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.786556 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 1.033856 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6221e-07        0  
+         1          4.1038e-11       0  
+current objective function value is 6.029e-03 
+current parameter is:  
+9.750e-01;  1.015e+00;  7.824e-08;  9.151e-03;  4.807e-01;  4.048e+03;  9.569e-09;  5.294e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 17.806308 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.374419 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.373212 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6220e-07        0  
+         1          4.1039e-11       0  
+current objective function value is 6.029e-03 
+
+                                Norm of      First-order 
+ Iteration        f(x)          step          optimality   CG-iterations
+     0         0.00602937                      0.000256                
+current parameter is:  
+1.509e+00;  1.015e+00;  3.815e-07;  4.528e-03;  3.566e-01;  4.048e+03;  9.569e-09;  5.294e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 19.122951 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.374838 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.377397 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6913e-04        0  
+         1          1.0858e-04       0  
+         2          3.4709e-05       0  
+         3          1.0316e-05       0  
+         4          3.2063e-06       0  
+         5          9.9129e-07       0  
+         6          3.1323e-07       0  
+         7          1.0126e-07       0  
+         8          3.3673e-08       0  
+         9          1.1459e-08       0  
+        10          3.9576e-09       0  
+        11          1.3750e-09       0  
+        12          4.7790e-10       0  
+current objective function value is 1.838e-01 
+current parameter is:  
+1.509e+00;  1.015e+00;  3.815e-07;  4.528e-03;  3.566e-01;  4.048e+03;  9.569e-09;  5.294e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 17.344288 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.373943 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.372922 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.9238e-07        0  
+         1          4.4985e-11       0  
+current objective function value is 1.838e-01 
+current parameter is:  
+1.509e+00;  1.015e+00;  3.815e-07;  4.528e-03;  3.566e-01;  4.048e+03;  9.569e-09;  5.294e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 19.553730 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.381183 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.380851 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.9228e-07        0  
+         1          4.4967e-11       0  
+current objective function value is 1.838e-01 
+current parameter is:  
+1.509e+00;  1.015e+00;  3.815e-07;  4.528e-03;  3.566e-01;  4.048e+03;  9.569e-09;  5.294e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 17.384159 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.371764 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.370636 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.9228e-07        0  
+         1          4.4967e-11       0  
+current objective function value is 1.838e-01 
+current parameter is:  
+1.509e+00;  1.015e+00;  3.815e-07;  4.528e-03;  3.566e-01;  4.048e+03;  9.569e-09;  5.294e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 19.543821 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.403219 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.404329 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.9229e-07        0  
+         1          4.4966e-11       0  
+current objective function value is 1.838e-01 
+current parameter is:  
+1.509e+00;  1.015e+00;  3.815e-07;  4.528e-03;  3.566e-01;  4.048e+03;  9.569e-09;  5.294e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 17.403677 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.511257 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.645567 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.9224e-07        0  
+         1          4.4968e-11       0  
+current objective function value is 1.838e-01 
+current parameter is:  
+1.509e+00;  1.015e+00;  3.815e-07;  4.528e-03;  3.566e-01;  4.048e+03;  9.569e-09;  5.294e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 19.652251 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.375573 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.373059 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.9230e-07        0  
+         1          4.4966e-11       0  
+current objective function value is 1.838e-01 
+current parameter is:  
+1.509e+00;  1.015e+00;  3.815e-07;  4.528e-03;  3.566e-01;  4.048e+03;  9.569e-09;  5.294e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 17.922504 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.372970 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.371281 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.9228e-07        0  
+         1          4.4966e-11       0  
+current objective function value is 1.838e-01 
+current parameter is:  
+1.509e+00;  1.015e+00;  3.815e-07;  4.528e-03;  3.566e-01;  4.048e+03;  9.569e-09;  5.294e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 19.939518 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 1.086609 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 1.144908 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.9227e-07        0  
+         1          4.4968e-11       0  
+current objective function value is 1.838e-01 
+     1         0.00602937             10       0.000256           0
+current parameter is:  
+1.088e+00;  2.858e+00;  1.163e-07;  7.676e-03;  4.461e-01;  1.868e+04;  5.700e-09;  2.465e-01;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 18.957897 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.378524 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.378705 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               2.1975e-04        0  
+         1          2.3874e-05       0  
+         2          3.1828e-06       0  
+         3          4.4318e-07       0  
+         4          6.6948e-08       0  
+         5          1.0606e-08       0  
+         6          1.7621e-09       0  
+         7          3.0273e-10       0  
+current objective function value is 6.528e-01 
+current parameter is:  
+1.088e+00;  2.858e+00;  1.163e-07;  7.676e-03;  4.461e-01;  1.868e+04;  5.700e-09;  2.465e-01;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 19.224993 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.896867 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.611345 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.9804e-07        0  
+         1          4.5036e-11       0  
+current objective function value is 6.528e-01 
+current parameter is:  
+1.088e+00;  2.858e+00;  1.163e-07;  7.676e-03;  4.461e-01;  1.868e+04;  5.700e-09;  2.465e-01;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 18.209938 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.400389 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.390260 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.9806e-07        0  
+         1          4.5028e-11       0  
+current objective function value is 6.528e-01 
+current parameter is:  
+1.088e+00;  2.858e+00;  1.163e-07;  7.676e-03;  4.461e-01;  1.868e+04;  5.700e-09;  2.465e-01;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 17.587419 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.373811 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.373914 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.9803e-07        0  
+         1          4.5036e-11       0  
+current objective function value is 6.528e-01 
+current parameter is:  
+1.088e+00;  2.858e+00;  1.163e-07;  7.676e-03;  4.461e-01;  1.868e+04;  5.700e-09;  2.465e-01;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 18.089689 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.377806 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.375100 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.9805e-07        0  
+         1          4.5032e-11       0  
+current objective function value is 6.528e-01 
+current parameter is:  
+1.088e+00;  2.858e+00;  1.163e-07;  7.676e-03;  4.461e-01;  1.868e+04;  5.700e-09;  2.465e-01;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 18.846768 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.378822 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.377751 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.9801e-07        0  
+         1          4.5032e-11       0  
+current objective function value is 6.528e-01 
+current parameter is:  
+1.088e+00;  2.858e+00;  1.163e-07;  7.676e-03;  4.461e-01;  1.868e+04;  5.700e-09;  2.465e-01;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 19.048667 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 1.162341 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.574176 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.9805e-07        0  
+         1          4.5033e-11       0  
+current objective function value is 6.528e-01 
+current parameter is:  
+1.088e+00;  2.858e+00;  1.163e-07;  7.676e-03;  4.461e-01;  1.868e+04;  5.700e-09;  2.465e-01;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 18.355985 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.780752 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.897296 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.9804e-07        0  
+         1          4.5031e-11       0  
+current objective function value is 6.528e-01 
+current parameter is:  
+1.088e+00;  2.858e+00;  1.163e-07;  7.676e-03;  4.461e-01;  1.868e+04;  5.700e-09;  2.465e-01;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 18.017590 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.374591 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.372579 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.9804e-07        0  
+         1          4.5034e-11       0  
+current objective function value is 6.528e-01 
+     2         0.00602937            2.5       0.000256           0
+current parameter is:  
+1.002e+00;  1.315e+00;  8.639e-08;  8.758e-03;  4.718e-01;  5.933e+03;  8.406e-09;  7.777e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 17.566787 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.370880 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.371043 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               2.9933e-04        0  
+         1          1.0628e-04       0  
+         2          2.8420e-05       0  
+         3          8.3885e-06       0  
+         4          2.5528e-06       0  
+         5          7.8326e-07       0  
+         6          2.4093e-07       0  
+         7          7.4095e-08       0  
+         8          2.2787e-08       0  
+         9          7.0218e-09       0  
+        10          2.1763e-09       0  
+        11          6.8109e-10       0  
+        12          2.1580e-10       0  
+current objective function value is 8.229e-03 
+current parameter is:  
+1.002e+00;  1.315e+00;  8.639e-08;  8.758e-03;  4.718e-01;  5.933e+03;  8.406e-09;  7.777e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 18.934058 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.839653 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.926613 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6299e-07        0  
+         1          4.1158e-11       0  
+current objective function value is 8.229e-03 
+current parameter is:  
+1.002e+00;  1.315e+00;  8.639e-08;  8.758e-03;  4.718e-01;  5.933e+03;  8.406e-09;  7.777e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 17.230258 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.374649 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.372072 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6299e-07        0  
+         1          4.1153e-11       0  
+current objective function value is 8.229e-03 
+current parameter is:  
+1.002e+00;  1.315e+00;  8.639e-08;  8.758e-03;  4.718e-01;  5.933e+03;  8.406e-09;  7.777e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 19.055359 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.516744 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.524107 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6296e-07        0  
+         1          4.1157e-11       0  
+current objective function value is 8.229e-03 
+current parameter is:  
+1.002e+00;  1.315e+00;  8.639e-08;  8.758e-03;  4.718e-01;  5.933e+03;  8.406e-09;  7.777e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 17.977273 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.771903 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.767655 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6298e-07        0  
+         1          4.1155e-11       0  
+current objective function value is 8.229e-03 
+current parameter is:  
+1.002e+00;  1.315e+00;  8.639e-08;  8.758e-03;  4.718e-01;  5.933e+03;  8.406e-09;  7.777e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 18.566591 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.382113 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.419001 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6295e-07        0  
+         1          4.1155e-11       0  
+current objective function value is 8.229e-03 
+current parameter is:  
+1.002e+00;  1.315e+00;  8.639e-08;  8.758e-03;  4.718e-01;  5.933e+03;  8.406e-09;  7.777e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 17.560760 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.373417 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.373125 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6298e-07        0  
+         1          4.1155e-11       0  
+current objective function value is 8.229e-03 
+current parameter is:  
+1.002e+00;  1.315e+00;  8.639e-08;  8.758e-03;  4.718e-01;  5.933e+03;  8.406e-09;  7.777e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 17.846702 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.370836 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.372310 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6297e-07        0  
+         1          4.1154e-11       0  
+current objective function value is 8.229e-03 
+current parameter is:  
+1.002e+00;  1.315e+00;  8.639e-08;  8.758e-03;  4.718e-01;  5.933e+03;  8.406e-09;  7.777e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 19.183276 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.637242 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.672410 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6297e-07        0  
+         1          4.1156e-11       0  
+current objective function value is 8.229e-03 
+     3         0.00602937          0.625       0.000256           0
+current parameter is:  
+9.818e-01;  1.083e+00;  8.021e-08;  9.052e-03;  4.784e-01;  4.454e+03;  9.263e-09;  5.828e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 17.712604 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.372616 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.372728 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               6.0291e-05        0  
+         1          5.4906e-07       0  
+         2          1.3770e-08       0  
+         3          3.7427e-10       0  
+current objective function value is 6.027e-03 
+current parameter is:  
+9.818e-01;  1.083e+00;  8.021e-08;  9.052e-03;  4.784e-01;  4.454e+03;  9.263e-09;  5.828e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 17.414927 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.374017 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.371905 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6209e-07        0  
+         1          4.1024e-11       0  
+current objective function value is 6.027e-03 
+current parameter is:  
+9.818e-01;  1.083e+00;  8.021e-08;  9.052e-03;  4.784e-01;  4.454e+03;  9.263e-09;  5.828e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 18.132760 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.373106 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.372295 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6212e-07        0  
+         1          4.1024e-11       0  
+current objective function value is 6.027e-03 
+current parameter is:  
+9.818e-01;  1.083e+00;  8.021e-08;  9.052e-03;  4.784e-01;  4.454e+03;  9.263e-09;  5.828e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 18.294879 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.374425 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.374279 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6209e-07        0  
+         1          4.1027e-11       0  
+current objective function value is 6.027e-03 
+current parameter is:  
+9.818e-01;  1.083e+00;  8.021e-08;  9.052e-03;  4.784e-01;  4.454e+03;  9.263e-09;  5.828e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 18.701543 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.381405 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.373340 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6211e-07        0  
+         1          4.1025e-11       0  
+current objective function value is 6.027e-03 
+current parameter is:  
+9.818e-01;  1.083e+00;  8.021e-08;  9.052e-03;  4.784e-01;  4.454e+03;  9.263e-09;  5.828e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 17.618936 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.373404 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.373585 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6208e-07        0  
+         1          4.1026e-11       0  
+current objective function value is 6.027e-03 
+current parameter is:  
+9.818e-01;  1.083e+00;  8.021e-08;  9.052e-03;  4.784e-01;  4.454e+03;  9.263e-09;  5.828e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 17.516598 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.375611 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.373753 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6211e-07        0  
+         1          4.1026e-11       0  
+current objective function value is 6.027e-03 
+current parameter is:  
+9.818e-01;  1.083e+00;  8.021e-08;  9.052e-03;  4.784e-01;  4.454e+03;  9.263e-09;  5.828e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 17.404387 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.373104 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.372655 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6210e-07        0  
+         1          4.1025e-11       0  
+current objective function value is 6.027e-03 
+current parameter is:  
+9.818e-01;  1.083e+00;  8.021e-08;  9.052e-03;  4.784e-01;  4.454e+03;  9.263e-09;  5.828e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 18.944577 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.385740 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.374751 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6210e-07        0  
+         1          4.1027e-11       0  
+current objective function value is 6.027e-03 
+     4          0.0060269        0.15625        0.00504           0
+current parameter is:  
+9.452e-01;  1.082e+00;  8.049e-08;  9.027e-03;  4.798e-01;  4.459e+03;  9.238e-09;  5.787e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 17.206767 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.376357 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.375600 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               2.1350e-05        0  
+         1          2.1771e-07       0  
+         2          3.1654e-09       0  
+         3          4.8107e-11       0  
+current objective function value is 6.438e-03 
+current parameter is:  
+9.452e-01;  1.082e+00;  8.049e-08;  9.027e-03;  4.798e-01;  4.459e+03;  9.238e-09;  5.787e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 19.497111 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.505726 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.544556 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6075e-07        0  
+         1          4.0827e-11       0  
+current objective function value is 6.438e-03 
+current parameter is:  
+9.452e-01;  1.082e+00;  8.049e-08;  9.027e-03;  4.798e-01;  4.459e+03;  9.238e-09;  5.787e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 18.043394 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.373626 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.376304 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6074e-07        0  
+         1          4.0820e-11       0  
+current objective function value is 6.438e-03 
+current parameter is:  
+9.452e-01;  1.082e+00;  8.049e-08;  9.027e-03;  4.798e-01;  4.459e+03;  9.238e-09;  5.787e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 16.949814 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.705900 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.848844 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6071e-07        0  
+         1          4.0822e-11       0  
+current objective function value is 6.438e-03 
+current parameter is:  
+9.452e-01;  1.082e+00;  8.049e-08;  9.027e-03;  4.798e-01;  4.459e+03;  9.238e-09;  5.787e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 17.789449 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.376833 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.373231 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6073e-07        0  
+         1          4.0821e-11       0  
+current objective function value is 6.438e-03 
+current parameter is:  
+9.452e-01;  1.082e+00;  8.049e-08;  9.027e-03;  4.798e-01;  4.459e+03;  9.238e-09;  5.787e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 18.190677 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.374711 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.374131 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6070e-07        0  
+         1          4.0821e-11       0  
+current objective function value is 6.438e-03 
+current parameter is:  
+9.452e-01;  1.082e+00;  8.049e-08;  9.027e-03;  4.798e-01;  4.459e+03;  9.238e-09;  5.787e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 18.841620 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.383878 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.386743 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6073e-07        0  
+         1          4.0822e-11       0  
+current objective function value is 6.438e-03 
+current parameter is:  
+9.452e-01;  1.082e+00;  8.049e-08;  9.027e-03;  4.798e-01;  4.459e+03;  9.238e-09;  5.787e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 18.188765 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.656402 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 1.580456 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6073e-07        0  
+         1          4.0821e-11       0  
+current objective function value is 6.438e-03 
+current parameter is:  
+9.452e-01;  1.082e+00;  8.049e-08;  9.027e-03;  4.798e-01;  4.459e+03;  9.238e-09;  5.787e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 17.437488 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.373063 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.372954 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6072e-07        0  
+         1          4.0822e-11       0  
+current objective function value is 6.438e-03 
+     5          0.0060269      0.0390625        0.00504           0
+current parameter is:  
+9.726e-01;  1.083e+00;  8.024e-08;  9.043e-03;  4.789e-01;  4.454e+03;  9.261e-09;  5.816e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 18.784538 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.509599 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.508258 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               1.5401e-05        0  
+         1          1.1871e-07       0  
+         2          1.2900e-09       0  
+         3          1.4537e-11       0  
+current objective function value is 6.015e-03 
+current parameter is:  
+9.726e-01;  1.083e+00;  8.024e-08;  9.043e-03;  4.789e-01;  4.454e+03;  9.261e-09;  5.816e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 18.767447 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.378212 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.376896 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6178e-07        0  
+         1          4.0979e-11       0  
+current objective function value is 6.015e-03 
+current parameter is:  
+9.726e-01;  1.083e+00;  8.024e-08;  9.043e-03;  4.789e-01;  4.454e+03;  9.261e-09;  5.816e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 17.879036 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.381447 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.382451 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6176e-07        0  
+         1          4.0970e-11       0  
+current objective function value is 6.015e-03 
+current parameter is:  
+9.726e-01;  1.083e+00;  8.024e-08;  9.043e-03;  4.789e-01;  4.454e+03;  9.261e-09;  5.816e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 17.652275 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.375258 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.373645 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6173e-07        0  
+         1          4.0973e-11       0  
+current objective function value is 6.015e-03 
+current parameter is:  
+9.726e-01;  1.083e+00;  8.024e-08;  9.043e-03;  4.789e-01;  4.454e+03;  9.261e-09;  5.816e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 17.848334 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.374986 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.375121 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6175e-07        0  
+         1          4.0972e-11       0  
+current objective function value is 6.015e-03 
+current parameter is:  
+9.726e-01;  1.083e+00;  8.024e-08;  9.043e-03;  4.789e-01;  4.454e+03;  9.261e-09;  5.816e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 17.467386 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.376421 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.373569 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6172e-07        0  
+         1          4.0972e-11       0  
+current objective function value is 6.015e-03 
+current parameter is:  
+9.726e-01;  1.083e+00;  8.024e-08;  9.043e-03;  4.789e-01;  4.454e+03;  9.261e-09;  5.816e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 17.666388 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.373169 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.372661 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6175e-07        0  
+         1          4.0972e-11       0  
+current objective function value is 6.015e-03 
+current parameter is:  
+9.726e-01;  1.083e+00;  8.024e-08;  9.043e-03;  4.789e-01;  4.454e+03;  9.261e-09;  5.816e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 17.640407 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.374662 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.374736 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6174e-07        0  
+         1          4.0971e-11       0  
+current objective function value is 6.015e-03 
+current parameter is:  
+9.726e-01;  1.083e+00;  8.024e-08;  9.043e-03;  4.789e-01;  4.454e+03;  9.261e-09;  5.816e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 18.773191 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.468431 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.465352 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6174e-07        0  
+         1          4.0973e-11       0  
+current objective function value is 6.015e-03 
+     6         0.00601546     0.00976562        0.00304           0
+current parameter is:  
+9.748e-01;  1.082e+00;  8.025e-08;  9.041e-03;  4.789e-01;  4.453e+03;  9.258e-09;  5.817e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 18.860589 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.382449 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.387489 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               1.1645e-06        0  
+         1          1.2871e-09       0  
+         2          1.4624e-12       0  
+current objective function value is 6.010e-03 
+current parameter is:  
+9.748e-01;  1.082e+00;  8.025e-08;  9.041e-03;  4.789e-01;  4.453e+03;  9.258e-09;  5.817e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 20.437776 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.540953 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.596604 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6188e-07        0  
+         1          4.0994e-11       0  
+current objective function value is 6.010e-03 
+current parameter is:  
+9.748e-01;  1.082e+00;  8.025e-08;  9.041e-03;  4.789e-01;  4.453e+03;  9.258e-09;  5.817e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 17.677610 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.377431 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.373709 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6186e-07        0  
+         1          4.0985e-11       0  
+current objective function value is 6.010e-03 
+current parameter is:  
+9.748e-01;  1.082e+00;  8.025e-08;  9.041e-03;  4.789e-01;  4.453e+03;  9.258e-09;  5.817e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 18.096095 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.374441 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.373236 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6183e-07        0  
+         1          4.0988e-11       0  
+current objective function value is 6.010e-03 
+current parameter is:  
+9.748e-01;  1.082e+00;  8.025e-08;  9.041e-03;  4.789e-01;  4.453e+03;  9.258e-09;  5.817e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 17.125767 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.374062 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.371094 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6185e-07        0  
+         1          4.0987e-11       0  
+current objective function value is 6.010e-03 
+current parameter is:  
+9.748e-01;  1.082e+00;  8.025e-08;  9.041e-03;  4.789e-01;  4.453e+03;  9.258e-09;  5.817e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 17.118282 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.374442 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.373587 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6182e-07        0  
+         1          4.0987e-11       0  
+current objective function value is 6.010e-03 
+current parameter is:  
+9.748e-01;  1.082e+00;  8.025e-08;  9.041e-03;  4.789e-01;  4.453e+03;  9.258e-09;  5.817e-02;  
+Factoring the big matrix for surface salinity 1...Elapsed time is 19.223657 seconds.
+Factoring the big matrix for surface salinity 2...Elapsed time is 0.694242 seconds.
+Factoring the big matrix for surface temperature 1...Elapsed time is 0.691787 seconds.
+ Newton-Armijo solver 
+Iteration  ||F(x_k)||    Steps   
+   0               4.6185e-07        0  
+         1          4.0987e-11       0  

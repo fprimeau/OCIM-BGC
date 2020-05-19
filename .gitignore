@@ -1,4 +1,4 @@
-#*#
+*#
 *.slurm
 slurm.*
 *.txt
