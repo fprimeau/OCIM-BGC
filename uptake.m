@@ -1,5 +1,6 @@
-function [G,Gx] = uptake(parm)
+function [G,Gx] = uptake(parm, par)
 % unpack the parameters to be optimized
+on = true; off = false;
 alpha = parm.alpha;
 beta  = parm.beta;
 
@@ -22,13 +23,43 @@ Gp  = alpha.*c2p.*L;
 % gradient of uptake operator
 nx  = parm.nx;
 Gpx = zeros(nwet,nx);
-Gpx(:,4) = alpha.*c2p.*L;              % dGdlog_alpha
-Gpx(:,5) = beta*alpha.*c2p.*dLdbeta;   % dGdlog_beta
+Gpx(:,par.pindx.lalpha) = alpha.*c2p.*L;              % dGdlog_alpha
+Gpx(:,par.pindx.lbeta) = beta*alpha.*c2p.*dLdbeta;   % dGdlog_beta
 
 % Gradient
 % grad DIP
 DIPx = zeros(nwet,nx);
-DIPx(:,[1,3:5]) = parm.Px(1:nwet,:);   
+np = 0;
+if (par.biogeochem.opt_sigma == on)
+    np = np + 1;
+    DIPx(:,par.pindx.lsigma) = parm.Px(1:nwet,par.pindx.lsigma);
+end
+
+if (par.biogeochem.opt_kappa_dp == on)
+    np = np + 1;
+    DIPx(:,par.pindx.lkappa_dp) = parm.Px(1:nwet,par.pindx.lkappa_dp);
+end
+
+if (par.biogeochem.opt_slopep == on)
+    np = np + 1;
+    DIPx(:,par.pindx.lslopep) = parm.Px(1:nwet,par.pindx.lslopep);
+end
+
+if (par.biogeochem.opt_interpp == on)
+    np = np + 1;
+    DIPx(:,par.pindx.linterpp) = parm.Px(1:nwet,par.pindx.linterpp);
+
+end
+
+if (par.biogeochem.opt_alpha == on)
+    np = np + 1;
+    DIPx(:,par.pindx.lalpha) = parm.Px(1:nwet,par.pindx.lalpha);
+end
+
+if (par.biogeochem.opt_beta == on)
+    np = np + 1;
+    DIPx(:,par.pindx.lbeta) = parm.Px(1:nwet,par.pindx.lbeta);   
+end
 
 Gx = zeros(nwet,nx);
 Gx = d0(Gp)*DIPx+d0(DIP)*Gpx;
@@ -36,7 +67,6 @@ Gx = d0(Gp)*DIPx+d0(DIP)*Gpx;
 % Hessian
 % map P-model parameter order to N-model parameter order
 
-% nx = parm.nx;
 % n = (nx+1)*nx/2;
 % pos = tril(ones(nx),0);
 % pos(pos==1) = 1:n;
@@ -44,8 +74,16 @@ Gx = d0(Gp)*DIPx+d0(DIP)*Gpx;
 
 % grad grad DIP
 % DIPxx = zeros(n_wet,n);
-% map = [pos(1,1) pos(1,2) pos(1,3) pos(1,4) pos(2,2) pos(2,3) pos(2,4) ...
-       % pos(3,3) pos(3,4) pos(4,4)];
+% nn = 1;
+% for ji = 1:np
+    % for kk = ji:np
+        % map(nn) = pos(ji,kk);
+        % nn = nn + 1;
+    % end
+% end
+
+% map = [pos(1,1) pos(1,2) pos(1,3) pos(1,4) pos(2,2) pos(2,3) pos(2,4) pos(3,3) pos(3,4) pos(4,4)];
+
 % DIPxx(:,map) = parm.Pxx(1:n_wet,:);
 
 % Gpxx = zeros(n_wet,n);

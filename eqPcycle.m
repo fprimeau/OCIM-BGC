@@ -1,9 +1,10 @@
-function [P,Px,parm] = eqPcycle(parm,ip,x)
+function [P,Px,parm] = eqPcycle(par,parm,x)
 % ip is the mapping from x to parameter names (see switch below)
 % output: P is model prediction of DIP,POP,and DOP
 % output: F partial derivative of P model w.r.t. model parameters x
 % output: Fxx hessian matrix of P model w.r.t.  model parameters x
 % unpack some useful stuff
+on = true; off = false;
 TRdiv = parm.TRdiv;
 M3d   = parm.M3d;
 grd   = parm.grd;
@@ -13,44 +14,47 @@ nwet  = parm.nwet; % number of wet points;
 I     = parm.I   ; % make an identity matrix;
 
 % unpack the parameters to be optimized
-if (nargin>1)
-    for ik1 = 1:length(ip)
-        switch ip(ik1)
-          case 1
-            parm.interpp = exp(x(ik1)); % interp of temperature dependence
-                                        %
-          case 2
-            parm.slopep = x(ik1); % slope of temperature dependence
-
-          case 3
-            parm.interpc = x(ik1); % interp of temperature dependence
-                                   %
-          case 4
-            parm.slopec  = x(ik1); % slope of temperature dependence
-                                  %
-          case 5
-            parm.sigma = exp(x(ik1)); % fraction of organic P
-                                      % allocated to dissolved pool
-          case 6
-            parm.kappa_dp = exp(x(ik1)); % DOP remineralization
-                                         % const.[s^-1];
-          case 7
-            parm.alpha = exp(x(ik1)); % npp scaling factor for DIP
-                                      % uptake rate
-          case 8
-            parm.beta = exp(x(ik1)); % npp scaling exponent for DIP
-                                     % uptake rate
-        end
-    end
+if (par.biogeochem.opt_sigma == on)
+    lsigma = x(par.pindx.lsigma);
+    sigma  = exp(lsigma);
+else
+    sigma  = par.biogeochem.sigma;
 end
-slopep = parm.x(2);
-sigma  = parm.x(5);
 
-% slopep   = parm.slopep;
-interpp  = parm.interpp;
-kappa_dp = parm.kappa_dp;
-alpha    = parm.alpha;
-beta     = parm.beta;
+if (par.biogeochem.opt_kappa_dp == on)
+    lkappa_dp = x(par.pindx.lkappa_dp);
+    kappa_dp  = exp(lkappa_dp);
+else
+    kappa_dp  = par.biogeochem.kappa_dp;
+end
+
+if (par.biogeochem.opt_slopep == on)
+    lslopep = x(par.pindx.lslopep);
+    slopep  = exp(lslopep);
+else
+    slopep  = par.biogeochem.slopep;
+end
+
+if (par.biogeochem.opt_interpp == on)
+    linterpp = x(par.pindx.linterpp);
+    interpp  = exp(linterpp);
+else
+    interpp  = par.biogeochem.interpp;
+end
+
+if (par.biogeochem.opt_alpha == on)
+    lalpha = x(par.pindx.lalpha);
+    alpha  = exp(lalpha);
+else
+    alpha  = par.biogeochem.alpha;
+end
+
+if (par.biogeochem.opt_beta == on)
+    lbeta = x(par.pindx.lbeta);
+    beta  = exp(lbeta);
+else
+    beta  = par.biogeochem.beta;
+end
 
 % fixed parameters
 % sigma    = parm.sigma;
@@ -104,49 +108,60 @@ if (nargout>1)
     DIP = P(1:nwet);
     POP = P(nwet+1:2*nwet);
     DOP = P(2*nwet+1:end);
-    Fx = zeros(3*nwet,length(ip));
-    [~,~,dPFDdslope,dPFDdinterp] = buildPFD(M3d,grd,parm,slopep,interpp);
-    for ik1 = 1:length(ip)
-        switch ip(ik1)
-          case 1 % interpp
-            Fx(:,ik1) = exp(x(ik1))*[Z;...
-                                dPFDdinterp*POP;...
-                                Z];
-          case 2 % slopep
-            Fx(:,ik1) =  [Z;...
-                          dPFDdslope*POP;...
-                          Z];
-          case 5 % sigma
-            Fx(:,ik1) =  exp(x(ik1))*[Z;...
-                                alpha*L*DIP;...
-                                -alpha*L*DIP];
-            
-          case 6 % kappa_dp
-            Fx(:,ik1) = exp(x(ik1))*[-DOP;...
-                                Z;...
-                                DOP];
-          case 7 % alpha
-            Fx(:,ik1) = exp(x(ik1))*[L*DIP;...
-                                -(1-sigma)*L*DIP;...
-                                -sigma*L*DIP];
-          case 8 %beta
-            dLambdadbeta = 0*Lambda;
-            dLambdadbeta(:,:,1) = log(npp).*LAM(:,:,1);
-            dLambdadbeta(:,:,2) = log(npp).*LAM(:,:,2);
-            iz = find(isinf(dLambdadbeta(:)));
-            dLambdadbeta(iz) = 0;
-            inan = find(isnan(dLambdadbeta(:)));
-            dLambdadbeta(inan) = 0;
-            dLdbeta = d0(dLambdadbeta(iwet));
-            Fx(:,ik1) = exp(x(ik1))*[ alpha*dLdbeta*DIP;...
-                                -(1-sigma)*alpha*dLdbeta*DIP;...
-                                -sigma*alpha*dLdbeta*DIP];
-            % will need L and dLdbeta for gradients of other
-            % biogeochemical cycles
-            parm.L = L;
-            parm.dLdbeta = dLdbeta;
-        end
+
+    % sigma
+    if (par.biogeochem.opt_sigma == on)
+        tmp = sigma*[Z; alpha*L*DIP; -alpha*L*DIP];
+        Px(:,par.pindx.lsigma) = mfactor(FFp,-tmp);
     end
-    % Fx is the derivative of the solution wrt to the parameters
-    Px = mfactor(FFp,-Fx);
+
+    % kappa_dp
+    if (par.biogeochem.opt_kappa_dp == on)
+        tmp = kappa_dp*[-DOP; Z; DOP];
+        Px(:,par.pindx.lkappa_dp) = mfactor(FFp,-tmp);
+    end
+
+    % slopep
+    if (par.biogeochem.opt_slopep == on)
+        [~,~,dPFDdslope] = buildPFD(M3d,grd,parm,slopep,interpp);
+        tmp =  [Z; dPFDdslope*POP; Z];
+        Px(:,par.pindx.lslopep) = mfactor(FFp, -tmp);
+    end
+
+    % interpp
+    if (par.biogeochem.opt_interpp == on)
+        [~,~,~,dPFDdinterp] = buildPFD(M3d,grd,parm,slopep,interpp);
+        tmp = interpp*[Z; dPFDdinterp*POP;  Z];
+        Px(:,par.pindx.linterpp) = mfactor(FFp,-tmp);
+    end
+    
+    % alpha
+    if (par.biogeochem.opt_alpha == on)
+        tmp = alpha*[L*DIP;...
+                     -(1-sigma)*L*DIP;...
+                     -sigma*L*DIP];
+        Px(:,par.pindx.lalpha) = mfactor(FFp,-tmp);
+    end
+    
+    %beta
+    if (par.biogeochem.opt_beta == on)
+        dLambdadbeta = 0*Lambda;
+        dLambdadbeta(:,:,1) = log(npp).*LAM(:,:,1);
+        dLambdadbeta(:,:,2) = log(npp).*LAM(:,:,2);
+        iz = find(isinf(dLambdadbeta(:)));
+        dLambdadbeta(iz) = 0;
+        inan = find(isnan(dLambdadbeta(:)));
+        dLambdadbeta(inan) = 0;
+        dLdbeta = d0(dLambdadbeta(iwet));
+        tmp = beta*[ alpha*dLdbeta*DIP;...
+                     -(1-sigma)*alpha*dLdbeta*DIP;...
+                     -sigma*alpha*dLdbeta*DIP];
+        % will need L and dLdbeta for gradients of other
+        % biogeochemical cycles
+        parm.L = L;
+        parm.dLdbeta = dLdbeta;
+        Px(:,par.pindx.lbeta) = mfactor(FFp,-tmp);
+    end
 end
+
+
