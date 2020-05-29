@@ -86,11 +86,11 @@ par.biogeochem.opt_slopep = off;
 par.biogeochem.opt_interpp = on;
 par.biogeochem.opt_alpha = on;
 par.biogeochem.opt_beta = on;
-par.biogeochem.opt_d = on;
+par.biogeochem.opt_d = off;
 par.biogeochem.opt_slopec = off;
-par.biogeochem.opt_interpc = on;
-par.biogeochem.opt_RR = on;
-par.biogeochem.opt_kappa_dc = on;
+par.biogeochem.opt_interpc = off;
+par.biogeochem.opt_RR = off;
+par.biogeochem.opt_kappa_dc = off;
 
 p0 = [];
 if (par.biogeochem.opt_sigma == on)
@@ -191,7 +191,7 @@ myfun = @(x) neglogpost(x, parm, par);
 options = optimoptions(@fminunc                  , ...
                        'Algorithm','trust-region', ...
                        'GradObj','on'            , ...
-                       'Hessian','off'           , ...
+                       'Hessian','on'            , ...
                        'Display','iter'          , ...
                        'MaxFunEvals',2000        , ...
                        'MaxIter',2000            , ...
@@ -205,26 +205,18 @@ G_test = on        ;
 nip    = length(x0) ;
 if(G_test);
     dx = sqrt(-1)*eps.^3*eye(nip);
-    for ii = 1:8 %nip
+    for ii = 1:4 %nip
         x  = real(x0)+dx(:,ii)    ;
-        parm.interpp  = exp(x(1)) ;
-        % parm.slopep   = x(2)      ;
-        parm.interpc  = exp(x(2)) ;
-        % parm.slopec   = x(4)      ;
-        parm.kappa_dp = exp(x(3)) ;
-        parm.alpha    = exp(x(4)) ;
-        parm.beta     = exp(x(5)) ;
-        parm.d        = exp(x(6)) ;
-        parm.kappa_c  = exp(x(7)) ;
-        parm.RR       = exp(x(8)) ;
-        [f,fx] = neglogpost(x, parm, par)       ;
-        diff = real(fx(ii))-imag(f)/eps^3 ;
-        fprintf('%i %e  \n',ii,diff)      ;
+        [f,fx,fxx] = neglogpost(x, parm, par) ;
+        diff = real(fx(ii)) - imag(f)/eps^3 ;
+        diffx = real(fxx(ii,:)) - imag(fx)/eps^3;
+        fprintf('%i %e  \n',ii,diff);
+        fprintf('%e %e %e %e \n', diffx);
     end
     keyboard
 else
     [xhat,fval,exitflag] = fminunc(myfun,x0,options);
-    [f,fx] = neglogpost(xhat,parm,par);
+    [f,fx,fxx] = neglogpost(xhat,parm,par);
     save(fname,'xhat')
 end
 

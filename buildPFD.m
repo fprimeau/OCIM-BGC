@@ -1,4 +1,4 @@
-function [PFdiv,varargout] = buildPFD(M3d,grd,parm,varargin)
+function [PFdiv,vout] = buildPFD(M3d,grd,parm,varargin)
 % this code is used to build Particle Flux Diverngence (PFD)
 %
 %                      ________________________                                        
@@ -75,6 +75,7 @@ function [PFdiv,varargout] = buildPFD(M3d,grd,parm,varargin)
     d2adb2         =  2*r./(b.^3);
     d2adslope2     =  (2*r.*aveT.^2)./(b.^3);
     d2adinterp2    =  2*r./b.^3;
+    d2adslopedinterp = 2*r*aveT./b.^3;
     d2adr2         =  0;
     d2adbr         = -1./b.^2;
     d2wdb2         = -d2adb2.*M;
@@ -82,6 +83,7 @@ function [PFdiv,varargout] = buildPFD(M3d,grd,parm,varargin)
     d2wdinterp2    = -d2adinterp2.*M;
     d2wdr2         = -d2adr2.*M;
     d2wdbr         = -d2adbr.*M;
+    d2wdslopedinterp = -d2adslopedinterp.*M;
     %FLUX = d0(w(iocn))*AVG;
     FLUX           = d0(w(iocn))*IU;
     dFLUXdb        = d0(dwdb(iocn))*IU;
@@ -92,6 +94,7 @@ function [PFdiv,varargout] = buildPFD(M3d,grd,parm,varargin)
     d2FLUXdslope2  = d0(d2wdslope2(iocn))*IU;
     d2FLUXdinterp2 = d0(d2wdinterp2(iocn))*IU;
     d2FLUXdbr      = d0(d2wdbr(iocn))*IU;
+    d2FLUXdslopedinterp = d0(d2wdslopedinterp(iocn))*IU;
     d2FLUXdr2      = 0;
     % particle flux divergence operator
     PFdiv          = DIV*FLUX;
@@ -104,7 +107,11 @@ function [PFdiv,varargout] = buildPFD(M3d,grd,parm,varargin)
     d2PFDdinterp2  = DIV*d2FLUXdinterp2;
     d2PFDdbr       = DIV*d2FLUXdbr;
     d2PFDdr2       = DIV*d2FLUXdr2;
-    varargout{1}   = dPFDdb;
-    varargout{2}   = dPFDdslope;
-    varargout{3}   = dPFDdinterp;
+    d2PFDdslopedinterp = DIV*d2FLUXdslopedinterp;
+    vout.dPFDdb = dPFDdb;
+    vout.dPFDdslope = dPFDdslope;
+    vout.dPFDdinterp = dPFDdinterp;
+    vout.d2PFDdslope2 = d2PFDdslope2;
+    vout.d2PFDdinterp2 = d2PFDdinterp2;
+    vout.d2PFDdslopedinterp = d2PFDdslopedinterp;
 end 
