@@ -1,4 +1,4 @@
-function [C,Cx] = eqCcycle(par, parm, x)
+function [C, Cx, parm] = eqCcycle(par, parm, x)
 % ip is the mapping from x to parameter names (see switch below)
 % output: C is model prediction of DIP,POP,and DOP
 % output: F partial derivative of P model w.r.t. model parameters x
@@ -29,8 +29,7 @@ end
 
 % slopep
 if (par.biogeochem.opt_slopep == on)
-    lslopep = x(par.pindx.lslopep);
-    parm.slopep  = exp(lslopep);
+    slopep = x(par.pindx.slopep);
 else
     parm.slopep  = par.biogeochem.slopep;
 end
@@ -69,8 +68,7 @@ end
 
 % slopec
 if (par.biogeochem.opt_slopec == on)
-    lslopec = x(par.pindx.lslopec);
-    parm.slopec  = exp(lslopec);
+    slopec = x(par.pindx.slopec);
 else
     parm.slopec  = par.biogeochem.slopec;
 end
@@ -99,14 +97,9 @@ else
     parm.RR = par.biogeochem.RR;
 end
 
-% PME part;
-[sst,ss] = PME(parm) ;
-parm.ss  = ss        ;
-parm.sst = sst       ;
-
-options.atol   = 5e-10 ;
-options.rtol   = 5e-10 ;
-options.iprint = 1     ;
+options.iprint = 1;
+options.atol = 5e-10 ;
+options.rtol = 5e-10 ;
 
 DIC = GC(0*nwet+1:1*nwet) ; 
 POC = GC(1*nwet+1:2*nwet) ;
@@ -121,7 +114,7 @@ if (ierr ~=0)
     keyboard
     else
         % reset the global variable for the next call eqCcycle
-    GC = 0.99999*real(C); 
+        GC = real(C) + 1e-7*randn(4*nwet,1);
     if nargout>1     
         %
         % Compute the gradient of the solution wrt the parameters
@@ -222,16 +215,17 @@ if nargout > 2
     
     % slopep
     if (par.biogeochem.opt_slopep == on)
-        tmp = [(1+RR)*Gx(:,par.pindx.lslopp) ;...
-               -(1-sigma)*Gx(:,par.pindx.lslopp) ;...
-               -sigma*Gx(:,par.pindx.lslopp)     ;...
-               -RR*Gx(:,par.pindx.lslopp)]   ;
-        Cx(:,par.pindx.lslopp) = mfactor(FD, -tmp);
+        tmp = [(1+RR)*Gx(:,par.pindx.slopp) ;...
+               -(1-sigma)*Gx(:,par.pindx.slopp) ;...
+               -sigma*Gx(:,par.pindx.slopp)     ;...
+               -RR*Gx(:,par.pindx.slopp)]   ;
+        Cx(:,par.pindx.slopp) = mfactor(FD, -tmp);
     end
     
     % interpc
     if (par.biogeochem.opt_interpc == on)
-        [~,~,~,dPFDdinterp] = buildPFD(M3d,grd,parm,slopec,interpc);
+        [~,vout] = buildPFD(M3d,grd,parm,slopec,interpc);
+        dPFDdinterp = vout.dPFDdinterp;
         tmp = interpc * ...
               [Z ; ...
                dPFDdinterp*POC ; ...
@@ -246,7 +240,7 @@ if nargout > 2
                dPFDdslope*POC ; ...
                Z ; ...
                Z];
-        Cx(:,par.pindx.lslopec) = mfactor(FD, -tmp);
+        Cx(:,par.pindx.slopec) = mfactor(FD, -tmp);
     end
     
     % sigma

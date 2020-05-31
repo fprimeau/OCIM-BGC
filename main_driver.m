@@ -3,12 +3,13 @@ addpath('/DFS-L/DATA/primeau/weilewang/my_func/')
 addpath('/DFS-L/DATA/primeau/weilewang/DATA/')
 addpath('/DFS-L/DATA/primeau/weilewang/GREG/Couple_CP/')
 on = true; off = false;
-global GC
+global GC GO
 % load constraint data
 load transport_v4.mat
 load GLODAP_grid_dic
 load GLODAP_grid_Alk
 load human_co2
+load o2obs_90x180x24 o2obs 
 load splco2_mod_monthly % monthly CO2 data
 load co2syspar90.mat co2syspar
 
@@ -18,6 +19,8 @@ load po4obs_90x180x24.mat % WOA PO4 observation
 load npp_90x180.mat % Satellite NPP in C unit;
 load kw660.mat Kw660 p4
 load tmpC.mat 
+load tmpO.mat
+
 format long
 grd  = grid         ;
 iwet = find(M3d(:)) ;
@@ -26,8 +29,16 @@ nwet = length(iwet) ;
 spd  = 24*60^2;
 spa  = 365*spd;
 zc   = sum(grd.zt(1:2));
-
-format long
+%
+% convert unit form [ml/l] to [umol/l].
+o2obs(iwet) = o2obs(iwet).*44.661;  
+% o2 correction based on Bianchi et al.(2012) [umol/l] .
+o2obs_c = o2obs(iwet).*1.009-2.523;
+% find out negative values and set them to zero.
+ineg = find(o2obs_c<0);               
+o2obs_c(ineg) = 0;
+parm.o2obs = o2obs_c;
+%
 MSK_now = M3d;
 parm.human_co2 = human_co2;
 parm.Salt  = Sobs    ;
@@ -51,7 +62,9 @@ permil     = parm.rho*1e-3  ; % from umol/kg to mmol/m3;
 parm.DICobs = DICstar*permil; % GLODAP dic obs [mmol/m3];
 parm.TAobs  = TAstar*permil ; % GLODAP TA obs [mmol/m3];
 parm.po4obs = po4obs        ;
+
 GC = [real(DIC);zeros(3*nwet,1)];
+GO = O + 1e-3*randn(parm.nwet,1);
 
 % transiant CO2 concentraion;
 parm.year      = splco2_mod(:,1) ;
@@ -65,33 +78,41 @@ parm.DIPbar  = nansum(po4obs(iwet).*dVt(iwet))/nansum(dVt(iwet)); % volume
 parm.taup    = 720*60^2; % (s) pic dissolution time-scale
 parm.tau_TA  = 1./parm.taup;
 
-par.biogeochem.sigma    = 0.30;
+% PME part;
+[sst,ss] = PME(parm) ;
+parm.ss  = ss        ;
+parm.sst = sst       ;
+%
+par.biogeochem.sigma    = 0.30      ; % production to DOC ratio
 par.biogeochem.slopep   = 0.00      ; % Martin curve exponent of POP
 par.biogeochem.interpp  = 9.750e-01 ;
 par.biogeochem.kappa_dp = 7.824e-08 ;
-par.biogeochem.alpha    = 9.151e-03 ;
-par.biogeochem.beta     = 4.807e-01 ;
-par.biogeochem.d        = 4048      ;   % pic remin e-folding length scale (m)
-                         % 
-
+par.biogeochem.alpha    = 9.151e-03 ; % npp linear scaling factor
+par.biogeochem.beta     = 4.807e-01 ; % npp scaling exponent
+par.biogeochem.d        = 4048      ; % pic remin e-folding length scale (m)
+                                      
 par.biogeochem.slopec   = 0         ; % Martin curve exponent of OC
 par.biogeochem.interpc  = 1.015e+00 ;
 par.biogeochem.kappa_dc = 9.569e-09 ;
 par.biogeochem.kappa_da = 0.5e-7    ;
-par.biogeochem.RR       = 5.294e-02 ;  % pic:poc ratio
-
-par.biogeochem.opt_sigma = off;
-par.biogeochem.opt_kappa_dp = on;
-par.biogeochem.opt_slopep = off;
-par.biogeochem.opt_interpp = on;
-par.biogeochem.opt_alpha = on;
+par.biogeochem.RR       = 5.294e-02 ; % pic:poc ratio
+par.biogeochem.slopeo   = 0;
+par.biogeochem.interpo  = 170/117;
+%
+par.biogeochem.opt_d = on; 
+par.biogeochem.opt_RR = on; 
 par.biogeochem.opt_beta = on;
-par.biogeochem.opt_d = off;
-par.biogeochem.opt_slopec = off;
-par.biogeochem.opt_interpc = off;
-par.biogeochem.opt_RR = off;
-par.biogeochem.opt_kappa_dc = off;
-
+par.biogeochem.opt_alpha = on;
+par.biogeochem.opt_sigma = off; 
+par.biogeochem.opt_slopep = off; 
+par.biogeochem.opt_interpp = on;
+par.biogeochem.opt_kappa_dp = on;
+par.biogeochem.opt_slopec   = off;
+par.biogeochem.opt_interpc  = on;
+par.biogeochem.opt_kappa_dc = on;
+par.biogeochem.opt_slopeo   = on;
+par.biogeochem.opt_interpo  = on;
+%
 p0 = [];
 if (par.biogeochem.opt_sigma == on)
     sigma = par.biogeochem.sigma; lsigma = log(sigma);
@@ -101,10 +122,10 @@ if (par.biogeochem.opt_sigma == on)
 end 
 
 if (par.biogeochem.opt_slopep == on)
-    slopep = par.biogeochem.slopep; lslopep = log(slopep);
+    slopep = par.biogeochem.slopep;
     strt = length(p0) + 1;
-    p0 = [p0; lslopep];
-    par.pindx.lslopep = strt : length(p0);
+    p0 = [p0; slopep];
+    par.pindx.slopep = strt : length(p0);
 end 
 
 if (par.biogeochem.opt_interpp == on)
@@ -136,10 +157,10 @@ if (par.biogeochem.opt_kappa_dp == on)
 end 
 
 if (par.biogeochem.opt_slopec == on)
-    slopec = par.biogeochem.slopec; lslopec = log(slopec);
+    slopec = par.biogeochem.slopec;
     strt = length(p0) + 1;
-    p0 = [p0; lslopec];
-    par.pindx.lslopec = strt : length(p0);
+    p0 = [p0; slopec];
+    par.pindx.slopec = strt : length(p0);
 end 
 
 if (par.biogeochem.opt_interpc == on)
@@ -170,9 +191,21 @@ if (par.biogeochem.opt_RR == on)
     par.pindx.lRR = strt : length(p0);
 end 
 
+if (par.biogeochem.opt_slopeo == on)
+    slopeo = par.biogeochem.slopeo; 
+    strt = length(p0) + 1;
+    p0 = [p0; slopeo];
+    par.pindx.slopeo = strt : length(p0);
+end 
+
+if (par.biogeochem.opt_interpo == on)
+    interpo = par.biogeochem.interpo; linterpo = log(interpo);
+    strt = length(p0) + 1;
+    p0 = [p0; linterpo];
+    par.pindx.linterpo = strt : length(p0);
+end 
+
 parm.kappa_p = 1/(720*60^2) ;
-
-
 parm.p2c = 0.006+0.0069*po4obs;
 parm.nzo = 2;
 %%%%%%% prepare NPP for the model %%%%%%%%
@@ -191,7 +224,7 @@ myfun = @(x) neglogpost(x, parm, par);
 options = optimoptions(@fminunc                  , ...
                        'Algorithm','trust-region', ...
                        'GradObj','on'            , ...
-                       'Hessian','on'            , ...
+                       'Hessian','off'            , ...
                        'Display','iter'          , ...
                        'MaxFunEvals',2000        , ...
                        'MaxIter',2000            , ...
@@ -201,22 +234,22 @@ options = optimoptions(@fminunc                  , ...
                        'FinDiffType','central'   , ...
                        'PrecondBandWidth',Inf)   ;
 %
-G_test = on        ;
+G_test = off        ;
 nip    = length(x0) ;
 if(G_test);
     dx = sqrt(-1)*eps.^3*eye(nip);
-    for ii = 1:4 %nip
+    for ii = 1:1 %nip
         x  = real(x0)+dx(:,ii)    ;
-        [f,fx,fxx] = neglogpost(x, parm, par) ;
+        [f,fx] = neglogpost(x, parm, par) ;
         diff = real(fx(ii)) - imag(f)/eps^3 ;
-        diffx = real(fxx(ii,:)) - imag(fx)/eps^3;
+        % diffx = real(fxx(ii,:)) - imag(fx)/eps^3;
         fprintf('%i %e  \n',ii,diff);
-        fprintf('%e %e %e %e \n', diffx);
+        % fprintf('%e %e %e %e \n', diffx);
     end
     keyboard
 else
     [xhat,fval,exitflag] = fminunc(myfun,x0,options);
-    [f,fx,fxx] = neglogpost(xhat,parm,par);
+    [f,fx] = neglogpost(xhat,parm,par);
     save(fname,'xhat')
 end
 

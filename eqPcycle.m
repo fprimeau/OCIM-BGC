@@ -1,4 +1,4 @@
-function [P,Px,Pxx,parm] = eqPcycle(par,parm,x)
+function [P,Px,parm] = eqPcycle(par,parm,x)
 % ip is the mapping from x to parameter names (see switch below)
 % output: P is model prediction of DIP,POP,and DOP
 % output: F partial derivative of P model w.r.t. model parameters x
@@ -29,8 +29,7 @@ else
 end
 
 if (par.biogeochem.opt_slopep == on)
-    lslopep = x(par.pindx.lslopep);
-    slopep  = exp(lslopep);
+    slopep = x(par.pindx.slopep);
 else
     slopep  = par.biogeochem.slopep;
 end
@@ -126,7 +125,7 @@ if (nargout>1)
         [~,vout] = buildPFD(M3d,grd,parm,slopep,interpp);
         dPFDdslope = vout.dPFDdslope;
         tmp =  [Z; dPFDdslope*POP; Z];
-        Px(:,par.pindx.lslopep) = mfactor(FFp, -tmp);
+        Px(:,par.pindx.slopep) = mfactor(FFp, -tmp);
     end
 
     % interpp
@@ -205,8 +204,8 @@ if (nargout>2)
     if (par.biogeochem.opt_sigma == on & par.biogeochem.opt_slopep == on)
         tmp = [Z; Z; Z] + ... % d2Jdsigmadslope * P
               [Z; ... % dJdsigmadPdslope
-               sigma*alpha*L*DIPx(:,par.pindx.lslopep); ...
-               -sigma*alpha*L*DIPx(:,par.pindx.lslopep)] + ...
+               sigma*alpha*L*DIPx(:,par.pindx.slopep); ...
+               -sigma*alpha*L*DIPx(:,par.pindx.slopep)] + ...
               [Z;...  % dJdslopepdPdsigma
                dPFDdslope*POPx(:,par.pindx.lsigma); ...
                Z];

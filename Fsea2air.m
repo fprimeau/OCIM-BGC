@@ -11,14 +11,14 @@ co2syspar = parm.co2syspar;
 tmp = M3d+nan;
 tmp(iwet) = DIC;
 vDICs = tmp(iwet(isrf));
-vSSS  = parm.ss(iwet(isrf));
+vSST  = parm.sst(iwet(isrf));
 
 [kw,P] = kwco2(M3d,grd);
 tmp = M3d*0;
 tmp(:,:,1) = kw;
 kw = tmp(iwet(isrf));
 
-scco2 = 2073.1 - 125.62*vSSS + 3.6276*vSSS.^2 - 0.043219*vSSS.^3;
+scco2 = 2073.1 - 125.62*vSST + 3.6276*vSST.^2 - 0.043219*vSST.^3;
 kw    = kw.*sqrt(660./scco2);
 KCO2  = kw/grd.dzt(1);
 % uatm

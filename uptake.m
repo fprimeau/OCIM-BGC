@@ -10,7 +10,7 @@ iwet = parm.iwet;
 nwet = parm.nwet;
 % N:P of uptake operator
 po4obs = parm.po4obs(iwet);
-c2p = parm.c2p;
+c2p    = parm.c2p;
 % N uptake operator
 L = diag(parm.L);  
 dLdbeta = diag(parm.dLdbeta); 
@@ -24,7 +24,7 @@ Gp  = alpha.*c2p.*L;
 nx  = parm.nx;
 Gpx = zeros(nwet,nx);
 Gpx(:,par.pindx.lalpha) = alpha.*c2p.*L;              % dGdlog_alpha
-Gpx(:,par.pindx.lbeta) = beta*alpha.*c2p.*dLdbeta;   % dGdlog_beta
+Gpx(:,par.pindx.lbeta)  = beta*alpha.*c2p.*dLdbeta;   % dGdlog_beta
 
 % Gradient
 % grad DIP
@@ -79,38 +79,38 @@ pos(pos==1) = 1:n;
 pos = pos';
 
 % grad grad DIP
-DIPxx = zeros(n_wet,n);
-nn = 1;
-for ji = 1:np
-    for kk = ji:np
-        map(nn) = pos(ji,kk);
-        nn = nn + 1;
-    end
-end
+% DIPxx = zeros(nwet,n);
+% nn = 1;
+% for ji = 1:np
+    % for kk = ji:np
+        % map(nn) = pos(ji,kk);
+        % nn = nn + 1;
+    % end
+% end
 
-DIPxx(:,map) = parm.Pxx(1:n_wet,:);
+% DIPxx(:,map) = parm.Pxx(1:nwet,:);
 
-Gpxx = zeros(n_wet,n);
-Gpxx(:,pos(ialpha,ialpha)) = alpha*c2p.*L; % alpha alpha
-Gpxx(:,pos(ialpha,ibeta)) = beta*alpha*c2p.*dLdbeta; % alpha beta
-Gpxx(:,pos(3,9)) = c2p_l*alpha*dc2pdc2p_l.*L;  % alpha c2p_l 
-Gpxx(:,pos(3,10)) = S*alpha*dc2pdS.*L;  % alpha S 
-Gpxx(:,pos(ibeta,ibeta)) = beta*alpha*c2p.*dLdbeta+...
-    beta^2*alpha*c2p.*d2Ldbetadbeta;   % beta beta 
-Gpxx(:,pos(4,9)) = c2p_l*beta*alpha*dc2pdc2p_l.*dLdbeta; % beta c2p_l
-Gpxx(:,pos(4,10)) = S*beta*alpha*dc2pdS.*dLdbeta;         % beta S
-Gpxx(:,pos(9,9)) = c2p_l*alpha*dc2pdc2p_l.*L;           % c2p_l c2p_l
-Gpxx(:,pos(9,10)) = 0*G;                                 % c2p_l S    
-Gpxx(:,pos(10,10)) = S*alpha*dc2pdS.*L;                   % S S
+% Gpxx = zeros(nwet,n);
+% Gpxx(:,pos(ialpha,ialpha)) = alpha*c2p.*L; % alpha alpha
+% Gpxx(:,pos(ialpha,ibeta)) = beta*alpha*c2p.*dLdbeta; % alpha beta
+% Gpxx(:,pos(3,9)) = c2p_l*alpha*dc2pdc2p_l.*L;  % alpha c2p_l 
+% Gpxx(:,pos(3,10)) = S*alpha*dc2pdS.*L;  % alpha S 
+% Gpxx(:,pos(ibeta,ibeta)) = beta*alpha*c2p.*dLdbeta+...
+    % beta^2*alpha*c2p.*d2Ldbetadbeta;   % beta beta 
+% Gpxx(:,pos(4,9)) = c2p_l*beta*alpha*dc2pdc2p_l.*dLdbeta; % beta c2p_l
+% Gpxx(:,pos(4,10)) = S*beta*alpha*dc2pdS.*dLdbeta;         % beta S
+% Gpxx(:,pos(9,9)) = c2p_l*alpha*dc2pdc2p_l.*L;           % c2p_l c2p_l
+% Gpxx(:,pos(9,10)) = 0*G;                                 % c2p_l S    
+% Gpxx(:,pos(10,10)) = S*alpha*dc2pdS.*L;                   % S S
 
 
-Gxx = d0(DIP)*Gpxx+d0(Gp)*DIPxx;
-for is = 1:nx
-    r = [pos(is,is):pos(is,end)];
-    Gxx(:,r) = Gxx(:,r)+...
-        d0(Gpx(:,is))*DIPx(:,is:end)+...
-        d0(DIPx(:,is))*Gpx(:,is:end);
-end
+% Gxx = d0(DIP)*Gpxx+d0(Gp)*DIPxx;
+% for is = 1:nx
+    % r = [pos(is,is):pos(is,end)];
+    % Gxx(:,r) = Gxx(:,r)+...
+        % d0(Gpx(:,is))*DIPx(:,is:end)+...
+        % d0(DIPx(:,is))*Gpx(:,is:end);
+% end
 
 
 
