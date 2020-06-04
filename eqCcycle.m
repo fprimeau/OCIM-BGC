@@ -12,89 +12,89 @@ nwet = parm.nwet;
 
 % unpack the parameters to be optimized
 %sigma
-if (par.biogeochem.opt_sigma == on)
+if (par.opt_sigma == on)
     lsigma = x(par.pindx.lsigma);
     parm.sigma  = exp(lsigma);
 else
-    parm.sigma  = par.biogeochem.sigma;
+    parm.sigma  = par.sigma;
 end
 
 % kappa_dp
-if (par.biogeochem.opt_kappa_dp == on)
+if (par.opt_kappa_dp == on)
     lkappa_dp = x(par.pindx.lkappa_dp);
     parm.kappa_dp  = exp(lkappa_dp);
 else
-    parm.kappa_dp  = par.biogeochem.kappa_dp;
+    parm.kappa_dp  = par.kappa_dp;
 end
 
 % slopep
-if (par.biogeochem.opt_slopep == on)
+if (par.opt_slopep == on)
     slopep = x(par.pindx.slopep);
 else
-    parm.slopep  = par.biogeochem.slopep;
+    parm.slopep  = par.slopep;
 end
 
 % interpp
-if (par.biogeochem.opt_interpp == on)
+if (par.opt_interpp == on)
     linterpp = x(par.pindx.linterpp);
     parm.interpp  = exp(linterpp);
 else
-    parm.interpp  = par.biogeochem.interpp;
+    parm.interpp  = par.interpp;
 end
 
 % alpha
-if (par.biogeochem.opt_alpha == on)
+if (par.opt_alpha == on)
     lalpha = x(par.pindx.lalpha);
     parm.alpha  = exp(lalpha);
 else
-    parm.alpha  = par.biogeochem.alpha;
+    parm.alpha  = par.alpha;
 end
 
 % beta
-if (par.biogeochem.opt_beta == on)
+if (par.opt_beta == on)
     lbeta = x(par.pindx.lbeta);
     parm.beta  = exp(lbeta);
 else
-    parm.beta  = par.biogeochem.beta;
+    parm.beta  = par.beta;
 end
 
 % kappa_dc
-if (par.biogeochem.opt_kappa_dc == on)
+if (par.opt_kappa_dc == on)
     lkappa_dc = x(par.pindx.lkappa_dc);
     parm.kappa_dc  = exp(lkappa_dc);
 else
-    parm.kappa_dc  = par.biogeochem.kappa_dc;
+    parm.kappa_dc  = par.kappa_dc;
 end
 
 % slopec
-if (par.biogeochem.opt_slopec == on)
+if (par.opt_slopec == on)
     slopec = x(par.pindx.slopec);
 else
-    parm.slopec  = par.biogeochem.slopec;
+    parm.slopec  = par.slopec;
 end
 
 % interpc
-if (par.biogeochem.opt_interpc == on)
+if (par.opt_interpc == on)
     linterpc = x(par.pindx.linterpc);
     parm.interpc  = exp(linterpc);
 else
-    parm.interpc  = par.biogeochem.interpc;
+    parm.interpc  = par.interpc;
 end
 
 % d
-if (par.biogeochem.opt_d == on)
+if (par.opt_d == on)
     ld = x(par.pindx.ld);
     parm.d  = exp(ld);
 else
-    parm.d = par.biogeochem.d;
+    parm.d = par.d;
 end
 
 % RR
-if (par.biogeochem.opt_RR == on)
+if (par.opt_RR == on)
     lRR = x(par.pindx.lRR);
     parm.RR = exp(lRR);
 else
-    parm.RR = par.biogeochem.RR;
+    parm.RR = par.RR;
 end
 
 options.iprint = 1;
@@ -161,7 +161,7 @@ PFDc = buildPFD(M3d,grd,parm,slopec,interpc);
 [JgDIC,KG] = Fsea2air(parm,DIC);
 
 % biological DIC uptake operator
-[G,Gx] = uptake(parm, par);
+[G,Gx] = uptake(par, parm);
 
 eq1 =   (1 + RR)*G + TRdiv * DIC - kappa_dc * DOC - kappa_p*CaC - JgDIC;
 eq2 = -(1-sigma)*G + (PFDc + kappa_p*I)   *   POC;
@@ -205,7 +205,7 @@ if nargout > 2
     Z = zeros(nwet,1);
     
     % interpp
-    if (par.biogeochem.opt_interpp == on)
+    if (par.opt_interpp == on)
         tmp = [(1+RR)*Gx(:,par.pindx.linterpp) ;...
                -(1-sigma)*Gx(:,par.pindx.linterpp) ;...
                -sigma*Gx(:,par.pindx.linterpp)     ;...
@@ -214,7 +214,7 @@ if nargout > 2
     end
     
     % slopep
-    if (par.biogeochem.opt_slopep == on)
+    if (par.opt_slopep == on)
         tmp = [(1+RR)*Gx(:,par.pindx.slopp) ;...
                -(1-sigma)*Gx(:,par.pindx.slopp) ;...
                -sigma*Gx(:,par.pindx.slopp)     ;...
@@ -223,7 +223,7 @@ if nargout > 2
     end
     
     % interpc
-    if (par.biogeochem.opt_interpc == on)
+    if (par.opt_interpc == on)
         [~,vout] = buildPFD(M3d,grd,parm,slopec,interpc);
         dPFDdinterp = vout.dPFDdinterp;
         tmp = interpc * ...
@@ -235,7 +235,7 @@ if nargout > 2
     end
     
     % slopec
-     if (par.biogeochem.opt_slopec == on)
+     if (par.opt_slopec == on)
         tmp = [Z ; ...
                dPFDdslope*POC ; ...
                Z ; ...
@@ -244,9 +244,8 @@ if nargout > 2
     end
     
     % sigma
-    if (par.biogeochem.opt_sigma == on)
-        tmp = sigma *  ...
-              [(1+RR)*Gx(:,par.pindx.lsigma) ;...
+    if (par.opt_sigma == on)
+        tmp =  [(1+RR)*Gx(:,par.pindx.lsigma) ;...
                -(1-sigma)*Gx(:,par.pindx.lsigma) + G;...
                -sigma*Gx(:,par.pindx.lsigma) - G  ;...
                -RR*Gx(:,par.pindx.lsigma)]   ;
@@ -254,7 +253,7 @@ if nargout > 2
     end
     
     % kappa_dp
-    if (par.biogeochem.opt_kappa_dp == on)
+    if (par.opt_kappa_dp == on)
         tmp = [(1+RR)*Gx(:,par.pindx.lkappa_dp) ;...
                -(1-sigma)*Gx(:,par.pindx.lkappa_dp) ;...
                -sigma*Gx(:,par.pindx.lkappa_dp)     ;...
@@ -263,7 +262,7 @@ if nargout > 2
     end
     
     % alpha
-    if (par.biogeochem.opt_alpha == on)
+    if (par.opt_alpha == on)
         tmp = [(1+RR)*Gx(:,par.pindx.lalpha) ;...
                -(1-sigma)*Gx(:,par.pindx.lalpha) ;...
                -sigma*Gx(:,par.pindx.lalpha)     ;...
@@ -272,7 +271,7 @@ if nargout > 2
     end
     
     % beta
-    if (par.biogeochem.opt_beta == on)
+    if (par.opt_beta == on)
         tmp = [(1+RR)*Gx(:,par.pindx.lbeta) ;...
                -(1-sigma)*Gx(:,par.pindx.lbeta) ;...
                -sigma*Gx(:,par.pindx.lbeta)     ;...
@@ -281,7 +280,7 @@ if nargout > 2
     end
     
     % d
-    if (par.biogeochem.opt_d == on)
+    if (par.opt_d == on)
         [~,dPFDdd] = buildPFD_CaCO3(parm,grd,M3d);
         tmp = d * [Z ; ...
                    Z ; ...
@@ -291,7 +290,7 @@ if nargout > 2
     end
     
     % kappa_dc
-    if (par.biogeochem.opt_kappa_dc == on)
+    if (par.opt_kappa_dc == on)
         tmp = kappa_dc * [-DOC ; ...
                           Z ; ...
                           DOC ; ...
@@ -300,7 +299,7 @@ if nargout > 2
     end
     
     % RR
-    if (par.biogeochem.opt_RR == on)
+    if (par.opt_RR == on)
         tmp = RR* [G ; ...
                    Z ; ...
                    Z ; ...

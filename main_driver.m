@@ -9,9 +9,12 @@ load transport_v4.mat
 load GLODAP_grid_dic
 load GLODAP_grid_Alk
 load human_co2
+load theta_from_qqq.mat theta
+
 load o2obs_90x180x24 o2obs 
 load splco2_mod_monthly % monthly CO2 data
 load co2syspar90.mat co2syspar
+load sio4obs_90x180x24.mat sio4obs
 
 load Sobs_90x180x24.mat
 load tempobs_90x180x24.mat
@@ -40,7 +43,7 @@ o2obs_c(ineg) = 0;
 parm.o2obs = o2obs_c;
 %
 MSK_now = M3d;
-parm.human_co2 = human_co2;
+
 parm.Salt  = Sobs    ;
 parm.Temp  = tempobs ;
 parm.ALK   = TAstar  ;
@@ -59,9 +62,13 @@ parm.Tobs  = tempobs;
 parm.rho   = 1024.5         ; % seawater density;
 permil     = parm.rho*1e-3  ; % from umol/kg to mmol/m3;
 
+parm.SIL    = sio4obs;
+parm.theta  = theta;
+
+parm.po4obs = po4obs        ;
 parm.DICobs = DICstar*permil; % GLODAP dic obs [mmol/m3];
 parm.TAobs  = TAstar*permil ; % GLODAP TA obs [mmol/m3];
-parm.po4obs = po4obs        ;
+parm.human_co2 = human_co2*permil;
 
 GC = [real(DIC);zeros(3*nwet,1)];
 GO = O + 1e-3*randn(parm.nwet,1);
@@ -74,6 +81,7 @@ parm.co2syspar = co2syspar       ;
 iwet_msk = find(MSK_now(:))      ;
 
 parm.kappa_g = 1/(1e6*spa); % geological restoring time [1/s];
+parm.SILbar  = nansum(sio4obs(iocn).*dVt(iocn))/nansum(dVt(iocn));
 parm.DIPbar  = nansum(po4obs(iwet).*dVt(iwet))/nansum(dVt(iwet)); % volume
 parm.taup    = 720*60^2; % (s) pic dissolution time-scale
 parm.tau_TA  = 1./parm.taup;
@@ -83,128 +91,199 @@ parm.tau_TA  = 1./parm.taup;
 parm.ss  = ss        ;
 parm.sst = sst       ;
 %
-par.biogeochem.sigma    = 0.30      ; % production to DOC ratio
-par.biogeochem.slopep   = 0.00      ; % Martin curve exponent of POP
-par.biogeochem.interpp  = 9.750e-01 ;
-par.biogeochem.kappa_dp = 7.824e-08 ;
-par.biogeochem.alpha    = 9.151e-03 ; % npp linear scaling factor
-par.biogeochem.beta     = 4.807e-01 ; % npp scaling exponent
-par.biogeochem.d        = 4048      ; % pic remin e-folding length scale (m)
-                                      
-par.biogeochem.slopec   = 0         ; % Martin curve exponent of OC
-par.biogeochem.interpc  = 1.015e+00 ;
-par.biogeochem.kappa_dc = 9.569e-09 ;
-par.biogeochem.kappa_da = 0.5e-7    ;
-par.biogeochem.RR       = 5.294e-02 ; % pic:poc ratio
-par.biogeochem.slopeo   = 0;
-par.biogeochem.interpo  = 170/117;
+par.Cmodel = off;
+par.Omodel = off;
+par.Simodel = off;
 %
-par.biogeochem.opt_d = on; 
-par.biogeochem.opt_RR = on; 
-par.biogeochem.opt_beta = on;
-par.biogeochem.opt_alpha = on;
-par.biogeochem.opt_sigma = off; 
-par.biogeochem.opt_slopep = off; 
-par.biogeochem.opt_interpp = on;
-par.biogeochem.opt_kappa_dp = on;
-par.biogeochem.opt_slopec   = off;
-par.biogeochem.opt_interpc  = on;
-par.biogeochem.opt_kappa_dc = on;
-par.biogeochem.opt_slopeo   = on;
-par.biogeochem.opt_interpo  = on;
-%
+% P model parameters;
+par.sigma    = 0.30      ; % production to DOC ratio
+par.slopep   = 0.00      ; % Martin curve exponent of POP
+par.interpp  = 9.750e-01 ;
+par.kappa_dp = 7.824e-08 ;
+par.alpha    = 9.151e-03 ; % npp linear scaling factor
+par.beta     = 4.807e-01 ; % npp scaling exponent
+
+% C model parameters                                      
+par.slopec   = 0         ; % Martin curve exponent of OC
+par.interpc  = 1.015e+00 ;
+par.kappa_dc = 9.569e-09 ;
+par.kappa_da = 0.5e-7    ;
+par.RR       = 5.294e-02 ; % pic:poc ratio
+par.d        = 4048      ; % pic remin e-folding length scale (m)
+
+% O model parameters
+par.slopeo   = 0;
+par.interpo  = 170/117;
+
+% Si model parameters
+par.bsi = 0.86;
+par.at = 1.32e16/(24*60*60);
+par.bt = 11481;
+par.aa = 1;
+par.bb = 1;
+par.kappa_gs = 1/(1e6*spa); % geological restoring time [1/s];
+
+% P model parameters
+par.opt_beta = on;
+par.opt_alpha = on;
+par.opt_sigma = off; 
+par.opt_slopep = off; 
+par.opt_interpp = on;
+par.opt_kappa_dp = on;
+
+% C model parameters
+par.opt_d = off; % 
+par.opt_RR = off; % 
+par.opt_slopec = off;
+par.opt_interpc = off; %
+par.opt_kappa_dc = off; %
+
+% O model parameters
+par.opt_slopeo = off; 
+par.opt_interpo = off; 
+
+% Si model parameters
+par.opt_at = off;
+par.opt_bt = off;
+par.opt_aa = off;
+par.opt_bb = off;
+par.opt_kappa_gs = off;
+% ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 p0 = [];
-if (par.biogeochem.opt_sigma == on)
-    sigma = par.biogeochem.sigma; lsigma = log(sigma);
+% sigma 
+if (par.opt_sigma == on)
+    sigma = par.sigma; lsigma = log(sigma);
     strt = length(p0) + 1;
     p0 = [p0; lsigma];
     par.pindx.lsigma = strt : length(p0);
 end 
-
-if (par.biogeochem.opt_slopep == on)
-    slopep = par.biogeochem.slopep;
+% kappa_dp 
+if (par.opt_kappa_dp == on)
+    kappa_dp = par.kappa_dp; lkappa_dp = log(kappa_dp);
+    strt = length(p0) + 1;
+    p0 = [p0; lkappa_dp];
+    par.pindx.lkappa_dp = strt : length(p0);
+end
+% slopep
+if (par.opt_slopep == on)
+    slopep = par.slopep;
     strt = length(p0) + 1;
     p0 = [p0; slopep];
     par.pindx.slopep = strt : length(p0);
 end 
-
-if (par.biogeochem.opt_interpp == on)
-    interpp = par.biogeochem.interpp; linterpp = log(interpp);
+% interpp
+if (par.opt_interpp == on)
+    interpp = par.interpp; linterpp = log(interpp);
     strt = length(p0) + 1;
     p0 = [p0; linterpp];
     par.pindx.linterpp = strt : length(p0);
 end 
-
-if (par.biogeochem.opt_alpha == on)
-    alpha = par.biogeochem.alpha; lalpha = log(alpha);
+% alpha 
+if (par.opt_alpha == on)
+    alpha = par.alpha; lalpha = log(alpha);
     strt = length(p0) + 1;
     p0 = [p0; lalpha];
     par.pindx.lalpha = strt : length(p0);
 end 
-
-if (par.biogeochem.opt_beta == on)
-    beta = par.biogeochem.beta; lbeta = log(beta);
+% beta
+if (par.opt_beta == on)
+    beta = par.beta; lbeta = log(beta);
     strt = length(p0) + 1;
     p0 = [p0; lbeta];
     par.pindx.lbeta = strt : length(p0);
 end 
-
-if (par.biogeochem.opt_kappa_dp == on)
-    kappa_dp = par.biogeochem.kappa_dp; lkappa_dp = log(kappa_dp);
-    strt = length(p0) + 1;
-    p0 = [p0; lkappa_dp];
-    par.pindx.lkappa_dp = strt : length(p0);
-end 
-
-if (par.biogeochem.opt_slopec == on)
-    slopec = par.biogeochem.slopec;
+% slopec
+if (par.opt_slopec == on)
+    slopec = par.slopec;
     strt = length(p0) + 1;
     p0 = [p0; slopec];
     par.pindx.slopec = strt : length(p0);
 end 
 
-if (par.biogeochem.opt_interpc == on)
-    interpc = par.biogeochem.interpc; linterpc = log(interpc);
+if (par.opt_interpc == on)
+    interpc = par.interpc; linterpc = log(interpc);
     strt = length(p0) + 1;
     p0 = [p0; linterpc];
     par.pindx.linterpc = strt : length(p0);
 end 
 
-if (par.biogeochem.opt_d == on)
-    d = par.biogeochem.d; ld = log(d);
+if (par.opt_d == on)
+    d = par.d; ld = log(d);
     strt = length(p0) + 1;
     p0 = [p0; ld];
     par.pindx.ld = strt : length(p0);
 end 
 
-if (par.biogeochem.opt_kappa_dc == on)
-    kappa_dc = par.biogeochem.kappa_dc; lkappa_dc = log(kappa_dc);
+if (par.opt_kappa_dc == on)
+    kappa_dc = par.kappa_dc; lkappa_dc = log(kappa_dc);
     strt = length(p0) + 1;
     p0 = [p0; lkappa_dc];
     par.pindx.lkappa_dc = strt : length(p0);
 end 
 
-if (par.biogeochem.opt_RR == on)
-    RR = par.biogeochem.RR; lRR = log(RR);
+if (par.opt_RR == on)
+    RR = par.RR; lRR = log(RR);
     strt = length(p0) + 1;
     p0 = [p0; lRR];
     par.pindx.lRR = strt : length(p0);
 end 
 
-if (par.biogeochem.opt_slopeo == on)
-    slopeo = par.biogeochem.slopeo; 
+if (par.opt_slopeo == on)
+    slopeo = par.slopeo; 
     strt = length(p0) + 1;
     p0 = [p0; slopeo];
     par.pindx.slopeo = strt : length(p0);
 end 
 
-if (par.biogeochem.opt_interpo == on)
-    interpo = par.biogeochem.interpo; linterpo = log(interpo);
+if (par.opt_interpo == on)
+    interpo = par.interpo; linterpo = log(interpo);
     strt = length(p0) + 1;
     p0 = [p0; linterpo];
     par.pindx.linterpo = strt : length(p0);
 end 
 
+% slopes
+if (par.opt_at == on)
+    at = par.at; lat = log(at);
+    strt = length(p0) + 1;
+    p0 = [p0; lat];
+    par.pindx.lat = strt : length(p0);
+end
+
+% interps
+if (par.opt_bt == on)
+    bt = par.bt; lbt = log(bt);
+    strt = length(p0) + 1;
+    p0 = [p0; lbt];
+    par.pindx.lbt = strt : length(p0);
+end
+
+% aa
+if (par.opt_aa == on)
+    aa = par.aa;
+    strt = length(p0) + 1;
+    p0 = [p0; aa];
+    par.pindx.aa = strt : length(p0);
+end
+
+% bb
+if (par.opt_bb == on)
+    bb = par.bb; lbb = log(bb);
+    strt = length(p0) + 1;
+    p0 = [p0; lbb];
+    par.pindx.lbb = strt : length(p0);
+end
+
+% kappa_gs
+if (par.opt_kappa_gs == on)
+    kappa_gs = par.kappa_gs; lkappa_gs = log(kappa_gs);
+    strt = length(p0) + 1;
+    p0 = [p0; lkappa_gs];
+    par.pindx.lkappa_gs = strt : length(p0);
+end
+%
+% ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+%
 parm.kappa_p = 1/(720*60^2) ;
 parm.p2c = 0.006+0.0069*po4obs;
 parm.nzo = 2;
@@ -234,23 +313,23 @@ options = optimoptions(@fminunc                  , ...
                        'FinDiffType','central'   , ...
                        'PrecondBandWidth',Inf)   ;
 %
-G_test = off        ;
+G_test = on        ;
 nip    = length(x0) ;
 if(G_test);
     dx = sqrt(-1)*eps.^3*eye(nip);
-    for ii = 1:1 %nip
+    for ii = 1:4 %nip
         x  = real(x0)+dx(:,ii)    ;
-        [f,fx] = neglogpost(x, parm, par) ;
-        diff = real(fx(ii)) - imag(f)/eps^3 ;
-        % diffx = real(fxx(ii,:)) - imag(fx)/eps^3;
+        [f,fx,fxx] = neglogpost(x, parm, par) ;
+        diff = real(fx(ii)) - imag(f)/eps.^3 ;
+        diffx = real(fxx(:,ii)) - imag(fx)/eps.^3;
         fprintf('%i %e  \n',ii,diff);
-        % fprintf('%e %e %e %e \n', diffx);
+        fprintf('%e %e %e %e \n', diffx);
     end
     keyboard
 else
     [xhat,fval,exitflag] = fminunc(myfun,x0,options);
     [f,fx] = neglogpost(xhat,parm,par);
-    save(fname,'xhat')
+    save PSi_xhat xhat
 end
 
 fprintf('------------ END! ---------------');

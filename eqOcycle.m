@@ -4,26 +4,26 @@ function [O2, Ox] = eqOcycle(par, parm, x)
     % unpack the parameters to be optimized
     
     % kappa_dc
-    if (par.biogeochem.opt_kappa_dc == on)
+    if (par.opt_kappa_dc == on)
         lkappa_dc = x(par.pindx.lkappa_dc);
         parm.kappa_dc  = exp(lkappa_dc);
     else
-        parm.kappa_dc  = par.biogeochem.kappa_dc;
+        parm.kappa_dc  = par.kappa_dc;
     end
 
     % slopeo
-    if (par.biogeochem.opt_slopeo == on)
+    if (par.opt_slopeo == on)
         parm.slopeo = x(par.pindx.slopeo);
     else
-        parm.slopeo  = par.biogeochem.slopeo;
+        parm.slopeo  = par.slopeo;
     end
     
     % interpo
-    if (par.biogeochem.opt_interpo == on)
+    if (par.opt_interpo == on)
         linterpo = x(par.pindx.linterpo);
         parm.interpo  = exp(linterpo);
     else
-        parm.interpo  = par.biogeochem.interpo;
+        parm.interpo  = par.interpo;
     end
     
     X0  = GO;
@@ -89,7 +89,7 @@ function [F, FD, Ox] = O_eqn(O2, par, parm, x)
     [KO2,o2sat] = Fsea2air_o2(parm);
     
     % organic C production rate
-    [G,Gx] = uptake(parm, par);
+    [G,Gx] = uptake(par, parm);
     
     % rate of o2 production
     PO2 = O2C.*G;
@@ -109,85 +109,85 @@ function [F, FD, Ox] = O_eqn(O2, par, parm, x)
     
     if (nargout > 2);
         % interpp
-        if (par.biogeochem.opt_interpp == on)
+        if (par.opt_interpp == on)
             tmp = -O2C.*Gx(:,par.pindx.linterpp) + ...
                   kappa_dc*d0(O2C.*DOCx(:,par.pindx.linterpp))*R;
             Ox(:,par.pindx.linterpp) = mfactor(FD, -tmp);
         end
         
         % slopep
-        if (par.biogeochem.opt_slopep == on)
+        if (par.opt_slopep == on)
             tmp = -O2C.*Gx(:,par.pindx.slopep) + ...
                   kappa_dc*O2C.*R.*DOCx(:,par.pindx.slopep);
             Ox(:,par.pindx.slopp) = mfactor(FD, -tmp);
         end
         
         % interpc
-        if (par.biogeochem.opt_interpc == on)
+        if (par.opt_interpc == on)
             tmp =  kappa_dc*O2C.*R.*DOCx(:,par.pindx.linterpc);
             Ox(:,par.pindx.linterpc) = mfactor(FD, -tmp);
         end
         
         % slopec
-        if (par.biogeochem.opt_slopec == on)
+        if (par.opt_slopec == on)
             tmp = kappa_dc*O2C.*R.*DOCx(:,par.pindx.slopec);
             Ox(:,par.pindx.slopec) = mfactor(FD, -tmp);
         end
         
         % sigma
-        if (par.biogeochem.opt_sigma == on)
+        if (par.opt_sigma == on)
             tmp = -O2C.*Gx(:,par.pindx.lsigma) + ...
                   kappa_dc*O2C.*R.*DOCx(:,par.pindx.lsigma);
             Ox(:,par.pindx.lsigma) = mfactor(FD, -tmp);
         end
         
         % kappa_dp
-        if (par.biogeochem.opt_kappa_dp == on)
+        if (par.opt_kappa_dp == on)
             tmp = -O2C.*Gx(:,par.pindx.lkappa_dp) + ...
                   kappa_dc*O2C.*R.*DOCx(:,par.pindx.lkappa_dp);
             Ox(:,par.pindx.lkappa_dp) = mfactor(FD, -tmp);
         end
         
         % alpha
-        if (par.biogeochem.opt_alpha == on)
+        if (par.opt_alpha == on)
             tmp = -O2C.*Gx(:,par.pindx.lalpha) + ...
                   kappa_dc*O2C.*R.*DOCx(:,par.pindx.lalpha);
             Ox(:,par.pindx.lalpha) = mfactor(FD, -tmp);
         end
         
         % beta
-        if (par.biogeochem.opt_beta == on)
+        if (par.opt_beta == on)
             tmp = -O2C.*Gx(:,par.pindx.lbeta) + ...
                   kappa_dc*O2C.*R.*DOCx(:,par.pindx.lbeta);
             Ox(:,par.pindx.lbeta) = mfactor(FD, -tmp);
         end
         
         % d
-        if (par.biogeochem.opt_d == on)
+        if (par.opt_d == on)
             tmp = kappa_dc*O2C.*R.*DOCx(:,par.pindx.ld);
             Ox(:,par.pindx.ld) = mfactor(FD, -tmp);
         end
         
         % kappa_dc
-        if (par.biogeochem.opt_kappa_dc == on)
+        if (par.opt_kappa_dc == on)
             tmp = kappa_dc*DOC.*O2C.*R + ...
                   kappa_dc*O2C.*R.*DOCx(:,par.pindx.lkappa_dc);
             Ox(:,par.pindx.lkappa_dc) = mfactor(FD, -tmp);
         end
         
         % RR
-        if (par.biogeochem.opt_RR == on)
+        if (par.opt_RR == on)
             tmp = kappa_dc*O2C.*R.*DOCx(:,par.pindx.lRR);
             Ox(:,par.pindx.lRR) = mfactor(FD, -tmp);
         end
 
-        if (par.biogeochem.opt_slopeo == on);
+        if (par.opt_slopeo == on);
             ZR = parm.ZR;
             tmp = -ZR.*G + kappa_dc*ZR.*DOC.*R;
             Ox(:,par.pindx.slopeo) = mfactor(FD, -tmp);
         end
 
-        if (par.biogeochem.opt_interpo == on);
+        if (par.opt_interpo == on);
             tmp = -interpo*G + interpo*kappa_dc*DOC.*R;
             Ox(:,par.pindx.linterpo) = mfactor(FD, -tmp);
         end

@@ -8,7 +8,7 @@ if A == 0
     x0 = parm.p0;
 end
 
-if (par.biogeochem.opt_sigma == on)
+if (par.opt_sigma == on)
     isigma = par.pindx.lsigma;
     xnew = exp(x(isigma));
     xold = exp(x0(isigma));
@@ -18,47 +18,7 @@ if (par.biogeochem.opt_sigma == on)
     fprintf('current sigma is %3.2e \n', exp(x(isigma)));
 end
 
-if (par.biogeochem.opt_slopep == on)
-    islopep = par.pindx.lslopep;
-    xnew = x(islopep);
-    xold = x0(islopep);
-    if (xnew > 5*xold | xnew < 0.2*xold);
-        x(islopep) = x0(islopep);
-    end
-    fprintf('current slopep is %3.2e \n', x(islopep));
-end
-
-if (par.biogeochem.opt_interpp == on)
-    iinterpp = par.pindx.linterpp;
-    xnew = exp(x(iinterpp));
-    xold = exp(x0(iinterpp));
-    if (xnew > 5*xold | xnew < 0.2*xold);
-        x(iinterpp) = x0(iinterpp);
-    end
-    fprintf('current interpp is %3.2e \n', exp(x(iinterpp)));
-end
-
-if (par.biogeochem.opt_alpha == on)
-    ialpha = par.pindx.lalpha;
-    xnew = exp(x(ialpha));
-    xold = exp(x0(ialpha));
-    if (xnew > 5*xold | xnew < 0.2*xold);
-        x(ialpha) = x0(ialpha);
-    end
-    fprintf('current alpha is %3.2e \n', exp(x(ialpha)));
-end
-
-if (par.biogeochem.opt_beta == on)
-    ibeta = par.pindx.lbeta;
-    xnew = exp(x(ibeta));
-    xold = exp(x0(ibeta));
-    if (xnew > 5*xold | xnew < 0.2*xold);
-        x(ibeta) = x0(ibeta);
-    end
-    fprintf('current beta is %3.2e \n', exp(x(ibeta)));
-end
-
-if (par.biogeochem.opt_kappa_dp == on)
+if (par.opt_kappa_dp == on)
     ikappa_dp = par.pindx.lkappa_dp;
     xnew = exp(x(ikappa_dp));
     xold = exp(x0(ikappa_dp));
@@ -68,7 +28,47 @@ if (par.biogeochem.opt_kappa_dp == on)
     fprintf('current kappa_dp is %3.2e \n', exp(x(ikappa_dp)));
 end
 
-if (par.biogeochem.opt_slopec == on)
+if (par.opt_slopep == on)
+    islopep = par.pindx.lslopep;
+    xnew = x(islopep);
+    xold = x0(islopep);
+    if (xnew > 5*xold | xnew < 0.2*xold);
+        x(islopep) = x0(islopep);
+    end
+    fprintf('current slopep is %3.2e \n', x(islopep));
+end
+
+if (par.opt_interpp == on)
+    iinterpp = par.pindx.linterpp;
+    xnew = exp(x(iinterpp));
+    xold = exp(x0(iinterpp));
+    if (xnew > 5*xold | xnew < 0.2*xold);
+        x(iinterpp) = x0(iinterpp);
+    end
+    fprintf('current interpp is %3.2e \n', exp(x(iinterpp)));
+end
+
+if (par.opt_alpha == on)
+    ialpha = par.pindx.lalpha;
+    xnew = exp(x(ialpha));
+    xold = exp(x0(ialpha));
+    if (xnew > 5*xold | xnew < 0.2*xold);
+        x(ialpha) = x0(ialpha);
+    end
+    fprintf('current alpha is %3.2e \n', exp(x(ialpha)));
+end
+
+if (par.opt_beta == on)
+    ibeta = par.pindx.lbeta;
+    xnew = exp(x(ibeta));
+    xold = exp(x0(ibeta));
+    if (xnew > 5*xold | xnew < 0.2*xold);
+        x(ibeta) = x0(ibeta);
+    end
+    fprintf('current beta is %3.2e \n', exp(x(ibeta)));
+end
+
+if (par.opt_slopec == on)
     islopec = par.pindx.lslopec;
     xnew = x(islopec);
     xold = x0(islopec);
@@ -78,7 +78,7 @@ if (par.biogeochem.opt_slopec == on)
     fprintf('current slopec is %3.2e \n', x(islopec));
 end
 
-if (par.biogeochem.opt_interpc == on)
+if (par.opt_interpc == on)
     iinterpc = par.pindx.linterpc;
     xnew = exp(x(iinterpc));
     xold = exp(x0(iinterpc));
@@ -88,7 +88,7 @@ if (par.biogeochem.opt_interpc == on)
     fprintf('current interpc is %3.2e \n', exp(x(iinterpc)));
 end
 
-if (par.biogeochem.opt_d == on)
+if (par.opt_d == on)
     id = par.pindx.ld;
     xnew = exp(x(id));
     xold = exp(x0(id));
@@ -98,7 +98,7 @@ if (par.biogeochem.opt_d == on)
     fprintf('current d is %3.2e \n', exp(x(id)));
 end
 
-if (par.biogeochem.opt_kappa_dc == on)
+if (par.opt_kappa_dc == on)
     ikappa_dc = par.pindx.lkappa_dc;
     xnew = exp(x(ikappa_dc));
     xold = exp(x0(ikappa_dc));
@@ -108,7 +108,7 @@ if (par.biogeochem.opt_kappa_dc == on)
     fprintf('current kappa_dc is %3.2e \n', exp(x(ikappa_dc)));
 end
 
-if (par.biogeochem.opt_RR == on)
+if (par.opt_RR == on)
     iRR = par.pindx.lRR;
     xnew = exp(x(iRR));
     xold = exp(x0(iRR));
@@ -118,7 +118,7 @@ if (par.biogeochem.opt_RR == on)
     fprintf('current RR is %3.2e \n', exp(x(iRR)));
 end
 
-if (par.biogeochem.opt_slopeo == on)
+if (par.opt_slopeo == on)
     islopeo = par.pindx.slopeo;
     xnew = x(islopeo);
     xold = x0(islopeo);
@@ -128,7 +128,7 @@ if (par.biogeochem.opt_slopeo == on)
     fprintf('current slopeo is %3.2e \n', x(islopeo));
 end
 
-if (par.biogeochem.opt_interpo == on)
+if (par.opt_interpo == on)
     iinterpo = par.pindx.linterpo;
     xnew = exp(x(iinterpo));
     xold = exp(x0(iinterpo));
@@ -136,6 +136,61 @@ if (par.biogeochem.opt_interpo == on)
         x(iinterpo) = x0(iinterpo);
     end
     fprintf('current interpo is %3.2e \n', exp(x(iinterpo)));
+end
+
+% at
+if (par.opt_at == on)
+    iat = par.pindx.lat;
+    xnew = exp(x(iat));
+    xold = exp(x0(iat));
+    if (xnew > 5*xold | xnew < 0.2*xold);
+        x(iat) = x0(iat);
+    end
+    fprintf('current interpo is %3.2e \n', exp(x(iat)));
+end
+
+% bt
+if (par.opt_bt == on)
+    ibt = par.pindx.lbt;
+    xnew = exp(x(ibt));
+    xold = exp(x0(ibt));
+    if (xnew > 5*xold | xnew < 0.2*xold);
+        x(ibt) = x0(ibt);
+    end
+    fprintf('current bt is %3.2e \n', exp(x(ibt)));
+end
+
+% aa
+if (par.opt_aa == on)
+    iaa = par.pindx.aa;
+    xnew = x(iaa);
+    xold = x0(iaa);
+    if (xnew > 5*xold | xnew < 0.2*xold);
+        x(iaa) = x0(iaa);
+    end
+    fprintf('current aa is %3.2e \n', x(iaa));
+end
+
+% bb
+if (par.opt_bb == on)
+    ibb = par.pindx.lbb;
+    xnew = exp(x(ibb));
+    xold = exp(x0(ibb));
+    if (xnew > 5*xold | xnew < 0.2*xold);
+        x(ibb) = x0(ibb);
+    end
+    fprintf('current bb is %3.2e \n', exp(x(ibb)));
+end
+
+% kappa_gs
+if (par.opt_kappa_gs == on)
+    ikappa_gs = par.pindx.lkappa_gs;
+    xnew = exp(x(ikappa_gs));
+    xold = exp(x0(ikappa_gs));
+    if (xnew > 10*xold | xnew < 0.1*xold);
+        x(ikappa_gs) = x0(ikappa_gs);
+    end
+    fprintf('current kappa_gs is %3.2e \n', exp(x(ikappa_gs)));
 end
 
 %+++++++++restore the parameter values back to their original ones.
