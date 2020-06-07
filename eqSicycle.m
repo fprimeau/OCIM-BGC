@@ -1,11 +1,11 @@
-function [Si,Six] = eqSicycle(par, parm, x)
+function [parm,Si,Six,Sixx] = eqSicycle(par, parm, x)
 on = true; off = false;
 M3d =  parm.M3d;
 iwet = parm.iwet;
 nwet = parm.nwet;
 I    = speye(nwet); % make an identity matrix;
 parm.nx = length(x);
-
+nsx = 0; % count number of Si parameters
 % unpack the parameters to be optimized
 if (par.opt_alpha == on)
     lalpha = x(par.pindx.lalpha);
@@ -13,56 +13,69 @@ if (par.opt_alpha == on)
 else
     parm.alpha  = par.alpha;
 end
-
+% beta
 if (par.opt_beta == on)
     lbeta = x(par.pindx.lbeta);
     parm.beta  = exp(lbeta);
 else
     parm.beta  = par.beta;
 end
-
-% slopes
+% bsi
+if (par.opt_bsi == on)
+    nsx = nsx + 1;
+    lbsi = x(par.pindx.lbsi);
+    parm.bsi = exp(lbsi);
+else
+    parm.bsi  = par.bsi;
+end
+% at
 if (par.opt_at == on)
+    nsx = nsx + 1;
     lat = x(par.pindx.lat);
     parm.at = exp(lat);
 else
     parm.at  = par.at;
 end
-
-% interps
+% bt
 if (par.opt_bt == on)
+    nsx = nsx + 1;
     lbt = x(par.pindx.lbt);
     parm.bt  = exp(lbt);
 else
     parm.bt  = par.bt;
 end
-
 % aa
 if (par.opt_aa == on)
-    aa = x(par.pindx.aa);
+    nsx = nsx + 1;
+    parm.aa = x(par.pindx.aa);
 else
-    aa  = par.aa;
+    parm.aa  = par.aa;
 end
-
 % bb
 if (par.opt_bb == on)
+    nsx = nsx + 1;
     lbb = x(par.pindx.lbb);
-    bb  = exp(lbb);
+    parm.bb  = exp(lbb);
 else
-    bb  = par.bb;
+    parm.bb  = par.bb;
 end
 % bb
-
 if (par.opt_kappa_gs == on)
+    nsx = nsx + 1;
     lkappa_gs = x(par.pindx.lkappa_gs);
-    kappa_gs  = exp(lkappa_gs);
+    parm.kappa_gs  = exp(lkappa_gs);
 else
-    kappa_gs  = par.kappa_gs;
+    parm.kappa_gs  = par.kappa_gs;
 end
+parm.nsx = nsx;
 %
 % ++++++++++++++++++++++++++++++++++++++++++++++++++
 at  = parm.at;
 bt  = parm.bt;
+aa  = parm.aa;
+bb  = parm.bb;
+bsi = parm.bsi;
+kappa_gs = parm.kappa_gs;
 T   = parm.sst(iwet) + 273.15;
 kappa_si = at * exp(-bt./T); 
 % ++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -84,7 +97,7 @@ mu = surface_mean(Z);
 Delta = sqrt(surface_mean((Z-mu).^2));
 
 % standardize the regressor variables
-ZR = (Z-mu)/Delta;
+ZR = 0.5+0.5*tanh((Z-mu)/Delta);
 % ZR = (Z-min(Z(isrf)))./(max(Z(isrf))-min(Z(isrf)));
 %
 Si2C = (aa*ZR + bb);      parm.Si2C = Si2C;
@@ -130,9 +143,9 @@ if nargout > 1
     
     % slopep
     if (par.opt_slopep == on)
-        tmp = -[Si2C.*Gx(:,par.pindx.slopp) ;...
-                -Si2C.*Gx(:,par.pindx.slopp)]   ;
-        Six(:,par.pindx.slopp) = mfactor(FD, tmp);
+        tmp = -[Si2C.*Gx(:,par.pindx.slopep) ;...
+                -Si2C.*Gx(:,par.pindx.slopep)]   ;
+        Six(:,par.pindx.slopep) = mfactor(FD, tmp);
     end
     
     % kappa_dp
@@ -157,7 +170,15 @@ if nargout > 1
 
         Six(:,par.pindx.lbeta) = mfactor(FD, tmp);
     end
-
+    % bsi
+    if (par.opt_bsi == on)
+        vout = buildPFD(par, parm);
+        dPFDdb = vout.dPFDdb;
+        tmp = -bsi*[DSI*0; ...
+                    dPFDdb*DSI];
+        
+        Six(:,par.pindx.lbsi) = mfactor(FD, tmp);
+    end
     % at
     if (par.opt_at == on)
         vout = buildPFD(par, parm);
@@ -168,7 +189,6 @@ if nargout > 1
         
         Six(:,par.pindx.lat) = mfactor(FD, tmp);
     end
-
     % bt
     if (par.opt_bt == on)
         vout = buildPFD(par, parm);
@@ -179,7 +199,6 @@ if nargout > 1
 
         Six(:,par.pindx.lbt) = mfactor(FD, tmp);
     end
-    
     % aa
     if (par.opt_aa == on)
         tmp = -[d0(G)*dSi2Cdaa; ... %.*SIL; ...
@@ -187,7 +206,6 @@ if nargout > 1
 
         Six(:,par.pindx.aa) = mfactor(FD, tmp);
     end
-
     % bb
     if (par.opt_bb == on)
         tmp = -bb*[d0(G)*dSi2Cdbb; ... %.*SIL; ...
@@ -195,412 +213,552 @@ if nargout > 1
 
         Six(:,par.pindx.lbb) = mfactor(FD, tmp);
     end
-
     % kappa_gs
     if (par.opt_kappa_gs == on)
         tmp = kappa_gs*[SILbar-SIL; ...
                         sparse(nwet,1)];
 
         Six(:,par.pindx.lkappa_gs) = mfactor(FD, tmp);
-
     end    
 end
-%% ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
+SILx = Six(1:nwet,:); DSIx = Six(nwet+1:end,:);
 %% ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 if (nargout > 2)
+    nx = parm.npx + parm.nsx;
+    ncs = nchoosek(nx,2)+nx;
+    Sixx = sparse(2*nwet,ncs);
     % Compute the hessian of the solution wrt the parameters
     DIPxx = parm.Pxx(1:nwet,:);
     [~,~,Gxx] = uptake(par, parm);
     % sigma sigma
     kk = 1;
     if (par.opt_sigma == on)
-        Sxx(:,kk) = sparse(2*nwet,1);
+        tmp = [-d0(Gxx(:,kk))*Si2C; ...
+               d0(Gxx(:,kk))*Si2C];
+        Sixx(:,kk) = mfactor(FD, tmp);
         kk = kk + 1;
     end
-
     % sigma kappa_dp
     if (par.opt_sigma == on & par.opt_kappa_dp == on)
-        Sxx(:,kk) = sparse(2*nwet,1);
+        tmp = [-d0(Gxx(:,kk))*Si2C; ...
+               d0(Gxx(:,kk))*Si2C];
+        Sixx(:,kk) = mfactor(FD, tmp);
         kk = kk + 1;
     end
-
     % sigma slopep
     if (par.opt_sigma == on & par.opt_slopep == on)
-        Sxx(:,kk) = sparse(2*nwet,1);
+        tmp = [-d0(Gxx(:,kk))*Si2C; ...
+               d0(Gxx(:,kk))*Si2C];
+        Sixx(:,kk) = mfactor(FD, tmp);
         kk = kk + 1;
     end
-
     % sigma interpp
     if (par.opt_sigma == on & par.opt_interpp == on)
-        Sxx(:,kk) = sparse(2*nwet,1);
+        tmp = [-d0(Gxx(:,kk))*Si2C; ...
+               d0(Gxx(:,kk))*Si2C];
+        Sixx(:,kk) = mfactor(FD, tmp);
         kk = kk + 1;
     end
-
     % sigma alpha
     if (par.opt_sigma == on & par.opt_alpha == on)
-        Sxx(:,kk) = sparse(2*nwet,1);
+        tmp = [-d0(Gxx(:,kk))*Si2C; ...
+               d0(Gxx(:,kk))*Si2C];
+        Sixx(:,kk) = mfactor(FD, tmp);
         kk = kk + 1;
     end
-
     % sigma beta
     if (par.opt_sigma == on & par.opt_beta == on)
-        Sxx(:,kk) = sparse(2*nwet,1);
+        tmp = [-d0(Gxx(:,kk))*Si2C; ...
+               d0(Gxx(:,kk))*Si2C];
+        Sixx(:,kk) = mfactor(FD, tmp);
         kk = kk + 1;
     end
-
     % kappa_dp kappa_dp
     if (par.opt_kappa_dp == on)
-        Sxx(:,kk) = sparse(2*nwet,1);
+        tmp = [-d0(Gxx(:,kk))*Si2C; ...
+               d0(Gxx(:,kk))*Si2C];
+        Sixx(:,kk) = mfactor(FD, tmp);
         kk = kk + 1;
     end
-
     % kappa_dp slopep
     if (par.opt_kappa_dp == on & par.opt_slopep == on)
-        Sxx(:,kk) = sparse(2*nwet,1);
+        tmp = [-d0(Gxx(:,kk))*Si2C; ...
+               d0(Gxx(:,kk))*Si2C];
+        Sixx(:,kk) = mfactor(FD, tmp);
         kk = kk + 1;
     end
-
     % kappa_dp interpp
     if (par.opt_kappa_dp == on & par.opt_interpp == on)
-        Sxx(:,kk) = sparse(2*nwet,1);
+        tmp = [-d0(Gxx(:,kk))*Si2C; ...
+               d0(Gxx(:,kk))*Si2C];
+        Sixx(:,kk) = mfactor(FD, tmp);
         kk = kk + 1;
     end
-
     % kappa_dp alpha
     if (par.opt_kappa_dp == on & par.opt_alpha == on)
-        Sxx(:,kk) = sparse(2*nwet,1);
+        tmp = [-d0(Gxx(:,kk))*Si2C; ...
+               d0(Gxx(:,kk))*Si2C];
+        Sixx(:,kk) = mfactor(FD, tmp);
         kk = kk + 1;
     end
-
     % kappa_dp beta
     if (par.opt_kappa_dp == on & par.opt_beta == on)
-        Sxx(:,kk) = sparse(2*nwet,1);
+        tmp = [-d0(Gxx(:,kk))*Si2C; ...
+               d0(Gxx(:,kk))*Si2C];
+        Sixx(:,kk) = mfactor(FD, tmp);
         kk = kk + 1;
     end
-
     % slopep slopep
     if (par.opt_slopep == on)
-        Sxx(:,kk) = sparse(2*nwet,1);
+        tmp = [-d0(Gxx(:,kk))*Si2C; ...
+               d0(Gxx(:,kk))*Si2C];
+        Sixx(:,kk) = mfactor(FD, tmp);
         kk = kk + 1;
     end
-    
     % slopep interpp
     if (par.opt_slopep == on & par.opt_interpp == on)
-        Sxx(:,kk) = sparse(2*nwet,1);
+        tmp = [-d0(Gxx(:,kk))*Si2C; ...
+               d0(Gxx(:,kk))*Si2C];
+        Sixx(:,kk) = mfactor(FD, tmp);
         kk = kk + 1;
     end
-
     % slopep alpha
     if (par.opt_slopep == on & par.opt_alpha == on)
-        Sxx(:,kk) = sparse(2*nwet,1);
+        tmp = [-d0(Gxx(:,kk))*Si2C; ...
+               d0(Gxx(:,kk))*Si2C];
+        Sixx(:,kk) = mfactor(FD, tmp);
         kk = kk + 1;
     end
-
     % slopep beta
     if (par.opt_slopep == on & par.opt_beta == on)
-        Sxx(:,kk) = sparse(2*nwet,1);
+        tmp = [-d0(Gxx(:,kk))*Si2C; ...
+               d0(Gxx(:,kk))*Si2C];
+        Sixx(:,kk) = mfactor(FD, tmp);
         kk = kk + 1;
     end
-    
     % interpp interpp
     if (par.opt_interpp == on)
-        Sxx(:,kk) = sparse(2*nwet,1);
+        tmp = [-d0(Gxx(:,kk))*Si2C; ...
+               d0(Gxx(:,kk))*Si2C];
+        Sixx(:,kk) = mfactor(FD, tmp);
         kk = kk + 1;
-    end    
-
+    end
     % interpp alpha
     if (par.opt_interpp == on & par.opt_alpha == on)
-        Sxx(:,kk) = sparse(2*nwet,1);
+        tmp = [-d0(Gxx(:,kk))*Si2C; ...
+               d0(Gxx(:,kk))*Si2C];
+        Sixx(:,kk) = mfactor(FD, tmp);
         kk = kk + 1;
     end
-
     % interpp beta
     if (par.opt_interpp == on & par.opt_beta == on)
-        Sxx(:,kk) = sparse(2*nwet,1);
+        tmp = [-d0(Gxx(:,kk))*Si2C; ...
+               d0(Gxx(:,kk))*Si2C];
+        Sixx(:,kk) = mfactor(FD, tmp);
         kk = kk + 1;
     end
-    
     % alpha alpha
     if (par.opt_alpha == on)
-        tmp = [-Si2C.*Gxx(:,kk); ...
-               Si2C.*Gxx(:,kk)]; %drhsdalphadalpha
-              
-        Sxx(:,kk) = mfactor(FFp, tmp);
+        tmp = [-d0(Si2C)*Gxx(:,kk); ...
+               d0(Si2C)*Gxx(:,kk)]; %drhsdalphadalpha      
+        Sixx(:,kk) = mfactor(FD, tmp);
         kk = kk + 1;
     end
-
     % alpha beta
     if (par.opt_alpha == on & par.opt_beta == on)
-        tmp = [-Si2C.*Gxx(:,kk); ...
-               Si2C.*Gxx(:,kk)]; %drhsdalphadbeta
-        
-        Sxx(:,kk) = mfactor(FFp,-tmp);
+        tmp = [-d0(Si2C)*Gxx(:,kk); ...
+               d0(Si2C)*Gxx(:,kk)]; %drhsdalphadbeta
+        Sixx(:,kk) = mfactor(FD, tmp);
         kk = kk + 1;
     end
-    
     % beta beta
     if (par.opt_beta == on)
-        tmp = [-Si2C.*Gxx(:,kk); ...
-               Si2C.*Gxx(:,kk)]; %drhsdalphadbeta
-        
-        Sxx(:,kk) = mfactor(FFp,-tmp);
+        tmp = [-d0(Si2C)*Gxx(:,kk); ...
+               d0(Si2C)*Gxx(:,kk)]; %drhsdalphadbeta
+        Sixx(:,kk) = mfactor(FD, tmp);
         kk = kk + 1;
     end
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % Si parameters
+    % --------------------------------------------------------
+    % Simodel parameters
+    % sigma bsi
+    if (par.opt_sigma == on & par.opt_bsi == on)
+        tmp = bsi*[0*DSI; ...
+                  -dPFDdb*DSIx(:,par.pindx.lsigma)];
+        Sixx(:,kk) = mfactor(FD, tmp);
+        kk = kk + 1;
+    end
     % sigma at
     if (par.opt_sigma == on & par.opt_at == on)
-        tmp = at*[-dkdat.*DSI(:,par.pindx.lsigma); ...
-                  (d0(dkdat) + dPFDdat)*DSI(:,par.pindx.lsigma)];
-        Sxx(:,kk) = mfactor(FFp,-tmp);
+        tmp = at*[d0(dkdat)*DSIx(:,par.pindx.lsigma); ...
+                  -(d0(dkdat) + dPFDdat)*DSIx(:,par.pindx.lsigma)];
+        Sixx(:,kk) = mfactor(FD, tmp);
         kk = kk + 1;
     end
     % sigma bt
     if (par.opt_sigma == on & par.opt_bt == on)
-        tmp = -bt*[-dkdbt.*DSI(:,par.pindx.lsigma); ...
-                   (d0(dkdbt) + dPFDdbt)*DSI(:,par.pindx.lsigma)];
-        Sxx(:,kk) = mfactor(FFp,-tmp);
+        tmp = bt*[d0(dkdbt)*DSIx(:,par.pindx.lsigma); ...
+                  -(d0(dkdbt)+dPFDdbt)*DSIx(:,par.pindx.lsigma)];
+        Sixx(:,kk) = mfactor(FD, tmp);
         kk = kk + 1;
     end
     % sigma aa
     if (par.opt_sigma == on & par.opt_aa == on)
-        tmp = -[d0(Gx(:,par.pindx.lsigma))*dSi2Cdaa; ... %.*SIL; ...
-                -d0(G(:,par.pindx.lsigma))*dSi2Cdaa]; %.*SIL];
-        
-        Sxx(:,kk) = mfactor(FD, tmp);
+        tmp = [-Gxx(:,kk); ...
+               Gxx(:,kk)];
+        Sixx(:,kk) = mfactor(FD, tmp);
+        kk = kk + 1;
     end
     % sigma bb
     if (par.opt_sigma == on & par.opt_bb == on)
-        tmp = -bb*[d0(Gx(par.pindx.lbb))*dSi2Cdbb; ... %.*SIL; ...
-                   -d0(Gx(par.pindx.lbb))*dSi2Cdbb]; %.*SIL];
-
-        Sxx(:,kk) = mfactor(FD, tmp);
+        tmp = [-Gxx(:,kk); ...
+               Gxx(:,kk)];
+        Sixx(:,kk) = mfactor(FD, tmp);
+        kk = kk + 1;
+    end
+    % kappa_dp bsi
+    if (par.opt_kappa_dp == on & par.opt_bsi == on)
+        tmp = bsi*[0*DSI; ...
+                  -(dPFDdb)*DSIx(:,par.pindx.lkappa_dp)];
+        Sixx(:,kk) = mfactor(FD, tmp);
+        kk = kk + 1;
     end
     % kappa_dp at
     if (par.opt_kappa_dp == on & par.opt_at == on)
-        tmp = at*[-dkdat.*DSI(:,par.pindx.lkappa_dp); ...
-                  (d0(dkdat) + dPFDdat)*DSI(:,par.pindx.lkappa_dp)];
-        Sxx(:,kk) = mfactor(FFp,-tmp);
+        tmp = at*[d0(dkdat)*DSIx(:,par.pindx.lkappa_dp); ...
+                  -(d0(dkdat)+dPFDdat)*DSIx(:,par.pindx.lkappa_dp)];
+        Sixx(:,kk) = mfactor(FD, tmp);
         kk = kk + 1;
     end
     % kappa_dp bt
     if (par.opt_kappa_dp == on & par.opt_bt == on)
-        tmp = -bt*[-dkdbt.*DSI(:,par.pindx.lkappa_dp); ...
-                   (d0(dkdbt) + dPFDdbt)*DSI(:,par.pindx.lkappa_dp)];
-        Sxx(:,kk) = mfactor(FFp,-tmp);
+        tmp = bt*[d0(dkdbt)*DSIx(:,par.pindx.lkappa_dp); ...
+                  -(d0(dkdbt)+dPFDdbt)*DSIx(:,par.pindx.lkappa_dp)];
+        Sixx(:,kk) = mfactor(FD, tmp);
         kk = kk + 1;
     end
     % kappa_dp aa
     if (par.opt_kappa_dp == on & par.opt_aa == on)
-        tmp = -[d0(Gx(:,par.pindx.lkappa_dp))*dSi2Cdaa; ... %.*SIL; ...
-                -d0(G(:,par.pindx.lkappa_dp))*dSi2Cdaa]; %.*SIL];
-        
-        Sxx(:,kk) = mfactor(FD, tmp);
+        tmp =  [-Gxx(:,kk); ...
+                Gxx(:,kk)];
+        Sixx(:,kk) = mfactor(FD, tmp);
+        kk = kk + 1;
     end
     % kappa_dp bb
     if (par.opt_kappa_dp == on & par.opt_bb == on)
-        tmp = -bb*[d0(Gx(par.pindx.lbb))*dSi2Cdbb; ... %.*SIL; ...
-                   -d0(Gx(par.pindx.lbb))*dSi2Cdbb]; %.*SIL];
-
-        Sxx(:,kk) = mfactor(FD, tmp);
+        tmp = [-Gxx(:,kk); ...
+               Gxx(:,kk)];
+        Sixx(:,kk) = mfactor(FD, tmp);
+        kk = kk + 1;
+    end
+    % slope bsi
+    if (par.opt_slopep == on & par.opt_bsi == on)
+        tmp = bsi*[0*DSI; ...
+                   -dPFDdb*DSIx(:,par.pindx.slopep)];
+        Sixx(:,kk) = mfactor(FD, tmp);
+        kk = kk + 1;
     end
     % slope at
-    if (par.opt_slope == on & par.opt_at == on)
-        tmp = at*[-dkdat.*DSI(:,par.pindx.slope); ...
-                  (d0(dkdat) + dPFDdat)*DSI(:,par.pindx.slope)];
-        Sxx(:,kk) = mfactor(FFp,-tmp);
+    if (par.opt_slopep == on & par.opt_at == on)
+        tmp = at*[d0(dkdat)*DSIx(:,par.pindx.slopep); ...
+                  -(d0(dkdat)+dPFDdat)*DSIx(:,par.pindx.slopep)];
+        Sixx(:,kk) = mfactor(FD, tmp);
         kk = kk + 1;
     end
     % slope bt
-    if (par.opt_slope == on & par.opt_bt == on)
-        tmp = -bt*[-dkdbt.*DSI(:,par.pindx.slope); ...
-                   (d0(dkdbt) + dPFDdbt)*DSI(:,par.pindx.slope)];
-        Sxx(:,kk) = mfactor(FFp,-tmp);
+    if (par.opt_slopep == on & par.opt_bt == on)
+        tmp = bt*[d0(dkdbt)*DSIx(:,par.pindx.slopep); ...
+                  -(d0(dkdbt)+dPFDdbt)*DSIx(:,par.pindx.slopep)];
+        Sixx(:,kk) = mfactor(FD, tmp);
         kk = kk + 1;
     end
-    % slope aa
-    if (par.opt_slope == on & par.opt_aa == on)
-        tmp = -[d0(Gx(:,par.pindx.lslope))*dSi2Cdaa; ... %.*SIL; ...
-                -d0(G(:,par.pindx.lslope))*dSi2Cdaa]; %.*SIL];
-        
-        Sxx(:,kk) = mfactor(FD, tmp);
+    % slopep aa
+    if (par.opt_slopep == on & par.opt_aa == on)
+        tmp = [-Gxx(:,kk); ...
+               Gxx(:,kk)];
+        Sixx(:,kk) = mfactor(FD, tmp);
+        kk = kk + 1;
     end
-    % slope bb
-    if (par.opt_slope == on & par.opt_bb == on)
-        tmp = -bb*[d0(Gx(par.pindx.lbb))*dSi2Cdbb; ... %.*SIL; ...
-                   -d0(Gx(par.pindx.lbb))*dSi2Cdbb]; %.*SIL];
-
-        Sxx(:,kk) = mfactor(FD, tmp);
+    % slopep bb
+    if (par.opt_slopep == on & par.opt_bb == on)
+        tmp = [-Gxx(:,kk); ...
+               Gxx(:,kk)];
+        Sixx(:,kk) = mfactor(FD, tmp);
+        kk = kk + 1;
+    end
+    % interpp bsi
+    if (par.opt_interpp == on & par.opt_bsi == on)
+        tmp = bsi*[0*DSI; ...
+                   -dPFDdb*DSIx(:, par.pindx.linterpp)];
+        Sixx(:,kk) = mfactor(FD, tmp);
+        kk = kk + 1;
     end
     % interpp at
     if (par.opt_interpp == on & par.opt_at == on)
-        tmp = at*[-dkdat.*DSI(:,par.pindx.linterpp); ...
-                  (d0(dkdat) + dPFDdat)*DSI(:,par.pindx.linterpp)];
-        Sxx(:,kk) = mfactor(FFp,-tmp);
+        tmp = at*[d0(dkdat)*DSIx(:, par.pindx.linterpp); ...
+                  -(d0(dkdat)+dPFDdat)*DSIx(:, par.pindx.linterpp)];
+        Sixx(:,kk) = mfactor(FD, tmp);
         kk = kk + 1;
     end
     % interpp bt
     if (par.opt_interpp == on & par.opt_bt == on)
-        tmp = -bt*[-dkdbt.*DSI(:,par.pindx.linterpp); ...
-                   (d0(dkdbt) + dPFDdbt)*DSI(:,par.pindx.linterpp)];
-        Sxx(:,kk) = mfactor(FFp,-tmp);
+        tmp = bt*[d0(dkdbt)*DSIx(:, par.pindx.linterpp); ...
+                  -(d0(dkdbt)+dPFDdbt)*DSIx(:,par.pindx.linterpp)];
+        Sixx(:,kk) = mfactor(FD, tmp);
         kk = kk + 1;
     end
     % interpp aa
     if (par.opt_interpp == on & par.opt_aa == on)
-        tmp = -[d0(Gx(:,par.pindx.linterpp))*dSi2Cdaa; ... %.*SIL; ...
-                -d0(G(:,par.pindx.linterpp))*dSi2Cdaa]; %.*SIL];
-        
-        Sxx(:,kk) = mfactor(FD, tmp);
+        tmp = [-Gxx(:,kk); ...
+               Gxx(:,kk)];
+        Sixx(:,kk) = mfactor(FD, tmp);
+        kk = kk + 1;
     end
     % interpp bb
     if (par.opt_interpp == on & par.opt_bb == on)
-        tmp = -bb*[d0(Gx(par.pindx.lbb))*dSi2Cdbb; ... %.*SIL; ...
-                   -d0(Gx(par.pindx.lbb))*dSi2Cdbb]; %.*SIL];
-
-        Sxx(:,kk) = mfactor(FD, tmp);
+        tmp = [-Gxx(:,kk); ...
+               Gxx(:,kk)];
+        Sixx(:,kk) = mfactor(FD, tmp);
+        kk = kk + 1;
     end
-
+    % alpha bsi
+    if (par.opt_alpha == on & par.opt_bsi == on)
+        tmp = bsi*[0*DSI; ...
+                   -dPFDdb*DSIx(:,par.pindx.lalpha)];
+        Sixx(:,kk) = mfactor(FD, tmp);
+        kk = kk + 1;
+    end
     % alpha at
     if (par.opt_alpha == on & par.opt_at == on)
-        tmp = at*[-dkdat.*DSI(:,par.pindx.lalpha); ...
-                  (d0(dkdat) + dPFDdat)*DSI(:,par.pindx.lalpha)];
-        Sxx(:,kk) = mfactor(FFp,-tmp);
+        tmp = at*[d0(dkdat)*DSIx(:,par.pindx.lalpha); ...
+                  -(d0(dkdat)+dPFDdat)*DSIx(:,par.pindx.lalpha)];
+        Sixx(:,kk) = mfactor(FD, tmp);
         kk = kk + 1;
     end
     % alpha bt
     if (par.opt_alpha == on & par.opt_bt == on)
-        tmp = -bt*[-dkdbt.*DSI(:,par.pindx.lalpha); ...
-                   (d0(dkdbt) + dPFDdbt)*DSI(:,par.pindx.lalpha)];
-        Sxx(:,kk) = mfactor(FFp,-tmp);
+        tmp = bt*[d0(dkdbt)*DSIx(:,par.pindx.lalpha); ...
+                  -(d0(dkdbt) + dPFDdbt)*DSIx(:,par.pindx.lalpha)];
+        Sixx(:,kk) = mfactor(FD, tmp);
         kk = kk + 1;
     end
     % alpha aa
     if (par.opt_alpha == on & par.opt_aa == on)
-        tmp = -Gxx(:,kk);
-        Sxx(:,kk) = mfactor(FD, tmp);
+        tmp = [-Gxx(:,kk); ...
+               Gxx(:,kk)];
+        Sixx(:,kk) = mfactor(FD, tmp);
+        kk = kk + 1;
     end
     % alpha bb
     if (par.opt_alpha == on & par.opt_bb == on)
-        tmp = -Gxx(:,kk);
-        Sxx(:,kk) = mfactor(FD, tmp);
+        tmp = [-Gxx(:,kk); ...
+               Gxx(:,kk)];
+        Sixx(:,kk) = mfactor(FD, tmp);
+        kk = kk + 1;
     end
-
+    % beta bsi
+    if (par.opt_beta == on & par.opt_bsi == on)
+        tmp = bsi*[0*DSI; ...
+                   -dPFDdb*DSIx(:,par.pindx.lbeta)];
+        Sixx(:,kk) = mfactor(FD, tmp);
+        kk = kk + 1;
+    end
     % beta at
     if (par.opt_beta == on & par.opt_at == on)
-        tmp = at*[-dkdat.*DSI(:,par.pindx.lbeta); ...
-                  (d0(dkdat) + dPFDdat)*DSI(:,par.pindx.lbeta)];
-        Sxx(:,kk) = mfactor(FFp,-tmp);
+        tmp = at*[d0(dkdat)*DSIx(:,par.pindx.lbeta); ...
+                  -(d0(dkdat)+dPFDdat)*DSIx(:,par.pindx.lbeta)];
+        Sixx(:,kk) = mfactor(FD, tmp);
         kk = kk + 1;
     end
     % beta bt
     if (par.opt_beta == on & par.opt_bt == on)
-        tmp = -bt*[-dkdbt.*DSI(:,par.pindx.lbeta); ...
-                   (d0(dkdbt) + dPFDdbt)*DSI(:,par.pindx.lbeta)];
-        Sxx(:,kk) = mfactor(FFp,-tmp);
+        tmp = bt*[d0(dkdbt)*DSIx(:,par.pindx.lbeta); ...
+                  -(d0(dkdbt)+dPFDdbt)*DSIx(:,par.pindx.lbeta)];
+        Sixx(:,kk) = mfactor(FD, tmp);
         kk = kk + 1;
     end
     % beta aa
     if (par.opt_beta == on & par.opt_aa == on)
-        tmp = -Gxx(:,kk);        
-        Sxx(:,kk) = mfactor(FD, tmp);
+        tmp = [-Gxx(:,kk); ...
+               Gxx(:,kk)];
+        Sixx(:,kk) = mfactor(FD, tmp);
+        kk = kk + 1;
     end
     % beta bb
     if (par.opt_beta == on & par.opt_bb == on)
-        tmp = -Gxx(:,kk);
-        Sxx(:,kk) = mfactor(FD, tmp);
+        tmp = [-Gxx(:,kk); ...
+               Gxx(:,kk)];
+        Sixx(:,kk) = mfactor(FD, tmp);
+        kk = kk + 1;
+    end
+    % bsi bsi
+    if (par.opt_bsi == on)
+        vout = buildPFD(par, parm);
+        d2PFDdb2 = vout.d2PFDdb2;
+        tmp = bsi*[0*DSI; ...
+                   -dPFDdb*DSI] + ...
+              bsi*bsi*[0*DSI; ...
+                       -d2PFDdb2*DSI] + ...
+              2*bsi*[0*DSI; ...
+                     -dPFDdb*DSIx(:,par.pindx.lbsi)];
+        Sixx(:,kk) = mfactor(FD, tmp);
+        kk = kk + 1;
+    end
+    % bsi at
+    if (par.opt_bsi & par.opt_at)
+        vout = buildPFD(par, parm);
+        d2PFDdatdb = vout.d2PFDdatdb;
+        tmp = bsi*at*[0*DSI; ...
+                      -d2PFDdatdb*DSI] + ...
+              bsi*[0*DSI; ...
+                   -dPFDdb*DSIx(:,par.pindx.lat)] + ...
+              at*[d0(dkdat)*DSIx(:,par.pindx.lbsi); ...
+                  -(d0(dkdat)+dPFDdat)*DSIx(:,par.pindx.lbsi)];
+        
+        Sixx(:,kk) = mfactor(FD, tmp);
+        kk = kk + 1;
+    end
+    % bsi bt
+    if (par.opt_bsi & par.opt_bt)
+        vout = buildPFD(par, parm);
+        d2PFDdbtdb = vout.d2PFDdbtdb;
+        tmp = bsi*bt*[0*DSI; ...
+                      -d2PFDdbtdb*DSI] + ...
+              bsi*[0*DSI; ...
+                   -dPFDdb*DSIx(:,par.pindx.lbt)] + ...
+              bt*[d0(dkdbt)*DSIx(:,par.pindx.lbsi); ...
+                  -(d0(dkdbt)+dPFDdbt)*DSIx(:,par.pindx.lbsi)];
+        
+        Sixx(:,kk) = mfactor(FD, tmp);
+        kk = kk + 1;
+    end
+    % bsi aa
+    if (par.opt_bsi & par.opt_aa)
+        tmp = bsi*[0*DSI; ...
+                  -dPFDdb*DSIx(:,par.pindx.aa)] + ...
+              [-d0(Gx(:,par.pindx.lbsi))*dSi2Cdaa; ... %.*SIL; ...
+               d0(Gx(:,par.pindx.lbsi))*dSi2Cdaa]; %.*SIL];
+        
+        Sixx(:,kk) = mfactor(FD, tmp);
+        kk = kk + 1;
+    end
+    % bsi bb
+    if (par.opt_bsi & par.opt_bb)
+        tmp = bsi*[0*DSI; ...
+                   -dPFDdb*DSIx(:,par.pindx.lbb)] + ...
+              [-d0(Gx(:,par.pindx.lbsi))*dSi2Cdbb; ... %.*SIL; ...
+               d0(Gx(:,par.pindx.lbsi))*dSi2Cdbb]; %.*SIL];
+
+        Sixx(:,kk) = mfactor(FD, tmp);
+        kk = kk + 1;
     end
     % at at
     if (par.opt_at == on)
         vout = buildPFD(par, parm);
         d2PFDdat2 = vout.d2PFDdat2;
-        tmp = -2*at*[-dkdat.*DSI(:,par.pindx.lat); ...
-                     (d0(dkdat)+dPFDdat)*DSI(:,par.pindx.lat)] + ...
-              -at*[-dkdat.*DSI; ...
-                   dkdat.*DSI + d2PFDdat2*DSI];
-        
-        Sxx(:,kk) = mfactor(FD, tmp);
+        d2kdat2 = dkdat;
+        tmp = at*[d0(dkdat)*DSI; ...
+                  -(d0(dkdat)+dPFDdat)*DSI] + ...
+              at*at*[0*DSI; ...
+                     -d2PFDdat2*DSI] + ...
+              2*at*[d0(dkdat)*DSIx(:,par.pindx.lat); ...
+                  -(d0(dkdat)+dPFDdat)*DSIx(:,par.pindx.lat)];
+        Sixx(:,kk) = mfactor(FD, tmp);
+        kk = kk + 1;
     end
     % at bt
     if (par.opt_at == on & par.opt_bt == on)
         vout = buildPFD(par, parm);
         d2PFDdatdbt = vout.d2PFDdatdbt;
-        tmp = -at*[-dkdat.*DSI(:,par.pindx.lbt); ...
-                   (d0(dkdat)+dPFDdat)*DSI(:,par.pindx.lbt)] + ...
-              -bt*[-dkdbt.*DSI(:,par.pindx.lat); ...
-                   (d0(dkdbt)+dPFDdbt)*DSI(:,par.pindx.lat)] + ...
-              -at*[-dkdat.*DSI; ...
-                   dkdat.*DSI + d2PFDdatdbt*DSI];
-    
-        Sxx(:,kk) = mfactor(FD, tmp);
+        d2kdatdbt = -exp(-bt./T).*(1./T);
+        tmp = at*bt*[d0(d2kdatdbt); ...
+                     -(d0(d2kdatdbt)+d2PFDdatdbt)]*DSI + ...
+              at*[d0(dkdat)*DSIx(:,par.pindx.lbt); ...
+                  -(d0(dkdat)+dPFDdat)*DSIx(:,par.pindx.lbt)] + ...
+              bt*[d0(dkdbt)*DSIx(:,par.pindx.lat); ...
+                  -(d0(dkdbt)+dPFDdbt)*DSIx(:,par.pindx.lat)];
+        
+        Sixx(:,kk) = mfactor(FD, tmp);
+        kk = kk + 1;
     end
     % at aa
     if (par.opt_at == on & par.opt_aa == on)
-        tmp = -at*[-dkdat.*DSI(:,par.pindx.laa); ...
-                   (d0(dkdat) + dPFDdat)*DSI(:,par.pindx.laa)] + ...
-              -[d0(Gx(:,par.pindx.lat))*dSi2Cdaa; ... %.*SIL; ...
-                -d0(Gx(:,par.pindx.lat))*dSi2Cdaa]; %.*SIL];
+        tmp = at*[d0(dkdat)*DSIx(:,par.pindx.aa); ...
+                  -(d0(dkdat)+dPFDdat)*DSIx(:,par.pindx.aa)] + ...
+              [-d0(Gx(:,par.pindx.lat))*dSi2Cdaa; ... %.*SIL; ...
+               d0(Gx(:,par.pindx.lat))*dSi2Cdaa]; %.*SIL];
         
-        Sxx(:,kk) = mfactor(FD, tmp);
+        Sixx(:,kk) = mfactor(FD, tmp);
+        kk = kk + 1;
     end
-    
     % at bb
     if (par.opt_at == on & par.opt_bb == on)
-        tmp = -at*[-dkdat.*DSI(:,par.pindx.lbb); ...
-                   (d0(dkdat) + dPFDdat)*DSI(:,par.pindx.lbb)] + ...
-              -[d0(Gx(:,par.pindx.lat))*dSi2Cdbb; ... %.*SIL; ...
-                -d0(Gx(:,par.pindx.lat))*dSi2Cdbb]; %.*SIL];
+        tmp = at*[d0(dkdat)*DSIx(:,par.pindx.lbb); ...
+                  -(d0(dkdat)+dPFDdat)*DSIx(:,par.pindx.lbb)] + ...
+              [-d0(Gx(:,par.pindx.lat))*dSi2Cdbb; ... %.*SIL; ...
+               d0(Gx(:,par.pindx.lat))*dSi2Cdbb]; %.*SIL];
 
-        Sxx(:,kk) = mfactor(FD, tmp);
+        Sixx(:,kk) = mfactor(FD, tmp);
+        kk = kk + 1;
     end
     % bt bt
     if (par.opt_bt == on)
         vout = buildPFD(par, parm);
+        d2kdbtdbt = kappa_si./T.^2;
         d2PFDdbt2 = vout.d2PFDdbt2;
-        tmp = -2*bt*[-dkdbt.*DSI(:,par.pindx.lbt); ...
-                     (d0(dkdbt)+d2PFDdbt2)*DSI(:,par.pindx.lbt)] + ...
-              -bt*[-dkdbt.*DSI; ...
-                   dkdbt.*DSI + d2PFDdbt2*DSI];
+        tmp = bt*[d0(dkdbt)*DSI; ...
+                  -(d0(dkdbt)+dPFDdbt)*DSI] + ...
+              bt*bt*[d0(d2kdbtdbt)*DSI; ...
+                     -(d0(d2kdbtdbt)+d2PFDdbt2)*DSI] + ...
+              2*bt*[d0(dkdbt)*DSIx(:,par.pindx.lbt); ...
+                    -(d0(dkdbt)+dPFDdbt)*DSIx(:,par.pindx.lbt)];
+              
         
-        Sxx(:,kk) = mfactor(FD, tmp);
+        Sixx(:,kk) = mfactor(FD, tmp);
+        kk = kk + 1;
     end
     % bt aa
     if (par.opt_bt == on & par.opt_aa == on)
-        tmp = -bt*[-dkdbt.*DSI(:,par.pindx.laa); ...
-                   (d0(dkdbt) + dPFDdbt)*DSI(:,par.pindx.laa)] + ...
-              -[d0(Gx(:,par.pindx.lbt))*dSi2Cdaa; ... %.*SIL; ...
-                -d0(Gx(:,par.pindx.lbt))*dSi2Cdaa]; %.*SIL];
+        tmp = bt*[d0(dkdbt)*DSIx(:,par.pindx.aa); ...
+                  -(d0(dkdbt) + dPFDdbt)*DSIx(:,par.pindx.aa)] + ...
+              [-d0(Gx(:,par.pindx.lbt))*dSi2Cdaa; ... %.*SIL; ...
+               d0(Gx(:,par.pindx.lbt))*dSi2Cdaa]; %.*SIL];
         
-        Sxx(:,kk) = mfactor(FD, tmp);
+        Sixx(:,kk) = mfactor(FD, tmp);
+        kk = kk + 1;
     end
     % bt bb
     if (par.opt_bt == on & par.opt_bb == on)
-        tmp = -bt*[-dkdbt.*DSI(:,par.pindx.lbb); ...
-                   (d0(dkdbt) + dPFDdbt)*DSI(:,par.pindx.lbb)] + ...
-              -[d0(Gx(:,par.pindx.lbt))*dSi2Cdbb; ... %.*SIL; ...
-                -d0(Gx(:,par.pindx.lbt))*dSi2Cdbb]; %.*SIL];
+        tmp = bt*[d0(dkdbt)*DSIx(:,par.pindx.lbb); ...
+                  -(d0(dkdbt)+dPFDdbt)*DSIx(:,par.pindx.lbb)] + ...
+              [-d0(Gx(:,par.pindx.lbt))*dSi2Cdbb; ... %.*SIL; ...
+               d0(Gx(:,par.pindx.lbt))*dSi2Cdbb]; %.*SIL];
 
-        Sxx(:,kk) = mfactor(FD, tmp);
+        Sixx(:,kk) = mfactor(FD, tmp);
+        kk = kk + 1;
     end
     % aa aa
     if (par.opt_aa == on & par.opt_aa == on)
-        tmp = -Gxx(:,kk);
-        Sxx(:,kk) = mfactor(FD, tmp);
+        tmp = [-Gxx(:,kk); ...
+               Gxx(:,kk)];
+        Sixx(:,kk) = mfactor(FD, tmp);
+        kk = kk + 1;
     end
     % aa bb
     if (par.opt_aa == on & par.opt_bb == on)
-        tmp = -Gxx(:,kk);
-        Sxx(:,kk) = sparse(nwet,1);
+        tmp = [-Gxx(:,kk); ...
+               Gxx(:,kk)];
+        Sixx(:,kk) = mfactor(FD, tmp);
+        kk = kk + 1;
     end
     % bb bb
     if (par.opt_bb == on & par.opt_bb == on)
-        tmp = -Gxx(:,kk);
-        Sxx(:,kk) = mfactor(FD, tmp);
-    end    
+        tmp = [-Gxx(:,kk); ...
+               Gxx(:,kk)];
+        Sixx(:,kk) = mfactor(FD, tmp);
+        kk = kk + 1;
+    end
 end
-%% +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
+%
 %% +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 function vout = buildPFD(par,parm);
 M3d = parm.M3d;
@@ -647,7 +805,7 @@ kappa_si = at*exp(-bt./T);
 % ++++++++++++++++++++++++++++++++++++++++++++++++++
 
 r = kappa_si;
-b = par.bsi;
+b = parm.bsi;
 a = r./b;
 % particle sinking velocity at the top of the grid cells.
 MSK = M3D.*M3D(:,:,[nz+1,1:nz]);
@@ -668,11 +826,17 @@ dwdbt = -dadbt.*M(iocn);
 %
 d2adb2 = 2*r./(b^3);
 d2adat2 = 0;
-d2adbt2 = (at*exp(-bt./T))./(T.^2.*b);
+d2adbt2 = dadr.*(at*exp(-bt./T))./(T.^2);
+d2adatdbt = -dadr.*exp(-bt./T)./T;
+d2adatdb  = -(1./b.^2).*drdat;
+d2adbtdb  = -(1./b.^2).*drdbt;
 
 d2wdb2 = -d2adb2.*M(iocn);
 d2wdat2 = 0;
 d2wdbt2 = -d2adbt2.*M(iocn);
+d2wdatdbt = -d2adatdbt.*M(iocn);
+d2wdatdb  = -d2adatdb.*M(iocn);
+d2wdbtdb  = -d2adbtdb.*M(iocn);
 %FLUX = d0(w(iocn))*AVG;
 FLUX = d0(w)*IU;
 dFLUXdb = d0(dwdb)*IU;
@@ -682,6 +846,9 @@ dFLUXdbt = d0(dwdbt)*IU;
 d2FLUXdb2 = d0(d2wdb2)*IU;
 d2FLUXdat2 = d0(d2wdat2)*IU;
 d2FLUXdbt2 = d0(d2wdbt2)*IU;
+d2FLUXdatdbt = d0(d2wdatdbt)*IU;
+d2FLUXdatdb  = d0(d2wdatdb)*IU;
+d2FLUXdbtdb  = d0(d2wdbtdb)*IU;
 % particle flux divergence operator
 vout.PFdiv = DIV*FLUX;
 vout.dPFDdb = DIV*dFLUXdb;
@@ -691,4 +858,7 @@ vout.dPFDdbt = DIV*dFLUXdbt;
 vout.d2PFDdb2 = DIV*d2FLUXdb2;
 vout.d2PFDdat2 = DIV*d2FLUXdat2;
 vout.d2PFDdbt2 = DIV*d2FLUXdbt2;
+vout.d2PFDdatdbt = DIV*d2FLUXdatdbt;
+vout.d2PFDdatdb = DIV*d2FLUXdatdb;
+vout.d2PFDdbtdb = DIV*d2FLUXdbtdb;
 %% +++++++++++++++++++++++++++++++++++++++++++

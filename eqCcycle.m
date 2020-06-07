@@ -140,7 +140,6 @@ POC   = X(1*nwet+1:2*nwet) ;
 DOC   = X(2*nwet+1:3*nwet) ;
 CaC   = X(3*nwet+1:4*nwet) ;
 
-save tmpC DIC POC DOC CaC
 % fixed parameters
 kappa_p = parm.kappa_p ;  
 sigma   = parm.sigma   ;

@@ -12,9 +12,10 @@ grd   = parm.grd;
 iwet  = parm.iwet;
 nwet  = parm.nwet; % number of wet points;
 I     = parm.I   ; % make an identity matrix;
-
+npx = 0; % count number of P model parameters;
 % unpack the parameters to be optimized
 if (par.opt_sigma == on)
+    npx = npx + 1;
     lsigma = x(par.pindx.lsigma);
     sigma  = exp(lsigma);
 else
@@ -22,6 +23,7 @@ else
 end
 
 if (par.opt_kappa_dp == on)
+    npx = npx + 1;
     lkappa_dp = x(par.pindx.lkappa_dp);
     kappa_dp  = exp(lkappa_dp);
 else
@@ -29,12 +31,14 @@ else
 end
 
 if (par.opt_slopep == on)
+    npx = npx + 1;
     slopep = x(par.pindx.slopep);
 else
     slopep  = par.slopep;
 end
 
 if (par.opt_interpp == on)
+    npx = npx + 1;
     linterpp = x(par.pindx.linterpp);
     interpp  = exp(linterpp);
 else
@@ -42,6 +46,7 @@ else
 end
 
 if (par.opt_alpha == on)
+    npx = npx + 1;
     lalpha = x(par.pindx.lalpha);
     alpha  = exp(lalpha);
 else
@@ -49,12 +54,13 @@ else
 end
 
 if (par.opt_beta == on)
+    npx = npx + 1;
     lbeta = x(par.pindx.lbeta);
     beta  = exp(lbeta);
 else
     beta  = par.beta;
 end
-
+parm.npx = npx;
 % fixed parameters
 % sigma    = parm.sigma;
 DIPbar   = M3d(iwet)*parm.DIPbar;  % gobal arerage PO4 conc.[mmol m^-3];
@@ -248,7 +254,7 @@ if (nargout>2)
     if (par.opt_sigma == on & par.opt_beta == on)
         tmp = [Z; ... % d2Jdsigmadbeta
                sigma*alpha*beta*dLdbeta*DIP;...
-               -sigma*lalpha*beta*dLdbeta*DIP] + ...
+               -sigma*alpha*beta*dLdbeta*DIP] + ...
               [Z; ... %dJdsigmadPdbeta
                sigma*alpha*L*DIPx(:,par.pindx.lbeta); ...
                -sigma*alpha*L*DIPx(:,par.pindx.lbeta)] + ...
@@ -334,11 +340,11 @@ if (nargout>2)
         [~,vout] = buildPFD(M3d,grd,parm,slopep,interpp);
         d2PFDdslope2 = vout.d2PFDdslope2;
         tmp = [Z; ... % d2Jdslope2
-               d2PDFdslope2*DOP; ...
+               d2PFDdslope2*POP; ...
                Z] + ...
               2*[Z; ... % dJdslopedPslope
-                 dPFDdslope*POPx(:,par.pindx.slopep);...
-                 Z];
+               dPFDdslope*POPx(:,par.pindx.slopep);...
+               Z];
         
         Pxx(:,kk) = mfactor(FFp,-tmp);
         kk = kk + 1;
@@ -349,15 +355,15 @@ if (nargout>2)
         == on)
         [~,vout] = buildPFD(M3d,grd,parm,slopep,interpp);
         d2PFDdslopedinterp = vout.d2PFDdslopedinterp;
-        tmp = [Z; ...  % d2Jdslopedinterp
-               d2PFDdslopedinterp*POP; ...
-               Z] + ...
+        tmp = interpp*[Z; ...  % d2Jdslopedinterp
+                       d2PFDdslopedinterp*POP; ...
+                       Z] + ...
               [Z; ... % dJdslopedPdinterp
                dPFDdslope*POPx(:,par.pindx.linterpp);...
                Z] + ...
-              [Z; ...  % dJdinterpdPdslope
-               dPFDdinterp*POPx(:,par.pindx.slopep); ...
-               Z]; 
+              interpp*[Z; ...  % dJdinterpdPdslope
+                       dPFDdinterp*POPx(:,par.pindx.slopep); ...
+                       Z]; 
         
         Pxx(:,kk) = mfactor(FFp,-tmp);
         kk = kk + 1;
@@ -478,7 +484,7 @@ if (nargout>2)
         inan = find(isnan(d2Lambdadbetadbeta(:)));
         d2Lambdadbetadbeta(inan) = 0;
         d2Ldbetadbeta = d0(d2Lambdadbetadbeta(iwet));
-
+        parm.d2Ldbetadbeta = d2Ldbetadbeta;
         tmp = [alpha*beta*dLdbeta*DIP;... % d2Jdbeta2 * P
                -(1-sigma)*alpha*beta*dLdbeta*DIP;...
                -sigma*alpha*beta*dLdbeta*DIP] + ...

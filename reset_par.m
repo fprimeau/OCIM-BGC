@@ -138,6 +138,17 @@ if (par.opt_interpo == on)
     fprintf('current interpo is %3.2e \n', exp(x(iinterpo)));
 end
 
+% bsi
+if (par.opt_bsi == on)
+    ibsi = par.pindx.lbsi;
+    xnew = exp(x(ibsi));
+    xold = exp(x0(ibsi));
+    if (xnew > 1.5 | xnew < 0.2);
+        x(ibsi) = x0(ibsi);
+    end
+    fprintf('current interpo is %3.2e \n', exp(x(ibsi)));
+end
+
 % at
 if (par.opt_at == on)
     iat = par.pindx.lat;

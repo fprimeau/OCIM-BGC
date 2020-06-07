@@ -4,7 +4,6 @@ addpath('/DFS-L/DATA/primeau/weilewang/DATA/')
 addpath('/DFS-L/DATA/primeau/weilewang/GREG/Couple_CP/')
 on = true; off = false;
 global GC GO
-% load constraint data
 load transport_v4.mat
 load GLODAP_grid_dic
 load GLODAP_grid_Alk
@@ -90,30 +89,25 @@ parm.tau_TA  = 1./parm.taup;
 [sst,ss] = PME(parm) ;
 parm.ss  = ss        ;
 parm.sst = sst       ;
-%
-par.Cmodel = off;
-par.Omodel = off;
-par.Simodel = off;
-%
 % P model parameters;
 par.sigma    = 0.30      ; % production to DOC ratio
 par.slopep   = 0.00      ; % Martin curve exponent of POP
-par.interpp  = 9.750e-01 ;
-par.kappa_dp = 7.824e-08 ;
-par.alpha    = 9.151e-03 ; % npp linear scaling factor
-par.beta     = 4.807e-01 ; % npp scaling exponent
+par.interpp  = 9.56e-01 ;
+par.kappa_dp = 8.30e-08 ;
+par.alpha    = 9.40e-03 ; % npp linear scaling factor
+par.beta     = 5.13e-01 ; % npp scaling exponent
 
 % C model parameters                                      
 par.slopec   = 0         ; % Martin curve exponent of OC
-par.interpc  = 1.015e+00 ;
-par.kappa_dc = 9.569e-09 ;
+par.interpc  = 8.80e-01 ;
+par.kappa_dc = 1.15e-08 ;
 par.kappa_da = 0.5e-7    ;
-par.RR       = 5.294e-02 ; % pic:poc ratio
-par.d        = 4048      ; % pic remin e-folding length scale (m)
+par.RR       = 4.68e-02 ; % pic:poc ratio
+par.d        = 3.78e+03 ; % pic remin e-folding length scale (m)
 
 % O model parameters
-par.slopeo   = 0;
-par.interpo  = 170/117;
+par.slopeo   = 2.08e-01;
+par.interpo  = 1.20;
 
 % Si model parameters
 par.bsi = 0.86;
@@ -123,11 +117,16 @@ par.aa = 1;
 par.bb = 1;
 par.kappa_gs = 1/(1e6*spa); % geological restoring time [1/s];
 
+%
+par.Cmodel = off;
+par.Omodel = off;
+par.Simodel = on;
+%
 % P model parameters
 par.opt_beta = on;
 par.opt_alpha = on;
-par.opt_sigma = off; 
-par.opt_slopep = off; 
+par.opt_sigma = on; 
+par.opt_slopep = on; 
 par.opt_interpp = on;
 par.opt_kappa_dp = on;
 
@@ -137,16 +136,15 @@ par.opt_RR = off; %
 par.opt_slopec = off;
 par.opt_interpc = off; %
 par.opt_kappa_dc = off; %
-
 % O model parameters
 par.opt_slopeo = off; 
 par.opt_interpo = off; 
-
 % Si model parameters
+par.opt_bsi = on;
 par.opt_at = off;
 par.opt_bt = off;
-par.opt_aa = off;
-par.opt_bb = off;
+par.opt_aa = on;
+par.opt_bb = on;
 par.opt_kappa_gs = off;
 % ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 p0 = [];
@@ -191,95 +189,103 @@ if (par.opt_beta == on)
     strt = length(p0) + 1;
     p0 = [p0; lbeta];
     par.pindx.lbeta = strt : length(p0);
-end 
-% slopec
-if (par.opt_slopec == on)
-    slopec = par.slopec;
-    strt = length(p0) + 1;
-    p0 = [p0; slopec];
-    par.pindx.slopec = strt : length(p0);
-end 
-
-if (par.opt_interpc == on)
-    interpc = par.interpc; linterpc = log(interpc);
-    strt = length(p0) + 1;
-    p0 = [p0; linterpc];
-    par.pindx.linterpc = strt : length(p0);
-end 
-
-if (par.opt_d == on)
-    d = par.d; ld = log(d);
-    strt = length(p0) + 1;
-    p0 = [p0; ld];
-    par.pindx.ld = strt : length(p0);
-end 
-
-if (par.opt_kappa_dc == on)
-    kappa_dc = par.kappa_dc; lkappa_dc = log(kappa_dc);
-    strt = length(p0) + 1;
-    p0 = [p0; lkappa_dc];
-    par.pindx.lkappa_dc = strt : length(p0);
-end 
-
-if (par.opt_RR == on)
-    RR = par.RR; lRR = log(RR);
-    strt = length(p0) + 1;
-    p0 = [p0; lRR];
-    par.pindx.lRR = strt : length(p0);
-end 
-
-if (par.opt_slopeo == on)
-    slopeo = par.slopeo; 
-    strt = length(p0) + 1;
-    p0 = [p0; slopeo];
-    par.pindx.slopeo = strt : length(p0);
-end 
-
-if (par.opt_interpo == on)
-    interpo = par.interpo; linterpo = log(interpo);
-    strt = length(p0) + 1;
-    p0 = [p0; linterpo];
-    par.pindx.linterpo = strt : length(p0);
-end 
-
-% slopes
-if (par.opt_at == on)
-    at = par.at; lat = log(at);
-    strt = length(p0) + 1;
-    p0 = [p0; lat];
-    par.pindx.lat = strt : length(p0);
 end
-
-% interps
-if (par.opt_bt == on)
-    bt = par.bt; lbt = log(bt);
-    strt = length(p0) + 1;
-    p0 = [p0; lbt];
-    par.pindx.lbt = strt : length(p0);
+if (par.Cmodel == on)
+    % slopec
+    if (par.opt_slopec == on)
+        slopec = par.slopec;
+        strt = length(p0) + 1;
+        p0 = [p0; slopec];
+        par.pindx.slopec = strt : length(p0);
+    end 
+    % interpc
+    if (par.opt_interpc == on)
+        interpc = par.interpc; linterpc = log(interpc);
+        strt = length(p0) + 1;
+        p0 = [p0; linterpc];
+        par.pindx.linterpc = strt : length(p0);
+    end 
+    % d
+    if (par.opt_d == on)
+        d = par.d; ld = log(d);
+        strt = length(p0) + 1;
+        p0 = [p0; ld];
+        par.pindx.ld = strt : length(p0);
+    end 
+    % kappa_dc
+    if (par.opt_kappa_dc == on)
+        kappa_dc = par.kappa_dc; lkappa_dc = log(kappa_dc);
+        strt = length(p0) + 1;
+        p0 = [p0; lkappa_dc];
+        par.pindx.lkappa_dc = strt : length(p0);
+    end 
+    % RR
+    if (par.opt_RR == on)
+        RR = par.RR; lRR = log(RR);
+        strt = length(p0) + 1;
+        p0 = [p0; lRR];
+        par.pindx.lRR = strt : length(p0);
+    end
 end
-
-% aa
-if (par.opt_aa == on)
-    aa = par.aa;
-    strt = length(p0) + 1;
-    p0 = [p0; aa];
-    par.pindx.aa = strt : length(p0);
-end
-
-% bb
-if (par.opt_bb == on)
-    bb = par.bb; lbb = log(bb);
-    strt = length(p0) + 1;
-    p0 = [p0; lbb];
-    par.pindx.lbb = strt : length(p0);
-end
-
-% kappa_gs
-if (par.opt_kappa_gs == on)
-    kappa_gs = par.kappa_gs; lkappa_gs = log(kappa_gs);
-    strt = length(p0) + 1;
-    p0 = [p0; lkappa_gs];
-    par.pindx.lkappa_gs = strt : length(p0);
+if par.Omodel == on
+    % slopeo
+    if (par.opt_slopeo == on)
+        slopeo = par.slopeo; 
+        strt = length(p0) + 1;
+        p0 = [p0; slopeo];
+        par.pindx.slopeo = strt : length(p0);
+    end 
+    % interpo
+    if (par.opt_interpo == on)
+        interpo = par.interpo; linterpo = log(interpo);
+        strt = length(p0) + 1;
+        p0 = [p0; linterpo];
+        par.pindx.linterpo = strt : length(p0);
+    end
+end 
+if par.Simodel == on 
+    % bsi
+    if (par.opt_bsi == on)
+        bsi = par.bsi; lbsi = log(bsi);
+        strt = length(p0) + 1;
+        p0 = [p0; lbsi];
+        par.pindx.lbsi = strt : length(p0);
+    end
+    % at 
+    if (par.opt_at == on)
+        at = par.at; lat = log(at);
+        strt = length(p0) + 1;
+        p0 = [p0; lat];
+        par.pindx.lat = strt : length(p0);
+    end
+    % bt
+    if (par.opt_bt == on)
+        bt = par.bt; lbt = log(bt);
+        strt = length(p0) + 1;
+        p0 = [p0; lbt];
+        par.pindx.lbt = strt : length(p0);
+    end
+    % aa
+    if (par.opt_aa == on)
+        aa = par.aa;
+        strt = length(p0) + 1;
+        p0 = [p0; aa];
+        par.pindx.aa = strt : length(p0);
+    end
+    % bb
+    if (par.opt_bb == on)
+        bb = par.bb; lbb = log(bb);
+        strt = length(p0) + 1;
+        p0 = [p0; lbb];
+        par.pindx.lbb = strt : length(p0);
+    end
+    % kappa_gs
+    if (par.opt_kappa_gs == on)
+        kappa_gs = par.kappa_gs; lkappa_gs = log(kappa_gs);
+        strt = length(p0) + 1;
+        p0 = [p0; lkappa_gs];
+        par.pindx.lkappa_gs = strt : length(p0);
+    end
 end
 %
 % ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -303,33 +309,36 @@ myfun = @(x) neglogpost(x, parm, par);
 options = optimoptions(@fminunc                  , ...
                        'Algorithm','trust-region', ...
                        'GradObj','on'            , ...
-                       'Hessian','off'            , ...
+                       'Hessian','on'            , ...
                        'Display','iter'          , ...
                        'MaxFunEvals',2000        , ...
                        'MaxIter',2000            , ...
-                       'TolX',1e-9               , ...
-                       'TolFun',1e-9             , ...
+                       'TolX',1e-8               , ...
+                       'TolFun',1e-8             , ...
                        'DerivativeCheck','off'   , ...
                        'FinDiffType','central'   , ...
                        'PrecondBandWidth',Inf)   ;
 %
-G_test = on        ;
+G_test = off        ;
 nip    = length(x0) ;
 if(G_test);
     dx = sqrt(-1)*eps.^3*eye(nip);
-    for ii = 1:4 %nip
+    for ii = 1:nip
         x  = real(x0)+dx(:,ii)    ;
         [f,fx,fxx] = neglogpost(x, parm, par) ;
         diff = real(fx(ii)) - imag(f)/eps.^3 ;
-        diffx = real(fxx(:,ii)) - imag(fx)/eps.^3;
         fprintf('%i %e  \n',ii,diff);
-        fprintf('%e %e %e %e \n', diffx);
+        diffx = real(fxx(:,ii)) - imag(fx)/eps.^3;
+        for jj = 1:length(fx)
+            fprintf('%e  ', diffx(jj));
+        end
+        fprintf('\n');
     end
     keyboard
 else
     [xhat,fval,exitflag] = fminunc(myfun,x0,options);
-    [f,fx] = neglogpost(xhat,parm,par);
-    save PSi_xhat xhat
+    [f,fx,fxx] = neglogpost(xhat,parm,par);
+    save PSi_xhat xhat fx fxx
 end
 
 fprintf('------------ END! ---------------');
