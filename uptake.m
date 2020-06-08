@@ -1,4 +1,4 @@
-function [G,Gx,Gxx] = uptake(par, parm)
+function [G,Gx,Gxx,Gp] = uptake(par, parm)
 % unpack the parameters to be optimized
 on = true; off = false;
 iwet = parm.iwet;
@@ -11,56 +11,25 @@ d2Ldbetadbeta = diag(parm.d2Ldbetadbeta);
 % N:P of uptake operator
 po4obs = parm.po4obs(iwet);
 c2p    = parm.c2p;
+Si2C   = parm.Si2C;
 % N uptake operator
 L = diag(parm.L);
 
 DIP = parm.DIP;
-G   = alpha.*c2p.*L.*DIP; 
-Gp  = alpha.*c2p.*L;   
+G   = d0(alpha.*c2p.*L.*DIP.*Si2C);
+Gp  = d0(alpha.*c2p.*L.*Si2C);
 
 % gradient of uptake operator
 nx  = parm.nx;
 Gpx = zeros(nwet,nx);
-Gpx(:,par.pindx.lalpha) = alpha.*c2p.*L;              % dGdlog_alpha
-Gpx(:,par.pindx.lbeta)  = beta*alpha.*c2p.*dLdbeta;   % dGdlog_beta
+Gpx(:,par.pindx.lalpha) = alpha.*c2p.*L.*Si2C;              % dGdlog_alpha
+Gpx(:,par.pindx.lbeta)  = beta*alpha.*c2p.*dLdbeta.*Si2C;   % dGdlog_beta
 
 % Gradient
 % grad DIP
 if (nargout >1)
-    DIPx = zeros(nwet,nx);
-    np = 0; % count the number of tunable parameters
-    if (par.opt_sigma == on)
-        isigma = par.pindx.lsigma;
-        DIPx(:,isigma) = parm.Px(1:nwet,isigma);
-    end
-    
-    if (par.opt_kappa_dp == on)
-        ikappa_dp = par.pindx.lkappa_dp;
-        DIPx(:,ikappa_dp) = parm.Px(1:nwet,ikappa_dp);
-    end
-    
-    if (par.opt_slopep == on)
-        islopep = par.pindx.slopep;
-        DIPx(:,islopep) = parm.Px(1:nwet,islopep);
-    end
-    
-    if (par.opt_interpp == on)
-        iinterpp = par.pindx.linterpp;
-        DIPx(:,iinterpp) = parm.Px(1:nwet,iinterpp);
-    end
-    
-    if (par.opt_alpha == on)
-        ialpha = par.pindx.lalpha; 
-        DIPx(:,ialpha) = parm.Px(1:nwet,ialpha);
-    end
-    
-    if (par.opt_beta == on)
-        ibeta = par.pindx.lbeta; 
-        DIPx(:,ibeta) = parm.Px(1:nwet,ibeta);
-    end
-    
-    Gx = zeros(nwet,nx);
-    Gx = d0(Gp)*DIPx+d0(DIP)*Gpx;
+    DIPx = parm.Px(1:nwet,:);
+    Gx = d0(Gp*DIPx+d0(DIP)*Gpx);
 end
 
 %% ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

@@ -44,7 +44,7 @@ if (par.Simodel == on)
 end
 %%%%%%%%%%%%%%%%%%   End Solve Si    %%%%%%%%%%%%%%%%%%%%
 %
-%%%%%%%%%%%%%%%%%%   Slove C    %%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%     Slove C   %%%%%%%%%%%%%%%%%%%%%%%%
 if (par.Cmodel == on)
     mu_dic = sum(W*parm.DICobs(iwet))/sum(diag(W));
     var_dic = sum(W*(parm.DICobs(iwet)-mu_dic).^2)/sum(diag(W));

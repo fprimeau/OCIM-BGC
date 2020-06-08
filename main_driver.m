@@ -126,7 +126,7 @@ par.Simodel = on;
 par.opt_beta = on;
 par.opt_alpha = on;
 par.opt_sigma = on; 
-par.opt_slopep = on; 
+par.opt_slopep = off; 
 par.opt_interpp = on;
 par.opt_kappa_dp = on;
 
@@ -319,7 +319,7 @@ options = optimoptions(@fminunc                  , ...
                        'FinDiffType','central'   , ...
                        'PrecondBandWidth',Inf)   ;
 %
-G_test = off        ;
+G_test = on        ;
 nip    = length(x0) ;
 if(G_test);
     dx = sqrt(-1)*eps.^3*eye(nip);
@@ -333,8 +333,9 @@ if(G_test);
             fprintf('%e  ', diffx(jj));
         end
         fprintf('\n');
+        keyboard
     end
-    keyboard
+    
 else
     [xhat,fval,exitflag] = fminunc(myfun,x0,options);
     [f,fx,fxx] = neglogpost(xhat,parm,par);
