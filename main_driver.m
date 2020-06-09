@@ -126,7 +126,7 @@ par.Simodel = on;
 par.opt_beta = on;
 par.opt_alpha = on;
 par.opt_sigma = on; 
-par.opt_slopep = off; 
+par.opt_slopep = on; 
 par.opt_interpp = on;
 par.opt_kappa_dp = on;
 
@@ -141,8 +141,8 @@ par.opt_slopeo = off;
 par.opt_interpo = off; 
 % Si model parameters
 par.opt_bsi = on;
-par.opt_at = off;
-par.opt_bt = off;
+par.opt_at = on;
+par.opt_bt = on;
 par.opt_aa = on;
 par.opt_bb = on;
 par.opt_kappa_gs = off;
@@ -333,9 +333,9 @@ if(G_test);
             fprintf('%e  ', diffx(jj));
         end
         fprintf('\n');
-        keyboard
+        
     end
-    
+    keyboard    
 else
     [xhat,fval,exitflag] = fminunc(myfun,x0,options);
     [f,fx,fxx] = neglogpost(xhat,parm,par);
