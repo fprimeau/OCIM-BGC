@@ -126,7 +126,7 @@ par.Simodel = on;
 par.opt_beta = on;
 par.opt_alpha = on;
 par.opt_sigma = on; 
-par.opt_slopep = on; 
+par.opt_slopep = off; 
 par.opt_interpp = on;
 par.opt_kappa_dp = on;
 
@@ -142,7 +142,7 @@ par.opt_interpo = off;
 % Si model parameters
 par.opt_bsi = on;
 par.opt_at = on;
-par.opt_bt = on;
+par.opt_bt = off;
 par.opt_aa = on;
 par.opt_bb = on;
 par.opt_kappa_gs = off;
@@ -313,13 +313,13 @@ options = optimoptions(@fminunc                  , ...
                        'Display','iter'          , ...
                        'MaxFunEvals',2000        , ...
                        'MaxIter',2000            , ...
-                       'TolX',1e-8               , ...
-                       'TolFun',1e-8             , ...
+                       'TolX',5e-7               , ...
+                       'TolFun',5e-7             , ...
                        'DerivativeCheck','off'   , ...
                        'FinDiffType','central'   , ...
                        'PrecondBandWidth',Inf)   ;
 %
-G_test = on        ;
+G_test = off        ;
 nip    = length(x0) ;
 if(G_test);
     dx = sqrt(-1)*eps.^3*eye(nip);
