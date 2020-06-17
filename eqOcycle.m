@@ -232,7 +232,7 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par, parm, x)
         
         % C and O model only parameters
         for ju = (npx+1) : (npx+ncx)
-            for jo = (npx+ncx+1):(npx+ncx+nox)
+            for jo = (npx+ncx+1) : (npx+ncx+nox)
                 kk = kk + 1;
                 if (ju ~= pindx.lkappa_dc)
                     tmp = kappa_dc*O2C.*DOCx(:,ju).*dRdO.*Ox(:,jo) ...
@@ -255,7 +255,7 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par, parm, x)
             kk = kk + 1;
             tmp = Ox(:,pindx.slopeo).*d2LdO2.*Ox(:,pindx.slopeo);
 
-            Oxx(:,pindx.slopeo) = mfactor(FD, -tmp);
+            Oxx(:,kk) = mfactor(FD, -tmp);
         end
 
         % slopeo interpo
@@ -263,14 +263,14 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par, parm, x)
             kk = kk + 1;
             tmp = Ox(:,pindx.slopeo).*d2LdO2.*Ox(:,pindx.linterpo);
 
-            Oxx(:,pindx.slopeo) = mfactor(FD, -tmp);
+            Oxx(:,kk) = mfactor(FD, -tmp);
         end
         
         % interpo interpo
         if (par.opt_interpo == on);
             kk = kk + 1;
             tmp = -interpo*diag(G) + ...
-                  Ox(:,pindx.slopeo).*d2LdO2.*Ox(:,pindx.slopeo);
+                  Ox(:,pindx.linterpo).*d2LdO2.*Ox(:,pindx.linterpo);
             
             Oxx(:,kk) = mfactor(FD, -tmp);
         end
