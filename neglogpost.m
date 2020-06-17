@@ -9,8 +9,10 @@ M3d  = parm.M3d  ;
 iwet = parm.iwet ;
 nwet = parm.nwet ;
 %
+EXP = 'SOxhalf';
+%
 f = 0;
-%%%%%%%%%%%%%%%%%%   Slove P    %%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%   Solve P    %%%%%%%%%%%%%%%%%%%%%%%%
 %
 W   = d0(dVt(iwet)/sum(dVt(iwet)));
 mu_dip  = sum(W*parm.po4obs(iwet))/sum(diag(W));
@@ -25,10 +27,12 @@ parm.DIP = DIP(iwet);  parm.Px = Px;
 parm.Pxx = Pxx;
 % DIP error
 ep = DIP(iwet) - parm.po4obs(iwet);
-f = f + 0.5*(ep.'*Wp*ep); 
+f = f + 0.5*(ep.'*Wp*ep);
+fname = strcat(EXP,'_P');
+save(fname,'DIP','DOP','POP')
 %%%%%%%%%%%%%%%%%%   End Solve P    %%%%%%%%%%%%%%%%%%%%
 %
-%%%%%%%%%%%%%%%%%%   End Solve Si    %%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%   Solve Si       %%%%%%%%%%%%%%%%%%%%
 if (par.Simodel == on)
     %
     mu_sil = sum(W*parm.SIL(iwet))/sum(diag(W));
@@ -44,25 +48,27 @@ if (par.Simodel == on)
 end
 %%%%%%%%%%%%%%%%%%   End Solve Si    %%%%%%%%%%%%%%%%%%%%
 %
-%%%%%%%%%%%%%%%%%%     Slove C   %%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%     Solve C   %%%%%%%%%%%%%%%%%%%%%%%%
 if (par.Cmodel == on)
     mu_dic = sum(W*parm.DICobs(iwet))/sum(diag(W));
     var_dic = sum(W*(parm.DICobs(iwet)-mu_dic).^2)/sum(diag(W));
     Wc = W/var_dic;
-    %
-    [C, Cx, parm] = eqCcycle(par, parm, x);
+    
+    [parm, C, Cx, Cxx] = eqCcycle(par, parm, x);
     DIC = M3d+nan; DIC(iwet) = C(0*nwet+1:1*nwet) ;
     POC = M3d+nan; POC(iwet) = C(1*nwet+1:2*nwet) ;
     DOC = M3d+nan; DOC(iwet) = C(2*nwet+1:3*nwet) ;
     CaC = M3d+nan; CaC(iwet) = C(3*nwet+1:4*nwet) ;
     parm.DIC = DIC(iwet);      parm.DOC = DOC(iwet);
     parm.DICx = Cx(1:nwet,:);  parm.DOCx = Cx(2*nwet+1:3*nwet,:);
+    parm.DICxx = Cxx(1:nwet,:);  parm.DOCxx = Cxx(2*nwet+1:3*nwet,:);
     % DIC error
     DIC = DIC + parm.human_co2;
     ec  = DIC(iwet) - parm.DICobs(iwet);
     f   = f + 0.5*(ec.'*Wc*ec);
     %
-    save tmpC DIC POC DOC CaC
+    fname = strcat(EXP,'_C');
+    save(fname,'DIC', 'POC', 'DOC', 'CaC')
 end
 %%%%%%%%%%%%%%%%%%   End Solve C    %%%%%%%%%%%%%%%%%%%%
 %
@@ -73,13 +79,14 @@ if (par.Omodel == on)
     var_o2 = sum(W*(parm.o2obs-mu_o2).^2)/sum(diag(W));
     Wo = W/var_o2;
     %
-    [O, Ox] = eqOcycle(par, parm, x);
+    [parm, O, Ox, Oxx] = eqOcycle(par, parm, x);
     O2 = M3d+nan;  O2(iwet) = O;
     %
     eo  = O - parm.o2obs;
     f   = f + 0.5*(eo.'*Wo*eo);
     %
-    save tmpO O2
+    fname = strcat(EXP,'_O2');
+    save(fname,'O2')
 end
 %%%%%%%%%%%%%%%%%%   End Solve O    %%%%%%%%%%%%%%%%%%%%
 fprintf('current objective function value is %3.3e \n',f);
@@ -125,6 +132,7 @@ if (nargout > 1)
                 fxx(parm_index(ju),parm_index(jo)) = ...
                     px(:,parm_index(ju)).'*Wp*px(:,parm_index(jo)) + ...
                     ep.'*Wp*pxx(:,kk);
+                % Simodel
                 if par.Simodel == on
                     sx  = Six(1:nwet,:);
                     sxx = Sixx(1:nwet,:);            
@@ -133,6 +141,25 @@ if (nargout > 1)
                         sx(:,parm_index(ju)).'*Ws*sx(:,parm_index(jo)) + ...
                         es.'*Ws*sxx(:,kk);
                 end 
+                % Cmodel
+                if par.Cmodel == on
+                    cx  = Cx(1:nwet,:);
+                    cxx = Cxx(1:nwet,:);            
+                    fxx(parm_index(ju),parm_index(jo)) = ...
+                        fxx(parm_index(ju), parm_index(jo)) + ...
+                        cx(:,parm_index(ju)).'*Wc*cx(:,parm_index(jo)) + ...
+                        ec.'*Wc*cxx(:,kk);
+                end
+                % Omodel
+                if par.Omodel == on
+                    ox  = Ox(1:nwet,:);
+                    oxx = Oxx(1:nwet,:);            
+                    fxx(parm_index(ju),parm_index(jo)) = ...
+                        fxx(parm_index(ju), parm_index(jo)) + ...
+                        ox(:,parm_index(ju)).'*Wo*ox(:,parm_index(jo)) + ...
+                        eo.'*Wo*oxx(:,kk);
+                end 
+                % make Hessian symetric;
                 fxx(parm_index(jo),parm_index(ju)) = ...
                     fxx(parm_index(ju),parm_index(jo));
                 kk = kk + 1;
@@ -142,6 +169,7 @@ if (nargout > 1)
     end
     
     if (par.Simodel == on)
+        sx  = Six(1:nwet,:);
         nsx = parm.nsx;
         if par.opt_bsi == on
             parm_index = [parm_index, par.pindx.lbsi];
@@ -172,6 +200,7 @@ if (nargout > 1)
             tmp(1:npx,1:npx) = fxx;
             fxx = tmp;
             % ------------------------------------------------------------
+            % P model parameters and Si parameters
             for ju = 1:npx
                 for jo = (npx+1):(npx+nsx)
                     fxx(parm_index(ju), parm_index(jo)) = ...
@@ -185,6 +214,7 @@ if (nargout > 1)
                 end 
             end
             % ------------------------------------------------------------
+            % Only Si parameters
             for ju = (npx+1):(npx+nsx)
                 for jo = ju:(npx+nsx)
                     fxx(parm_index(ju), parm_index(jo)) = ...
@@ -194,6 +224,130 @@ if (nargout > 1)
                     
                     fxx(parm_index(jo), parm_index(ju)) = ...
                         fxx(parm_index(ju), parm_index(jo));
+                    kk = kk + 1;
+                end 
+            end
+        end
+        % ----------------------------------------------------------------
+    end
+    % C model
+    if (par.Cmodel == on & par.Omodel == off)
+        cx  = Cx(1:nwet,:);
+        ncx = parm.ncx;
+        % --------------------------
+        for ji = 1:(npx+ncx)
+            fx(ji) = fx(ji) + ec.'*Wc*cx(:, ji);
+        end
+        % --------------------------
+        %
+        if (nargout >2)
+            tmp = sparse(npx+ncx, npx+ncx);
+            tmp(1:npx,1:npx) = fxx;
+            fxx = tmp;
+            % ------------------------------------------------------------
+            % P model parameters and C parameters
+            for ju = 1:npx
+                for jo = (npx+1):(npx+ncx)
+                    fxx(ju, jo) = ...
+                        fxx(ju, jo) + ...
+                        cx(:,ju).'*Wc*cx(:,jo) + ec.'*Wc*cxx(:,kk);
+                    fxx(jo,ju) = fxx(ju, jo);
+                    kk = kk + 1;
+                end 
+            end
+            % ------------------------------------------------------------
+            % Only C parameters
+            for ju = (npx+1):(npx+ncx)
+                for jo = ju:(npx+ncx)
+                    fxx(ju, jo) = fxx(ju, jo) + ...
+                        cx(:,ju).'*Wc*cx(:,jo) + ec.'*Wc*cxx(:,kk);
+                    fxx(jo, ju) = fxx(ju, jo);
+                    kk = kk + 1;
+                end 
+            end
+        end
+        % ----------------------------------------------------------------
+    end
+    % C model and O model are both on
+    if (par.Cmodel == on & par.Omodel == on)
+        cx  = Cx(1:nwet,:);
+        ox  = Ox(1:nwet,:);
+        nox = parm.nox;
+        ncx = parm.ncx;
+        % --------------------------
+        % add C model Gradient
+        for ji = 1:(npx+ncx)
+            fx(ji) = fx(ji) + ec.'*Wc*cx(:, ji);
+        end
+        % add O model Gradient
+        for ji = 1:(npx+ncx+nox)
+            fx(ji) = fx(ji) + eo.'*Wo*ox(:, ji);
+        end
+        % --------------------------
+        %
+        if (nargout > 2)
+            tmp = sparse(npx+ncx+nox, npx+ncx+nox);
+            tmp(1:npx,1:npx) = fxx;
+            fxx = tmp;
+            % ------------------------------------------------------------
+            % P and C model parameters
+            for ju = 1:npx
+                for jo = (npx+1):(npx+ncx)
+                    fxx(ju, jo) = ...
+                        fxx(ju, jo) + ...
+                        cx(:,ju).'*Wc*cx(:,jo) + ec.'*Wc*cxx(:,kk) + ...
+                        ox(:,ju).'*Wo*ox(:,jo) + eo.'*Wo*oxx(:,kk);
+                    
+                    fxx(jo, ju) = fxx(ju, jo);
+                    kk = kk + 1;
+                end 
+            end
+            % ------------------------------------------------------------
+            % C model parameters
+            for ju = (npx+1):(npx+ncx)
+                for jo = ju:(npx+ncx)
+                    fxx(ju, jo) = ...
+                        fxx(ju, jo) + ...
+                        cx(:,ju).'*Wc*cx(:,jo) + ec.'*Wc*cxx(:,kk) + ...
+                        ox(:,ju).'*Wo*ox(:,jo) + eo.'*Wo*oxx(:,kk);
+   
+                    fxx(jo, ju) = fxx(ju, jo);
+                    kk = kk + 1;
+                end 
+            end
+            % ------------------------------------------------------------
+            % P and O model parameters
+            for ju = 1:npx
+                for jo = (npx+ncx+1):(npx+ncx+nox)
+                    fxx(ju, jo) = ...
+                        fxx(ju, jo) + ...
+                        ox(:,ju).'*Wo*ox(:,jo) + eo.'*Wo*oxx(:,kk);
+
+                    fxx(jo, ju) = fxx(ju, jo);
+                    kk = kk + 1;
+                end 
+            end
+            % ------------------------------------------------------------
+            % C and O model parameters
+            for ju = (npx+1):(npx+ncx)
+                for jo = (npx+ncx+1):(npx+ncx+nox)
+                    fxx(ju, jo) = ...
+                        fxx(ju, jo) + ...
+                        ox(:,ju).'*Wo*ox(:,jo) + eo.'*Wo*oxx(:,kk);
+                    
+                    fxx(jo, ju) = fxx(ju, jo);
+                    kk = kk + 1;
+                end 
+            end
+            % ------------------------------------------------------------
+            % O model parameters
+            for ju = (npx+ncx+1):(npx+ncx+nox)
+                for jo = ju:(npx+ncx+nox)
+                    fxx(ju, jo) = ...
+                        fxx(ju, jo) + ...
+                        ox(:,ju).'*Wo*ox(:,jo) + eo.'*Wo*oxx(:,kk);
+
+                    fxx(jo, ju) = fxx(ju, jo);
                     kk = kk + 1;
                 end 
             end

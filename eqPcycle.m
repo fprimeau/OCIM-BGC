@@ -21,7 +21,9 @@ if (par.opt_sigma == on)
 else
     sigma  = par.sigma;
 end
+parm.sigma = sigma; % pass parameter to C/Si/O models
 
+%
 if (par.opt_kappa_dp == on)
     npx = npx + 1;
     lkappa_dp = x(par.pindx.lkappa_dp);
@@ -29,14 +31,18 @@ if (par.opt_kappa_dp == on)
 else
     kappa_dp  = par.kappa_dp;
 end
+parm.kappa_dp = kappa_dp; % pass parameter to C/Si/O models
 
+%
 if (par.opt_slopep == on)
     npx = npx + 1;
     slopep = x(par.pindx.slopep);
 else
     slopep  = par.slopep;
 end
+parm.slopep = slopep; % pass parameter to C/Si/O models
 
+%
 if (par.opt_interpp == on)
     npx = npx + 1;
     linterpp = x(par.pindx.linterpp);
@@ -44,7 +50,9 @@ if (par.opt_interpp == on)
 else
     interpp  = par.interpp;
 end
+parm.interpp = interpp; % pass parameter to C/Si/O models
 
+%
 if (par.opt_alpha == on)
     npx = npx + 1;
     lalpha = x(par.pindx.lalpha);
@@ -52,7 +60,9 @@ if (par.opt_alpha == on)
 else
     alpha  = par.alpha;
 end
+parm.alpha = alpha; % pass parameter to C/Si/O models
 
+%
 if (par.opt_beta == on)
     npx = npx + 1;
     lbeta = x(par.pindx.lbeta);
@@ -60,6 +70,7 @@ if (par.opt_beta == on)
 else
     beta  = par.beta;
 end
+parm.beta = beta; % pass parameter to C/Si/O models
 parm.npx = npx;
 % fixed parameters
 % sigma    = parm.sigma;
@@ -105,7 +116,7 @@ FFp = mfactor(cell2mat(Fp));
 % solve for P-cycle model state
 P = mfactor(FFp,RHS);
 
-if (nargout>1)
+if (nargout>2)
     %
     % Compute the gradient of the solution wrt the parameters
     %
@@ -174,7 +185,7 @@ end
 DIPx = Px(0*nwet+1:1*nwet,:);
 POPx = Px(1*nwet+1:2*nwet,:);
 DOPx = Px(2*nwet+1:end,:);
-if (nargout>2)
+if (nargout>3)
     %
     % Compute the hessian of the solution wrt the parameters
     %

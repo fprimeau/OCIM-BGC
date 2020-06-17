@@ -1,80 +1,27 @@
-function [C, Cx, parm] = eqCcycle(par, parm, x)
+function [parm, C, Cx, Cxx] = eqCcycle(par, parm, x)
 % ip is the mapping from x to parameter names (see switch below)
 % output: C is model prediction of DIP,POP,and DOP
 % output: F partial derivative of P model w.r.t. model parameters x
 % output: Fxx hessian matrix of P model w.r.t.  model parameters x
 on = true; off = false;
 global GC
-nx = length(x) ;
-parm.nx = nx   ;
 iwet = parm.iwet;
 nwet = parm.nwet;
 
 % unpack the parameters to be optimized
-%sigma
-if (par.opt_sigma == on)
-    lsigma = x(par.pindx.lsigma);
-    parm.sigma  = exp(lsigma);
-else
-    parm.sigma  = par.sigma;
-end
-
-% kappa_dp
-if (par.opt_kappa_dp == on)
-    lkappa_dp = x(par.pindx.lkappa_dp);
-    parm.kappa_dp  = exp(lkappa_dp);
-else
-    parm.kappa_dp  = par.kappa_dp;
-end
-
-% slopep
-if (par.opt_slopep == on)
-    slopep = x(par.pindx.slopep);
-else
-    parm.slopep  = par.slopep;
-end
-
-% interpp
-if (par.opt_interpp == on)
-    linterpp = x(par.pindx.linterpp);
-    parm.interpp  = exp(linterpp);
-else
-    parm.interpp  = par.interpp;
-end
-
-% alpha
-if (par.opt_alpha == on)
-    lalpha = x(par.pindx.lalpha);
-    parm.alpha  = exp(lalpha);
-else
-    parm.alpha  = par.alpha;
-end
-
-% beta
-if (par.opt_beta == on)
-    lbeta = x(par.pindx.lbeta);
-    parm.beta  = exp(lbeta);
-else
-    parm.beta  = par.beta;
-end
-
-% kappa_dc
-if (par.opt_kappa_dc == on)
-    lkappa_dc = x(par.pindx.lkappa_dc);
-    parm.kappa_dc  = exp(lkappa_dc);
-else
-    parm.kappa_dc  = par.kappa_dc;
-end
+ncx = 0; % count number of C model tunable parameters;
 
 % slopec
 if (par.opt_slopec == on)
-    slopec = x(par.pindx.slopec);
+    ncx = ncx + 1;
+    parm.slopec = x(par.pindx.slopec);
 else
     parm.slopec  = par.slopec;
 end
 
 % interpc
 if (par.opt_interpc == on)
+    ncx = ncx + 1;
     linterpc = x(par.pindx.linterpc);
     parm.interpc  = exp(linterpc);
 else
@@ -83,50 +30,77 @@ end
 
 % d
 if (par.opt_d == on)
+    ncx = ncx + 1;
     ld = x(par.pindx.ld);
     parm.d  = exp(ld);
 else
     parm.d = par.d;
 end
 
+% kappa_dc
+if (par.opt_kappa_dc == on)
+    ncx = ncx + 1;
+    lkappa_dc = x(par.pindx.lkappa_dc);
+    parm.kappa_dc  = exp(lkappa_dc);
+else
+    parm.kappa_dc  = par.kappa_dc;
+end
+
 % RR
 if (par.opt_RR == on)
+    ncx = ncx + 1;
     lRR = x(par.pindx.lRR);
     parm.RR = exp(lRR);
 else
     parm.RR = par.RR;
 end
 
+% cc
+if (par.opt_cc)
+    ncx = ncx + 1;
+    lcc = x(par.pindx.lcc);
+    parm.cc = exp(lcc);
+else
+    parm.cc = par.cc;
+end 
+
+% dd
+if (par.opt_dd)
+    ncx = ncx + 1;
+    ldd = x(par.pindx.ldd);
+    parm.dd = exp(ldd);
+else
+    parm.dd = par.dd;
+end
+% return number count back to neglogpost
+parm.ncx = ncx;
+%
+
 options.iprint = 1;
 options.atol = 5e-10 ;
 options.rtol = 5e-10 ;
 
-DIC = GC(0*nwet+1:1*nwet) ; 
-POC = GC(1*nwet+1:2*nwet) ;
-DOC = GC(2*nwet+1:3*nwet) ;
-CaC = GC(3*nwet+1:4*nwet) ;
-X0  = [DIC;POC;DOC;CaC]   ;
-
+X0  = GC;
 [C,ierr] = nsnew(X0,@(X) C_eqn(X,parm,x,par),options) ;
-
 if (ierr ~=0)
     fprintf('eqCcycle did not converge.\n') ;
     keyboard
-    else
-        % reset the global variable for the next call eqCcycle
-        GC = real(C) + 1e-7*randn(4*nwet,1);
-    if nargout>1     
-        %
-        % Compute the gradient of the solution wrt the parameters
-        [F,FD,Cx] = C_eqn(C,parm,x,par);
-        %
-    end
+else
+    % reset the global variable for the next call eqCcycle
+    GC = real(C) + 1e-7*randn(4*nwet,1);
+    X0 = GC;
+    F = C_eqn(C,parm,x,par);
+    % test if norm of F small enough, if now rerun nsnew;
+    if norm(F) > 1e-12
+        [C,ierr] = nsnew(X0,@(X) C_eqn(X,parm,x,par),options);
+    end 
+    %
+    [F,FD,Cx,Cxx,parm] = C_eqn(C,parm,x,par);
 end
-
-function [F,FD,Cx] = C_eqn(X,parm,x,par)    
+%% --------------------------------------------------------------
+function [F,FD,Cx,Cxx,parm] = C_eqn(X,parm,x,par)    
 % unpack some useful stuff
 on = true; off = false;
-nx    = parm.nx    ;
 grd   = parm.grd   ;
 dVt   = parm.dVt   ;
 M3d   = parm.M3d   ;
@@ -139,12 +113,13 @@ DIC   = X(0*nwet+1:1*nwet) ;
 POC   = X(1*nwet+1:2*nwet) ;
 DOC   = X(2*nwet+1:3*nwet) ;
 CaC   = X(3*nwet+1:4*nwet) ;
-
+%
+PO4 = parm.po4obs(iwet);
+%
 % fixed parameters
-kappa_p = parm.kappa_p ;  
-sigma   = parm.sigma   ;
-
+kappa_p = parm.kappa_p ;
 % parameters need to be optimized
+sigma    = parm.sigma   ;
 d        = parm.d;
 RR       = parm.RR;
 slopec   = parm.slopec;
@@ -152,158 +127,1048 @@ interpc  = parm.interpc;
 kappa_dc = parm.kappa_dc;
 alpha    = parm.alpha ;
 beta     = parm.beta  ;
+cc       = parm.cc;
+dd       = parm.dd;
 
+C2P = 1./(cc*PO4 + dd);
+parm.C2P = C2P;
 % particle flux div_rergence [s^-1];
 PFDa = buildPFD_CaCO3(parm,grd,M3d);
 PFDc = buildPFD(M3d,grd,parm,slopec,interpc);
 % Air-Sea gas exchange %%%%%%%%%%%%%%%%%%%%%
-[JgDIC,KG] = Fsea2air(parm,DIC);
+[JgDIC,KG,KGG] = Fsea2air(parm,DIC);
 
 % biological DIC uptake operator
-[G,Gx] = uptake(par, parm);
+G = uptake_C(par, parm); parm.G = G;
+kappa_g = parm.kappa_g;
+DICbar = nansum(DIC.*parm.dVt(iwet))./sum(parm.dVt(iwet));
 
-eq1 =   (1 + RR)*G + TRdiv * DIC - kappa_dc * DOC - kappa_p*CaC - JgDIC;
-eq2 = -(1-sigma)*G + (PFDc + kappa_p*I)   *   POC;
-eq3 =     -sigma*G + (TRdiv + kappa_dc*I) *   DOC - kappa_p*POC;
-eq4 =        -RR*G + (PFDa  + kappa_p*I)  *   CaC;
+eq1 =     (1+RR)*G*C2P + TRdiv*DIC - kappa_dc*DOC - kappa_p*CaC - ...
+          JgDIC;
+% eq1 =     (1+RR)*G*C2P + TRdiv*DIC - kappa_dc*DOC - kappa_p*CaC - ...
+          % kappa_g*(DIC - DICbar);
+eq2 = -(1-sigma)*G*C2P + (PFDc+kappa_p*I)*POC;
+eq3 =     -sigma*G*C2P + (TRdiv+kappa_dc*I)*DOC - kappa_p*POC;
+eq4 =        -RR*G*C2P + (PFDa+kappa_p*I)*CaC;
 
 F   = [eq1;eq2;eq3;eq4];
 
-% construct the LHS matrix for the offline model
-% disp('Preparing LHS and RHS matrix:')
-
-% colum 1 dFdDIC
-Jc{1,1} = TRdiv - KG;
-Jc{2,1} = 0*I;
-Jc{3,1} = 0*I;
-Jc{4,1} = 0*I;
-
-% colum 2 dFdPOC
-Jc{1,2} = 0*I;
-Jc{2,2} = PFDc+kappa_p*I;
-Jc{3,2} = -kappa_p*I;
-Jc{4,2} = 0*I;
-
-% colum 3 dFdDOC
-Jc{1,3} = -kappa_dc*I;
-Jc{2,3} = 0*I;
-Jc{3,3} = TRdiv+kappa_dc*I;
-Jc{4,3} = 0*I;
-
-% colum 4 dFdCaC
-Jc{1,4} = -kappa_p*I;
-Jc{2,4} = 0*I;
-Jc{3,4} = 0*I;
-Jc{4,4} = PFDa+kappa_p*I;
-
-% factorize Jacobian matrix
-FD = mfactor(cell2mat(Jc));
-
-if nargout > 2
+if nargout > 1
+    % construct the LHS matrix for the offline model
+    % disp('Preparing LHS and RHS matrix:')
     
-    Z = zeros(nwet,1);
+    % colum 1 dFdDIC
+    Jc{1,1} = TRdiv - KG;
+    Jc{2,1} = 0*I;
+    Jc{3,1} = 0*I;
+    Jc{4,1} = 0*I;
+    
+    % colum 2 dFdPOC
+    Jc{1,2} = 0*I;
+    Jc{2,2} = PFDc+kappa_p*I;
+    Jc{3,2} = -kappa_p*I;
+    Jc{4,2} = 0*I;
+    
+    % colum 3 dFdDOC
+    Jc{1,3} = -kappa_dc*I;
+    Jc{2,3} = 0*I;
+    Jc{3,3} = TRdiv+kappa_dc*I;
+    Jc{4,3} = 0*I;
+    
+    % colum 4 dFdCaC
+    Jc{1,4} = -kappa_p*I;
+    Jc{2,4} = 0*I;
+    Jc{3,4} = 0*I;
+    Jc{4,4} = PFDa+kappa_p*I;
+    
+    % factorize Jacobian matrix
+    FD = mfactor(cell2mat(Jc));
+end 
+
+%% ----------------------------------------------------
+if nargout > 2
+    pindx = par.pindx;
+    Z = sparse(nwet,1);
+    dC2Pdcc = -PO4./(cc*PO4 + dd).^2;
+    dC2Pddd = -1./(cc*PO4 + dd).^2;
+    parm.dC2Pdcc = dC2Pdcc;
+    parm.dC2Pddd = dC2Pddd;
+    [~,Gx] = uptake_C(par,parm);
+    parm.Gx = Gx;
+    % sigma
+    if (par.opt_sigma == on)
+        tmp = [Z; ...
+               -sigma*G*C2P; ...
+               sigma*G*C2P; ...
+               Z] + ...
+              [-(1+RR)*d0(Gx(:,pindx.lsigma))*C2P; ...
+               (1-sigma)*d0(Gx(:,pindx.lsigma))*C2P; ...
+               sigma*d0(Gx(:,pindx.lsigma))*C2P; ...
+               RR*d0(Gx(:,pindx.lsigma))*C2P];
+        
+        Cx(:,pindx.lsigma) = mfactor(FD, tmp);
+    end
+    
+    % kappa_dp
+    if (par.opt_kappa_dp == on)
+        tmp = [-(1+RR)*d0(Gx(:,pindx.lkappa_dp))*C2P ; ...
+               (1-sigma)*d0(Gx(:,pindx.lkappa_dp))*C2P; ...
+               sigma*d0(Gx(:,pindx.lkappa_dp))*C2P; ...
+               RR*d0(Gx(:,pindx.lkappa_dp))*C2P];
+        
+        Cx(:,pindx.lkappa_dp) = mfactor(FD, tmp);
+    end
+
+    % slopep
+    if (par.opt_slopep == on)
+        tmp = [-(1+RR)*d0(Gx(:,pindx.slopep))*C2P; ...
+               (1-sigma)*d0(Gx(:,pindx.slopep))*C2P; ...
+               sigma*d0(Gx(:,pindx.slopep))*C2P; ...
+               RR*d0(Gx(:,pindx.slopep))*C2P];
+        
+        Cx(:,pindx.slopep) = mfactor(FD, tmp);
+    end
     
     % interpp
     if (par.opt_interpp == on)
-        tmp = [(1+RR)*Gx(:,par.pindx.linterpp) ;...
-               -(1-sigma)*Gx(:,par.pindx.linterpp) ;...
-               -sigma*Gx(:,par.pindx.linterpp)     ;...
-               -RR*Gx(:,par.pindx.linterpp)]   ;
-        Cx(:,par.pindx.linterpp) = mfactor(FD, -tmp);
+        tmp = [-(1+RR)*d0(Gx(:,pindx.linterpp))*C2P;...
+               (1-sigma)*d0(Gx(:,pindx.linterpp))*C2P;...
+               sigma*d0(Gx(:,pindx.linterpp))*C2P;...
+               RR*d0(Gx(:,pindx.linterpp))*C2P];
+
+        Cx(:,pindx.linterpp) = mfactor(FD, tmp);
     end
     
-    % slopep
-    if (par.opt_slopep == on)
-        tmp = [(1+RR)*Gx(:,par.pindx.slopp) ;...
-               -(1-sigma)*Gx(:,par.pindx.slopp) ;...
-               -sigma*Gx(:,par.pindx.slopp)     ;...
-               -RR*Gx(:,par.pindx.slopp)]   ;
-        Cx(:,par.pindx.slopp) = mfactor(FD, -tmp);
+    % alpha
+    if (par.opt_alpha == on)
+        tmp = [-(1+RR)*d0(Gx(:,pindx.lalpha))*C2P; ...
+               (1-sigma)*d0(Gx(:,pindx.lalpha))*C2P; ...
+               sigma*d0(Gx(:,pindx.lalpha))*C2P; ...
+               RR*d0(Gx(:,pindx.lalpha))*C2P];
+
+        Cx(:,pindx.lalpha) = mfactor(FD, tmp);
+    end
+    
+    % beta
+    if (par.opt_beta == on)
+        tmp = [-(1+RR)*d0(Gx(:,pindx.lbeta))*C2P;...
+               (1-sigma)*d0(Gx(:,pindx.lbeta))*C2P;...
+               sigma*d0(Gx(:,pindx.lbeta))*C2P;...
+               RR*d0(Gx(:,pindx.lbeta))*C2P];
+        
+        Cx(:,pindx.lbeta) = mfactor(FD, tmp);
+    end
+    % -------------------- C parameters ------------------
+    % slopec
+    if (par.opt_slopec == on)
+        [~,vout] = buildPFD(M3d,grd,parm,slopec,interpc);
+        dPFDdslope = vout.dPFDdslope;
+        tmp = [Z ; ...
+               -dPFDdslope*POC; ...
+               Z ; ...
+               Z];
+        
+        Cx(:,pindx.slopec) = mfactor(FD, tmp);
     end
     
     % interpc
     if (par.opt_interpc == on)
         [~,vout] = buildPFD(M3d,grd,parm,slopec,interpc);
         dPFDdinterp = vout.dPFDdinterp;
-        tmp = interpc * ...
-              [Z ; ...
-               dPFDdinterp*POC ; ...
-               Z ; ...
-               Z];
-        Cx(:,par.pindx.linterpc) = mfactor(FD, -tmp);
-    end
-    
-    % slopec
-     if (par.opt_slopec == on)
-        tmp = [Z ; ...
-               dPFDdslope*POC ; ...
-               Z ; ...
-               Z];
-        Cx(:,par.pindx.slopec) = mfactor(FD, -tmp);
-    end
-    
-    % sigma
-    if (par.opt_sigma == on)
-        tmp =  [(1+RR)*Gx(:,par.pindx.lsigma) ;...
-               -(1-sigma)*Gx(:,par.pindx.lsigma) + G;...
-               -sigma*Gx(:,par.pindx.lsigma) - G  ;...
-               -RR*Gx(:,par.pindx.lsigma)]   ;
-        Cx(:,par.pindx.lsigma) = mfactor(FD, -tmp);
-    end
-    
-    % kappa_dp
-    if (par.opt_kappa_dp == on)
-        tmp = [(1+RR)*Gx(:,par.pindx.lkappa_dp) ;...
-               -(1-sigma)*Gx(:,par.pindx.lkappa_dp) ;...
-               -sigma*Gx(:,par.pindx.lkappa_dp)     ;...
-               -RR*Gx(:,par.pindx.lkappa_dp)]   ;
-        Cx(:,par.pindx.lkappa_dp) = mfactor(FD, -tmp);
-    end
-    
-    % alpha
-    if (par.opt_alpha == on)
-        tmp = [(1+RR)*Gx(:,par.pindx.lalpha) ;...
-               -(1-sigma)*Gx(:,par.pindx.lalpha) ;...
-               -sigma*Gx(:,par.pindx.lalpha)     ;...
-               -RR*Gx(:,par.pindx.lalpha)]   ;
-        Cx(:,par.pindx.lalpha) = mfactor(FD, -tmp);
-    end
-    
-    % beta
-    if (par.opt_beta == on)
-        tmp = [(1+RR)*Gx(:,par.pindx.lbeta) ;...
-               -(1-sigma)*Gx(:,par.pindx.lbeta) ;...
-               -sigma*Gx(:,par.pindx.lbeta)     ;...
-               -RR*Gx(:,par.pindx.lbeta)]   ;
-        Cx(:,par.pindx.lbeta) = mfactor(FD, -tmp);
+        tmp = interpc*[Z ; ...
+                       -dPFDdinterp*POC; ...
+                       Z ; ...
+                       Z];
+        
+        Cx(:,pindx.linterpc) = mfactor(FD, tmp);
     end
     
     % d
     if (par.opt_d == on)
         [~,dPFDdd] = buildPFD_CaCO3(parm,grd,M3d);
-        tmp = d * [Z ; ...
-                   Z ; ...
-                   Z ; ...
-                   dPFDdd*CaC];
-        Cx(:,par.pindx.ld) = mfactor(FD, -tmp);
+        tmp = d*[Z; Z; Z;  -dPFDdd*CaC];
+        
+        Cx(:,pindx.ld) = mfactor(FD, tmp);
     end
     
     % kappa_dc
     if (par.opt_kappa_dc == on)
-        tmp = kappa_dc * [-DOC ; ...
-                          Z ; ...
-                          DOC ; ...
-                          Z] ;
-        Cx(:,par.pindx.lkappa_dc) = mfactor(FD, -tmp);
+        tmp = kappa_dc*[DOC; Z; -DOC; Z];
+        
+        Cx(:,pindx.lkappa_dc) = mfactor(FD, tmp);
     end
     
     % RR
     if (par.opt_RR == on)
-        tmp = RR* [G ; ...
-                   Z ; ...
-                   Z ; ...
-                   -G] ;
-        Cx(:,par.pindx.lRR) = mfactor(FD, -tmp);
-    end            
-end
+        tmp = RR*[-G*C2P; ...
+                  Z ; ...
+                  Z ; ...
+                  G*C2P];
 
+        Cx(:,pindx.lRR) = mfactor(FD, tmp);
+    end
+
+    % cc
+    if (par.opt_cc == on)
+        tmp = cc*[-(1+RR)*G*dC2Pdcc; ...
+                  (1-sigma)*G*dC2Pdcc; ...
+                  sigma*G*dC2Pdcc; ...
+                  RR*G*dC2Pdcc];
+        
+        Cx(:,pindx.lcc) = mfactor(FD, tmp);
+    end
+    
+    % dd
+    if (par.opt_dd == on)
+        tmp = dd*[-(1+RR)*G*dC2Pddd; ...
+                  (1-sigma)*G*dC2Pddd; ...
+                  sigma*G*dC2Pddd; ...
+                  RR*G*dC2Pddd];
+
+        Cx(:,pindx.ldd) = mfactor(FD, tmp);
+    end
+end
+%% --------------------------------------------------------------
+if nargout > 3
+    d2C2Pdcc2 = (2*PO4.^2)./(cc*PO4 + dd).^3;
+    d2C2Pddd2 = 2./(cc*PO4 + dd).^3;
+    d2C2Pdccddd = (2*PO4)./(cc*PO4 + dd).^3;
+    [~,~,Gxx] = uptake_C(par,parm);
+    parm.Gxx = Gxx;
+    DICx = Cx(0*nwet+1:1*nwet,:);
+    POCx = Cx(1*nwet+1:2*nwet,:);
+    DOCx = Cx(2*nwet+1:3*nwet,:);
+    CaCx = Cx(3*nwet+1:end,:);
+    npx = parm.npx;
+    % ------------------------------------------------------
+    % P model only parameters
+    kk = 0;
+    for jj = 1:npx
+        for jk = jj:npx
+            kk = kk + 1;
+            % sigma sigma
+            if (par.opt_sigma & jj == jk & jj == pindx.lsigma)
+                tmp = sigma*[Z; ...
+                             -G*C2P - 2*d0(Gx(:,jj))*C2P;...
+                             G*C2P + 2*d0(Gx(:,jj))*C2P;...
+                             Z] + ...
+                      [-(1+RR)*d0(Gxx(:,kk))*C2P; ...
+                       (1-sigma)*d0(Gxx(:,kk))*C2P; ...
+                       sigma*d0(Gxx(:,kk))*C2P; ...
+                       RR*d0(Gxx(:,kk))*C2P];
+                
+                Cxx(:,kk) = mfactor(FD, tmp);
+                %pairs not assciated with sigma;
+            elseif ((par.opt_sigma) & (jj ~= pindx.lsigma & jk ...
+                                       ~= pindx.lsigma))
+                tmp = [-(1+RR)*d0(Gxx(:,kk))*C2P; ...
+                       (1-sigma)*d0(Gxx(:,kk))*C2P; ...
+                       sigma*d0(Gxx(:,kk))*C2P; ...
+                       RR*d0(Gxx(:,kk))*C2P]; % + ...
+                
+                Cxx(:,kk) = mfactor(FD, tmp);
+                % sigma is off
+            elseif (par.opt_sigma == off)
+                tmp = [-(1+RR)*d0(Gxx(:,kk))*C2P; ...
+                       (1-sigma)*d0(Gxx(:,kk))*C2P; ...
+                       sigma*d0(Gxx(:,kk))*C2P; ...
+                       RR*d0(Gxx(:,kk))*C2P]; % + ...
+                
+                Cxx(:,kk) = mfactor(FD, tmp);
+                % sigma foo
+            else
+                tmp = [Z;  -sigma*d0(Gx(:,jk))*C2P; ...
+                       sigma*d0(Gx(:,jk))*C2P;   Z] + ...
+                      [-(1+RR)*d0(Gxx(:,kk))*C2P; ...
+                       (1-sigma)*d0(Gxx(:,kk))*C2P; ...
+                       sigma*d0(Gxx(:,kk))*C2P; ...
+                       RR*d0(Gxx(:,kk))*C2P]; % + ...
+                
+                Cxx(:,kk) = mfactor(FD, tmp);
+            end
+        end
+    end
+    % ------------------------------------------------------
+    % P and  C model parameters
+    % sigma slopec
+    if (par.opt_sigma & par.opt_slopec)
+        kk = kk + 1;
+        tmp =  [Z ; ...
+                -dPFDdslope*POCx(:,pindx.lsigma) ; ...
+                Z ; ...
+                Z];
+        
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % sigma interpc
+    if (par.opt_sigma & par.opt_interpc)
+        kk = kk + 1;
+        tmp = interpc * ...
+              [Z ; ...
+               -dPFDdinterp*POCx(:,pindx.lsigma); ...
+               Z ; ...
+               Z];
+        
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % sigma d
+    if (par.opt_sigma & par.opt_d)
+        kk = kk + 1;
+        tmp = d*[Z ; ...
+                 Z ; ...
+                 Z ; ...
+                 -dPFDdd*CaCx(:,pindx.lsigma)];
+        
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % sigma kappa_dc
+    if (par.opt_sigma & par.opt_kappa_dc)
+        kk = kk + 1;
+        tmp = kappa_dc*[DOCx(:,pindx.lsigma); ...
+                        Z; ...
+                        -DOCx(:,pindx.lsigma); ...
+                        Z];
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % sigma RR
+    if (par.opt_sigma & par.opt_RR)
+        kk = kk + 1;
+        tmp = RR* [-d0(Gx(:,pindx.lsigma))*C2P; ...
+                   Z ; ...
+                   Z ; ...
+                   d0(Gx(:,pindx.lsigma))*C2P];
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % sigma cc
+    if (par.opt_sigma & par.opt_cc)
+        kk = kk + 1;
+        tmp = cc*[-(1+RR)*d0(Gx(:,pindx.lsigma))*dC2Pdcc; ...
+                  -sigma*G*dC2Pdcc+(1-sigma)*d0(Gx(:,pindx.lsigma))*dC2Pdcc; ...
+                  sigma*G*dC2Pdcc+sigma*d0(Gx(:,pindx.lsigma))*dC2Pdcc; ...
+                  RR*d0(Gx(:,pindx.lsigma))*dC2Pdcc];
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % sigma dd
+    if (par.opt_sigma & par.opt_dd)
+        kk = kk + 1;
+        tmp = dd*[-(1+RR)*d0(Gx(:,pindx.lsigma))*dC2Pddd; ...
+                  -sigma*G*dC2Pddd+(1-sigma)*d0(Gx(:,pindx.lsigma))*dC2Pddd; ...
+                  sigma*G*dC2Pddd+sigma*d0(Gx(:,pindx.lsigma))*dC2Pddd; ...
+                  RR*d0(Gx(:,pindx.lsigma))*dC2Pddd];
+        
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % kappa_dp slopec
+    if (par.opt_kappa_dp & par.opt_slopec)
+        kk = kk + 1;
+        tmp =  [Z ; ...
+                -dPFDdslope*POCx(:,pindx.lkappa_dp); ...
+                Z ; ...
+                Z];
+        
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % kappa_dp interpc
+    if (par.opt_kappa_dp & par.opt_interpc)
+        kk = kk + 1;
+        tmp = interpc*[Z ; ...
+                       -dPFDdinterp*POCx(:,pindx.lkappa_dp); ...
+                       Z ; ...
+                       Z];
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % kappa_dp d
+    if (par.opt_kappa_dp & par.opt_d)
+        kk = kk + 1;
+        tmp = d*[Z ; ...
+                 Z ; ...
+                 Z ; ...
+                 -dPFDdd*CaCx(:,pindx.lkappa_dp)];
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % kappa_dp kappa_dc
+    if (par.opt_kappa_dp & par.opt_kappa_dc)
+        kk = kk + 1;
+        tmp = kappa_dc*[DOCx(:,pindx.lkappa_dp); ...
+                        Z ; ...
+                        -DOCx(:,pindx.lkappa_dp); ...
+                        Z];
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % kappa_dp RR
+    if (par.opt_kappa_dp & par.opt_RR)
+        kk = kk + 1;
+        tmp = RR* [-d0(Gx(:,pindx.lkappa_dp))*C2P; ...
+                   Z ; ...
+                   Z ; ...
+                   d0(Gx(:,pindx.lkappa_dp))*C2P];
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % kappa_dp cc
+    if (par.opt_kappa_dp & par.opt_cc)
+        kk = kk + 1;
+        tmp = cc*[-(1+RR)*d0(Gx(:,pindx.lkappa_dp))*dC2Pdcc; ...
+                  (1-sigma)*d0(Gx(:,pindx.lkappa_dp))*dC2Pdcc; ...
+                  sigma*d0(Gx(:,pindx.lkappa_dp))*dC2Pdcc; ...
+                  RR*d0(Gx(:,pindx.lkappa_dp))*dC2Pdcc];
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % kappa_dp dd
+    if (par.opt_kappa_dp & par.opt_dd)
+        kk = kk + 1;
+        tmp = dd*[-(1+RR)*d0(Gx(:,pindx.lkappa_dp))*dC2Pddd; ...
+                  (1-sigma)*d0(Gx(:,pindx.lkappa_dp))*dC2Pddd; ...
+                  sigma*d0(Gx(:,pindx.lkappa_dp))*dC2Pddd; ...
+                  RR*d0(Gx(:,pindx.lkappa_dp))*dC2Pddd];
+        
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % slopep slopec
+    if (par.opt_slopep & par.opt_slopec)
+        kk = kk + 1;
+        tmp = [Z ; ...
+               -dPFDdslope*POCx(:,pindx.slopep); ...
+               Z ; ...
+               Z];
+        
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % slopep interpc
+    if (par.opt_slopep & par.opt_interpc)
+        kk = kk + 1;
+        tmp = interpc*[Z ; ...
+                       -dPFDdinterp*POCx(:,pindx.slopep); ...
+                       Z ; ...
+                       Z];
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % slopep d
+    if (par.opt_slopep & par.opt_d)
+        kk = kk + 1;
+        tmp = d*[Z ; ...
+                 Z ; ...
+                 Z ; ...
+                 -dPFDdd*CaCx(:,pindx.slopep)];
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % slopep kappa_dc
+    if (par.opt_slopep & par.opt_kappa_dc)
+        kk = kk + 1;
+        tmp = kappa_dc*[DOCx(:,pindx.slopep); ...
+                        Z; ...
+                        -DOCx(:,pindx.slopep); ...
+                        Z];
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % slopep RR
+    if (par.opt_slopep & par.opt_RR)
+        kk = kk + 1;
+        tmp = RR*[-d0(Gx(:,pindx.slopep))*C2P; ...
+                  Z ; ...
+                  Z ; ...
+                  d0(Gx(:,pindx.slopep))*C2P];
+        
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % slopep cc
+    if (par.opt_slopep & par.opt_cc)
+        kk = kk + 1;
+        tmp = cc*[-(1+RR)*d0(Gx(:,pindx.slopep))*dC2Pdcc; ...
+                  (1-sigma)*d0(Gx(:,pindx.slopep))*dC2Pdcc; ...
+                  sigma*d0(Gx(:,pindx.slopep))*dC2Pdcc; ...
+                  RR*d0(Gx(:,pindx.slopep))*dC2Pdcc];
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % slopep dd
+    if (par.opt_slopep & par.opt_dd)
+        kk = kk + 1;
+        tmp = dd*[-(1+RR)*d0(Gx(:,pindx.slopep))*dC2Pddd; ...
+                  (1-sigma)*d0(Gx(:,pindx.slopep))*dC2Pddd; ...
+                  sigma*d0(Gx(:,pindx.slopep))*dC2Pddd; ...
+                  RR*d0(Gx(:,pindx.slopep))*dC2Pddd];
+        
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % interpp slopec
+    if (par.opt_interpp & par.opt_slopec)
+        kk = kk + 1;
+        tmp = [Z ; ...
+               -dPFDdslope*POCx(:,pindx.linterpp); ...
+               Z ; ...
+               Z];
+        
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % interpp interpc
+    if (par.opt_interpp & par.opt_interpc)
+        kk = kk + 1;
+        tmp = interpc*[Z ; ...
+                       -dPFDdinterp*POCx(:,pindx.linterpp); ...
+                       Z ; ...
+                       Z];
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % interpp d
+    if (par.opt_interpp & par.opt_d)
+        kk = kk + 1;
+        tmp = d*[Z ; ...
+                 Z ; ...
+                 Z ; ...
+                 -dPFDdd*CaCx(:,pindx.linterpp)];
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % interpp kappa_dc
+    if (par.opt_interpp & par.opt_kappa_dc)
+        kk = kk + 1;
+        tmp = kappa_dc*[DOCx(:,pindx.linterpp); ...
+                        Z ; ...
+                        -DOCx(:,pindx.linterpp); ...
+                        Z];
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % interpp RR
+    if (par.opt_interpp & par.opt_RR)
+        kk = kk + 1;
+        tmp = RR*[-d0(Gx(:,pindx.linterpp))*C2P; ...
+                  Z ; ...
+                  Z ; ...
+                  d0(Gx(:,pindx.linterpp))*C2P];
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % interpp cc
+    if (par.opt_interpp & par.opt_cc)
+        kk = kk + 1;
+        tmp = cc*[-(1+RR)*d0(Gx(:,pindx.linterpp))*dC2Pdcc; ...
+                  (1-sigma)*d0(Gx(:,pindx.linterpp))*dC2Pdcc;...
+                  sigma*d0(Gx(:,pindx.linterpp))*dC2Pdcc;...
+                  RR*d0(Gx(:,pindx.linterpp))*dC2Pdcc];
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % interpp dd
+    if (par.opt_interpp & par.opt_dd)
+        kk = kk + 1;
+        tmp = dd*[-(1+RR)*d0(Gx(:,pindx.linterpp))*dC2Pddd; ...
+                  (1-sigma)*d0(Gx(:,pindx.linterpp))*dC2Pddd;...
+                  sigma*d0(Gx(:,pindx.linterpp))*dC2Pddd;...
+                  RR*d0(Gx(:,pindx.linterpp))*dC2Pddd];
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % alpha slopec
+    if (par.opt_alpha & par.opt_slopec)
+        kk = kk + 1;
+        tmp = [Z ; ...
+               -dPFDdslope*POCx(:,pindx.lalpha); ...
+               Z ; ...
+               Z];
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % alpha interpc
+    if (par.opt_alpha & par.opt_interpc)
+        kk = kk + 1;
+        tmp = interpc* ...
+              [Z ; ...
+               -dPFDdinterp*POCx(:,pindx.lalpha); ...
+               Z ; ...
+               Z];
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % alpha d
+    if (par.opt_alpha & par.opt_d)
+        kk = kk + 1;
+        tmp = d*[Z ; ...
+                 Z ; ...
+                 Z ; ...
+                 -dPFDdd*CaCx(:,pindx.lalpha)];
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % alpha kappa_dc
+    if (par.opt_alpha & par.opt_kappa_dc)
+        kk = kk + 1;
+        tmp = kappa_dc*[DOCx(:,pindx.lalpha); ...
+                        Z ; ...
+                        -DOCx(:,pindx.lalpha); ...
+                        Z];
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % alpha RR
+    if (par.opt_alpha & par.opt_RR)
+        kk = kk + 1;
+        tmp = RR* [-d0(Gx(:,pindx.lalpha))*C2P; ...
+                   Z ; ...
+                   Z ; ...
+                   d0(Gx(:,pindx.lalpha))*C2P];
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % alpha cc
+    if (par.opt_alpha & par.opt_cc)
+        kk = kk + 1;
+        tmp = cc*[-(1+RR)*d0(Gx(:,pindx.lalpha))*dC2Pdcc; ...
+                  (1-sigma)*d0(Gx(:,pindx.lalpha))*dC2Pdcc; ...
+                  sigma*d0(Gx(:,pindx.lalpha))*dC2Pdcc; ...
+                  RR*d0(Gx(:,pindx.lalpha))*dC2Pdcc];
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % alpha dd
+    if (par.opt_alpha & par.opt_dd)
+        kk = kk + 1;
+        tmp = dd*[-(1+RR)*d0(Gx(:,pindx.lalpha))*dC2Pddd; ...
+                  (1-sigma)*d0(Gx(:,pindx.lalpha))*dC2Pddd; ...
+                  sigma*d0(Gx(:,pindx.lalpha))*dC2Pddd; ...
+                  RR*d0(Gx(:,pindx.lalpha))*dC2Pddd];
+        
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+    
+    % beta slopec
+    if (par.opt_beta & par.opt_slopec)
+        kk = kk + 1;
+        tmp = [Z ; ...
+               -dPFDdslope*POCx(:,pindx.lbeta); ...
+               Z ; ...
+               Z];
+        
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % beta interpc
+    if (par.opt_beta & par.opt_interpc)
+        kk = kk + 1;
+        tmp = interpc* ...
+              [Z ; ...
+               -dPFDdinterp*POCx(:,pindx.lbeta); ...
+               Z ; ...
+               Z];
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+    
+    % beta d
+    if (par.opt_beta & par.opt_d)
+        kk = kk + 1;
+        tmp = d*[Z ; ...
+                 Z ; ...
+                 Z ; ...
+                 -dPFDdd*CaCx(:,pindx.lbeta)];
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % beta kappa_dc
+    if (par.opt_beta & par.opt_kappa_dc)
+        kk = kk + 1;
+        tmp = kappa_dc*[DOCx(:,pindx.lbeta); ...
+                        Z ; ...
+                        -DOCx(:,pindx.lbeta); ...
+                        Z];
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % beta RR
+    if (par.opt_beta & par.opt_RR)
+        kk = kk + 1;
+        tmp = RR*[-d0(Gx(:,pindx.lbeta))*C2P; ...
+                  Z ; ...
+                  Z ; ...
+                  d0(Gx(:,pindx.lbeta))*C2P];
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % beta cc
+    if (par.opt_beta & par.opt_cc)
+        kk = kk + 1;
+        tmp = cc*[-(1+RR)*d0(Gx(:,pindx.lbeta))*dC2Pdcc; ...
+                  (1-sigma)*d0(Gx(:,pindx.lbeta))*dC2Pdcc; ...
+                  sigma*d0(Gx(:,pindx.lbeta))*dC2Pdcc; ...
+                  RR*d0(Gx(:,pindx.lbeta))*dC2Pdcc];
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % beta dd
+    if (par.opt_beta & par.opt_dd)
+        kk = kk + 1;
+        tmp = dd*[-(1+RR)*d0(Gx(:,pindx.lbeta))*dC2Pddd; ...
+                  (1-sigma)*d0(Gx(:,pindx.lbeta))*dC2Pddd; ...
+                  sigma*d0(Gx(:,pindx.lbeta))*dC2Pddd; ...
+                  RR*d0(Gx(:,pindx.lbeta))*dC2Pddd];
+        
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % slopec slopec
+    if (par.opt_slopec)
+        kk = kk + 1;
+        [~,vout] = buildPFD(M3d,grd,parm,slopec,interpc);
+        d2PFDdslope2 = vout.d2PFDdslope2;
+        tmp = [Z ; ...
+               -d2PFDdslope2*POC-2*dPFDdslope*POCx(:,pindx.slopec);
+               Z ; ...
+               Z];
+        
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % slopec interpc
+    if (par.opt_slopec & par.opt_interpc)
+        kk = kk + 1;
+        [~,vout] = buildPFD(M3d,grd,parm,slopec,interpc);
+        d2PFDdslopedinterp = vout.d2PFDdslopedinterp;
+        tmp =  [Z ; ...
+                [-interpc*d2PFDdslopedinterp*POC- ...
+                 dPFDdslope*POCx(:,pindx.linterpc) - ...
+                 interpc*dPFDdinterp*POCx(:,pindx.slopec)];
+                Z; Z];
+        
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+    
+    % slopec d
+    if (par.opt_slopec & par.opt_d)
+        kk = kk + 1;
+        tmp = [Z ; ...
+               -dPFDdslope*POCx(:,pindx.ld); ...
+               Z ; ...
+               -d*dPFDdd*CaCx(:,pindx.slopec)];
+        
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % slopec kappa_dc
+    if (par.opt_slopec & par.opt_kappa_dc)
+        kk = kk + 1;
+        tmp = [kappa_dc*DOCx(:,pindx.slopec) ; ...
+               -dPFDdslope*POCx(:,pindx.lkappa_dc); ...
+               -kappa_dc*DOCx(:,pindx.slopec) ; ...
+               Z];
+        
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % slopec RR
+    if (par.opt_slopec & par.opt_RR)
+        kk = kk + 1;
+        tmp = [Z ; ...
+               -dPFDdslope*POCx(:,pindx.lRR); ...
+               Z ; ...
+               Z];
+        
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % slopec cc
+    if (par.opt_slopec & par.opt_cc)
+        kk = kk + 1;
+        tmp = [Z ; ...
+               -dPFDdslope*POCx(:,pindx.lcc); ...
+               Z ; ...
+               Z];
+        
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % slopec dd
+    if (par.opt_slopec & par.opt_dd)
+        kk = kk + 1;
+        tmp = [Z ; ...
+               -dPFDdslope*POCx(:,pindx.ldd); ...
+               Z ; ...
+               Z];
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % interpc interpc
+    if (par.opt_interpc)
+        kk = kk + 1;
+        [~,vout] = buildPFD(M3d,grd,parm,slopec,interpc);
+        d2PFDdinterp2 = vout.d2PFDdinterp2;        
+        tmp = interpc*[Z; ...
+                       -dPFDdinterp*POC-interpc*d2PFDdinterp2*POC- ...
+                       2*dPFDdinterp*POCx(:,pindx.linterpc); 
+                       Z ; ...
+                       Z];
+        
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % interpc d
+    if (par.opt_interpc & par.opt_d)
+        kk = kk + 1;
+        tmp = [Z ; ...
+               -interpc*dPFDdinterp*POCx(:,pindx.ld); ...
+               Z ; ...
+               -d*dPFDdd*CaCx(:,pindx.linterpc)];
+        
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % interpc kappa_dc
+    if (par.opt_interpc & par.opt_kappa_dc)
+        kk = kk + 1;
+        tmp = [kappa_dc*DOCx(:,pindx.linterpc); ...
+               -interpc*dPFDdinterp*POCx(:,pindx.lkappa_dc); ...
+               -kappa_dc*DOCx(:,pindx.linterpc); ...
+               Z];
+        
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % interpc RR
+    if (par.opt_interpc & par.opt_RR)
+        kk = kk + 1;
+        tmp = interpc*[Z ; ...
+                       -dPFDdinterp*POCx(:,pindx.lRR); ...
+                       Z ; ...
+                       Z];
+        
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % interpc cc
+    if (par.opt_interpc & par.opt_cc)
+        kk = kk + 1;
+        tmp = interpc*[Z ; ...
+                       -dPFDdinterp*POCx(:,pindx.lcc); ...
+                       Z ; ...
+                       Z];
+        
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end 
+
+    % interpc dd
+    if (par.opt_interpc & par.opt_dd)
+        kk = kk + 1;
+        tmp = interpc*[Z ; ...
+                       -dPFDdinterp*POCx(:,pindx.ldd); ...
+                       Z ; ...
+                       Z];
+        
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % d d
+    if (par.opt_d & par.opt_d)
+        kk = kk + 1;
+        [~,~,d2PFDdd2] = buildPFD_CaCO3(parm,grd,M3d);
+        tmp = d*[Z ; ...
+                 Z ; ...
+                 Z ; ...
+                 -dPFDdd*CaC-d*d2PFDdd2*CaC-2*dPFDdd*CaCx(:,pindx.ld)];
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % d kappa_dc
+    if (par.opt_d & par.opt_kappa_dc)
+        kk = kk + 1;
+        tmp = [kappa_dc*DOCx(:,pindx.ld); ...
+               Z ; ...
+               -kappa_dc*DOCx(:,pindx.ld); ...
+               -d*dPFDdd*CaCx(:,pindx.lkappa_dc)];
+        
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+    
+    % d RR
+    if (par.opt_d & par.opt_RR)
+        kk = kk + 1;
+        tmp = [Z ; ...
+               Z ; ...
+               Z ; ...
+               -d*dPFDdd*CaCx(:,pindx.lRR)];
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % d cc
+    if (par.opt_d & par.opt_cc)
+        kk = kk + 1;
+        tmp = d*[Z ; ...
+                 Z ; ...
+                 Z ; ...
+                 -dPFDdd*CaCx(:,pindx.lcc)];
+        
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % d dd
+    if (par.opt_d & par.opt_dd)
+        kk = kk + 1;
+        tmp = d*[Z ; ...
+                 Z ; ...
+                 Z ; ...
+                 -dPFDdd*CaCx(:,pindx.ldd)];
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % kappa_dc kappa_dc
+    if (par.opt_kappa_dc & par.opt_kappa_dc)
+        kk = kk + 1;
+        tmp = kappa_dc*[DOC + 2*DOCx(:,pindx.lkappa_dc); ...
+                        Z ; ...
+                        -DOC - 2*DOCx(:,pindx.lkappa_dc); ...
+                        Z];
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % kappa_dc RR
+    if (par.opt_kappa_dc & par.opt_RR)
+        kk = kk + 1;
+        tmp = kappa_dc*[DOCx(:,pindx.lRR); ...
+                        Z; ...
+                        -DOCx(:,pindx.lRR); ...
+                        Z];
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % kappa_dc cc
+    if (par.opt_kappa_dc & par.opt_cc)
+        kk = kk + 1;
+        tmp = kappa_dc*[DOCx(:,pindx.lcc); ...
+                        Z ; ...
+                        -DOCx(:,pindx.lcc); ...
+                        Z] ;
+
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % kappa_dc dd
+    if (par.opt_kappa_dc & par.opt_dd)
+        kk = kk + 1;
+        tmp = kappa_dc*[DOCx(:,pindx.ldd); ...
+                        Z; ...
+                        -DOCx(:,pindx.ldd); ...
+                        Z];
+        
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % RR RR
+    if (par.opt_RR)
+        kk = kk + 1;
+        tmp = -RR*[G*C2P; ...
+                   Z ; ...
+                   Z ; ...
+                   -G*C2P];
+        
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % RR cc
+    if (par.opt_RR & par.opt_cc)
+        kk = kk + 1;
+        tmp = -cc*RR*[G*dC2Pdcc; ...
+                       Z ; ...
+                       Z ; ...
+                       -G*dC2Pdcc];
+                  
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % RR dd
+    if (par.opt_RR & par.opt_dd)
+        kk = kk + 1;
+        tmp = -dd*RR*[G*dC2Pddd; ...
+                        Z; ...
+                        Z; ...
+                        -G*dC2Pddd];
+              
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % cc cc
+    if (par.opt_cc)
+        kk = kk + 1;
+        tmp = cc*[-(1+RR)*G*(dC2Pdcc+cc*d2C2Pdcc2); ...
+                  (1-sigma)*G*(dC2Pdcc+cc*d2C2Pdcc2); ...
+                  sigma*G*(dC2Pdcc+cc*d2C2Pdcc2); ...
+                  RR*G*(dC2Pdcc+cc*d2C2Pdcc2)];
+        
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % cc dd
+    if (par.opt_cc & par.opt_dd)
+        kk = kk + 1;
+        tmp = cc*dd*[-(1+RR)*G*d2C2Pdccddd; ...
+                     (1-sigma)*G*d2C2Pdccddd; ...
+                     sigma*G*d2C2Pdccddd; ...
+                     RR*G*d2C2Pdccddd];
+        
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+
+    % dd dd
+    if (par.opt_dd)
+        kk = kk + 1;
+        tmp = dd*[-(1+RR)*G*(dC2Pddd+dd*d2C2Pddd2); ...
+                  (1-sigma)*G*(dC2Pddd+dd*d2C2Pddd2); ...
+                  sigma*G*(dC2Pddd+dd*d2C2Pddd2); ...
+                  RR*G*(dC2Pddd+dd*d2C2Pddd2)];
+ 
+        Cxx(:,kk) = mfactor(FD, tmp);
+    end
+end

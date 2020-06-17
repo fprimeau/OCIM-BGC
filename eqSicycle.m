@@ -5,7 +5,7 @@ iwet = parm.iwet;
 nwet = parm.nwet;
 I    = speye(nwet); % make an identity matrix;
 parm.nx = length(x);
-nsx = 0; % count number of Si parameters
+nsx = 0; % count number of Si tunable parameters
 % unpack the parameters to be optimized
 if (par.opt_alpha == on)
     lalpha = x(par.pindx.lalpha);

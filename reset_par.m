@@ -29,7 +29,7 @@ if (par.opt_kappa_dp == on)
 end
 
 if (par.opt_slopep == on)
-    islopep = par.pindx.lslopep;
+    islopep = par.pindx.slopep;
     xnew = x(islopep);
     xold = x0(islopep);
     if (xnew > 5*xold | xnew < 0.2*xold);

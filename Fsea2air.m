@@ -1,4 +1,4 @@
-function [JgDIC,KG] = Fsea2air(parm,DIC)
+function [JgDIC,KG,KGG] = Fsea2air(parm,DIC)
 grd  = parm.grd;
 M3d  = parm.M3d;
 iwet = parm.iwet;
@@ -44,3 +44,6 @@ JgDIC = JgDIC*1024.5/1000; % umole/kg/s to mmol/m^3/s
 tmp = M3d*0;
 tmp(iwet(isrf)) = KCO2.*(g_k0.*pco2atm - g_co2)*1024.5/1000;
 KG = d0(tmp(iwet));
+tmp = M3d*0;
+tmp(iwet(isrf)) = -KCO2.*gg_co2*1024.5/1000;
+KGG = tmp(iwet);

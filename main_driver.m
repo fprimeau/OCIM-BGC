@@ -20,8 +20,8 @@ load tempobs_90x180x24.mat
 load po4obs_90x180x24.mat % WOA PO4 observation
 load npp_90x180.mat % Satellite NPP in C unit;
 load kw660.mat Kw660 p4
-load tmpC.mat 
-load tmpO.mat
+load SOxhalf_C.mat
+load SOxhalf_O2.mat
 
 format long
 grd  = grid         ;
@@ -69,8 +69,8 @@ parm.DICobs = DICstar*permil; % GLODAP dic obs [mmol/m3];
 parm.TAobs  = TAstar*permil ; % GLODAP TA obs [mmol/m3];
 parm.human_co2 = human_co2*permil;
 
-GC = [real(DIC);zeros(3*nwet,1)];
-GO = O + 1e-3*randn(parm.nwet,1);
+GC = real([DIC(iwet); POC(iwet); DOC(iwet); CaC(iwet)]);
+GO = real(O2(iwet)) + 1e-5*randn(parm.nwet,1);
 
 % transiant CO2 concentraion;
 parm.year      = splco2_mod(:,1) ;
@@ -91,54 +91,55 @@ parm.ss  = ss        ;
 parm.sst = sst       ;
 % P model parameters;
 par.sigma    = 0.30      ; % production to DOC ratio
-par.slopep   = 0.00      ; % Martin curve exponent of POP
+par.slopep   = 0.01      ; % Martin curve exponent of POP
 par.interpp  = 9.56e-01 ;
 par.kappa_dp = 8.30e-08 ;
 par.alpha    = 9.40e-03 ; % npp linear scaling factor
 par.beta     = 5.13e-01 ; % npp scaling exponent
 
 % C model parameters                                      
-par.slopec   = 0         ; % Martin curve exponent of OC
+par.slopec   = 0.01     ; % Martin curve exponent of OC
 par.interpc  = 8.80e-01 ;
 par.kappa_dc = 1.15e-08 ;
 par.kappa_da = 0.5e-7    ;
 par.RR       = 4.68e-02 ; % pic:poc ratio
 par.d        = 3.78e+03 ; % pic remin e-folding length scale (m)
-
+par.cc       = 0.0060;
+par.dd       = 0.0069;
 % O model parameters
 par.slopeo   = 2.08e-01;
 par.interpo  = 1.20;
 
 % Si model parameters
 par.bsi = 0.86;
-par.at = 1.32e16/(24*60*60);
+par.at = 1.32e16/spd;
 par.bt = 11481;
 par.aa = 1;
 par.bb = 1;
 par.kappa_gs = 1/(1e6*spa); % geological restoring time [1/s];
-
 %
-par.Cmodel = off;
-par.Omodel = off;
-par.Simodel = on;
+par.Cmodel = on;
+par.Omodel = on;
+par.Simodel = off;
 %
 % P model parameters
 par.opt_beta = on;
 par.opt_alpha = on;
-par.opt_sigma = on; 
-par.opt_slopep = off; 
+par.opt_sigma = off; 
+par.opt_slopep = on; 
 par.opt_interpp = on;
 par.opt_kappa_dp = on;
-
 % C model parameters
 par.opt_d = off; % 
 par.opt_RR = off; % 
+par.opt_cc = off;
+par.opt_dd = off;
 par.opt_slopec = off;
-par.opt_interpc = off; %
-par.opt_kappa_dc = off; %
+par.opt_interpc = on; %
+par.opt_kappa_dc = on; %
 % O model parameters
-par.opt_slopeo = off; 
-par.opt_interpo = off; 
+par.opt_slopeo = on; 
+par.opt_interpo = on; 
 % Si model parameters
 par.opt_bsi = on;
 par.opt_at = on;
@@ -190,6 +191,7 @@ if (par.opt_beta == on)
     p0 = [p0; lbeta];
     par.pindx.lbeta = strt : length(p0);
 end
+%
 if (par.Cmodel == on)
     % slopec
     if (par.opt_slopec == on)
@@ -225,6 +227,20 @@ if (par.Cmodel == on)
         strt = length(p0) + 1;
         p0 = [p0; lRR];
         par.pindx.lRR = strt : length(p0);
+    end
+    % cc
+    if (par.opt_cc == on)
+        cc = par.cc; lcc = log(cc);
+        strt = length(p0) + 1;
+        p0 = [p0; lcc];
+        par.pindx.lcc = strt : length(p0);
+    end
+    % dd
+    if (par.opt_dd == on)
+        dd = par.dd; ldd = log(dd);
+        strt = length(p0) + 1;
+        p0 = [p0; ldd];
+        par.pindx.ldd = strt : length(p0);
     end
 end
 if par.Omodel == on
@@ -296,6 +312,12 @@ parm.nzo = 2;
 %%%%%%% prepare NPP for the model %%%%%%%%
 inan        = find(isnan(npp(:)));
 npp(inan)   = 0;
+% tmp = squeeze(M3d(:,:,1));
+% tmp(1:15,:) = nan; % SO
+% tmp(65:78,55:125) = nan; % NP
+% tmp(35:55,90:145) = nan; % EP
+% iso = find(isnan(tmp));
+% npp(iso) = npp(iso)*0.5;
 parm.npp    = npp/(12*spd);
 parm.Lambda = M3d*0;
 parm.Lambda(:,:,1) = 0.5*(1/grd.dzt(1))*parm.p2c(:,:,1)./(1e-9+po4obs(:,:,1));
@@ -303,9 +325,10 @@ parm.Lambda(:,:,2) = 0.5*(1/grd.dzt(2))*parm.p2c(:,:,2)./(1e-9+po4obs(:,:,2));
 parm.Lambda(:,:,3:end) = 0;
 %%%%%%%%%%%%%%%%%%%% end %%%%%%%%%%%%%%%%%
 parm.p0 = p0;
-x0    = p0;
+x0 = p0;
+%
 myfun = @(x) neglogpost(x, parm, par);
-
+%
 options = optimoptions(@fminunc                  , ...
                        'Algorithm','trust-region', ...
                        'GradObj','on'            , ...
@@ -319,12 +342,12 @@ options = optimoptions(@fminunc                  , ...
                        'FinDiffType','central'   , ...
                        'PrecondBandWidth',Inf)   ;
 %
-G_test = off        ;
-nip    = length(x0) ;
+G_test = on;
+nip    = length(x0);
 if(G_test);
     dx = sqrt(-1)*eps.^3*eye(nip);
     for ii = 1:nip
-        x  = real(x0)+dx(:,ii)    ;
+        x  = real(x0)+dx(:,ii);
         [f,fx,fxx] = neglogpost(x, parm, par) ;
         diff = real(fx(ii)) - imag(f)/eps.^3 ;
         fprintf('%i %e  \n',ii,diff);
@@ -333,9 +356,7 @@ if(G_test);
             fprintf('%e  ', diffx(jj));
         end
         fprintf('\n');
-        
     end
-    keyboard    
 else
     [xhat,fval,exitflag] = fminunc(myfun,x0,options);
     [f,fx,fxx] = neglogpost(xhat,parm,par);
