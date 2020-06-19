@@ -1,4 +1,6 @@
 function [G,Gx,Gxx] = uptake_C(par,parm)
+%
+pindx = par.pindx;
 % unpack the parameters to be optimized
 alpha = parm.alpha;
 beta  = parm.beta;
@@ -7,59 +9,32 @@ iwet = parm.iwet;
 nwet = parm.nwet;
 % of uptake operator
 po4obs = parm.po4obs(iwet);
-c2p = parm.c2p;
 % P uptake operator
 L = parm.L;  
-dLdbeta = parm.dLdbeta; 
-
+dLdbeta = parm.dLdbeta;
 
 DIP = parm.DIP;
 G   = d0(alpha*L*DIP); 
 Gp  = alpha*L;   
 
-pindx = par.pindx;
 % Gradient
 % grad DIP
 if (nargout >1)
     % gradient of uptake operator
     nx  = parm.npx;
     Gpx = zeros(nwet,nx);
-
-    DIPx = zeros(nwet,nx);
-    np = 0; % count the number of tunable parameters
-    if (par.opt_sigma)
-        isigma = pindx.lsigma;
-        DIPx(:,isigma) = parm.Px(1:nwet,isigma);
-    end
-
-    if (par.opt_kappa_dp)
-        ikappa_dp = pindx.lkappa_dp;
-        DIPx(:,ikappa_dp) = parm.Px(1:nwet,ikappa_dp);
-    end
-
-    if (par.opt_slopep)
-        islopep = pindx.slopep;
-        DIPx(:,islopep) = parm.Px(1:nwet,islopep);
-    end
-
-    if (par.opt_interpp)
-        iinterpp = pindx.linterpp;
-        DIPx(:,iinterpp) = parm.Px(1:nwet,iinterpp);
-    end
-
+    DIPx = parm.Px(1:nwet,:);
+    
     if (par.opt_alpha)
         ialpha = pindx.lalpha;
         Gpx(:,ialpha) = diag(alpha*L); % dGdlog_alpha
-        DIPx(:,ialpha) = parm.Px(1:nwet,ialpha);
     end
 
     if (par.opt_beta)
         ibeta = pindx.lbeta;
         Gpx(:,ibeta) = diag(beta*alpha*dLdbeta); % dGdlog_beta
-        DIPx(:,ibeta) = parm.Px(1:nwet,ibeta);
     end
 
-    Gx = zeros(nwet,nx);
     Gx = Gp*DIPx+d0(DIP)*Gpx;
 end
 

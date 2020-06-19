@@ -41,9 +41,11 @@ tmp(iwet(isrf)) = KCO2.*(co2sat - co2surf);
 JgDIC = tmp(iwet);
 JgDIC = JgDIC*1024.5/1000; % umole/kg/s to mmol/m^3/s
 
+%
 tmp = M3d*0;
 tmp(iwet(isrf)) = KCO2.*(g_k0.*pco2atm - g_co2)*1024.5/1000;
 KG = d0(tmp(iwet));
+%
 tmp = M3d*0;
 tmp(iwet(isrf)) = -KCO2.*gg_co2*1024.5/1000;
 KGG = tmp(iwet);
