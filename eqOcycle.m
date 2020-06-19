@@ -32,7 +32,7 @@ function [parm, O2, Ox, Oxx] = eqOcycle(par, parm, x)
         keyboard
     else
         % reset the global variable for the next call eqOcycle
-        GO = real(O2) + 1e-5*randn(parm.nwet,1);
+        GO = real(O2) + 1e-6*randn(parm.nwet,1);
         X0 = GO;
         F = O_eqn(O2, par, parm, x);
         if norm(F) > 1e-12
@@ -60,9 +60,9 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par, parm, x)
     slopeo   = parm.slopeo;
     interpo  = parm.interpo;
     %
-    [vout] = mkO2P(parm);
-    O2P = vout.O2P;
-    dO2Pdslopeo = vout.dO2Pdslopeo;
+    vout = mkO2P(parm);
+    O2P  = vout.O2P;
+    dO2Pdslopeo  = vout.dO2Pdslopeo;
     dO2Pdinterpo = vout.dO2Pdinterpo;
     %
     % O2 saturation concentration
@@ -78,7 +78,7 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par, parm, x)
     d2RdO2 = -2*d0(dRdO)*tanh(O2-10);
     O2C = 170/117;
     % rate of o2 utilization
-    LO2 = O2C.*(kappa_dc*DOC.*R);
+    LO2 = kappa_dc*(DOC.*O2C.*R);
     dLdO = kappa_dc*d0(DOC.*O2C.*dRdO);
     d2LdO2 = kappa_dc*DOC.*O2C.*d2RdO2;
     % O2 function
@@ -130,12 +130,12 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par, parm, x)
 
     %% ------------------- Hessian -------------------------
     if (nargout > 3);
-        kk = 0;
-        Oxx = sparse(nwet, nchoosek(nx,2)+nx);
+        %
         Gxx = parm.Gxx;
         DOCxx  = parm.DOCxx;
-        %
+        Oxx = sparse(nwet,nchoosek(nx,2)+nx);
         % P model parameters
+        kk = 0;
         for ju = 1 : npx
             for jo = ju : npx
                 kk = kk + 1;

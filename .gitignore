@@ -1,5 +1,6 @@
 *.eps
 *#
+*.eps
 *.slurm
 slurm.*
 *.txt

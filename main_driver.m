@@ -65,7 +65,7 @@ parm.SIL    = sio4obs;
 parm.theta  = theta;
 
 parm.po4obs = po4obs        ;
-parm.DICobs = DICstar*permil; % GLODAP dic obs [mmol/m3];
+parm.DICobs = dic*permil; % GLODAP dic obs [mmol/m3];
 parm.TAobs  = TAstar*permil ; % GLODAP TA obs [mmol/m3];
 parm.human_co2 = human_co2*permil;
 
@@ -84,31 +84,33 @@ parm.SILbar  = nansum(sio4obs(iocn).*dVt(iocn))/nansum(dVt(iocn));
 parm.DIPbar  = nansum(po4obs(iwet).*dVt(iwet))/nansum(dVt(iwet)); % volume
 parm.taup    = 720*60^2; % (s) pic dissolution time-scale
 parm.tau_TA  = 1./parm.taup;
-
+par.kappa_da = 0.5e-7    ;
 % PME part;
 [sst,ss] = PME(parm) ;
 parm.ss  = ss        ;
 parm.sst = sst       ;
-% P model parameters;
-par.sigma    = 0.30      ; % production to DOC ratio
-par.slopep   = 0.01      ; % Martin curve exponent of POP
-par.interpp  = 9.56e-01 ;
-par.kappa_dp = 8.30e-08 ;
-par.alpha    = 9.40e-03 ; % npp linear scaling factor
-par.beta     = 5.13e-01 ; % npp scaling exponent
 
+%
+% P model parameters;
+par.sigma    = 0.121    ; % production to DOC ratio
+par.slopep   = 6.76e-03 ; 
+par.interpp  = 8.32e-01 ; % Martin curve exponent of POP
+par.kappa_dp = 8.03e-08 ;
+par.alpha    = 8.72e-03 ; % npp linear scaling factor
+par.beta     = 5.44e-01 ; % npp scaling exponent
+                          
 % C model parameters                                      
-par.slopec   = 0.01     ; % Martin curve exponent of OC
-par.interpc  = 8.80e-01 ;
-par.kappa_dc = 1.15e-08 ;
-par.kappa_da = 0.5e-7    ;
-par.RR       = 4.68e-02 ; % pic:poc ratio
-par.d        = 3.78e+03 ; % pic remin e-folding length scale (m)
-par.cc       = 0.0060;
-par.dd       = 0.0069;
+par.slopec   = -3.20e-03;
+par.interpc  = 1.02e-00 ; % Martin curve exponent of OC
+par.kappa_dc = 2.24e-08 ;
+par.RR       = 1.87e-01 ; % pic:poc ratio
+par.d        = 1.90e+03 ; % pic remin e-folding length scale (m)
+par.cc       = 2.94e-03 ;
+par.dd       = 8.75e-03 ;
+%
 % O model parameters
-par.slopeo   = 2.08e-01;
-par.interpo  = 1.20;
+par.slopeo   = -4.61e-01;
+par.interpo  = 150.00;
 
 % Si model parameters
 par.bsi = 0.86;
@@ -117,7 +119,7 @@ par.bt = 11481;
 par.aa = 1;
 par.bb = 1;
 par.kappa_gs = 1/(1e6*spa); % geological restoring time [1/s];
-%
+%% -------------------------------------------------------------
 par.Cmodel = on;
 par.Omodel = on;
 par.Simodel = off;
@@ -125,16 +127,16 @@ par.Simodel = off;
 % P model parameters
 par.opt_beta = on;
 par.opt_alpha = on;
-par.opt_sigma = off; 
+par.opt_sigma = on; 
 par.opt_slopep = on; 
 par.opt_interpp = on;
 par.opt_kappa_dp = on;
 % C model parameters
-par.opt_d = off; % 
-par.opt_RR = off; % 
-par.opt_cc = off;
-par.opt_dd = off;
-par.opt_slopec = off;
+par.opt_d = on; % 
+par.opt_RR = on; % 
+par.opt_cc = on;
+par.opt_dd = on;
+par.opt_slopec = on;
 par.opt_interpc = on; %
 par.opt_kappa_dc = on; %
 % O model parameters
@@ -147,7 +149,7 @@ par.opt_bt = off;
 par.opt_aa = on;
 par.opt_bb = on;
 par.opt_kappa_gs = off;
-% ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+%% -------------------------------------------------------------
 p0 = [];
 % sigma 
 if (par.opt_sigma == on)
@@ -304,14 +306,14 @@ if par.Simodel == on
     end
 end
 %
-% ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+%% -------------------------------------------------------------
 %
 parm.kappa_p = 1/(720*60^2) ;
 parm.p2c = 0.006+0.0069*po4obs;
 parm.nzo = 2;
 %%%%%%% prepare NPP for the model %%%%%%%%
-inan        = find(isnan(npp(:)));
-npp(inan)   = 0;
+inan = find(isnan(npp(:)));
+npp(inan) = 0;
 % tmp = squeeze(M3d(:,:,1));
 % tmp(1:15,:) = nan; % SO
 % tmp(65:78,55:125) = nan; % NP
@@ -356,11 +358,12 @@ if(G_test);
             fprintf('%e  ', diffx(jj));
         end
         fprintf('\n');
+        keyboard
     end
 else
     [xhat,fval,exitflag] = fminunc(myfun,x0,options);
     [f,fx,fxx] = neglogpost(xhat,parm,par);
-    save PSi_xhat xhat fx fxx
+    save temp_PCO_xhat xhat fx fxx
 end
 
-fprintf('------------ END! ---------------');
+fprintf('------------ END! ---------------\n');
