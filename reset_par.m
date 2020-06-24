@@ -145,7 +145,7 @@ if (par.Omodel == on)
         islopeo = par.pindx.slopeo;
         xnew = abs(x(islopeo));
         xold = abs(x0(islopeo));
-        if (xnew > 5 | xnew < -5);
+        if (xnew > 50 | xnew < -50);
             x(islopeo) = x0(islopeo);
         end
         fprintf('current slopeo is %3.2e \n', x(islopeo));
@@ -171,7 +171,7 @@ if (par.Simodel==on)
         if (xnew > 1.5 | xnew < 0.2);
             x(ibsi) = x0(ibsi);
         end
-        fprintf('current interpo is %3.2e \n', exp(x(ibsi)));
+        fprintf('current bsi is %3.2e \n', exp(x(ibsi)));
     end
     
     % at
@@ -182,7 +182,7 @@ if (par.Simodel==on)
         if (xnew > 5*xold | xnew < 0.2*xold);
             x(iat) = x0(iat);
         end
-        fprintf('current interpo is %3.2e \n', exp(x(iat)));
+        fprintf('current at is %3.2e \n', exp(x(iat)));
     end
     
     % bt
@@ -201,7 +201,7 @@ if (par.Simodel==on)
         iaa = par.pindx.aa;
         xnew = x(iaa);
         xold = x0(iaa);
-        if (xnew > 5*xold | xnew < 0.2*xold);
+        if (xnew > 50 | xnew < -50);
             x(iaa) = x0(iaa);
         end
         fprintf('current aa is %3.2e \n', x(iaa));

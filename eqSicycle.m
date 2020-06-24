@@ -59,7 +59,7 @@ if (par.opt_bb == on)
 else
     parm.bb  = par.bb;
 end
-% bb
+% kappa_gs
 if (par.opt_kappa_gs == on)
     nsx = nsx + 1;
     lkappa_gs = x(par.pindx.lkappa_gs);
@@ -123,7 +123,6 @@ FD = mfactor(Jac);
 Si = mfactor(FD,RHS);
 SIL = Si(1:nwet);
 DSI = Si(nwet+1:end);
-save tmpSi SIL DSI
 %% +++++++++++++++++++++++++++++++++++++++++++
 if nargout > 1
     [~,Gx] = uptake(par, parm);

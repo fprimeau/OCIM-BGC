@@ -5,23 +5,25 @@ addpath('/DFS-L/DATA/primeau/weilewang/GREG/Couple_CP/')
 on = true; off = false;
 global GC GO
 load transport_v4.mat
-load GLODAP_grid_dic
-load GLODAP_grid_Alk
-load human_co2
-load theta_from_qqq.mat theta
-
-load o2obs_90x180x24 o2obs 
-load splco2_mod_monthly % monthly CO2 data
-load co2syspar90.mat co2syspar
-load sio4obs_90x180x24.mat sio4obs
-
 load Sobs_90x180x24.mat
 load tempobs_90x180x24.mat
+load theta_from_qqq.mat theta
+%
+load human_co2
+load GLODAP_grid_dic
+load GLODAP_grid_Alk
 load po4obs_90x180x24.mat % WOA PO4 observation
+load raw_o2obs_90x180x24.mat o2raw
+load raw_po4obs_90x180x24.mat po4raw
+load raw_sio4obs_90x180x24.mat sio4raw
+load sio4obs_90x180x24.mat sio4obs
+load splco2_mod_monthly % monthly CO2 data
+load co2syspar90.mat co2syspar
+
 load npp_90x180.mat % Satellite NPP in C unit;
 load kw660.mat Kw660 p4
-load SOxhalf_C.mat
-load SOxhalf_O2.mat
+load constant_b_C.mat
+load constant_b_O2.mat
 
 format long
 grd  = grid         ;
@@ -33,16 +35,15 @@ spa  = 365*spd;
 zc   = sum(grd.zt(1:2));
 %
 % convert unit form [ml/l] to [umol/l].
-o2obs(iwet) = o2obs(iwet).*44.661;  
+o2raw = o2raw.*44.661;  
 % o2 correction based on Bianchi et al.(2012) [umol/l] .
-o2obs_c = o2obs(iwet).*1.009-2.523;
+o2raw_c = o2raw.*1.009-2.523;
 % find out negative values and set them to zero.
-ineg = find(o2obs_c<0);               
-o2obs_c(ineg) = 0;
-parm.o2obs = o2obs_c;
+ineg = find(o2raw_c(:)<0);
+o2raw_c(ineg) = 0;
+parm.o2raw = o2raw_c;
 %
 MSK_now = M3d;
-
 parm.Salt  = Sobs    ;
 parm.Temp  = tempobs ;
 parm.ALK   = TAstar  ;
@@ -60,11 +61,13 @@ parm.aveT  = nanmean(tempobs(:,:,1:8),3);
 parm.Tobs  = tempobs;
 parm.rho   = 1024.5         ; % seawater density;
 permil     = parm.rho*1e-3  ; % from umol/kg to mmol/m3;
+parm.theta = theta;
+%
+parm.SIL     = sio4obs;
+parm.po4obs  = po4obs;
+parm.po4raw  = po4raw;
+parm.sio4raw = sio4raw;
 
-parm.SIL    = sio4obs;
-parm.theta  = theta;
-
-parm.po4obs = po4obs        ;
 parm.DICobs = dic*permil; % GLODAP dic obs [mmol/m3];
 parm.TAobs  = TAstar*permil ; % GLODAP TA obs [mmol/m3];
 parm.human_co2 = human_co2*permil;
@@ -89,35 +92,34 @@ par.kappa_da = 0.5e-7    ;
 [sst,ss] = PME(parm) ;
 parm.ss  = ss        ;
 parm.sst = sst       ;
-
 %
 % P model parameters;
-par.sigma    = 0.121    ; % production to DOC ratio
-par.slopep   = 6.76e-03 ; 
-par.interpp  = 8.32e-01 ; % Martin curve exponent of POP
-par.kappa_dp = 8.03e-08 ;
-par.alpha    = 8.72e-03 ; % npp linear scaling factor
-par.beta     = 5.44e-01 ; % npp scaling exponent
+par.sigma    = 2.72e-01 ;    ; % production to DOC ratio
+par.slopep   = 0;
+par.interpp  = 8.90e-01 ;
+par.kappa_dp = 5.48e-08 ;
+par.alpha    = 5.43e-03 ;
+par.beta     = 4.19e-01 ;
                           
 % C model parameters                                      
-par.slopec   = -3.20e-03;
-par.interpc  = 1.02e-00 ; % Martin curve exponent of OC
-par.kappa_dc = 2.24e-08 ;
-par.RR       = 1.87e-01 ; % pic:poc ratio
-par.d        = 1.90e+03 ; % pic remin e-folding length scale (m)
-par.cc       = 2.94e-03 ;
-par.dd       = 8.75e-03 ;
+par.slopec   = 0;
+par.interpc  = 1.15e+00 ;
+par.kappa_dc = 3.69e-08 ;
+par.RR       = 7.66e-02 ;
+par.d        = 2.56e+03 ;
+par.cc       = 0; %1.21e-03 ;
+par.dd       = 1/117; % 7.17e-03 ;
 %
 % O model parameters
-par.slopeo   = -4.61e-01;
-par.interpo  = 150.00;
+par.slopeo   = -5.00e+00 ;
+par.interpo  = 2.95e+02 ;
 
 % Si model parameters
-par.bsi = 0.86;
+par.bsi = 0.33;
 par.at = 1.32e16/spd;
 par.bt = 11481;
 par.aa = 1;
-par.bb = 1;
+par.bb = 0.968;
 par.kappa_gs = 1/(1e6*spa); % geological restoring time [1/s];
 %% -------------------------------------------------------------
 par.Cmodel = on;
@@ -134,8 +136,8 @@ par.opt_kappa_dp = on;
 % C model parameters
 par.opt_d = on; % 
 par.opt_RR = on; % 
-par.opt_cc = on;
-par.opt_dd = on;
+par.opt_cc = off;
+par.opt_dd = off;
 par.opt_slopec = on;
 par.opt_interpc = on; %
 par.opt_kappa_dc = on; %
@@ -344,7 +346,7 @@ options = optimoptions(@fminunc                  , ...
                        'FinDiffType','central'   , ...
                        'PrecondBandWidth',Inf)   ;
 %
-G_test = on;
+G_test = off;
 nip    = length(x0);
 if(G_test);
     dx = sqrt(-1)*eps.^3*eye(nip);
@@ -363,7 +365,7 @@ if(G_test);
 else
     [xhat,fval,exitflag] = fminunc(myfun,x0,options);
     [f,fx,fxx] = neglogpost(xhat,parm,par);
-    save temp_PCO_xhat xhat fx fxx
+    save temp_PCO_const_c2p_xhat xhat fx fxx
 end
 
 fprintf('------------ END! ---------------\n');
