@@ -59,14 +59,6 @@ if (par.opt_bb == on)
 else
     parm.bb  = par.bb;
 end
-% kappa_gs
-if (par.opt_kappa_gs == on)
-    nsx = nsx + 1;
-    lkappa_gs = x(par.pindx.lkappa_gs);
-    parm.kappa_gs  = exp(lkappa_gs);
-else
-    parm.kappa_gs  = par.kappa_gs;
-end
 parm.nsx = nsx;
 %
 % ++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -108,7 +100,7 @@ dSi2Cdbb = 1./Z;          parm.dSi2Cdbb = dSi2Cdbb;
 vout  = buildPFD(par,parm);
 TRdiv = parm.TRdiv;
 PFdiv = vout.PFdiv;
-G     = uptake(par, parm);
+G     = uptake_Si(par, parm);
 % build Jacobian matrix
 % +++++++++++++++++++++++++++++++++++++++++
 % F = ([TRdiv*SIL + G*Si2C*SIL - kappa_si*DSI + kappa_gs*(SIL-SILbar);...
@@ -125,7 +117,7 @@ SIL = Si(1:nwet);
 DSI = Si(nwet+1:end);
 %% +++++++++++++++++++++++++++++++++++++++++++
 if nargout > 1
-    [~,Gx] = uptake(par, parm);
+    [~,Gx] = uptake_Si(par, parm);
     % sigma
     if (par.opt_sigma == on)
         tmp =  [-d0(Gx(:,par.pindx.lsigma))*SIL.*Si2C;...
@@ -221,13 +213,6 @@ if nargout > 1
         Six(:,par.pindx.lbb) = mfactor(FD, tmp);
     end
 
-    % kappa_gs
-    if (par.opt_kappa_gs == on)
-        tmp = kappa_gs*[SILbar; ...
-                        sparse(nwet,1)];
-
-        Six(:,par.pindx.lkappa_gs) = mfactor(FD, tmp);
-    end    
 end
 SILx = Six(1:nwet,:);
 DSIx = Six(nwet+1:end,:);
@@ -240,7 +225,7 @@ if (nargout > 2)
     DIP = parm.DIP;
     DIPx  = parm.Px(1:nwet,:);
     DIPxx = parm.Pxx(1:nwet,:);
-    [~,~,Gxx,Gp,parm] = uptake(par, parm);
+    [~,~,Gxx,Gp,parm] = uptake_Si(par, parm);
     dGpdalpha = parm.dGpdalpha;
     dGpdbeta  = parm.dGpdbeta;
     % sigma sigma
@@ -1029,21 +1014,21 @@ ib = i0(:,:,[2:nz+1,1]); % use a periodic downward shift
 IU = I0(iu,:);
 IB = I0(ib,:);
 % keep only wet boxes
-iocn = find(M3D(:));
-I0 = I0(iocn,:); I0 = I0(:,iocn);
-IU = IU(:,iocn); IU = IU(iocn,:);
-IB = IB(:,iocn); IB = IB(iocn,:);
+iwet = find(M3D(:));
+I0 = I0(iwet,:); I0 = I0(:,iwet);
+IU = IU(:,iwet); IU = IU(iwet,:);
+IB = IB(:,iwet); IB = IB(iwet,:);
 % (averages POP onto the top of the grid boxes)
-AVG = d0((I0+IU)*M3D(iocn))\(I0+IU);
+AVG = d0((I0+IU)*M3D(iwet))\(I0+IU);
 % (compute the divergence in the center of the grid boxes)
-DIV = d0(dVt(iocn))\(I0-IB)*d0(dAt(iocn));
+DIV = d0(dVt(iwet))\(I0-IB)*d0(dAt(iwet));
 % (compute the flux at the top of the grid cells)
 % mimics a Martin curve flux attenuation profile
 %(see Kriest and Oschelies 2008 in Biogeosciences)
 % ++++++++++++++++++++++++++++++++++++++++++++++++++
 at  = parm.at;
 bt  = parm.bt;
-T  = parm.theta + 273.15;
+T  = parm.sst(iwet) + 273.15;
 kappa_si = at*exp(-bt./T); 
 % ++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -1054,7 +1039,7 @@ a = r./b;
 MSK = M3D.*M3D(:,:,[nz+1,1:nz]);
 M = MSK.*ZW3d;
 
-w = -a.*M(iocn);
+w = -a.*M(iwet);
 %
 dadb = -r./(b.^2);
 dadr = 1./b;
@@ -1063,9 +1048,9 @@ drdbt = -(at*exp(-bt./T))./T;
 dadat =  dadr.*drdat;
 dadbt =  dadr.*drdbt;
 %
-dwdb = -dadb.*M(iocn);
-dwdat = -dadat.*M(iocn);
-dwdbt = -dadbt.*M(iocn);
+dwdb = -dadb.*M(iwet);
+dwdat = -dadat.*M(iwet);
+dwdbt = -dadbt.*M(iwet);
 %
 d2adb2 = 2*r./(b^3);
 d2adat2 = 0;
@@ -1074,13 +1059,13 @@ d2adatdbt = -dadr.*exp(-bt./T)./T;
 d2adatdb  = -(1./b.^2).*drdat;
 d2adbtdb  = -(1./b.^2).*drdbt;
 
-d2wdb2 = -d2adb2.*M(iocn);
+d2wdb2 = -d2adb2.*M(iwet);
 d2wdat2 = 0;
-d2wdbt2 = -d2adbt2.*M(iocn);
-d2wdatdbt = -d2adatdbt.*M(iocn);
-d2wdatdb  = -d2adatdb.*M(iocn);
-d2wdbtdb  = -d2adbtdb.*M(iocn);
-%FLUX = d0(w(iocn))*AVG;
+d2wdbt2 = -d2adbt2.*M(iwet);
+d2wdatdbt = -d2adatdbt.*M(iwet);
+d2wdatdb  = -d2adatdb.*M(iwet);
+d2wdbtdb  = -d2adbtdb.*M(iwet);
+%FLUX = d0(w(iwet))*AVG;
 FLUX = d0(w)*IU;
 dFLUXdb = d0(dwdb)*IU;
 dFLUXdat = d0(dwdat)*IU;
