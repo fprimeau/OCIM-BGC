@@ -8,3 +8,7 @@ slurm.*
 *.err
 *.mat
 *~
+OutputData90/
+OutputData91/
+Figs90/
+Figs91/

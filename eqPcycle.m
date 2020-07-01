@@ -86,6 +86,7 @@ LAM(:,:,1) = (npp.^beta).*Lambda(:,:,1);
 LAM(:,:,2) = (npp.^beta).*Lambda(:,:,2);
 L          = d0(LAM(iwet));  % PO4 assimilation rate [s^-1];
 parm.L     = L;
+
 % particle flux
 PFD = buildPFD(M3d,grd,parm,slopep,interpp);
 

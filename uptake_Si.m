@@ -1,8 +1,8 @@
-function [G,Gx,Gxx,Gp,parm] = uptake(par, parm)
+function [G,Gx,Gxx,Gp,parm] = uptake_Si(par, parm)
 % unpack the parameters to be optimized
 on = true; off = false;
-iwet = parm.iwet;
-nwet = parm.nwet;
+iwet  = parm.iwet;
+nwet  = parm.nwet;
 alpha = parm.alpha;
 beta  = parm.beta;
 
@@ -369,8 +369,8 @@ if (nargout >2)
         % beta bb
         if (par.opt_beta == on & par.opt_bb == on)
             Gxx(:, kk) = bb * ...
-                d0(Gpx(:,par.pindx.lbeta))*DIP.*dSi2Cdbb + ...
-                Gp*DIPx(:,par.pindx.lbeta).*dSi2Cdbb;
+                (d0(Gpx(:,par.pindx.lbeta))*DIP.*dSi2Cdbb + ...
+                 Gp*DIPx(:,par.pindx.lbeta).*dSi2Cdbb);
             kk = kk + 1;
         end
         % bsi bsi

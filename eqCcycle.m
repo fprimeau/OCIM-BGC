@@ -76,8 +76,8 @@ end
 parm.ncx = ncx;
 %
 options.iprint = 1;
-options.atol = 5e-10 ;
-options.rtol = 5e-10 ;
+options.atol = 5e-9 ;
+options.rtol = 5e-9 ;
 
 X0  = GC;
 [C,ierr] = nsnew(X0,@(X) C_eqn(X,parm,x,par),options) ;
@@ -86,7 +86,7 @@ if (ierr ~= 0)
     keyboard
 else
     % reset the global variable for the next call eqCcycle
-    GC = real(C) + 1e-7*randn(4*nwet,1);
+    GC = real(C) + 1e-6*randn(4*nwet,1);
     X0 = GC;
     F = C_eqn(C,parm,x,par);
     % test if norm of F small enough, if now rerun nsnew;

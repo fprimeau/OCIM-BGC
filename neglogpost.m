@@ -1,15 +1,20 @@
 function [f, fx, fxx] = neglogpost(x, parm, par)
+global iter
 on = true; off = false;
 % reset parameters if they are too large/small;
-[parm,x] = reset_par(x, parm, par);
+iter = iter + 1;
+fprintf('current iteration is %d \n',iter);
+if iter <= 10
+    [parm,x] = reset_par(x, parm, par);
+end
+% print out current parameter values to the log file
+PrintPara(x, par);
+%
 nx = length(x); % number of parameters
-
 dVt  = parm.dVt  ;
 M3d  = parm.M3d  ;
 iwet = parm.iwet ;
 nwet = parm.nwet ;
-%
-VER = 'temp_dep_b_const_c2p';
 %
 f = 0;
 %%%%%%%%%%%%%%%%%%   Solve P    %%%%%%%%%%%%%%%%%%%%%%%%
@@ -24,41 +29,42 @@ Wp = Wp/var_dip;
 DIP = M3d+nan;  DIP(iwet) = P(1+0*nwet:1*nwet) ;
 POP = M3d+nan;  POP(iwet) = P(1+1*nwet:2*nwet) ;
 DOP = M3d+nan;  DOP(iwet) = P(1+2*nwet:3*nwet) ;
-parm.DIP = DIP(iwet);  parm.Px = Px;
+parm.Px  = Px;
 parm.Pxx = Pxx;
+parm.DIP = DIP(iwet);
 % DIP error
-ep = DIP(iwet(idip)) - parm.po4obs(iwet(idip));
+ep = DIP(iwet(idip)) - parm.po4raw(iwet(idip));
 f = f + 0.5*(ep.'*Wp*ep);
-fname = strcat(VER,'_P');
+fname = strcat(parm.VER,'_P');
 save(fname,'DIP','DOP','POP')
 %%%%%%%%%%%%%%%%%%   End Solve P    %%%%%%%%%%%%%%%%%%%%
-%
+
 %%%%%%%%%%%%%%%%%%   Solve Si       %%%%%%%%%%%%%%%%%%%%
 if (par.Simodel == on)
     %
     isil = find(parm.sio4raw(iwet)>0);
     Ws   = d0(dVt(iwet(isil))/sum(dVt(iwet(isil))));
-    mu_sil = sum(Ws*parm.SIL(iwet(isil)))/sum(diag(Ws));
-    var_sil = sum(Ws*(parm.SIL(iwet(isil))-mu_sil).^2)/sum(diag(Ws));
+    mu_sil = sum(Ws*parm.sio4raw(iwet(isil)))/sum(diag(Ws));
+    var_sil = sum(Ws*(parm.sio4raw(iwet(isil))-mu_sil).^2)/sum(diag(Ws));
     Ws = Ws/var_sil;
     %
     [parm,Si,Six,Sixx] = eqSicycle(par, parm, x);
     SIL = M3d+nan;  SIL(iwet) = Si(1:nwet);
     DSI = M3d+nan;  DSI(iwet) = Si(nwet+1:end);
     % SiO error
-    es = SIL(iwet(isil)) - parm.SIL(iwet(isil));
+    es = SIL(iwet(isil)) - parm.sio4raw(iwet(isil));
     f = f + 0.5*(es.'*Ws*es);
-    fname = strcat(VER,'_Si');
+    fname = strcat(parm.VER,'_Si');
     save(fname,'SIL','DSI')
 end
 %%%%%%%%%%%%%%%%%%   End Solve Si    %%%%%%%%%%%%%%%%%%%%
-%
+
 %%%%%%%%%%%%%%%%%%     Solve C   %%%%%%%%%%%%%%%%%%%%%%%%
 if (par.Cmodel == on)
-    idic = find(parm.DICobs(iwet)>0);
+    idic = find(parm.dicraw(iwet)>0);
     Wc   = d0(dVt(iwet(idic))/sum(dVt(iwet(idic))));
-    mu_dic = sum(Wc*parm.DICobs(iwet(idic)))/sum(diag(Wc));
-    var_dic = sum(Wc*(parm.DICobs(iwet(idic))-mu_dic).^2)/sum(diag(Wc));
+    mu_dic = sum(Wc*parm.dicraw(iwet(idic)))/sum(diag(Wc));
+    var_dic = sum(Wc*(parm.dicraw(iwet(idic))-mu_dic).^2)/sum(diag(Wc));
     Wc = Wc/var_dic;
     
     [parm, C, Cx, Cxx] = eqCcycle(par, parm, x);
@@ -71,15 +77,15 @@ if (par.Cmodel == on)
     parm.DICxx = Cxx(1:nwet,:);  parm.DOCxx = Cxx(2*nwet+1:3*nwet,:);
     % DIC error
     DIC = DIC + parm.human_co2;
-    ec  = DIC(iwet(idic)) - parm.DICobs(iwet(idic));
+    ec  = DIC(iwet(idic)) - parm.dicraw(iwet(idic));
     f   = f + 0.5*(ec.'*Wc*ec);
     %
-    fname = strcat(VER,'_C');
+    fname = strcat(parm.VER,'_C');
     save(fname,'DIC', 'POC', 'DOC', 'CaC')
 end
 %%%%%%%%%%%%%%%%%%   End Solve C    %%%%%%%%%%%%%%%%%%%%
-%
-%%%%%%%%%%%%%%%%%%   Slove O    %%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%   Solve O    %%%%%%%%%%%%%%%%%%%%%%%%
 if (par.Omodel == on)
     %
     io2 = find(parm.o2raw(iwet)>0);
@@ -94,7 +100,7 @@ if (par.Omodel == on)
     eo  = O2(iwet(io2)) - parm.o2raw(iwet(io2));
     f   = f + 0.5*(eo.'*Wo*eo);
     %
-    fname = strcat(VER,'_O2');
+    fname = strcat(parm.VER,'_O2');
     save(fname,'O2')
 end
 %%%%%%%%%%%%%%%%%%   End Solve O    %%%%%%%%%%%%%%%%%%%%

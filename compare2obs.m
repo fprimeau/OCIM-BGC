@@ -1,25 +1,37 @@
 clc; clear all; close all
 addpath('/DFS-L/DATA/primeau/weilewang/DATA/');
 addpath('/DFS-L/DATA/primeau/weilewang/my_func');
-addpath('/DFS-L/DATA/primeau/weilewang/GREG/Couple_CP/')
+addpath('/DFS-L/DATA/primeau/weilewang/DATA/OCIM2')
 on = true; off = false;
+version = 91;
 Pmodel = on;
 Cmodel = on;
-Omodel = on; 
+Omodel = off; 
 Simodel = off;
-
-load transport_v4.mat
-grd  = grid;
+if version == 90
+    load transport_v4.mat
+    load GLODAPv2_90x180x24raw.mat
+    load DICant_90x180x24.mat DICant
+    load OutputData90/PC_var_b_P.mat
+    load OutputData90/PC_var_b_C.mat
+    grd  = grid;
+elseif version == 91
+    load OCIM2_CTL_He.mat output
+    load GLODAPv2_91x180x24raw.mat
+    load DICant_91x180x24.mat DICant
+    load OutputData91/CTL_He_C.mat
+    load OutputData91/CTL_He_P.mat
+    grd = output.grid;
+    M3d = output.M3d;
+end
+%
 iwet = find(M3d(:));
 nwet = length(iwet);
+dVt  = grd.DXT3d.*grd.DYT3d.*grd.DZT3d;
 nfig = 0;
 %%%%%%%%%%%%%%%%% compare DIP  %%%%%%%%%%%%%%w
 if (Pmodel == on)
     nfig = nfig+1;
-    % load temp_dep_b_P.mat
-    load constant_b_P.mat
-    load raw_po4obs_90x180x24.mat    
-    %
     figure(nfig)
     DIPobs = po4raw; 
     ipo4 = find(DIP(iwet)>0 & DIPobs(iwet)>0);
@@ -63,10 +75,6 @@ end
 %% ---------------------------------------------------
 if (Omodel == on)
     nfig = nfig + 1;
-    % load temp_dep_b_O2.mat
-    load constant_b_O2.mat
-    load raw_o2obs_90x180x24.mat
-    %
     figure(nfig)
     o2obs = o2raw;
     % convert unit form [ml/l] to [umol/l].
@@ -116,20 +124,15 @@ end
 %% -----------------------------------------------------
 if (Cmodel == on)
     nfig = nfig + 1;
-    load human_co2
-    load GLODAP_grid_dic
-    % load temp_dep_b_C.mat
-    load constant_b_C.mat
-    %
     figure(nfig)
     rho = 1024.5     ; % seawater density;
     permil = rho*1e-3; % from umol/kg to mmol/m3;
-    DICobs = dic*permil; % GLODAP dic obs [mmol/m3];
-    human_co2 = human_co2*permil;
+    DICobs = dicraw*permil; % GLODAP dic obs [mmol/m3];
+    human_co2 = DICant*permil;
     iDIC = find(DICobs(iwet)>0);
     %
     O = DICobs(iwet(iDIC));
-    M = DIC(iwet(iDIC)) + human_co2(iwet(iDIC));
+    M = DIC(iwet(iDIC)) + DICant(iwet(iDIC));
     rsquare(O,M)
     %
     data = [O, M];
@@ -169,9 +172,6 @@ end
 %% -----------------------------------------------------
 if (Simodel == on)
     nfig = nfig + 1;
-    load raw_sio4obs_90x180x24.mat
-    load temp_dep_b_Si.mat
-    %
     figure(nfig)
     iSIL = find(SIL(iwet)>0 & sio4raw(iwet)>0);
     
