@@ -1,12 +1,12 @@
 function [f, fx, fxx] = neglogpost(x, parm, par)
 global iter
 on = true; off = false;
-% reset parameters if they are too large/small;
-iter = iter + 1;
-fprintf('current iteration is %d \n',iter);
 if iter <= 10
+    % reset parameters if they are too large/small;
     [parm,x] = reset_par(x, parm, par);
 end
+fprintf('current iteration is %d \n',iter);
+iter = iter + 1;
 % print out current parameter values to the log file
 PrintPara(x, par);
 %
@@ -105,7 +105,7 @@ if (par.Omodel == on)
 end
 %%%%%%%%%%%%%%%%%%   End Solve O    %%%%%%%%%%%%%%%%%%%%
 fprintf('current objective function value is %3.3e \n',f);
-%
+
 %% +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 if (nargout > 1)
     fx = zeros(length(x),1);
