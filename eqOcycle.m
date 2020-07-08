@@ -24,7 +24,7 @@ function [parm, O2, Ox, Oxx] = eqOcycle(par, parm, x)
     %
     X0  = GO;
     options.iprint = 1;
-    options.atol = 1e-10; options.rtol = 1e-10 ;
+    options.atol = 5e-8; options.rtol = 5e-8 ;
     [O2,ierr] = nsnew(X0,@(X) O_eqn(X,par,parm,x),options) ;
 
     if (ierr ~=0)

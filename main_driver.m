@@ -3,53 +3,76 @@ addpath('/DFS-L/DATA/primeau/weilewang/my_func/')
 addpath('/DFS-L/DATA/primeau/weilewang/DATA/')
 addpath('/DFS-L/DATA/primeau/weilewang/DATA/OCIM2')
 addpath('/DFS-L/DATA/primeau/weilewang/GREG/Couple_CP/')
-on = true; off = false;
-global GC GO
-version = 90;
-
-load transport_v4.mat
-load Sobs_90x180x24.mat
-load tempobs_90x180x24.mat
-load theta_from_qqq.mat theta
-%
-load human_co2
-load GLODAP_grid_dic
-load GLODAP_grid_Alk
-load po4obs_90x180x24.mat % WOA PO4 observation
-load raw_o2obs_90x180x24.mat o2raw
-load raw_po4obs_90x180x24.mat po4raw
-load raw_sio4obs_90x180x24.mat sio4raw
-load sio4obs_90x180x24.mat sio4obs
-load splco2_mod_monthly % monthly CO2 data
-load co2syspar90.mat co2syspar
-
-load npp_90x180.mat % Satellite NPP in C unit;
-load kw660.mat Kw660 p4
-load constant_b_C.mat
-load constant_b_O2.mat
-
 format long
-grd  = grid         ;
-iwet = find(M3d(:)) ;
-nwet = length(iwet) ;
-% define some constants;
+on = true; off = false;
+global GC GO iter
+iter = 0;
 spd  = 24*60^2;
 spa  = 365*spd;
-zc   = sum(grd.zt(1:2));
 %
-% convert unit form [ml/l] to [umol/l].
-o2raw = o2raw.*44.661;  
-% o2 correction based on Bianchi et al.(2012) [umol/l] .
-o2raw_c = o2raw.*1.009-2.523;
-% find out negative values and set them to zero.
-ineg = find(o2raw_c(:)<0);
-o2raw_c(ineg) = 0;
-parm.o2raw = o2raw_c;
+version = 91;
+par.Cmodel = on;
+par.Omodel = on;
+par.Simodel = off;
 %
-MSK_now = M3d;
+if version == 90
+    parm.VER = "/DFS-L/DATA/primeau/weilewang/OutputCoupledCPO/MSK90/PCO_var_b";
+    
+    load transport_v4.mat grid M3d TR
+    load Sobs_90x180x24.mat
+    load tempobs_90x180x24.mat
+    load po4obs_90x180x24.mat % WOA PO4 observation
+    load Siobs_91x180x24.mat Siobs
+    %
+    load DICant_90x180x24.mat
+    load GLODAPv2_90x180x24raw.mat
+    load splco2_mod_monthly % monthly CO2 data
+    load co2syspar90.mat co2syspar
+    load cbpm_npp_annual_90x180.mat
+    load kw660_90x180.mat
+    load /DFS-L/DATA/primeau/weilewang/OutputCoupledCPO/MSK90/temp_dep_b_C.mat
+    load /DFS-L/DATA/primeau/weilewang/OutputCoupledCPO/MSK90/temp_dep_b_O2.mat
+    grd  = grid         ;
+    
+elseif version == 91
+    parm.VER = "/DFS-L/DATA/primeau/weilewang/OutputCoupledCPO/MSK91/PCO_CTL_He";
+
+    load OCIM2_CTL_He.mat output 
+    % load OCIM2_KiLOW_He.mat output 
+    % load OCIM2_KiHIGH_He.mat output 
+    % load OCIM2_KvHIGH_He.mat output 
+    % load OCIM2_KvHIGH_KiLOW_He.mat output 
+    
+    % load OCIM2_CTL_noHe.mat output 
+    % load OCIM2_KiLOW_noHe.mat output 
+    % load OCIM2_KiHIGH_noHe.mat output 
+    % load OCIM2_KvHIGH_noHe.mat output 
+    % load OCIM2_KvHIGH_KiLOW_noHe.mat output 
+    % load OCIM2_KvHIGH_KiHIGH_noHe.mat output 
+    load Sobs_91x180x24.mat
+    load po4obs_91x180x24.mat % WOA PO4 observation
+    load tempobs_91x180x24.mat
+    load Siobs_91x180x24.mat Siobs
+    %
+    load DICant_91x180x24.mat
+    load GLODAPv2_91x180x24raw.mat
+    load splco2_mod_monthly % monthly CO2 data
+    load co2syspar91.mat co2syspar
+    load cbpm_npp_annual_91x180.mat
+    load kw660_91x180.mat
+    load /DFS-L/DATA/primeau/weilewang/OutputCoupledCPO/MSK91/PCO_CTL_He_C.mat
+    load /DFS-L/DATA/primeau/weilewang/OutputCoupledCPO/MSK91/PCO_CTL_He_O2.mat
+    M3d = output.M3d;
+    grd = output.grid;
+    TR  = output.TR/spa;
+end
+
+iwet = find(M3d(:)) ;
+nwet = length(iwet) ;
+dVt = grd.DXT3d.*grd.DYT3d.*grd.DZT3d;
+%
 parm.Salt  = Sobs    ;
 parm.Temp  = tempobs ;
-parm.ALK   = TAstar  ;
 parm.dVt   = dVt     ;
 parm.Kw660 = Kw660   ;
 parm.p4    = p4      ;
@@ -64,16 +87,14 @@ parm.aveT  = nanmean(tempobs(:,:,1:8),3);
 parm.Tobs  = tempobs;
 parm.rho   = 1024.5         ; % seawater density;
 permil     = parm.rho*1e-3  ; % from umol/kg to mmol/m3;
-parm.theta = theta;
-%
-parm.SIL     = sio4obs;
+                              %
+parm.SIL     = Siobs;
 parm.po4obs  = po4obs;
+parm.o2raw   = o2raw;
 parm.po4raw  = po4raw;
 parm.sio4raw = sio4raw;
-
-parm.DICobs = dic*permil; % GLODAP dic obs [mmol/m3];
-parm.TAobs  = TAstar*permil ; % GLODAP TA obs [mmol/m3];
-parm.human_co2 = human_co2*permil;
+parm.dicraw  = dicraw*permil; % GLODAP dic obs [mmol/m3];
+parm.human_co2 = DICant*permil;
 
 GC = real([DIC(iwet); POC(iwet); DOC(iwet); CaC(iwet)]);
 GO = real(O2(iwet)) + 1e-5*randn(parm.nwet,1);
@@ -83,10 +104,8 @@ parm.year      = splco2_mod(:,1) ;
 parm.pco2_air  = splco2_mod(:,2) ;
 parm.co2syspar = co2syspar       ;
 
-iwet_msk = find(MSK_now(:))      ;
-
 parm.kappa_g = 1/(1e6*spa); % geological restoring time [1/s];
-parm.SILbar  = nansum(sio4obs(iocn).*dVt(iocn))/nansum(dVt(iocn));
+parm.SILbar  = nansum(Siobs(iwet).*dVt(iwet))/nansum(dVt(iwet));
 parm.DIPbar  = nansum(po4obs(iwet).*dVt(iwet))/nansum(dVt(iwet)); % volume
 parm.taup    = 720*60^2; % (s) pic dissolution time-scale
 parm.tau_TA  = 1./parm.taup;
@@ -95,27 +114,28 @@ par.kappa_da = 0.5e-7    ;
 [sst,ss] = PME(parm) ;
 parm.ss  = ss        ;
 parm.sst = sst       ;
+
 %
 % P model parameters;
-par.sigma    = 2.72e-01 ;    ; % production to DOC ratio
-par.slopep   = 0;
-par.interpp  = 8.90e-01 ;
-par.kappa_dp = 5.48e-08 ;
-par.alpha    = 5.43e-03 ;
-par.beta     = 4.19e-01 ;
+par.sigma    = 1/3      ;
+par.kappa_dp = 4.44e-08 ;
+par.slopep   = 0 ;
+par.interpp  = 0.89 ;
+par.alpha    = 9.33e-04 ;
+par.beta     = 1.16e-01 ;
                           
 % C model parameters                                      
-par.slopec   = 0;
-par.interpc  = 1.15e+00 ;
-par.kappa_dc = 3.69e-08 ;
-par.RR       = 7.66e-02 ;
-par.d        = 2.56e+03 ;
-par.cc       = 0; %1.21e-03 ;
-par.dd       = 1/117; % 7.17e-03 ;
+par.slopec   = 0 ;
+par.interpc  = 1.06e+00 ;
+par.d        = 2.25e+03 ;
+par.kappa_dc = 3.06e-08 ;
+par.RR       = 6.37e-02 ;
+par.cc       = 5.77e-03 ;
+par.dd       = 3.39e-03 ;
 %
 % O model parameters
-par.slopeo   = -5.00e+00 ;
-par.interpo  = 2.95e+02 ;
+par.slopeo   = 0.0e+00 ;
+par.interpo  = 1.70e+02 ;
 
 % Si model parameters
 par.bsi = 0.33;
@@ -125,35 +145,31 @@ par.aa = 1;
 par.bb = 0.968;
 par.kappa_gs = 1/(1e6*spa); % geological restoring time [1/s];
 %% -------------------------------------------------------------
-par.Cmodel = on;
-par.Omodel = on;
-par.Simodel = off;
 %
 % P model parameters
 par.opt_beta = on;
 par.opt_alpha = on;
-par.opt_sigma = on; 
+par.opt_sigma = off; 
 par.opt_slopep = on; 
 par.opt_interpp = on;
 par.opt_kappa_dp = on;
 % C model parameters
 par.opt_d = on; % 
 par.opt_RR = on; % 
-par.opt_cc = off;
-par.opt_dd = off;
+par.opt_cc = on;
+par.opt_dd = on;
 par.opt_slopec = on;
 par.opt_interpc = on; %
 par.opt_kappa_dc = on; %
 % O model parameters
-par.opt_slopeo = on; 
-par.opt_interpo = on; 
+par.opt_slopeo = off; 
+par.opt_interpo = off; 
 % Si model parameters
 par.opt_bsi = on;
 par.opt_at = on;
 par.opt_bt = off;
 par.opt_aa = on;
 par.opt_bb = on;
-par.opt_kappa_gs = off;
 %% -------------------------------------------------------------
 p0 = [];
 % sigma 
@@ -302,13 +318,6 @@ if par.Simodel == on
         p0 = [p0; lbb];
         par.pindx.lbb = strt : length(p0);
     end
-    % kappa_gs
-    if (par.opt_kappa_gs == on)
-        kappa_gs = par.kappa_gs; lkappa_gs = log(kappa_gs);
-        strt = length(p0) + 1;
-        p0 = [p0; lkappa_gs];
-        par.pindx.lkappa_gs = strt : length(p0);
-    end
 end
 %
 %% -------------------------------------------------------------
@@ -317,7 +326,7 @@ parm.kappa_p = 1/(720*60^2) ;
 parm.p2c = 0.006+0.0069*po4obs;
 parm.nzo = 2;
 %%%%%%% prepare NPP for the model %%%%%%%%
-inan = find(isnan(npp(:)));
+inan = find(isnan(npp(:)) | npp(:)<0);
 npp(inan) = 0;
 % tmp = squeeze(M3d(:,:,1));
 % tmp(1:15,:) = nan; % SO
@@ -363,12 +372,13 @@ if(G_test);
             fprintf('%e  ', diffx(jj));
         end
         fprintf('\n');
-        keyboard
+        exit 
     end
 else
     [xhat,fval,exitflag] = fminunc(myfun,x0,options);
     [f,fx,fxx] = neglogpost(xhat,parm,par);
-    save temp_PCO_const_c2p_xhat xhat fx fxx
+    fname = strcat(parm.VER,'_xhat');
+    save(fname, 'xhat','fx', 'fxx')
 end
 
 fprintf('------------ END! ---------------\n');
