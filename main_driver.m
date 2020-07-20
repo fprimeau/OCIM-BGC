@@ -52,13 +52,13 @@ par.opt_bb = on;
 %   version 90 has only one transport operator taken from Primeau et al. (2013)
 %   version 91 has lots of choices. See below.
 %
-version = 91;
-
-%
 spd  = 24*60^2;
 spa  = 365*spd;
 %
-%
+version = 90;
+par.Cmodel = off;
+par.Omodel = off;
+par.Simodel = off;
 %
 if version == 90
     
@@ -134,7 +134,6 @@ parm.nwet  = nwet    ;
 parm.TRdiv = -TR     ;
 parm.grd   = grd     ;
 parm.I     = speye(nwet);
-parm.aveT  = nanmean(tempobs(:,:,1:8),3);
 parm.Tobs  = tempobs;
 parm.rho   = 1024.5         ; % seawater density;
 permil     = parm.rho*1e-3  ; % from umol/kg to mmol/m3;
@@ -165,9 +164,10 @@ parm.taup    = 720*60^2; % (s) pic dissolution time-scale
 parm.tau_TA  = 1./parm.taup;
 par.kappa_da = 0.5e-7    ;
 % PME part;
-[sst,ss] = PME(parm) ;
-parm.ss  = ss        ;
-parm.sst = sst       ;
+[Tmod,Smod] = PME(parm) ;
+parm.Smod  = Smod   ;
+parm.Tmod = Tmod;
+parm.aveT  = nanmean(Tmod(:,:,1:8),3);
 
 %
 % Default P model parameters;

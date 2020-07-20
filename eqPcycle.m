@@ -40,7 +40,7 @@ if (par.opt_slopep == on)
 else
     slopep  = par.slopep;
 end
-parm.slopep = slopep; % pass parameter to C/Si/O models
+parm.bm = slopep; % pass parameter to C/Si/O models
 
 %
 if (par.opt_interpp == on)
@@ -50,7 +50,7 @@ if (par.opt_interpp == on)
 else
     interpp  = par.interpp;
 end
-parm.interpp = interpp; % pass parameter to C/Si/O models
+parm.bb = interpp; % pass parameter to C/Si/O models
 
 %
 if (par.opt_alpha == on)
@@ -88,7 +88,7 @@ L          = d0(LAM(iwet));  % PO4 assimilation rate [s^-1];
 parm.L     = L;
 
 % particle flux
-PFD = buildPFD(M3d,grd,parm,slopep,interpp);
+PFD = buildPFD(M3d,grd,parm,'POP');
 
 % build Jacobian equations.
 % column 1 dF/dDIP
@@ -140,16 +140,16 @@ if (nargout>2)
 
     % slopep
     if (par.opt_slopep == on)
-        [~,vout] = buildPFD(M3d,grd,parm,slopep,interpp);
-        dPFDdslope = vout.dPFDdslope;
+        [~,vout] = buildPFD(M3d,grd,parm,'POP');
+        PFD_slope = vout.PFD_bm;
         tmp =  [Z; dPFDdslope*POP; Z];
         Px(:,par.pindx.slopep) = mfactor(FFp, -tmp);
     end
 
     % interpp
     if (par.opt_interpp == on)
-        [~,vout] = buildPFD(M3d,grd,parm,slopep,interpp);
-        dPFDdinterp = vout.dPFDdinterp;
+        [~,vout] = buildPFD(M3d,grd,parm,'POP');
+        dPFDdinterp = vout.PFD_bb;
         tmp = interpp*[Z; dPFDdinterp*POP;  Z];
         Px(:,par.pindx.linterpp) = mfactor(FFp,-tmp);
     end
@@ -349,8 +349,8 @@ if (nargout>3)
 
     % slopep slopep
     if (par.opt_slopep == on)
-        [~,vout] = buildPFD(M3d,grd,parm,slopep,interpp);
-        d2PFDdslope2 = vout.d2PFDdslope2;
+        [~,~,vout] = buildPFD(M3d,grd,parm,'POP');
+        d2PFDdslope2 = vout.PFD_bm_bm
         tmp = [Z; ... % d2Jdslope2
                d2PFDdslope2*POP; ...
                Z] + ...
@@ -365,8 +365,8 @@ if (nargout>3)
     % slopep interpp
     if (par.opt_slopep == on & par.opt_interpp ...
         == on)
-        [~,vout] = buildPFD(M3d,grd,parm,slopep,interpp);
-        d2PFDdslopedinterp = vout.d2PFDdslopedinterp;
+        [~,~,vout] = buildPFD(M3d,grd,parm,'POP');
+        d2PFDdslopedinterp = vout.PFD_bm_bb;
         tmp = interpp*[Z; ...  % d2Jdslopedinterp
                        d2PFDdslopedinterp*POP; ...
                        Z] + ...
@@ -411,8 +411,8 @@ if (nargout>3)
     
     % interpp interpp
     if (par.opt_interpp == on)
-        [~,vout] = buildPFD(M3d,grd,parm,slopep,interpp);
-        d2PFDdinterp2 = vout.d2PFDdinterp2;
+        [~,~,vout] = buildPFD(M3d,grd,parm,'POP');
+        d2PFDdinterp2 = vout.PFD_bb_bb;
         tmp = [Z; ... % d2Jdinterp2
                interpp*interpp*d2PFDdinterp2*POP; ...
                Z] + ...
@@ -511,121 +511,3 @@ if (nargout>3)
         kk = kk + 1;
     end
 end
-
-%% ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-function [PFdiv,vout] = buildPFD(M3d,grd,parm,varargin)
-% this code is used to build Particle Flux Diverngence (PFD)
-%
-%                      ________________________                                        
-%                     /         A             /|  POP sinking          
-%                 top/_______________________/ |       |       
-%                    |  |                    | |       | -w   
-%                    | /        V            | /       |       
-%                 bot|/______________________|/        V
-%                                                  
-% PFD = (A*w(top)*POP(top)-A*w(bot)*POP(bot))/V;
-% add an exra layer of zeros at the bottom to ensure there is no
-% flux in or out of the domain when using periodic shift operators
-% for finite differences and averaging
-Tobs       = parm.Tobs;
-aveT       = parm.aveT;
-[ny,nx,nz] = size(M3d);
-M3D        = zeros(ny,nx,nz+1);
-M3D(:,:,1:end-1) = M3d;
-% add the zw coordinate at the top of the extra layer
-ZW3d = grd.ZW3d;
-ZW3d = ZW3d(:,:,[1:end,end]);
-ZW3d(:,:,end) = grd.ZW3d(:,:,end)+grd.dzt(end);
-% areas of the top of the grid box
-dAt = (grd.DXT3d.*grd.DYT3d).*M3d;
-% volume of the grid boxes
-dVt = (grd.DXT3d.*grd.DYT3d.*grd.DZT3d).*M3d;
-%
-n = nx*ny*(nz+1);
-I0 = speye(n);
-i0 = zeros(ny,nx,nz+1);
-i0(:) = 1:n;
-% periodic shifts OK because M3D has a layer of zeros on the bottom
-iu = i0(:,:,[nz+1,1:nz]); %use a periodic upward shift
-ib = i0(:,:,[2:nz+1,1]); % use a periodic downward shift
-IU = I0(iu,:);
-IB = I0(ib,:);
-% keep only wet boxes
-iocn = find(M3D(:));
-I0 = I0(iocn,:); I0 = I0(:,iocn);
-IU = IU(:,iocn); IU = IU(iocn,:);
-IB = IB(:,iocn); IB = IB(iocn,:);
-% (averages POP onto the top of the grid boxes)
-AVG = d0((I0+IU)*M3D(iocn))\(I0+IU);
-% (compute the divergence in the center of the grid boxes)
-DIV = d0(dVt(iocn))\(I0-IB)*d0(dAt(iocn));
-% (compute the flux at the top of the grid cells)
-% mimics a Martin curve flux attenuation profile
-%(see Kriest and Oschelies 2008 in Biogeosciences)
-r   = parm.kappa_p;
-MSK = M3D.*M3D(:,:,[nz+1,1:nz]);
-M   = MSK.*ZW3d;
-if length(varargin) > 1;
-    slope  = varargin{1};
-    interp = varargin{2};
-    T = aveT;
-    % T = Tobs(:,:,[1:nz,nz]);
-    b = slope*T+interp;
-else
-    b = varargin{1};
-end
-a = r./b;
-
-% particle sinking velocity at the top of the grid cells.
-w              = -a.*M;
-dadb           = -r./b.^2;
-dadr           = 1./b;
-dbdslope       = T;
-dbdinterp      = 1;
-dadslope       = dadb.*dbdslope;
-dadinterp      = dadb.*dbdinterp;
-dwdb           = -dadb.*M;
-dwdr           = -dadr.*M;
-dwdslope       = dwdb.*dbdslope;
-dwdinterp      = dwdb.*dbdinterp;
-%
-d2adb2           = 2*r./(b.^3);
-d2adr2           = 0;
-d2adbdr          = -1./b.^2;
-d2adslope2       = (2*r.*T.^2)./(b.^3);
-d2adinterp2      = 2*r./b.^3;
-d2adslopedinterp = 2*r*T./b.^3;
-%
-d2wdb2           = -d2adb2.*M;
-d2wdr2           = -d2adr2.*M;
-d2wdbdr          = -d2adbdr.*M;
-d2wdslope2       = -d2adslope2.*M;
-d2wdinterp2      = -d2adinterp2.*M;
-d2wdslopedinterp = -d2adslopedinterp.*M;
-%FLUX = d0(w(iocn))*AVG;
-FLUX                = d0(w(iocn))*IU;
-dFLUXdr             = d0(dwdr(iocn))*IU;
-dFLUXdb             = d0(dwdb(iocn))*IU;
-dFLUXdslope         = d0(dwdslope(iocn))*IU;
-dFLUXdinterp        = d0(dwdinterp(iocn))*IU;
-%
-d2FLUXdb2           = d0(d2wdb2(iocn))*IU;
-d2FLUXdslope2       = d0(d2wdslope2(iocn))*IU;
-d2FLUXdinterp2      = d0(d2wdinterp2(iocn))*IU;
-d2FLUXdbdr          = d0(d2wdbdr(iocn))*IU;
-d2FLUXdslopedinterp = d0(d2wdslopedinterp(iocn))*IU;
-d2FLUXdr2      = 0;
-% particle flux divergence operator
-PFdiv = DIV*FLUX;
-vout.dPFDdb             = DIV*dFLUXdb;
-vout.dPFDdr             = DIV*dFLUXdr;
-vout.dPFDdslope         = DIV*dFLUXdslope;
-vout.dPFDdinterp        = DIV*dFLUXdinterp;
-%
-vout.d2PFDdb2           = DIV*d2FLUXdb2;
-vout.d2PFDdr2           = DIV*d2FLUXdr2;
-vout.d2PFDdbdr          = DIV*d2FLUXdbdr;
-vout.d2PFDdslope2       = DIV*d2FLUXdslope2;
-vout.d2PFDdinterp2      = DIV*d2FLUXdinterp2;
-vout.d2PFDdslopedinterp = DIV*d2FLUXdslopedinterp;
-
