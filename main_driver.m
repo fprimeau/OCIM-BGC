@@ -1,24 +1,68 @@
-clc; clear all; close all
+% Set some read-only paths:
 addpath('/DFS-L/DATA/primeau/weilewang/my_func/')
 addpath('/DFS-L/DATA/primeau/weilewang/DATA/')
-addpath('/DFS-L/DATA/primeau/weilewang/DATA/OCIM2')
 addpath('/DFS-L/DATA/primeau/weilewang/GREG/Couple_CP/')
-format long
+addpath('/DFS-L/DATA/primeau/weilewang/DATA/OCIM2')
+% Set some a read-write path:
+parm.VER = "/DFS-L/DATA/primeau/fprimeau/OCIM_BGC_OUTPUT/MSK91";
+
+%
+%% -------------------------------------------------------------
 on = true; off = false;
-global GC GO iter
-iter = 0;
+%
+%  choose which elements to include in the model
+%  par.Pmodel hard coded on. In other words the Pmodel is essential.
+%
+par.Cmodel = off; % C-cycle model 
+par.Omodel = off; % O2-cycle model
+par.Simodel = off;% Si-cycle model
+
+%
+% Choose which parameters to optimize
+%
+% P model parameters
+par.opt_beta = on;
+par.opt_alpha = on;
+par.opt_sigma = off; 
+par.opt_slopep = on; 
+par.opt_interpp = on;
+par.opt_kappa_dp = on;
+% C model parameters
+par.opt_d = on;  
+par.opt_RR = on; 
+par.opt_cc = on;
+par.opt_dd = on;
+par.opt_slopec = on;
+par.opt_interpc = on; 
+par.opt_kappa_dc = on; 
+% O model parameters
+par.opt_slopeo = off; 
+par.opt_interpo = off; 
+% Si model parameters
+par.opt_bsi = on;
+par.opt_at = on;
+par.opt_bt = off;
+par.opt_aa = on;
+par.opt_bb = on;
+%% -------------------------------------------------------------
+
+%
+%  choose 91 or 90 for the version of OCIM used to construct the tracer
+%  transport operator
+%   version 90 has only one transport operator taken from Primeau et al. (2013)
+%   version 91 has lots of choices. See below.
+%
+version = 91;
+
+%
 spd  = 24*60^2;
 spa  = 365*spd;
 %
-version = 91;
-par.Cmodel = on;
-par.Omodel = on;
-par.Simodel = off;
+%
 %
 if version == 90
-    parm.VER = "/DFS-L/DATA/primeau/weilewang/OutputCoupledCPO/MSK90/PCO_var_b";
     
-    load transport_v4.mat grid M3d TR
+    load transport_v4.mat grid M3d TR % this is the only choice
     load Sobs_90x180x24.mat
     load tempobs_90x180x24.mat
     load po4obs_90x180x24.mat % WOA PO4 observation
@@ -35,8 +79,8 @@ if version == 90
     grd  = grid         ;
     
 elseif version == 91
-    parm.VER = "/DFS-L/DATA/primeau/weilewang/OutputCoupledCPO/MSK91/PCO_CTL_He";
 
+    % uncomment only one version of OCIM2 
     load OCIM2_CTL_He.mat output 
     % load OCIM2_KiLOW_He.mat output 
     % load OCIM2_KiHIGH_He.mat output 
@@ -67,6 +111,13 @@ elseif version == 91
     TR  = output.TR/spa;
 end
 
+%
+format long
+global GC GO iter
+iter = 0;
+%
+%
+
 iwet = find(M3d(:)) ;
 nwet = length(iwet) ;
 dVt = grd.DXT3d.*grd.DYT3d.*grd.DZT3d;
@@ -96,6 +147,9 @@ parm.sio4raw = sio4raw;
 parm.dicraw  = dicraw*permil; % GLODAP dic obs [mmol/m3];
 parm.human_co2 = DICant*permil;
 
+% Global variables used as initial iterates for the nonlinear solvers for
+% the CO2-system (GC) and for the O2. O2 is nonlinear because microbes
+% switch from O2 to NO3 to respire organic matter where O2 is too.
 GC = real([DIC(iwet); POC(iwet); DOC(iwet); CaC(iwet)]);
 GO = real(O2(iwet)) + 1e-5*randn(parm.nwet,1);
 
@@ -116,7 +170,7 @@ parm.ss  = ss        ;
 parm.sst = sst       ;
 
 %
-% P model parameters;
+% Default P model parameters;
 par.sigma    = 1/3      ;
 par.kappa_dp = 4.44e-08 ;
 par.slopep   = 0 ;
@@ -124,7 +178,7 @@ par.interpp  = 0.89 ;
 par.alpha    = 9.33e-04 ;
 par.beta     = 1.16e-01 ;
                           
-% C model parameters                                      
+% Default C model parameters                                      
 par.slopec   = 0 ;
 par.interpc  = 1.06e+00 ;
 par.d        = 2.25e+03 ;
@@ -133,44 +187,17 @@ par.RR       = 6.37e-02 ;
 par.cc       = 5.77e-03 ;
 par.dd       = 3.39e-03 ;
 %
-% O model parameters
+% Default O2 model parameters
 par.slopeo   = 0.0e+00 ;
 par.interpo  = 1.70e+02 ;
 
-% Si model parameters
+% Default Si model parameters
 par.bsi = 0.33;
 par.at = 1.32e16/spd;
 par.bt = 11481;
 par.aa = 1;
 par.bb = 0.968;
 par.kappa_gs = 1/(1e6*spa); % geological restoring time [1/s];
-%% -------------------------------------------------------------
-%
-% P model parameters
-par.opt_beta = on;
-par.opt_alpha = on;
-par.opt_sigma = off; 
-par.opt_slopep = on; 
-par.opt_interpp = on;
-par.opt_kappa_dp = on;
-% C model parameters
-par.opt_d = on; % 
-par.opt_RR = on; % 
-par.opt_cc = on;
-par.opt_dd = on;
-par.opt_slopec = on;
-par.opt_interpc = on; %
-par.opt_kappa_dc = on; %
-% O model parameters
-par.opt_slopeo = off; 
-par.opt_interpo = off; 
-% Si model parameters
-par.opt_bsi = on;
-par.opt_at = on;
-par.opt_bt = off;
-par.opt_aa = on;
-par.opt_bb = on;
-%% -------------------------------------------------------------
 p0 = [];
 % sigma 
 if (par.opt_sigma == on)

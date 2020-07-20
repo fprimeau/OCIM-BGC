@@ -22,7 +22,7 @@ toc;
 %
 ss = M3d+nan;
 Ssurf = parm.Salt(iwet);
-fprintf('Factoring the big matrix for surface salinity 2...'); tic
+fprintf('Solving the big matrix for surface salinity 2...'); tic
 ss(iwet) = mfactor(FB,Isrf*Ssurf*parm.tau_TA);
 toc
 
