@@ -116,7 +116,9 @@ Si = mfactor(FD,RHS);
 SIL = Si(1:nwet);
 DSI = Si(nwet+1:end);
 %% +++++++++++++++++++++++++++++++++++++++++++
-if nargout > 1
+if (par.optim == off)
+    Six = [];
+else
     [~,Gx] = uptake_Si(par, parm);
     % sigma
     if (par.opt_sigma == on)
@@ -217,7 +219,9 @@ end
 SILx = Six(1:nwet,:);
 DSIx = Six(nwet+1:end,:);
 %% ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-if (nargout > 2)
+if (par.optim == off)
+    Sixx = [];
+else 
     nx = parm.npx + parm.nsx;
     ncs = nchoosek(nx,2)+nx;
     Sixx = sparse(2*nwet,ncs);

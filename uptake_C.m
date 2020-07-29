@@ -1,4 +1,5 @@
 function [G,Gx,Gxx] = uptake_C(par,parm)
+on = true; off = false;
 %
 pindx = par.pindx;
 % unpack the parameters to be optimized
@@ -11,7 +12,6 @@ nwet = parm.nwet;
 po4obs = parm.po4obs(iwet);
 % P uptake operator
 L = parm.L;  
-dLdbeta = parm.dLdbeta;
 
 DIP = parm.DIP;
 G   = d0(alpha*L*DIP); 
@@ -19,12 +19,14 @@ Gp  = alpha*L;
 
 % Gradient
 % grad DIP
-if (nargout >1)
+if par.optim == off
+    Gx = [];
+elseif (par.optim & nargout > 1)
     % gradient of uptake operator
     nx  = parm.npx;
     Gpx = zeros(nwet,nx);
     DIPx = parm.Px(1:nwet,:);
-    
+    dLdbeta = parm.dLdbeta;    
     if (par.opt_alpha)
         ialpha = pindx.lalpha;
         Gpx(:,ialpha) = diag(alpha*L); % dGdlog_alpha
@@ -39,7 +41,9 @@ if (nargout >1)
 end
 
 %% ------------------------------------------------
-if (nargout >2)
+if par.optim == off
+    Gxx = [];
+elseif (par.optim & nargout > 2)
     kk = 0;
     DIPxx = parm.Pxx(1:nwet,:);
     d2Ldbetadbeta = parm.d2Ldbetadbeta;

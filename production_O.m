@@ -1,4 +1,5 @@
 function [G,Gx,Gxx] = production_O(par,parm)
+on = true; off = false;
 % unpack the parameters to be optimized
 alpha = parm.alpha;
 beta  = parm.beta;
@@ -20,7 +21,9 @@ Gp  = alpha*L;
 pindx = par.pindx;
 % Gradient
 % grad DIP
-if (nargout >1)
+if (par.optim == off)
+    Gx  = [];
+elseif (par.optim & nargout>1)
     % gradient of uptake operator
     nx  = parm.npx;
     Gpx = zeros(nwet,nx);
@@ -61,10 +64,14 @@ if (nargout >1)
 
     Gx = zeros(nwet,nx);
     Gx = Gp*DIPx+d0(DIP)*Gpx;
-end
+end 
 
 %% ------------------------------------------------
-if (nargout >2)
+
+% Hessian
+if (par.optim == off)
+    Gxx = [];
+elseif (par.optim & nargout>2)
     kk = 0;
     DIPxx = parm.Pxx(1:nwet,:);
     d2Ldbetadbeta = parm.d2Ldbetadbeta;

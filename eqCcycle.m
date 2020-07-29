@@ -135,7 +135,7 @@ PFDa = buildPFD_CaCO3(parm,grd,M3d);
 PFDc = buildPFD(M3d,grd,parm,slopec,interpc);
 
 % Air-Sea gas exchange
-[JgDIC,KG,KGG] = Fsea2air(parm,DIC);
+[JgDIC,KG,KGG] = Fsea2air(par, parm, DIC);
 
 % biological DIC uptake operator
 G = uptake_C(par, parm); parm.G = G;
@@ -145,7 +145,7 @@ eq2 = -(1-sigma)*G*C2P + (PFDc+kappa_p*I)*POC;
 eq3 =     -sigma*G*C2P + (TRdiv+kappa_dc*I)*DOC - kappa_p*POC;
 eq4 =        -RR*G*C2P + (PFDa+kappa_p*I)*CaC;
 
-F   = [eq1;eq2;eq3;eq4];
+F   = [eq1; eq2; eq3; eq4];
 
 if nargout > 1
     % construct the LHS matrix for the offline model
@@ -180,7 +180,9 @@ if nargout > 1
 end 
 
 %% ----------------------------------------------------
-if nargout > 2
+if (par.optim == off)
+    Cx = [];
+elseif (par.optim & nargout > 2)
     pindx = par.pindx;
     Z = sparse(nwet,1);
     dC2Pdcc = -PO4./(cc*PO4 + dd).^2;
@@ -316,7 +318,9 @@ if nargout > 2
     end
 end
 %% --------------------------------------------------------------
-if nargout > 3
+if (par.optim == off)
+    Cxx = [];
+elseif (par.optim & nargout > 3);
     p2c = cc*PO4 + dd;
     d2C2Pddd2 = 2./p2c.^3;
     d2C2Pdcc2 = (2*PO4.^2)./p2c.^3;

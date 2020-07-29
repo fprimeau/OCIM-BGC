@@ -8,7 +8,7 @@ end
 fprintf('current iteration is %d \n',iter);
 iter = iter + 1;
 % print out current parameter values to the log file
-PrintPara(x, par);
+PrintPara(x, par, parm);
 %
 nx = length(x); % number of parameters
 dVt  = parm.dVt  ;
@@ -35,7 +35,7 @@ parm.DIP = DIP(iwet);
 % DIP error
 ep = DIP(iwet(idip)) - parm.po4raw(iwet(idip));
 f = f + 0.5*(ep.'*Wp*ep);
-fname = strcat(parm.VER,'_P');
+fname = strcat(parm.VER,'_P.mat');
 save(fname,'DIP','DOP','POP')
 %%%%%%%%%%%%%%%%%%   End Solve P    %%%%%%%%%%%%%%%%%%%%
 
@@ -54,7 +54,7 @@ if (par.Simodel == on)
     % SiO error
     es = SIL(iwet(isil)) - parm.sio4raw(iwet(isil));
     f = f + 0.5*(es.'*Ws*es);
-    fname = strcat(parm.VER,'_Si');
+    fname = strcat(parm.VER,'_Si.mat');
     save(fname,'SIL','DSI')
 end
 %%%%%%%%%%%%%%%%%%   End Solve Si    %%%%%%%%%%%%%%%%%%%%
@@ -72,15 +72,16 @@ if (par.Cmodel == on)
     POC = M3d+nan; POC(iwet) = C(1*nwet+1:2*nwet) ;
     DOC = M3d+nan; DOC(iwet) = C(2*nwet+1:3*nwet) ;
     CaC = M3d+nan; CaC(iwet) = C(3*nwet+1:4*nwet) ;
-    parm.DIC = DIC(iwet);      parm.DOC = DOC(iwet);
-    parm.DICx = Cx(1:nwet,:);  parm.DOCx = Cx(2*nwet+1:3*nwet,:);
-    parm.DICxx = Cxx(1:nwet,:);  parm.DOCxx = Cxx(2*nwet+1:3*nwet,:);
+    parm.DIC = DIC(iwet);
+    parm.DOC = DOC(iwet);
+    parm.Cx  = Cx;
+    parm.Cxx = Cxx;
     % DIC error
     DIC = DIC + parm.human_co2;
     ec  = DIC(iwet(idic)) - parm.dicraw(iwet(idic));
     f   = f + 0.5*(ec.'*Wc*ec);
     %
-    fname = strcat(parm.VER,'_C');
+    fname = strcat(parm.VER,'_C.mat');
     save(fname,'DIC', 'POC', 'DOC', 'CaC')
 end
 %%%%%%%%%%%%%%%%%%   End Solve C    %%%%%%%%%%%%%%%%%%%%
@@ -100,7 +101,7 @@ if (par.Omodel == on)
     eo  = O2(iwet(io2)) - parm.o2raw(iwet(io2));
     f   = f + 0.5*(eo.'*Wo*eo);
     %
-    fname = strcat(parm.VER,'_O2');
+    fname = strcat(parm.VER,'_O2.mat');
     save(fname,'O2')
 end
 %%%%%%%%%%%%%%%%%%   End Solve O    %%%%%%%%%%%%%%%%%%%%

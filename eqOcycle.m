@@ -89,14 +89,17 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par, parm, x)
     end
     %
     %% ----------------- Gradient -------------------
-    if (nargout > 2);
+    if (par.optim == off)
+        Ox = [];
+    elseif (par.optim & nargout > 2)
         npx = parm.npx;
         ncx = parm.ncx;
         nox = parm.nox;
         nx = npx + ncx + nox;
         Ox = sparse(nwet, nx);
         Gx = parm.Gx;
-        DOCx = parm.DOCx;
+        DICx = parm.Cx(1:nwet,:);
+        DOCx = parm.Cx(2*nwet+1:3*nwet,:);
         % P model only parameters
         for jj = 1:npx
             tmp = -d0(Gx(:,jj))*O2P + ...
@@ -129,10 +132,13 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par, parm, x)
     end
 
     %% ------------------- Hessian -------------------------
-    if (nargout > 3);
+    if (par.optim == off)
+        Oxx = [];
+    elseif (par.optim & nargout > 3)
         %
         Gxx = parm.Gxx;
-        DOCxx  = parm.DOCxx;
+        DICxx = parm.Cxx(1:nwet,:);
+        DOCxx = parm.Cxx(2*nwet+1:3*nwet,:);
         Oxx = sparse(nwet,nchoosek(nx,2)+nx);
         % P model parameters
         kk = 0;

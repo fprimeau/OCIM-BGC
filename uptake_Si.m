@@ -27,7 +27,9 @@ Gpx(:,par.pindx.lbeta)  = beta*alpha.*c2p.*dLdbeta;   % dGdlog_beta
 
 % Gradient
 % grad DIP
-if (nargout >1)
+if (par.optim == off)
+    Gx = [];
+elseif (par.optim & nargout > 1)
     DIPx = zeros(nwet,nx);
     np = 0; % count the number of tunable parameters
     if (par.opt_sigma == on)
@@ -80,7 +82,9 @@ if (nargout >1)
 end
 
 %% ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-if (nargout >2)
+if (par.optim == off)
+    Gxx = [];
+elseif (par.optim & nargout >2)
     npx = parm.npx;
     dGpdalpha = Gpx(:,par.pindx.lalpha);
     dGpdbeta = Gpx(:,par.pindx.lbeta);

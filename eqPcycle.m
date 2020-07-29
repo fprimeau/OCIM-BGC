@@ -116,8 +116,11 @@ RHS = [kappa_g*DIPbar;...
 FFp = mfactor(cell2mat(Fp));
 % solve for P-cycle model state
 P = mfactor(FFp,RHS);
+
 %% ---------------------------------------------------------
-if (nargout>2)
+if (par.optim == off)
+    Px = [];
+elseif (par.optim & nargout > 2)
     %
     % Compute the gradient of the solution wrt the parameters
     %
@@ -183,13 +186,13 @@ if (nargout>2)
     end
 end
 %% ---------------------------------------------------------
-DIPx = Px(0*nwet+1:1*nwet,:);
-POPx = Px(1*nwet+1:2*nwet,:);
-DOPx = Px(2*nwet+1:end,:);
-if (nargout>3)
-    %
+if (par.optim == off)
+    Pxx = [];
+elseif (par.optim & nargout > 3) 
     % Compute the hessian of the solution wrt the parameters
-    %
+    DIPx = Px(0*nwet+1:1*nwet,:);
+    POPx = Px(1*nwet+1:2*nwet,:);
+    DOPx = Px(2*nwet+1:end,:);
     % sigma sigma
     kk = 1;
     if (par.opt_sigma == on)
