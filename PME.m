@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%  PME part  %%%%%%%%%%%%%%%%%%%%%%%%
-function [sst,ss] = PME(parm)
+function [modT,modS] = PME(parm)
 M3d = parm.M3d;
 grd = parm.grd;
 iwet = parm.iwet;
@@ -20,17 +20,17 @@ FB = mfactor(B);
 toc;
 
 %
-ss = M3d+nan;
+modS = M3d+nan;
 Ssurf = parm.Salt(iwet);
 fprintf('Factoring the big matrix for surface salinity 2...'); tic
-ss(iwet) = mfactor(FB,Isrf*Ssurf*parm.tau_TA);
+modS(iwet) = mfactor(FB,Isrf*Ssurf*parm.tau_TA);
 toc
 
 %
-sst = M3d+nan;
+modT = M3d+nan;
 Tsurf = parm.Temp(iwet);
 fprintf('Factoring the big matrix for surface temperature 1...'); tic
-sst(iwet) = mfactor(FB,Isrf*Tsurf*parm.tau_TA);
+modT(iwet) = mfactor(FB,Isrf*Tsurf*parm.tau_TA);
 toc
 clear memory
 clear B 

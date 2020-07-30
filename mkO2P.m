@@ -5,8 +5,8 @@ interpo  = parm.interpo;
 %
 iwet = parm.iwet;
 nwet = parm.nwet;
-sal  = parm.ss;
-sst  = parm.sst;
+sal  = parm.modS;
+modT = parm.modT;
 smsk = parm.M3d;
 smsk(:,:,2:end) = 0;
 isrf = find(smsk(iwet));
@@ -14,7 +14,7 @@ dVs = parm.dVt(iwet(isrf));
 surface_mean = @(x) sum(x(isrf).*dVs)/sum(dVs);
 
 % compute the mean of the regressor variable
-Z = sst(iwet);
+Z  = modT(iwet);
 mu = surface_mean(Z);
 Delta = sqrt(surface_mean((Z-mu).^2));
 

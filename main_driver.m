@@ -11,31 +11,33 @@ spd  = 24*60^2;
 spa  = 365*spd;
 %
 version = 90;
-par.optim  = on;
-par.Cmodel = on;
-par.Omodel = on;
-par.Simodel = off;
+par.optim   = on;
+par.Cmodel  = on;
+par.Omodel  = off;
+par.Simodel = on;
 %
 if version == 90
     % ATTENTION: please change this directory to where you wanna
     % save your output files
-    parm.VER = '/DFS-L/DATA/primeau/weilewang/COP4WWF/MSK90/fixedPO';
-    
+    % parm.VER = '/DFS-L/DATA/primeau/weilewang/COP4WWF/MSK90/varP2O';
+    parm.VER = 'Gtest';
     load transport_v4.mat grid M3d TR
     load Sobs_90x180x24.mat
     load tempobs_90x180x24.mat
-    load po4obs_90x180x24.mat % WOA PO4 observation
-    load Siobs_91x180x24.mat Siobs
+    load po4obs_90x180x24.mat       % WOA PO4 observation
+    load Siobs_90x180x24.mat Siobs
     %
     load DICant_90x180x24.mat
     load GLODAPv2_90x180x24raw.mat
-    load splco2_mod_monthly % monthly CO2 data
+    load splco2_mod_monthly.mat     % monthly CO2 data
     load co2syspar90.mat co2syspar
     load cbpm_npp_annual_90x180.mat
     load kw660_90x180.mat
-    load /DFS-L/DATA/primeau/weilewang/OutputCoupledCPO/MSK90/temp_dep_b_C.mat
-    load /DFS-L/DATA/primeau/weilewang/OutputCoupledCPO/MSK90/temp_dep_b_O2.mat
-    grd  = grid ;
+    load /DFS-L/DATA/primeau/weilewang/COP4WWF/MSK90/fixedPO_C.mat
+    load /DFS-L/DATA/primeau/weilewang/COP4WWF/MSK90/fixedPO_O2.mat
+    % load Gtest_C.mat
+    % load Gtest_O2.mat 
+    grd = grid ;
     
 elseif version == 91
     % ATTENTION: please change this directory to where you wanna
@@ -88,8 +90,6 @@ parm.nwet  = nwet    ;
 parm.TRdiv = -TR     ;
 parm.grd   = grd     ;
 parm.I     = speye(nwet);
-parm.aveT  = nanmean(tempobs(:,:,1:8),3);
-parm.Tobs  = tempobs;
 parm.rho   = 1024.5         ; % seawater density;
 permil     = parm.rho*1e-3  ; % from umol/kg to mmol/m3;
                               %
@@ -102,26 +102,27 @@ parm.dicraw  = dicraw*permil; % GLODAP dic obs [mmol/m3];
 parm.human_co2 = DICant*permil;
 
 GC = real([DIC(iwet); POC(iwet); DOC(iwet); CaC(iwet)]);
-GO = real(O2(iwet)) + 1e-5*randn(parm.nwet,1);
+GO = real(O2(iwet)) + 1e-7*randn(parm.nwet,1);
 
 % transiant CO2 concentraion;
 parm.year      = splco2_mod(:,1) ;
 parm.pco2_air  = splco2_mod(:,2) ;
 parm.co2syspar = co2syspar       ;
 
-parm.kappa_g = 1/(1e6*spa); % geological restoring time [1/s];
-parm.SILbar  = nansum(Siobs(iwet).*dVt(iwet))/nansum(dVt(iwet));
-parm.DIPbar  = nansum(po4obs(iwet).*dVt(iwet))/nansum(dVt(iwet)); % volume
-parm.taup    = 720*60^2; % (s) pic dissolution time-scale
-parm.tau_TA  = 1./parm.taup;
-par.kappa_da = 0.5e-7    ;
-par.kappa_gs = 1/(1e6*spa); % geological restoring time [1/s];
-% PME part;
-[sst,ss] = PME(parm) ;
-parm.ss  = ss        ;
-parm.sst = sst       ;
+parm.kappa_g  = 1/(1e6*spa); % geological restoring time [1/s];
+parm.SILbar   = nansum(Siobs(iwet).*dVt(iwet))/nansum(dVt(iwet));
+parm.DIPbar   = nansum(po4obs(iwet).*dVt(iwet))/nansum(dVt(iwet)); % volume
+parm.taup     = 720*60^2; % (s) pic dissolution time-scale
+parm.tau_TA   = 1./parm.taup;
+parm.kappa_gs = 1/(1e6*spa); % geological restoring time [1/s];
+                             % PME part;
+[modT,modS] = PME(parm) ;
+parm.modS = modS        ;
+parm.modT = modT        ;
+parm.aveT = nanmean(modT(:,:,1:8),3);
 % load optimal parameters if they exist
-fname = strcat(parm.VER,'_xhat.mat');
+Fsaved = '/DFS-L/DATA/primeau/weilewang/COP4WWF/MSK90/fixedPO';
+fname = strcat(Fsaved,'_xhat.mat');
 if isfile(fname)
     load(fname)
 end
@@ -252,8 +253,8 @@ par.opt_slopec   = on;
 par.opt_interpc  = on; %
 par.opt_kappa_dc = on; %
 % O model parameters
-par.opt_slopeo  = off; 
-par.opt_interpo = off; 
+par.opt_slopeo  = on; 
+par.opt_interpo = on; 
 % Si model parameters
 par.opt_bsi = on;
 par.opt_at = on;
@@ -419,20 +420,19 @@ parm.nzo = 2;
 inan = find(isnan(npp(:)) | npp(:) < 0);
 npp(inan) = 0;
 
-% parm.VER = '/DFS-L/DATA/primeau/weilewang/COP4WWF/MSK91/CTL_He_fixedPO_halfNP';
-% tmp = squeeze(M3d(:,:,1));
-% tmp(1:15,:) = nan; % SO
-% tmp(65:78,55:125) = nan; % NP
-% tmp(35:55,90:145) = nan; % EP
-% iso = find(isnan(tmp));
-% npp(iso) = npp(iso)*0.5;
+% parm.VER = '/DFS-L/DATA/primeau/weilewang/COP4WWF/MSK90/fixedPO_SOxhalf';
+% tmp = squeeze(M3d(:,:,1)) ;
+% tmp(1:15,:) = nan ; % SO
+% tmp(65:78,55:125) = nan   ; % NP
+% tmp(35:55,90:145) = nan   ; % EP
+% itarg = find(isnan(tmp(:))) ;
+% npp(itarg) = npp(itarg)*0.5   ;
 %
 parm.npp    = npp/(12*spd);
 parm.Lambda = M3d*0;
 parm.Lambda(:,:,1) = 0.5*(1/grd.dzt(1))*parm.p2c(:,:,1)./(1e-9+po4obs(:,:,1));
 parm.Lambda(:,:,2) = 0.5*(1/grd.dzt(2))*parm.p2c(:,:,2)./(1e-9+po4obs(:,:,2));
 parm.Lambda(:,:,3:end) = 0;
-
 %%%%%%%%%%%%%%%%%%%% end %%%%%%%%%%%%%%%%%
 parm.p0 = p0;
 x0 = p0;
@@ -452,11 +452,11 @@ options = optimoptions(@fminunc                  , ...
                        'FinDiffType','central'   , ...
                        'PrecondBandWidth',Inf)   ;
 %
-G_test = off;
+G_test = on;
 nip    = length(x0);
 if(G_test);
     dx = sqrt(-1)*eps.^3*eye(nip);
-    for ii = 1:nip
+    for ii = 1 : nip
         x  = real(x0)+dx(:,ii);
         [f,fx,fxx] = neglogpost(x, parm, par) ;
         diff = real(fx(ii)) - imag(f)/eps.^3 ;
@@ -466,8 +466,8 @@ if(G_test);
             fprintf('%e  ', diffx(jj));
         end
         fprintf('\n');
-        exit 
     end
+    exit 
 else
     [xhat,fval,exitflag] = fminunc(myfun,x0,options);
     [f,fx,fxx] = neglogpost(xhat,parm,par);

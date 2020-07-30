@@ -68,7 +68,7 @@ aa  = parm.aa;
 bb  = parm.bb;
 bsi = parm.bsi;
 kappa_gs = parm.kappa_gs;
-T   = parm.sst(iwet) + 273.15;
+T   = parm.modT(iwet) + 273.15;
 kappa_si = at * exp(-bt./T); 
 % ++++++++++++++++++++++++++++++++++++++++++++++++++
 %
@@ -214,7 +214,6 @@ else
 
         Six(:,par.pindx.lbb) = mfactor(FD, tmp);
     end
-
 end
 SILx = Six(1:nwet,:);
 DSIx = Six(nwet+1:end,:);
@@ -1032,7 +1031,7 @@ DIV = d0(dVt(iwet))\(I0-IB)*d0(dAt(iwet));
 % ++++++++++++++++++++++++++++++++++++++++++++++++++
 at  = parm.at;
 bt  = parm.bt;
-T  = parm.sst(iwet) + 273.15;
+T   = parm.modT(iwet) + 273.15;
 kappa_si = at*exp(-bt./T); 
 % ++++++++++++++++++++++++++++++++++++++++++++++++++
 

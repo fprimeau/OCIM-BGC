@@ -1184,8 +1184,7 @@ function [PFdiv,vout] = buildPFD(M3d,grd,parm,varargin)
 % add an exra layer of zeros at the bottom to ensure there is no
 % flux in or out of the domain when using periodic shift operators
 % for finite differences and averaging
-Tobs       = parm.Tobs;
-aveT       = parm.aveT;
+
 [ny,nx,nz] = size(M3d);
 M3D        = zeros(ny,nx,nz+1);
 M3D(:,:,1:end-1) = M3d;
@@ -1225,7 +1224,7 @@ M   = MSK.*ZW3d;
 if length(varargin) > 1;
     slope  = varargin{1};
     interp = varargin{2};
-    T = aveT;
+    T      = parm.aveT;
     % T = Tobs(:,:,[1:nz,nz]);
     b = slope*T+interp;
 else

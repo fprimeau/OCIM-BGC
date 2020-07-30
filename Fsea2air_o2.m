@@ -1,4 +1,4 @@
-function [KO2,o2sat] = Fsea2air_o2(parm)
+function [KO2, o2sat] = Fsea2air_o2(parm)
 grd  = parm.grd;
 M3d  = parm.M3d;
 iwet = find(M3d(:));
@@ -7,8 +7,8 @@ tmp  = M3d;
 tmp(:,:,2:end) = 0;
 isrf = find(tmp(iwet));
 
-vSST  = parm.sst(iwet(isrf));
-vSSS  = parm.ss(iwet(isrf));
+vSST  = parm.modT(iwet(isrf));
+vSSS  = parm.modS(iwet(isrf));
 
 [kw,P] = kwco2(M3d,grd);
 tmp = M3d*0;

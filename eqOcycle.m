@@ -24,7 +24,7 @@ function [parm, O2, Ox, Oxx] = eqOcycle(par, parm, x)
     %
     X0  = GO;
     options.iprint = 1;
-    options.atol = 5e-8; options.rtol = 5e-8 ;
+    options.atol = 1e-10; options.rtol = 1e-10 ;
     [O2,ierr] = nsnew(X0,@(X) O_eqn(X,par,parm,x),options) ;
 
     if (ierr ~=0)
@@ -32,7 +32,7 @@ function [parm, O2, Ox, Oxx] = eqOcycle(par, parm, x)
         keyboard
     else
         % reset the global variable for the next call eqOcycle
-        GO = real(O2) + 1e-6*randn(parm.nwet,1);
+        GO = real(O2) + 1e-5*randn(parm.nwet,1);
         X0 = GO;
         F = O_eqn(O2, par, parm, x);
         if norm(F) > 1e-12
