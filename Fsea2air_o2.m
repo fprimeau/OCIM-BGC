@@ -7,8 +7,8 @@ tmp  = M3d;
 tmp(:,:,2:end) = 0;
 isrf = find(tmp(iwet));
 
-vSST  = parm.sst(iwet(isrf));
-vSSS  = parm.ss(iwet(isrf));
+vSST  = parm.Tmod(iwet(isrf));
+vSSS  = parm.Smod(iwet(isrf));
 
 [kw,P] = kwco2(M3d,grd);
 tmp = M3d*0;

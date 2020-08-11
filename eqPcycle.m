@@ -1,17 +1,17 @@
-function [parm,P,Px,Pxx] = eqPcycle(par,parm,x)
+function [par,P,Px,Pxx] = eqPcycle(par,x)
 % ip is the mapping from x to parameter names (see switch below)
 % output: P is model prediction of DIP,POP,and DOP
 % output: F partial derivative of P model w.r.t. model parameters x
 % output: Fxx hessian matrix of P model w.r.t.  model parameters x
 % unpack some useful stuff
 on = true; off = false;
-TRdiv = parm.TRdiv;
-M3d   = parm.M3d;
-grd   = parm.grd;
+TRdiv = par.TRdiv;
+M3d   = par.M3d;
+grd   = par.grd;
 
-iwet  = parm.iwet;
-nwet  = parm.nwet; % number of wet points;
-I     = parm.I   ; % make an identity matrix;
+iwet  = par.iwet;
+nwet  = par.nwet; % number of wet points;
+I     = par.I   ; % make an identity matrix;
 npx = 0; % count number of P model parameters;
 % unpack the parameters to be optimized
 if (par.opt_sigma == on)
@@ -21,7 +21,7 @@ if (par.opt_sigma == on)
 else
     sigma  = par.sigma;
 end
-parm.sigma = sigma; % pass parameter to C/Si/O models
+par.sigma = sigma; % pass parameter to C/Si/O models
 
 %
 if (par.opt_kappa_dp == on)
@@ -31,7 +31,7 @@ if (par.opt_kappa_dp == on)
 else
     kappa_dp  = par.kappa_dp;
 end
-parm.kappa_dp = kappa_dp; % pass parameter to C/Si/O models
+par.kappa_dp = kappa_dp; % pass parameter to C/Si/O models
 
 %
 if (par.opt_slopep == on)
@@ -40,7 +40,7 @@ if (par.opt_slopep == on)
 else
     slopep  = par.slopep;
 end
-parm.bm = slopep; % pass parameter to C/Si/O models
+par.bP_T = slopep; % pass parameter to C/Si/O models
 
 %
 if (par.opt_interpp == on)
@@ -50,7 +50,7 @@ if (par.opt_interpp == on)
 else
     interpp  = par.interpp;
 end
-parm.bb = interpp; % pass parameter to C/Si/O models
+par.bP = interpp; % pass parameter to C/Si/O models
 
 %
 if (par.opt_alpha == on)
@@ -60,7 +60,7 @@ if (par.opt_alpha == on)
 else
     alpha  = par.alpha;
 end
-parm.alpha = alpha; % pass parameter to C/Si/O models
+par.alpha = alpha; % pass parameter to C/Si/O models
 
 %
 if (par.opt_beta == on)
@@ -70,25 +70,25 @@ if (par.opt_beta == on)
 else
     beta  = par.beta;
 end
-parm.beta = beta; % pass parameter to C/Si/O models
-parm.npx = npx;
+par.beta = beta; % pass parameter to C/Si/O models
+par.npx = npx;
 % fixed parameters
-% sigma    = parm.sigma;
-DIPbar   = M3d(iwet)*parm.DIPbar;  % gobal arerage PO4 conc.[mmol m^-3];
-kappa_g  = parm.kappa_g; % PO4 geological restore const.[s^-1];
-kappa_p  = parm.kappa_p; % POP solubilization rate constant
-npp      = parm.npp;     % net primary production
+% sigma    = par.sigma;
+DIPbar   = M3d(iwet)*par.DIPbar;  % gobal arerage PO4 conc.[mmol m^-3];
+kappa_g  = par.kappa_g; % PO4 geological restore const.[s^-1];
+kappa_p  = par.kappa_p; % POP solubilization rate constant
+npp      = par.npp;     % net primary production
 
 % build part of the biological DIP uptake operator
-Lambda     = parm.Lambda;
+Lambda     = par.Lambda;
 LAM        = 0*M3d;
 LAM(:,:,1) = (npp.^beta).*Lambda(:,:,1);
 LAM(:,:,2) = (npp.^beta).*Lambda(:,:,2);
 L          = d0(LAM(iwet));  % PO4 assimilation rate [s^-1];
-parm.L     = L;
+par.L     = L;
 
 % particle flux
-PFD = buildPFD(M3d,grd,parm,'POP');
+PFD = buildPFD(M3d,grd,par,'POP');
 
 % build Jacobian equations.
 % column 1 dF/dDIP
@@ -140,15 +140,15 @@ if (nargout>2)
 
     % slopep
     if (par.opt_slopep == on)
-        [~,vout] = buildPFD(M3d,grd,parm,'POP');
-        PFD_slope = vout.PFD_bm;
+        [~,vout] = buildPFD(M3d,grd,par,'POP');
+        dPFDdslope = vout.PFD_bm;
         tmp =  [Z; dPFDdslope*POP; Z];
         Px(:,par.pindx.slopep) = mfactor(FFp, -tmp);
     end
 
     % interpp
     if (par.opt_interpp == on)
-        [~,vout] = buildPFD(M3d,grd,parm,'POP');
+        [~,vout] = buildPFD(M3d,grd,par,'POP');
         dPFDdinterp = vout.PFD_bb;
         tmp = interpp*[Z; dPFDdinterp*POP;  Z];
         Px(:,par.pindx.linterpp) = mfactor(FFp,-tmp);
@@ -177,8 +177,8 @@ if (nargout>2)
                      -sigma*alpha*dLdbeta*DIP];
         % will need L and dLdbeta for gradients of other
         % biogeochemical cycles
-        parm.L = L;
-        parm.dLdbeta = dLdbeta;
+        par.L = L;
+        par.dLdbeta = dLdbeta;
         Px(:,par.pindx.lbeta) = mfactor(FFp,-tmp);
     end
 end
@@ -349,8 +349,8 @@ if (nargout>3)
 
     % slopep slopep
     if (par.opt_slopep == on)
-        [~,~,vout] = buildPFD(M3d,grd,parm,'POP');
-        d2PFDdslope2 = vout.PFD_bm_bm
+        [~,~,vout] = buildPFD(M3d,grd,par,'POP');
+        d2PFDdslope2 = vout.PFD_bm_bm;
         tmp = [Z; ... % d2Jdslope2
                d2PFDdslope2*POP; ...
                Z] + ...
@@ -365,7 +365,7 @@ if (nargout>3)
     % slopep interpp
     if (par.opt_slopep == on & par.opt_interpp ...
         == on)
-        [~,~,vout] = buildPFD(M3d,grd,parm,'POP');
+        [~,~,vout] = buildPFD(M3d,grd,par,'POP');
         d2PFDdslopedinterp = vout.PFD_bm_bb;
         tmp = interpp*[Z; ...  % d2Jdslopedinterp
                        d2PFDdslopedinterp*POP; ...
@@ -411,7 +411,7 @@ if (nargout>3)
     
     % interpp interpp
     if (par.opt_interpp == on)
-        [~,~,vout] = buildPFD(M3d,grd,parm,'POP');
+        [~,~,vout] = buildPFD(M3d,grd,par,'POP');
         d2PFDdinterp2 = vout.PFD_bb_bb;
         tmp = [Z; ... % d2Jdinterp2
                interpp*interpp*d2PFDdinterp2*POP; ...
@@ -496,7 +496,7 @@ if (nargout>3)
         inan = find(isnan(d2Lambdadbetadbeta(:)));
         d2Lambdadbetadbeta(inan) = 0;
         d2Ldbetadbeta = d0(d2Lambdadbetadbeta(iwet));
-        parm.d2Ldbetadbeta = d2Ldbetadbeta;
+        par.d2Ldbetadbeta = d2Ldbetadbeta;
         tmp = [alpha*beta*dLdbeta*DIP;... % d2Jdbeta2 * P
                -(1-sigma)*alpha*beta*dLdbeta*DIP;...
                -sigma*alpha*beta*dLdbeta*DIP] + ...
@@ -511,3 +511,6 @@ if (nargout>3)
         kk = kk + 1;
     end
 end
+
+end
+

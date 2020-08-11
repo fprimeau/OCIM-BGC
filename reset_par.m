@@ -1,12 +1,9 @@
-function  [parm, x] = reset_par(x, parm, par);
+function  x = reset_par(x, par, par_old);
 %
 on = true; off = false;
-%++++++++++ check if the optimization routine suggests strange
+% ++++++++++ check if the optimization routine suggests strange
 % parameter values
-A = exist('x0');
-if A == 0
-    x0 = parm.p0;
-end
+x0 = par_old.p0;
 
 if (par.opt_sigma == on)
     isigma = par.pindx.lsigma;
@@ -200,6 +197,5 @@ if (par.Simodel==on)
     
 end
 
-% reset parm.p0;
-parm.p0 = x;
-%+++++++++restore the parameter values back to their original ones.
+end
+

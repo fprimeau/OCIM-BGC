@@ -1,12 +1,12 @@
-function [parm, C, Cx, Cxx] = eqCcycle(par, parm, x)
+function [par, C, Cx, Cxx] = eqCcycle(par, x)
 % ip is the mapping from x to parameter names (see switch below)
 % output: C is model prediction of DIP,POP,and DOP
 % output: F partial derivative of P model w.r.t. model parameters x
 % output: Fxx hessian matrix of P model w.r.t.  model parameters x
 on = true; off = false;
 global GC
-iwet = parm.iwet;
-nwet = parm.nwet;
+iwet = par.iwet;
+nwet = par.nwet;
 
 % unpack the parameters to be optimized
 ncx = 0; % count number of C model tunable parameters;
@@ -14,73 +14,73 @@ ncx = 0; % count number of C model tunable parameters;
 % slopec
 if (par.opt_slopec == on)
     ncx = ncx + 1;
-    parm.slopec = x(par.pindx.slopec);
+    slopec = x(par.pindx.slopec);
 else
-    parm.slopec  = par.slopec;
+    slopec  = par.slopec;
 end
-
+par.bC_T = slopec;
 % interpc
 if (par.opt_interpc == on)
     ncx = ncx + 1;
     linterpc = x(par.pindx.linterpc);
-    parm.interpc  = exp(linterpc);
+    interpc  = exp(linterpc);
 else
-    parm.interpc  = par.interpc;
+    interpc  = par.interpc;
 end
-
+par.bC = interpc;
 % d
 if (par.opt_d == on)
     ncx = ncx + 1;
     ld = x(par.pindx.ld);
-    parm.d  = exp(ld);
+    par.d  = exp(ld);
 else
-    parm.d = par.d;
+    par.d = par.d;
 end
 
 % kappa_dc
 if (par.opt_kappa_dc == on)
     ncx = ncx + 1;
     lkappa_dc = x(par.pindx.lkappa_dc);
-    parm.kappa_dc  = exp(lkappa_dc);
+    par.kappa_dc  = exp(lkappa_dc);
 else
-    parm.kappa_dc  = par.kappa_dc;
+    par.kappa_dc  = par.kappa_dc;
 end
 
 % RR
 if (par.opt_RR == on)
     ncx = ncx + 1;
     lRR = x(par.pindx.lRR);
-    parm.RR = exp(lRR);
+    par.RR = exp(lRR);
 else
-    parm.RR = par.RR;
+    par.RR = par.RR;
 end
 
 % cc
 if (par.opt_cc)
     ncx = ncx + 1;
     lcc = x(par.pindx.lcc);
-    parm.cc = exp(lcc);
+    par.cc = exp(lcc);
 else
-    parm.cc = par.cc;
+    par.cc = par.cc;
 end 
 
 % dd
 if (par.opt_dd)
     ncx = ncx + 1;
     ldd = x(par.pindx.ldd);
-    parm.dd = exp(ldd);
+    par.dd = exp(ldd);
 else
-    parm.dd = par.dd;
+    par.dd = par.dd;
 end
 % return number count back to neglogpost
-parm.ncx = ncx;
+par.ncx = ncx;
 %
 options.iprint = 1;
 options.atol = 5e-9 ;
 options.rtol = 5e-9 ;
 
 X0  = GC;
-[C,ierr] = nsnew(X0,@(X) C_eqn(X,parm,x,par),options) ;
+[C,ierr] = nsnew(X0,@(X) C_eqn(X,par,x),options) ;
 if (ierr ~= 0)
     fprintf('eqCcycle did not converge.\n') ;
     keyboard
@@ -88,62 +88,64 @@ else
     % reset the global variable for the next call eqCcycle
     GC = real(C) + 1e-6*randn(4*nwet,1);
     X0 = GC;
-    F = C_eqn(C,parm,x,par);
+    F = C_eqn(C,par,x);
     % test if norm of F small enough, if now rerun nsnew;
     if norm(F) > 1e-12
-        [C,ierr] = nsnew(X0,@(X) C_eqn(X,parm,x,par),options);
+        [C,ierr] = nsnew(X0,@(X) C_eqn(X,par,x),options);
     end 
     %
-    [F,FD,Cx,Cxx,parm] = C_eqn(C,parm,x,par);
+    [F,FD,Cx,Cxx,par] = C_eqn(C,par,x);
 end
 %% --------------------------------------------------------------
-function [F,FD,Cx,Cxx,parm] = C_eqn(X,parm,x,par)    
+end
+
+function [F,FD,Cx,Cxx,par] = C_eqn(X,par,x)    
 % unpack some useful stuff
 on = true; off = false;
-grd   = parm.grd   ;
-M3d   = parm.M3d   ;
-TRdiv = parm.TRdiv ;
-iwet  = parm.iwet  ;
-nwet  = parm.nwet  ;
-I     = parm.I     ;
+grd   = par.grd   ;
+M3d   = par.M3d   ;
+TRdiv = par.TRdiv ;
+iwet  = par.iwet  ;
+nwet  = par.nwet  ;
+I     = par.I     ;
 
 DIC   = X(0*nwet+1:1*nwet) ; 
 POC   = X(1*nwet+1:2*nwet) ;
 DOC   = X(2*nwet+1:3*nwet) ;
-CaC   = X(3*nwet+1:4*nwet) ;
+PIC   = X(3*nwet+1:4*nwet) ;
 %
-PO4 = parm.po4obs(iwet);
+PO4 = par.po4obs(iwet);
 %
 % fixed parameters
-kappa_p = parm.kappa_p ;
+kappa_p = par.kappa_p ;
 % parameters need to be optimized
-sigma    = parm.sigma   ;
-d        = parm.d;
-RR       = parm.RR;
-slopec   = parm.slopec;
-interpc  = parm.interpc;
-kappa_dc = parm.kappa_dc;
-alpha    = parm.alpha ;
-beta     = parm.beta  ;
-cc       = parm.cc;
-dd       = parm.dd;
+sigma    = par.sigma   ;
+d        = par.d;
+RR       = par.RR;
+slopec   = par.bC_T;
+interpc  = par.bC;
+kappa_dc = par.kappa_dc;
+alpha    = par.alpha ;
+beta     = par.beta  ;
+cc       = par.cc;
+dd       = par.dd;
 
 C2P = 1./(cc*PO4 + dd);
-parm.C2P = C2P;
+par.C2P = C2P;
 % particle flux div_rergence [s^-1];
-PFDa = buildPFD_CaCO3(parm,grd,M3d);
-PFDc = buildPFD(M3d,grd,parm,slopec,interpc);
+PFDa = buildPFD(M3d,grd,par,'PIC');
+PFDc = buildPFD(M3d,grd,par,'POC');
 
 % Air-Sea gas exchange
-[JgDIC,KG,KGG] = Fsea2air(parm,DIC);
+[JgDIC,KG,KGG] = Fsea2air(par,DIC);
 
 % biological DIC uptake operator
-G = uptake_C(par, parm); parm.G = G;
+G = uptake_C(par); par.G = G;
 
-eq1 =     (1+RR)*G*C2P + TRdiv*DIC - kappa_dc*DOC - kappa_p*CaC - JgDIC;
+eq1 =     (1+RR)*G*C2P + TRdiv*DIC - kappa_dc*DOC - kappa_p*PIC - JgDIC;
 eq2 = -(1-sigma)*G*C2P + (PFDc+kappa_p*I)*POC;
 eq3 =     -sigma*G*C2P + (TRdiv+kappa_dc*I)*DOC - kappa_p*POC;
-eq4 =        -RR*G*C2P + (PFDa+kappa_p*I)*CaC;
+eq4 =        -RR*G*C2P + (PFDa+kappa_p*I)*PIC;
 
 F   = [eq1;eq2;eq3;eq4];
 
@@ -169,7 +171,7 @@ if nargout > 1
     Jc{3,3} = TRdiv+kappa_dc*I;
     Jc{4,3} = 0*I;
     
-    % colum 4 dFdCaC
+    % colum 4 dFdPIC
     Jc{1,4} = -kappa_p*I;
     Jc{2,4} = 0*I;
     Jc{3,4} = 0*I;
@@ -185,11 +187,11 @@ if nargout > 2
     Z = sparse(nwet,1);
     dC2Pdcc = -PO4./(cc*PO4 + dd).^2;
     dC2Pddd = -1./(cc*PO4 + dd).^2;
-    parm.dC2Pdcc = dC2Pdcc;
-    parm.dC2Pddd = dC2Pddd;
-    [~,Gx] = uptake_C(par,parm);
-    parm.Gx = Gx;
-    npx = parm.npx;
+    par.dC2Pdcc = dC2Pdcc;
+    par.dC2Pddd = dC2Pddd;
+    [~,Gx] = uptake_C(par);
+    par.Gx = Gx;
+    npx = par.npx;
     % P model parameters
     % sigma
     if (par.opt_sigma == on)
@@ -257,8 +259,8 @@ if nargout > 2
     % -------------------- C parameters ------------------
     % slopec
     if (par.opt_slopec == on)
-        [~,vout] = buildPFD(M3d,grd,parm,slopec,interpc);
-        dPFDdslopec = vout.dPFDdslope;
+        [~,gout] = buildPFD(M3d,grd,par,'POC');
+        dPFDdslopec = gout.PFD_bm;
         tmp = [Z; -dPFDdslopec*POC; Z;  Z];
         
         Cx(:,pindx.slopec) = mfactor(FD, tmp);
@@ -266,8 +268,8 @@ if nargout > 2
     
     % interpc
     if (par.opt_interpc == on)
-        [~,vout] = buildPFD(M3d,grd,parm,slopec,interpc);
-        dPFDdinterpc = vout.dPFDdinterp;
+        [~,gout] = buildPFD(M3d,grd,par,'POC');
+        dPFDdinterpc = gout.PFD_bb;
         tmp = interpc*[Z; -dPFDdinterpc*POC; Z; Z];
         
         Cx(:,pindx.linterpc) = mfactor(FD, tmp);
@@ -275,8 +277,9 @@ if nargout > 2
     
     % d
     if (par.opt_d == on)
-        [~,dPFDdd] = buildPFD_CaCO3(parm,grd,M3d);
-        tmp = d*[Z; Z; Z; -dPFDdd*CaC];
+        [~,gout] = buildPFD(M3d,grd,par,'PIC');
+        dPFDdd = gout.PFD_d;
+        tmp = d*[Z; Z; Z; -dPFDdd*PIC];
         
         Cx(:,pindx.ld) = mfactor(FD, tmp);
     end
@@ -321,12 +324,12 @@ if nargout > 3
     d2C2Pddd2 = 2./p2c.^3;
     d2C2Pdcc2 = (2*PO4.^2)./p2c.^3;
     d2C2Pdccddd = (2*PO4)./p2c.^3;
-    [~,~,Gxx] = uptake_C(par,parm);
-    parm.Gxx = Gxx;
+    [~,~,Gxx] = uptake_C(par);
+    par.Gxx = Gxx;
     DICx = Cx(0*nwet+1:1*nwet,:);
     POCx = Cx(1*nwet+1:2*nwet,:);
     DOCx = Cx(2*nwet+1:3*nwet,:);
-    CaCx = Cx(3*nwet+1:end,:);
+    PICx = Cx(3*nwet+1:end,:);
     % ------------------------------------------------------
     % P model only parameters
     kk = 0;
@@ -410,7 +413,7 @@ if nargout > 3
         tmp = d*[Z ; ...
                  Z ; ...
                  Z ; ...
-                 -dPFDdd*CaCx(:,pindx.lsigma)];
+                 -dPFDdd*PICx(:,pindx.lsigma)];
         
         Cxx(:,kk) = mfactor(FD, tmp);
     end
@@ -487,7 +490,7 @@ if nargout > 3
         tmp = d*[Z; ...
                  Z; ...
                  Z; ...
-                 -dPFDdd*CaCx(:,pindx.lkappa_dp)];
+                 -dPFDdd*PICx(:,pindx.lkappa_dp)];
 
         Cxx(:,kk) = mfactor(FD, tmp);
     end
@@ -564,7 +567,7 @@ if nargout > 3
         tmp = d*[Z ; ...
                  Z ; ...
                  Z ; ...
-                 -dPFDdd*CaCx(:,pindx.slopep)];
+                 -dPFDdd*PICx(:,pindx.slopep)];
 
         Cxx(:,kk) = mfactor(FD, tmp);
     end
@@ -641,7 +644,7 @@ if nargout > 3
         tmp = d*[Z; ...
                  Z; ...
                  Z; ...
-                 -dPFDdd*CaCx(:,pindx.linterpp)];
+                 -dPFDdd*PICx(:,pindx.linterpp)];
 
         Cxx(:,kk) = mfactor(FD, tmp);
     end
@@ -719,7 +722,7 @@ if nargout > 3
         tmp = d*[Z ; ...
                  Z ; ...
                  Z ; ...
-                 -dPFDdd*CaCx(:,pindx.lalpha)];
+                 -dPFDdd*PICx(:,pindx.lalpha)];
 
         Cxx(:,kk) = mfactor(FD, tmp);
     end
@@ -797,7 +800,7 @@ if nargout > 3
         tmp = d*[Z ; ...
                  Z ; ...
                  Z ; ...
-                 -dPFDdd*CaCx(:,pindx.lbeta)];
+                 -dPFDdd*PICx(:,pindx.lbeta)];
 
         Cxx(:,kk) = mfactor(FD, tmp);
     end
@@ -849,8 +852,8 @@ if nargout > 3
     % slopec slopec
     if (par.opt_slopec)
         kk = kk + 1;
-        [~,vout] = buildPFD(M3d,grd,parm,slopec,interpc);
-        d2PFDdslopec2 = vout.d2PFDdslope2;
+        [~,~,hout] = buildPFD(M3d,grd,par,'POC');
+        d2PFDdslopec2 = hout.PFD_bm_bm;
         tmp = [Z ; ...
                -d2PFDdslopec2*POC-2*dPFDdslopec*POCx(:,pindx.slopec);
                Z ; ...
@@ -862,8 +865,8 @@ if nargout > 3
     % slopec interpc
     if (par.opt_slopec & par.opt_interpc)
         kk = kk + 1;
-        [~,vout] = buildPFD(M3d,grd,parm,slopec,interpc);
-        d2PFDdslopecdinterpc = vout.d2PFDdslopedinterp;
+        [~,~,hout] = buildPFD(M3d,grd,par,'POC');
+        d2PFDdslopecdinterpc = hout.PFD_bm_bb;
         tmp =  [Z ; ...
                 [-interpc*d2PFDdslopecdinterpc*POC - ...
                  dPFDdslopec*POCx(:,pindx.linterpc) - ...
@@ -879,7 +882,7 @@ if nargout > 3
         tmp = [Z ; ...
                -dPFDdslopec*POCx(:,pindx.ld); ...
                Z ; ...
-               -d*dPFDdd*CaCx(:,pindx.slopec)];
+               -d*dPFDdd*PICx(:,pindx.slopec)];
         
         Cxx(:,kk) = mfactor(FD, tmp);
     end
@@ -931,8 +934,8 @@ if nargout > 3
     % interpc interpc
     if (par.opt_interpc)
         kk = kk + 1;
-        [~,vout] = buildPFD(M3d,grd,parm,slopec,interpc);
-        d2PFDdinterpc2 = vout.d2PFDdinterp2;        
+        [~,~,hout] = buildPFD(M3d,grd,par,'POC');
+        d2PFDdinterpc2 = hout.PFD_bb_bb;
         tmp = interpc* ...
               [Z; ...
                -dPFDdinterpc*POC-interpc*d2PFDdinterpc2*POC-2* ...
@@ -949,7 +952,7 @@ if nargout > 3
         tmp = [Z ; ...
                -interpc*dPFDdinterpc*POCx(:,pindx.ld); ...
                Z ; ...
-               -d*dPFDdd*CaCx(:,pindx.linterpc)];
+               -d*dPFDdd*PICx(:,pindx.linterpc)];
         
         Cxx(:,kk) = mfactor(FD, tmp);
     end
@@ -1001,11 +1004,12 @@ if nargout > 3
     % d d
     if (par.opt_d & par.opt_d)
         kk = kk + 1;
-        [~,~,d2PFDdd2] = buildPFD_CaCO3(parm,grd,M3d);
+        [~,~,hout] = buildPFD(M3d,grd,par,'PIC');
+        d2PFDdd2 = hout.PFD_d_d;
         tmp = d*[Z ; ...
                  Z ; ...
                  Z ; ...
-                 -dPFDdd*CaC-d*d2PFDdd2*CaC-2*dPFDdd*CaCx(:,pindx.ld)];
+                 -dPFDdd*PIC-d*d2PFDdd2*PIC-2*dPFDdd*PICx(:,pindx.ld)];
 
         Cxx(:,kk) = mfactor(FD, tmp);
     end
@@ -1016,7 +1020,7 @@ if nargout > 3
         tmp = [kappa_dc*DOCx(:,pindx.ld); ...
                Z ; ...
                -kappa_dc*DOCx(:,pindx.ld); ...
-               -d*dPFDdd*CaCx(:,pindx.lkappa_dc)];
+               -d*dPFDdd*PICx(:,pindx.lkappa_dc)];
         
         Cxx(:,kk) = mfactor(FD, tmp);
     end
@@ -1027,7 +1031,7 @@ if nargout > 3
         tmp = [Z; ...
                Z; ...
                Z; ...
-               -d*dPFDdd*CaCx(:,pindx.lRR)];
+               -d*dPFDdd*PICx(:,pindx.lRR)];
 
         Cxx(:,kk) = mfactor(FD, tmp);
     end
@@ -1038,7 +1042,7 @@ if nargout > 3
         tmp = d*[Z; ...
                  Z; ...
                  Z; ...
-                 -dPFDdd*CaCx(:,pindx.lcc)];
+                 -dPFDdd*PICx(:,pindx.lcc)];
         
         Cxx(:,kk) = mfactor(FD, tmp);
     end
@@ -1049,7 +1053,7 @@ if nargout > 3
         tmp = d*[Z; ...
                  Z; ...
                  Z; ...
-                 -dPFDdd*CaCx(:,pindx.ldd)];
+                 -dPFDdd*PICx(:,pindx.ldd)];
 
         Cxx(:,kk) = mfactor(FD, tmp);
     end
@@ -1166,119 +1170,6 @@ if nargout > 3
 end
 
 
-function [PFdiv,vout] = buildPFD(M3d,grd,parm,varargin)
-% this code is used to build Particle Flux Diverngence (PFD)
-%
-%                      ________________________                                        
-%                     /         A             /|  POP sinking          
-%                 top/_______________________/ |       |       
-%                    |  |                    | |       | -w   
-%                    | /        V            | /       |       
-%                 bot|/______________________|/        V
-%                                                  
-% PFD = (A*w(top)*POP(top)-A*w(bot)*POP(bot))/V;
-% add an exra layer of zeros at the bottom to ensure there is no
-% flux in or out of the domain when using periodic shift operators
-% for finite differences and averaging
-Tobs       = parm.Tobs;
-aveT       = parm.aveT;
-[ny,nx,nz] = size(M3d);
-M3D        = zeros(ny,nx,nz+1);
-M3D(:,:,1:end-1) = M3d;
-% add the zw coordinate at the top of the extra layer
-ZW3d = grd.ZW3d;
-ZW3d = ZW3d(:,:,[1:end,end]);
-ZW3d(:,:,end) = grd.ZW3d(:,:,end)+grd.dzt(end);
-% areas of the top of the grid box
-dAt = (grd.DXT3d.*grd.DYT3d).*M3d;
-% volume of the grid boxes
-dVt = (grd.DXT3d.*grd.DYT3d.*grd.DZT3d).*M3d;
-%
-n = nx*ny*(nz+1);
-I0 = speye(n);
-i0 = zeros(ny,nx,nz+1);
-i0(:) = 1:n;
-% periodic shifts OK because M3D has a layer of zeros on the bottom
-iu = i0(:,:,[nz+1,1:nz]); %use a periodic upward shift
-ib = i0(:,:,[2:nz+1,1]); % use a periodic downward shift
-IU = I0(iu,:);
-IB = I0(ib,:);
-% keep only wet boxes
-iocn = find(M3D(:));
-I0 = I0(iocn,:); I0 = I0(:,iocn);
-IU = IU(:,iocn); IU = IU(iocn,:);
-IB = IB(:,iocn); IB = IB(iocn,:);
-% (averages POP onto the top of the grid boxes)
-AVG = d0((I0+IU)*M3D(iocn))\(I0+IU);
-% (compute the divergence in the center of the grid boxes)
-DIV = d0(dVt(iocn))\(I0-IB)*d0(dAt(iocn));
-% (compute the flux at the top of the grid cells)
-% mimics a Martin curve flux attenuation profile
-%(see Kriest and Oschelies 2008 in Biogeosciences)
-r   = parm.kappa_p;
-MSK = M3D.*M3D(:,:,[nz+1,1:nz]);
-M   = MSK.*ZW3d;
-if length(varargin) > 1;
-    slope  = varargin{1};
-    interp = varargin{2};
-    T = aveT;
-    % T = Tobs(:,:,[1:nz,nz]);
-    b = slope*T+interp;
-else
-    b = varargin{1};
-end
-a = r./b;
 
-% particle sinking velocity at the top of the grid cells.
-w              = -a.*M;
-dadb           = -r./b.^2;
-dadr           = 1./b;
-dbdslope       = T;
-dbdinterp      = 1;
-dadslope       = dadb.*dbdslope;
-dadinterp      = dadb.*dbdinterp;
-dwdb           = -dadb.*M;
-dwdr           = -dadr.*M;
-dwdslope       = dwdb.*dbdslope;
-dwdinterp      = dwdb.*dbdinterp;
-%
-d2adb2           = 2*r./(b.^3);
-d2adr2           = 0;
-d2adbdr          = -1./b.^2;
-d2adslope2       = (2*r.*T.^2)./(b.^3);
-d2adinterp2      = 2*r./b.^3;
-d2adslopedinterp = 2*r*T./b.^3;
-%
-d2wdb2           = -d2adb2.*M;
-d2wdr2           = -d2adr2.*M;
-d2wdbdr          = -d2adbdr.*M;
-d2wdslope2       = -d2adslope2.*M;
-d2wdinterp2      = -d2adinterp2.*M;
-d2wdslopedinterp = -d2adslopedinterp.*M;
-%FLUX = d0(w(iocn))*AVG;
-FLUX                = d0(w(iocn))*IU;
-dFLUXdr             = d0(dwdr(iocn))*IU;
-dFLUXdb             = d0(dwdb(iocn))*IU;
-dFLUXdslope         = d0(dwdslope(iocn))*IU;
-dFLUXdinterp        = d0(dwdinterp(iocn))*IU;
-%
-d2FLUXdb2           = d0(d2wdb2(iocn))*IU;
-d2FLUXdslope2       = d0(d2wdslope2(iocn))*IU;
-d2FLUXdinterp2      = d0(d2wdinterp2(iocn))*IU;
-d2FLUXdbdr          = d0(d2wdbdr(iocn))*IU;
-d2FLUXdslopedinterp = d0(d2wdslopedinterp(iocn))*IU;
-d2FLUXdr2      = 0;
-% particle flux divergence operator
-PFdiv = DIV*FLUX;
-vout.dPFDdb             = DIV*dFLUXdb;
-vout.dPFDdr             = DIV*dFLUXdr;
-vout.dPFDdslope         = DIV*dFLUXdslope;
-vout.dPFDdinterp        = DIV*dFLUXdinterp;
-%
-vout.d2PFDdb2           = DIV*d2FLUXdb2;
-vout.d2PFDdr2           = DIV*d2FLUXdr2;
-vout.d2PFDdbdr          = DIV*d2FLUXdbdr;
-vout.d2PFDdslope2       = DIV*d2FLUXdslope2;
-vout.d2PFDdinterp2      = DIV*d2FLUXdinterp2;
-vout.d2PFDdslopedinterp = DIV*d2FLUXdslopedinterp;
+end
 

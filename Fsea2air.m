@@ -11,7 +11,7 @@ co2syspar = parm.co2syspar;
 tmp = M3d+nan;
 tmp(iwet) = DIC;
 vDICs = tmp(iwet(isrf));
-vSST  = parm.sst(iwet(isrf));
+vSST  = parm.Tmod(iwet(isrf));
 
 [kw,P] = kwco2(M3d,grd);
 tmp = M3d*0;

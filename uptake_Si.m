@@ -1,26 +1,26 @@
-function [G,Gx,Gxx,Gp,parm] = uptake_Si(par, parm)
+function [G,Gx,Gxx,Gp,par] = uptake_Si(par)
 % unpack the parameters to be optimized
 on = true; off = false;
-iwet  = parm.iwet;
-nwet  = parm.nwet;
-alpha = parm.alpha;
-beta  = parm.beta;
+iwet  = par.iwet;
+nwet  = par.nwet;
+alpha = par.alpha;
+beta  = par.beta;
 
-dLdbeta = diag(parm.dLdbeta); 
-d2Ldbetadbeta = diag(parm.d2Ldbetadbeta);
+dLdbeta = diag(par.dLdbeta); 
+d2Ldbetadbeta = diag(par.d2Ldbetadbeta);
 % N:P of uptake operator
-po4obs = parm.po4obs(iwet);
-c2p    = parm.c2p;
-Si2C   = parm.Si2C;
+po4obs = par.po4obs(iwet);
+c2p    = par.c2p;
+Si2C   = par.Si2C;
 % N uptake operator
-L = diag(parm.L);
+L = diag(par.L);
 
-DIP = parm.DIP;
+DIP = par.DIP;
 G   = d0(alpha.*c2p.*L.*DIP);
 Gp  = d0(alpha.*c2p.*L);
 
 % gradient of uptake operator
-nx  = parm.nx;
+nx  = par.nx;
 Gpx = zeros(nwet,nx);
 Gpx(:,par.pindx.lalpha) = alpha.*c2p.*L;              % dGdlog_alpha
 Gpx(:,par.pindx.lbeta)  = beta*alpha.*c2p.*dLdbeta;   % dGdlog_beta
@@ -32,40 +32,40 @@ if (nargout >1)
     np = 0; % count the number of tunable parameters
     if (par.opt_sigma == on)
         isigma = par.pindx.lsigma;
-        DIPx(:,isigma) = parm.Px(1:nwet,isigma);
+        DIPx(:,isigma) = par.Px(1:nwet,isigma);
     end
 
     if (par.opt_kappa_dp == on)
         ikappa_dp = par.pindx.lkappa_dp;
-        DIPx(:,ikappa_dp) = parm.Px(1:nwet,ikappa_dp);
+        DIPx(:,ikappa_dp) = par.Px(1:nwet,ikappa_dp);
     end
 
     if (par.opt_slopep == on)
         islopep = par.pindx.slopep;
-        DIPx(:,islopep) = parm.Px(1:nwet,islopep);
+        DIPx(:,islopep) = par.Px(1:nwet,islopep);
     end
 
     if (par.opt_interpp == on)
         iinterpp = par.pindx.linterpp;
-        DIPx(:,iinterpp) = parm.Px(1:nwet,iinterpp);
+        DIPx(:,iinterpp) = par.Px(1:nwet,iinterpp);
     end
 
     if (par.opt_alpha == on)
         ialpha = par.pindx.lalpha;
-        DIPx(:,ialpha) = parm.Px(1:nwet,ialpha);
+        DIPx(:,ialpha) = par.Px(1:nwet,ialpha);
     end
 
     if (par.opt_beta == on)
         ibeta = par.pindx.lbeta;
-        DIPx(:,ibeta) = parm.Px(1:nwet,ibeta);
+        DIPx(:,ibeta) = par.Px(1:nwet,ibeta);
     end
 
     Gx = zeros(nwet,nx);
     Gx = Gp*DIPx+d0(DIP)*Gpx;
 
     if (par.Simodel)
-        dSi2Cdaa = parm.dSi2Cdaa;
-        dSi2Cdbb = parm.dSi2Cdbb;
+        dSi2Cdaa = par.dSi2Cdaa;
+        dSi2Cdbb = par.dSi2Cdbb;
 
         if par.opt_aa
             iaa = par.pindx.aa;
@@ -81,12 +81,12 @@ end
 
 %% ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 if (nargout >2)
-    npx = parm.npx;
+    npx = par.npx;
     dGpdalpha = Gpx(:,par.pindx.lalpha);
     dGpdbeta = Gpx(:,par.pindx.lbeta);
-    parm.dGpdalpha = dGpdalpha;
-    parm.dGpdbeta  = dGpdbeta;
-    DIPxx = parm.Pxx(1:nwet,:);
+    par.dGpdalpha = dGpdalpha;
+    par.dGpdbeta  = dGpdbeta;
+    DIPxx = par.Pxx(1:nwet,:);
     Gxx = sparse(nwet,nchoosek(npx,2)+npx);
     % Compute the hessian of the solution wrt the parameters
     kk = 1;
@@ -218,13 +218,13 @@ if (nargout >2)
     % Si parameters
     if par.Simodel == on
         % ---------------------------------------------------------
-        nsx = parm.nsx;
-        at = parm.at;
-        bt  = parm.bt;
-        aa  = parm.aa;
-        bb  = parm.bb;
-        bsi = parm.bsi;
-        kappa_gs  = parm.kappa_gs;
+        nsx = par.nsx;
+        at = par.at;
+        bt  = par.bt;
+        aa  = par.aa;
+        bb  = par.bb;
+        bsi = par.bsi;
+        kappa_gs  = par.kappa_gs;
         % number of parameter combinations;
         if (nsx >=2)
             ncs = nchoosek(nsx,2)+nsx + npx*nsx;
@@ -436,3 +436,6 @@ if (nargout >2)
         end 
     end
 end
+
+end
+

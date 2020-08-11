@@ -12,16 +12,15 @@ function [PFdiv,Gout,Hout] = buildPFD(M3d,grd,parm,Ptype)
 %
 % this code is used to build a Particle Flux Diverngence operator
 %
-%                      ________________________                                        
-%                     /         A             /|  POM sinking flux
+%                      ________________________                          %                     /         A             /|  POM sinking flux
 %                 top/_______________________/ |       |       
 %                    |  |                    | |       | -w   
 %                    | /        V            | /       |       
 %                 bot|/______________________|/        V
 %                                                  
 
-[DIV,IU,M,iwet] = mkOperators(M3d,grd)
-if ( strcmp(Ptype,'POP') | stcmp(Ptype,'POC') )
+[DIV,IU,M,iwet] = mkOperators(M3d,grd);
+if ( strcmp(Ptype,'POP') | strcmp(Ptype,'POC') )
     % Define a temperature dependent powerlaw exponent 
     T = parm.aveT;
     if ( strcmp(Ptype,'POP') ) 
@@ -47,7 +46,7 @@ if ( strcmp(Ptype,'POP') | stcmp(Ptype,'POC') )
 elseif ( strcmp(Ptype,'PIC') )
     r = 1./parm.taup;
     d = parm.d; % e-folding length scale for PIC flux attenuation
-    w = -r*d;
+    w = -r*d*M;
     FLUX = d0(w(iwet))*IU;
 elseif ( strcmp(Ptype,'bSi') )
     % Define a temperature dependent dissolution rate
@@ -67,7 +66,7 @@ end
 PFdiv = DIV*FLUX;
 
 
-if (varargout > 1) % compute the gradient w.r.t. the parameters
+if (nargout > 1) % compute the gradient w.r.t. the parameters
     if ( strcmp(Ptype,'POP') | strcmp(Ptype,'POC') )
         a_b  = -r./b.^2; % derivative of a w.r.t. b
         a_r  = 1./b;     % derivative of a w.r.t. r
@@ -89,7 +88,7 @@ if (varargout > 1) % compute the gradient w.r.t. the parameters
         Gout.PFD_bb = DIV*FLUX_bb;
         
     elseif( strcmp(Ptype,'PIC') )    
-        w_d = -r;
+        w_d = -r*M;
         FLUX_d = d0(w_d(iwet))*IU;
         Gout.PFD_d = DIV*FLUX_d;
     elseif ( strcmp(Ptype,'bSi') )
@@ -116,7 +115,7 @@ if (varargout > 1) % compute the gradient w.r.t. the parameters
 
 end
 
-if (varargout > 2) % compute the hessian w.r.t. the parameters
+if (nargout > 2) % compute the hessian w.r.t. the parameters
     if ( strcmp(Ptype,'POP') | strcmp(Ptype,'POC') )
         a_b_b = 2*r./(b.^3);           % derivative of a_b w.r.t. b
         a_r_r = 0;                     % derivative of a_r w.r.t. r
@@ -181,7 +180,8 @@ if (varargout > 2) % compute the hessian w.r.t. the parameters
     end
 end
 end
-function [DIV,IU,M,iwet] = mkOperator(M3d,grd);
+
+function [DIV,IU,M,iwet] = mkOperators(M3d,grd);
 % add an exra layer of zeros at the bottom to ensure there is no
 % flux in or out of the domain when using periodic shift operators
 % for finite differences and averaging
