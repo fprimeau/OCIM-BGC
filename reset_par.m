@@ -1,11 +1,11 @@
-function  [parm, x] = reset_par(x, parm, par);
+function  [par, x] = reset_par(x, par);
 %
 on = true; off = false;
 %++++++++++ check if the optimization routine suggests strange
 % parameter values
 A = exist('x0');
 if A == 0
-    x0 = parm.p0;
+    x0 = par.p0;
 end
 
 if (par.opt_sigma == on)
@@ -26,21 +26,21 @@ if (par.opt_kappa_dp == on)
     end
 end
 
-if (par.opt_slopep == on)
-    islopep = par.pindx.slopep;
-    xnew = x(islopep);
-    xold = x0(islopep);
+if (par.opt_bP_T == on)
+    ibP_T = par.pindx.bP_T;
+    xnew = x(ibP_T);
+    xold = x0(ibP_T);
     if (xnew > 5e-2 | xnew < -5e-2);
-        x(islopep) = x0(islopep);
+        x(ibP_T) = x0(ibP_T);
     end
 end
 
-if (par.opt_interpp == on)
-    iinterpp = par.pindx.linterpp;
-    xnew = exp(x(iinterpp));
-    xold = exp(x0(iinterpp));
-    if (xnew > 5*xold | xnew < 0.2*xold);
-        x(iinterpp) = x0(iinterpp);
+if (par.opt_bP == on)
+    ibP = par.pindx.lbP;
+    xnew = exp(x(ibP));
+    xold = exp(x0(ibP));
+    if (xnew > 2*xold | xnew < 0.5*xold);
+        x(ibP) = x0(ibP);
     end
 end
 
@@ -63,21 +63,21 @@ if (par.opt_beta == on)
 end
 
 if par.Cmodel == on 
-    if (par.opt_slopec == on)
-        islopec = par.pindx.slopec;
-        xnew = x(islopec);
-        xold = x0(islopec);
+    if (par.opt_bC_T == on)
+        ibC_T = par.pindx.bC_T;
+        xnew = x(ibC_T);
+        xold = x0(ibC_T);
         if (xnew > 5e-2 | xnew < -5e-2);
-            x(islopec) = x0(islopec);
+            x(ibC_T) = x0(ibC_T);
         end
     end
     
-    if (par.opt_interpc == on)
-        iinterpc = par.pindx.linterpc;
-        xnew = exp(x(iinterpc));
-        xold = exp(x0(iinterpc));
-        if (xnew > 10*xold | xnew < 0.1*xold);
-            x(iinterpc) = x0(iinterpc);
+    if (par.opt_bC == on)
+        ibC = par.pindx.lbC;
+        xnew = exp(x(ibC));
+        xold = exp(x0(ibC));
+        if (xnew > 2*xold | xnew < 0.5*xold);
+            x(ibC) = x0(ibC);
         end
     end
     
@@ -85,7 +85,7 @@ if par.Cmodel == on
         id = par.pindx.ld;
         xnew = exp(x(id));
         xold = exp(x0(id));
-        if (xnew > 5*xold | xnew < 0.2*xold);
+        if (xnew > 2*xold | xnew < 0.5*xold);
             x(id) = x0(id);
         end
     end
@@ -200,6 +200,6 @@ if (par.Simodel==on)
     
 end
 
-% reset parm.p0;
-parm.p0 = x;
+% reset par.p0;
+par.p0 = x;
 %+++++++++restore the parameter values back to their original ones.

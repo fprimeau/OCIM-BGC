@@ -1,16 +1,16 @@
-function vout = mkO2P(parm)
+function vout = mkO2P(par)
 % parameters
-slopeo   = parm.slopeo;
-interpo  = parm.interpo;
+slopeo   = par.slopeo;
+interpo  = par.interpo;
 %
-iwet = parm.iwet;
-nwet = parm.nwet;
-sal  = parm.modS;
-modT = parm.modT;
-smsk = parm.M3d;
+iwet = par.iwet;
+nwet = par.nwet;
+sal  = par.modS;
+modT = par.modT;
+smsk = par.M3d;
 smsk(:,:,2:end) = 0;
 isrf = find(smsk(iwet));
-dVs = parm.dVt(iwet(isrf));
+dVs = par.dVt(iwet(isrf));
 surface_mean = @(x) sum(x(isrf).*dVs)/sum(dVs);
 
 % compute the mean of the regressor variable
@@ -19,7 +19,7 @@ mu = surface_mean(Z);
 Delta = sqrt(surface_mean((Z-mu).^2));
 
 % standardize the regressor variables
-ZR = (Z-mu)/Delta; parm.ZR = ZR;
+ZR = (Z-mu)/Delta; par.ZR = ZR;
 %
 vout.O2P = slopeo*ZR + interpo;
 vout.dO2Pdslopeo = ZR;

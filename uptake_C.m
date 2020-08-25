@@ -1,19 +1,19 @@
-function [G,Gx,Gxx] = uptake_C(par,parm)
+function [G,Gx,Gxx] = uptake_C(par)
 on = true; off = false;
 %
 pindx = par.pindx;
 % unpack the parameters to be optimized
-alpha = parm.alpha;
-beta  = parm.beta;
+alpha = par.alpha;
+beta  = par.beta;
 
-iwet = parm.iwet;
-nwet = parm.nwet;
+iwet = par.iwet;
+nwet = par.nwet;
 % of uptake operator
-po4obs = parm.po4obs(iwet);
+po4obs = par.po4obs(iwet);
 % P uptake operator
-L = parm.L;  
+L = par.L;  
 
-DIP = parm.DIP;
+DIP = par.DIP;
 G   = d0(alpha*L*DIP); 
 Gp  = alpha*L;   
 
@@ -23,10 +23,10 @@ if par.optim == off
     Gx = [];
 elseif (par.optim & nargout > 1)
     % gradient of uptake operator
-    nx  = parm.npx;
+    nx  = par.npx;
     Gpx = zeros(nwet,nx);
-    DIPx = parm.Px(1:nwet,:);
-    dLdbeta = parm.dLdbeta;    
+    DIPx = par.Px(1:nwet,:);
+    dLdbeta = par.dLdbeta;    
     if (par.opt_alpha)
         ialpha = pindx.lalpha;
         Gpx(:,ialpha) = diag(alpha*L); % dGdlog_alpha
@@ -45,8 +45,8 @@ if par.optim == off
     Gxx = [];
 elseif (par.optim & nargout > 2)
     kk = 0;
-    DIPxx = parm.Pxx(1:nwet,:);
-    d2Ldbetadbeta = parm.d2Ldbetadbeta;
+    DIPxx = par.Pxx(1:nwet,:);
+    d2Ldbetadbeta = par.d2Ldbetadbeta;
     % sigma sigma
     if (par.opt_sigma)
         kk = kk + 1;
@@ -59,14 +59,14 @@ elseif (par.optim & nargout > 2)
         Gxx(:,kk) = Gp*DIPxx(:,kk);
     end
 
-    % sigma slopep
-    if (par.opt_sigma & par.opt_slopep)
+    % sigma bP_T
+    if (par.opt_sigma & par.opt_bP_T)
         kk = kk + 1;
         Gxx(:,kk) = Gp*DIPxx(:,kk);
     end
 
-    % sigma interpp
-    if (par.opt_sigma & par.opt_interpp)
+    % sigma bP
+    if (par.opt_sigma & par.opt_bP)
         kk = kk + 1;
         Gxx(:,kk) = Gp*DIPxx(:,kk);
     end
@@ -91,14 +91,14 @@ elseif (par.optim & nargout > 2)
         Gxx(:,kk) = Gp*DIPxx(:,kk);
     end
 
-    % kappa_dp slopep
-    if (par.opt_kappa_dp & par.opt_slopep)
+    % kappa_dp bP_T
+    if (par.opt_kappa_dp & par.opt_bP_T)
         kk = kk + 1;
         Gxx(:,kk) = Gp*DIPxx(:,kk);
     end
 
-    % kappa_dp interpp
-    if (par.opt_kappa_dp & par.opt_interpp)
+    % kappa_dp bP
+    if (par.opt_kappa_dp & par.opt_bP)
         kk = kk + 1;
         Gxx(:,kk) = Gp*DIPxx(:,kk);
     end
@@ -117,50 +117,50 @@ elseif (par.optim & nargout > 2)
             d0(Gpx(:,pindx.lbeta))*DIPx(:,pindx.lkappa_dp);
     end
 
-    % slopep slopep
-    if (par.opt_slopep)
+    % bP_T bP_T
+    if (par.opt_bP_T)
         kk = kk + 1;
         Gxx(:,kk) = Gp*DIPxx(:,kk);
     end
 
-    % slopep interpp
-    if (par.opt_slopep & par.opt_interpp)
+    % bP_T bP
+    if (par.opt_bP_T & par.opt_bP)
         kk = kk + 1;
         Gxx(:,kk) = Gp*DIPxx(:,kk);
     end
 
-    % slopep alpha
-    if (par.opt_slopep & par.opt_alpha)
+    % bP_T alpha
+    if (par.opt_bP_T & par.opt_alpha)
         kk = kk + 1;
         Gxx(:,kk) = Gp*DIPxx(:,kk) + ...
-            d0(Gpx(:,pindx.lalpha))*DIPx(:,pindx.slopep);
+            d0(Gpx(:,pindx.lalpha))*DIPx(:,pindx.bP_T);
     end
 
-    % slopep beta
-    if (par.opt_slopep & par.opt_beta)
+    % bP_T beta
+    if (par.opt_bP_T & par.opt_beta)
         kk = kk + 1;
         Gxx(:,kk) = Gp*DIPxx(:,kk) + ...
-            d0(Gpx(:,pindx.lbeta))*DIPx(:,pindx.slopep);
+            d0(Gpx(:,pindx.lbeta))*DIPx(:,pindx.bP_T);
     end
 
-    % interpp interpp
-    if (par.opt_interpp)
+    % bP bP
+    if (par.opt_bP)
         kk = kk + 1;
         Gxx(:,kk) = Gp*DIPxx(:,kk);
     end
 
-    % interpp alpha
-    if (par.opt_interpp & par.opt_alpha)
+    % bP alpha
+    if (par.opt_bP & par.opt_alpha)
         kk = kk + 1;
         Gxx(:,kk) = Gp*DIPxx(:,kk) + ...
-            d0(Gpx(:,pindx.lalpha))*DIPx(:,pindx.linterpp);
+            d0(Gpx(:,pindx.lalpha))*DIPx(:,pindx.lbP);
     end
 
-    % interpp beta
-    if (par.opt_interpp & par.opt_beta)
+    % bP beta
+    if (par.opt_bP & par.opt_beta)
         kk = kk + 1;
         Gxx(:,kk) = Gp*DIPxx(:,kk) + ...
-            d0(Gpx(:,pindx.lbeta))*DIPx(:,pindx.linterpp);
+            d0(Gpx(:,pindx.lbeta))*DIPx(:,pindx.lbP);
     end
 
     % alpha alpha

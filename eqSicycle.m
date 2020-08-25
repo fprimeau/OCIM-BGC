@@ -1,86 +1,86 @@
-function [parm,Si,Six,Sixx] = eqSicycle(par, parm, x)
+function [par,Si,Six,Sixx] = eqSicycle(x, par)
 on = true; off = false;
-M3d =  parm.M3d;
-iwet = parm.iwet;
-nwet = parm.nwet;
+M3d =  par.M3d;
+iwet = par.iwet;
+nwet = par.nwet;
 I    = speye(nwet); % make an identity matrix;
-parm.nx = length(x);
+par.nx = length(x);
 nsx = 0; % count number of Si tunable parameters
 % unpack the parameters to be optimized
 if (par.opt_alpha == on)
     lalpha = x(par.pindx.lalpha);
-    parm.alpha  = exp(lalpha);
+    par.alpha  = exp(lalpha);
 else
-    parm.alpha  = par.alpha;
+    par.alpha  = par.alpha;
 end
 % beta
 if (par.opt_beta == on)
     lbeta = x(par.pindx.lbeta);
-    parm.beta  = exp(lbeta);
+    par.beta  = exp(lbeta);
 else
-    parm.beta  = par.beta;
+    par.beta  = par.beta;
 end
 % bsi
 if (par.opt_bsi == on)
     nsx = nsx + 1;
     lbsi = x(par.pindx.lbsi);
-    parm.bsi = exp(lbsi);
+    par.bsi = exp(lbsi);
 else
-    parm.bsi  = par.bsi;
+    par.bsi  = par.bsi;
 end
 % at
 if (par.opt_at == on)
     nsx = nsx + 1;
     lat = x(par.pindx.lat);
-    parm.at = exp(lat);
+    par.at = exp(lat);
 else
-    parm.at  = par.at;
+    par.at  = par.at;
 end
 % bt
 if (par.opt_bt == on)
     nsx = nsx + 1;
     lbt = x(par.pindx.lbt);
-    parm.bt  = exp(lbt);
+    par.bt  = exp(lbt);
 else
-    parm.bt  = par.bt;
+    par.bt  = par.bt;
 end
 % aa
 if (par.opt_aa == on)
     nsx = nsx + 1;
-    parm.aa = x(par.pindx.aa);
+    par.aa = x(par.pindx.aa);
 else
-    parm.aa  = par.aa;
+    par.aa  = par.aa;
 end
 % bb
 if (par.opt_bb == on)
     nsx = nsx + 1;
     lbb = x(par.pindx.lbb);
-    parm.bb  = exp(lbb);
+    par.bb  = exp(lbb);
 else
-    parm.bb  = par.bb;
+    par.bb  = par.bb;
 end
-parm.nsx = nsx;
+par.nsx = nsx;
 %
 % ++++++++++++++++++++++++++++++++++++++++++++++++++
-at  = parm.at;
-bt  = parm.bt;
-aa  = parm.aa;
-bb  = parm.bb;
-bsi = parm.bsi;
-kappa_gs = parm.kappa_gs;
-T   = parm.modT(iwet) + 273.15;
+at  = par.at;
+bt  = par.bt;
+aa  = par.aa;
+bb  = par.bb;
+bsi = par.bsi;
+kappa_gs = par.kappa_gs;
+T   = par.modT(iwet) + 273.15;
 kappa_si = at * exp(-bt./T); 
 % ++++++++++++++++++++++++++++++++++++++++++++++++++
 %
 % fixed parameters
-SI4 = parm.SIL(iwet);
-SILbar  = parm.SILbar*M3d(iwet);
+SI4 = par.SIL(iwet);
+SILbar  = par.SILbar*M3d(iwet);
 %
 %%%%%%%%%%%%%%%%%%% create Si2P %%%%%%%%%%%%%%%%%%%%%
 smsk = M3d;
 smsk(:,:,3:end) = 0;
 isrf = find(smsk(iwet));
-dVs = parm.dVt(iwet(isrf));
+dVs = par.dVt(iwet(isrf));
 surface_mean = @(x) sum(x(isrf).*dVs)/sum(dVs);
 
 % compute the mean of the regressor variable
@@ -92,15 +92,15 @@ Delta = sqrt(surface_mean((Z-mu).^2));
 ZR = 0.5+0.5*tanh((Z-mu)/Delta);
 % ZR = (Z-min(Z(isrf)))./(max(Z(isrf))-min(Z(isrf)));
 %
-Si2C = (aa*ZR + bb)./Z;   parm.Si2C = Si2C;
-dSi2Cdaa = ZR./Z;         parm.dSi2Cdaa = dSi2Cdaa;
-dSi2Cdbb = 1./Z;          parm.dSi2Cdbb = dSi2Cdbb;
+Si2C = (aa*ZR + bb)./Z;   par.Si2C = Si2C;
+dSi2Cdaa = ZR./Z;         par.dSi2Cdaa = dSi2Cdaa;
+dSi2Cdbb = 1./Z;          par.dSi2Cdbb = dSi2Cdbb;
 %%%%%%%%%%%%%%%%%%%%%%% end %%%%%%%%%%%%%%%%%%%%%%%%
 %
-vout  = buildPFD(par,parm);
-TRdiv = parm.TRdiv;
+vout  = buildPFD(par, 'Si');
+TRdiv = par.TRdiv;
 PFdiv = vout.PFdiv;
-G     = uptake_Si(par, parm);
+G     = uptake_Si(par);
 % build Jacobian matrix
 % +++++++++++++++++++++++++++++++++++++++++
 % F = ([TRdiv*SIL + G*Si2C*SIL - kappa_si*DSI + kappa_gs*(SIL-SILbar);...
@@ -119,7 +119,7 @@ DSI = Si(nwet+1:end);
 if (par.optim == off)
     Six = [];
 else
-    [~,Gx] = uptake_Si(par, parm);
+    [~,Gx] = uptake_Si(par, par);
     % sigma
     if (par.opt_sigma == on)
         tmp =  [-d0(Gx(:,par.pindx.lsigma))*SIL.*Si2C;...
@@ -170,7 +170,7 @@ else
 
     % bsi
     if (par.opt_bsi == on)
-        vout = buildPFD(par, parm);
+        vout = buildPFD(par, par);
         dPFDdb = vout.dPFDdb;
         tmp = bsi*[DSI*0;  -dPFDdb*DSI];
 
@@ -179,7 +179,7 @@ else
     
     % at
     if (par.opt_at == on)
-        vout = buildPFD(par, parm);
+        vout = buildPFD(par, par);
         dPFDdat = vout.dPFDdat;
         dkdat = exp(-bt./T);
         tmp = at*[dkdat.*DSI; ...
@@ -190,7 +190,7 @@ else
 
     % bt
     if (par.opt_bt == on)
-        vout = buildPFD(par, parm);
+        vout = buildPFD(par, par);
         dPFDdbt = vout.dPFDdbt;
         dkdbt = -(at*exp(-bt./T))./T;
         tmp = bt*[dkdbt.*DSI; ...
@@ -221,16 +221,16 @@ DSIx = Six(nwet+1:end,:);
 if (par.optim == off)
     Sixx = [];
 else 
-    nx = parm.npx + parm.nsx;
+    nx = par.npx + par.nsx;
     ncs = nchoosek(nx,2)+nx;
     Sixx = sparse(2*nwet,ncs);
     % Compute the hessian of the solution wrt the parameters
-    DIP = parm.DIP;
-    DIPx  = parm.Px(1:nwet,:);
-    DIPxx = parm.Pxx(1:nwet,:);
-    [~,~,Gxx,Gp,parm] = uptake_Si(par, parm);
-    dGpdalpha = parm.dGpdalpha;
-    dGpdbeta  = parm.dGpdbeta;
+    DIP = par.DIP;
+    DIPx  = par.Px(1:nwet,:);
+    DIPxx = par.Pxx(1:nwet,:);
+    [~,~,Gxx,Gp,par] = uptake_Si(par, par);
+    dGpdalpha = par.dGpdalpha;
+    dGpdbeta  = par.dGpdbeta;
     % sigma sigma
     kk = 1;
     if (par.opt_sigma)
@@ -799,7 +799,7 @@ else
     end
     % bsi bsi
     if (par.opt_bsi == on)
-        vout = buildPFD(par, parm);
+        vout = buildPFD(par, par);
         d2PFDdb2 = vout.d2PFDdb2;
         tmp = bsi*[0*DSI; ...
                    -dPFDdb*DSI] + ...
@@ -813,7 +813,7 @@ else
     end
     % bsi at
     if (par.opt_bsi & par.opt_at)
-        vout = buildPFD(par, parm);
+        vout = buildPFD(par, par);
         d2PFDdatdb = vout.d2PFDdatdb;
         tmp = bsi*at*[0*DSI; ...
                       -d2PFDdatdb*DSI] + ...
@@ -827,7 +827,7 @@ else
     end
     % bsi bt
     if (par.opt_bsi & par.opt_bt)
-        vout = buildPFD(par, parm);
+        vout = buildPFD(par, par);
         d2PFDdbtdb = vout.d2PFDdbtdb;
         tmp = bsi*bt*[0*DSI; ...
                       -d2PFDdbtdb*DSI] + ...
@@ -865,7 +865,7 @@ else
     end
     % at at
     if (par.opt_at == on)
-        vout = buildPFD(par, parm);
+        vout = buildPFD(par, par);
         d2PFDdat2 = vout.d2PFDdat2;
         d2kdat2 = dkdat;
         tmp = at*[d0(dkdat)*DSI; ...
@@ -880,7 +880,7 @@ else
     end
     % at bt
     if (par.opt_at == on & par.opt_bt == on)
-        vout = buildPFD(par, parm);
+        vout = buildPFD(par, par);
         d2PFDdatdbt = vout.d2PFDdatdbt;
         d2kdatdbt = -exp(-bt./T).*(1./T);
         tmp = at*bt*[d0(d2kdatdbt); ...
@@ -919,7 +919,7 @@ else
     end
     % bt bt
     if (par.opt_bt == on)
-        vout = buildPFD(par, parm);
+        vout = buildPFD(par, par);
         d2kdbtdbt = kappa_si./T.^2;
         d2PFDdbt2 = vout.d2PFDdbt2;
         tmp = bt*[d0(dkdbt)*DSI; ...
@@ -991,9 +991,9 @@ else
 end
 %
 %% +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-function vout = buildPFD(par,parm);
-M3d = parm.M3d;
-grd = parm.grd;
+function vout = buildPFD(par,par);
+M3d = par.M3d;
+grd = par.grd;
 
 [ny,nx,nz] = size(M3d);
 M3D = zeros(ny,nx,nz+1);
@@ -1029,14 +1029,14 @@ DIV = d0(dVt(iwet))\(I0-IB)*d0(dAt(iwet));
 % mimics a Martin curve flux attenuation profile
 %(see Kriest and Oschelies 2008 in Biogeosciences)
 % ++++++++++++++++++++++++++++++++++++++++++++++++++
-at  = parm.at;
-bt  = parm.bt;
-T   = parm.modT(iwet) + 273.15;
+at  = par.at;
+bt  = par.bt;
+T   = par.modT(iwet) + 273.15;
 kappa_si = at*exp(-bt./T); 
 % ++++++++++++++++++++++++++++++++++++++++++++++++++
 
 r = kappa_si;
-b = parm.bsi;
+b = par.bsi;
 a = r./b;
 % particle sinking velocity at the top of the grid cells.
 MSK = M3D.*M3D(:,:,[nz+1,1:nz]);

@@ -10,17 +10,38 @@ iter = 0;
 spd  = 24*60^2;
 spa  = 365*spd;
 %
-version = 90;
+TR_ver = 91;
+mod_ver = 'CTL_He_varP2O';
 par.optim   = on;
 par.Cmodel  = on;
-par.Omodel  = off;
-par.Simodel = on;
+par.Omodel  = on;
+par.Simodel = off;
+% save results 
+% ATTENTION: please change this directory to where you wanna
+% save your output files
+output_dir = sprintf('/DFS-L/DATA/primeau/weilewang/COP4WWF/MSK%2d/',TR_ver);
+VER = strcat(output_dir,mod_ver);
 %
-if version == 90
-    % ATTENTION: please change this directory to where you wanna
-    % save your output files
-    % parm.VER = '/DFS-L/DATA/primeau/weilewang/COP4WWF/MSK90/varP2O';
-    parm.VER = 'Gtest';
+% Creat output file names based on which model(s) is(are) optimized
+if (par.Cmodel == off & par.Omodel == off & par.Simodel == off)
+    fname = strcat(VER,'_P');
+    %
+elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off)
+    fname = strcat(VER,'_PC');
+    %
+elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off)
+    fname = strcat(VER,'_PCO');
+    %
+elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on)
+    fname = strcat(VER,'_PCSi');
+    %
+elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on)
+    fname = strcat(VER,'_PCOSi');
+end 
+% par.fname = 'Gtest';
+par.fname = fname;
+%
+if TR_ver == 90
     load transport_v4.mat grid M3d TR
     load Sobs_90x180x24.mat
     load tempobs_90x180x24.mat
@@ -39,11 +60,7 @@ if version == 90
     % load Gtest_O2.mat 
     grd = grid ;
     
-elseif version == 91
-    % ATTENTION: please change this directory to where you wanna
-    % save your output files
-    parm.VER = '/DFS-L/DATA/primeau/weilewang/COP4WWF/MSK91/CTL_He_fixedPO';
-
+elseif TR_ver == 91
     load OCIM2_CTL_He.mat output 
     % load OCIM2_KiLOW_He.mat output 
     % load OCIM2_KiHIGH_He.mat output 
@@ -78,48 +95,49 @@ iwet = find(M3d(:)) ;
 nwet = length(iwet) ;
 dVt = grd.DXT3d.*grd.DYT3d.*grd.DZT3d;
 %
-parm.Salt  = Sobs    ;
-parm.Temp  = tempobs ;
-parm.dVt   = dVt     ;
-parm.Kw660 = Kw660   ;
-parm.p4    = p4      ;
-parm.c2p   = 110     ;
-parm.M3d   = M3d     ;
-parm.iwet  = iwet    ;
-parm.nwet  = nwet    ;
-parm.TRdiv = -TR     ;
-parm.grd   = grd     ;
-parm.I     = speye(nwet);
-parm.rho   = 1024.5         ; % seawater density;
-permil     = parm.rho*1e-3  ; % from umol/kg to mmol/m3;
+[par.kw,par.P] = kw(M3d,grd);
+par.Salt  = Sobs    ;
+par.Temp  = tempobs ;
+par.dVt   = dVt     ;
+par.Kw660 = Kw660   ;
+par.p4    = p4      ;
+par.c2p   = 110     ;
+par.M3d   = M3d     ;
+par.iwet  = iwet    ;
+par.nwet  = nwet    ;
+par.TRdiv = -TR     ;
+par.grd   = grd     ;
+par.I     = speye(nwet);
+par.rho   = 1024.5         ; % seawater density;
+permil     = par.rho*1e-3  ; % from umol/kg to mmol/m3;
                               %
-parm.SIL     = Siobs;
-parm.po4obs  = po4obs;
-parm.o2raw   = o2raw;
-parm.po4raw  = po4raw;
-parm.sio4raw = sio4raw;
-parm.dicraw  = dicraw*permil; % GLODAP dic obs [mmol/m3];
-parm.human_co2 = DICant*permil;
+par.SIL     = Siobs;
+par.po4obs  = po4obs;
+par.o2raw   = o2raw;
+par.po4raw  = po4raw;
+par.sio4raw = sio4raw;
+par.dicraw  = dicraw*permil; % GLODAP dic obs [mmol/m3];
+par.human_co2 = DICant*permil;
 
 GC = real([DIC(iwet); POC(iwet); DOC(iwet); CaC(iwet)]);
-GO = real(O2(iwet)) + 1e-7*randn(parm.nwet,1);
+GO = real(O2(iwet)) + 1e-7*randn(par.nwet,1);
 
 % transiant CO2 concentraion;
-parm.year      = splco2_mod(:,1) ;
-parm.pco2_air  = splco2_mod(:,2) ;
-parm.co2syspar = co2syspar       ;
+par.year      = splco2_mod(:,1) ;
+par.pco2_air  = splco2_mod(:,2) ;
+par.co2syspar = co2syspar       ;
 
-parm.kappa_g  = 1/(1e6*spa); % geological restoring time [1/s];
-parm.SILbar   = nansum(Siobs(iwet).*dVt(iwet))/nansum(dVt(iwet));
-parm.DIPbar   = nansum(po4obs(iwet).*dVt(iwet))/nansum(dVt(iwet)); % volume
-parm.taup     = 720*60^2; % (s) pic dissolution time-scale
-parm.tau_TA   = 1./parm.taup;
-parm.kappa_gs = 1/(1e6*spa); % geological restoring time [1/s];
+par.kappa_g  = 1/(1e6*spa); % geological restoring time [1/s];
+par.SILbar   = nansum(Siobs(iwet).*dVt(iwet))/nansum(dVt(iwet));
+par.DIPbar   = nansum(po4obs(iwet).*dVt(iwet))/nansum(dVt(iwet)); % volume
+par.taup     = 720*60^2; % (s) pic dissolution time-scale
+par.tau_TA   = 1./par.taup;
+par.kappa_gs = 1/(1e6*spa); % geological restoring time [1/s];
                              % PME part;
-[modT,modS] = PME(parm) ;
-parm.modS = modS        ;
-parm.modT = modT        ;
-parm.aveT = nanmean(modT(:,:,1:8),3);
+[modT,modS] = PME(par) ;
+par.modS = modS        ;
+par.modT = modT        ;
+par.aveT = nanmean(modT(:,:,1:8),3);
 % load optimal parameters if they exist
 Fsaved = '/DFS-L/DATA/primeau/weilewang/COP4WWF/MSK90/fixedPO';
 fname = strcat(Fsaved,'_xhat.mat');
@@ -138,15 +156,15 @@ if exist('xhat') & isfield(xhat,'kappa_dp')
 else 
     par.kappa_dp = 4.44e-08 ;
 end 
-if exist('xhat') & isfield(xhat,'slopep')
-    par.slopep = xhat.slopep;
+if exist('xhat') & isfield(xhat,'bP_T')
+    par.bP_T = xhat.bP_T;
 else 
-    par.slopep = 0 ;
+    par.bP_T = 0 ;
 end 
-if exist('xhat') & isfield(xhat,'interpp')
-    par.interpp  = xhat.interpp ;
+if exist('xhat') & isfield(xhat,'bP')
+    par.bP  = xhat.bP ;
 else 
-    par.interpp  = 0.89 ;
+    par.bP  = 0.89 ;
 end 
 if exist('xhat') & isfield(xhat,'alpha')
     par.alpha = xhat.alpha;
@@ -160,15 +178,15 @@ else
 end 
 
 % C model parameters                                      
-if exist('xhat') & isfield(xhat,'slopec')
-    par.slopec = xhat.slopec ;
+if exist('xhat') & isfield(xhat,'bC_T')
+    par.bC_T = xhat.bC_T ;
 else
-    par.slopec = 0 ;
+    par.bC_T = 0 ;
 end 
-if exist('xhat') & isfield(xhat,'interpc')
-    par.interpc = xhat.interpc ;
+if exist('xhat') & isfield(xhat,'bC')
+    par.bC = xhat.bC ;
 else
-    par.interpc = 1.06e+00 ;
+    par.bC = 1.06e+00 ;
 end 
 if exist('xhat') & isfield(xhat,'d')
     par.d = xhat.d   ;
@@ -241,16 +259,16 @@ end
 par.opt_beta = on;
 par.opt_alpha = on;
 par.opt_sigma = off; 
-par.opt_slopep = on; 
-par.opt_interpp = on;
+par.opt_bP_T = on; 
+par.opt_bP = on;
 par.opt_kappa_dp = on;
 % C model parameters
 par.opt_d  = on; % 
 par.opt_RR = on; % 
 par.opt_cc = on;
 par.opt_dd = on;
-par.opt_slopec   = on;
-par.opt_interpc  = on; %
+par.opt_bC_T = on;
+par.opt_bC   = on; %
 par.opt_kappa_dc = on; %
 % O model parameters
 par.opt_slopeo  = on; 
@@ -262,9 +280,12 @@ par.opt_bt = off;
 par.opt_aa = on;
 par.opt_bb = on;
 %% -------------------------------------------------------------
+npx = 0; ncx = 0;
+nox = 0; nsx = 0;
 p0 = [];
-% sigma 
+% sigma
 if (par.opt_sigma == on)
+    npx = npx+1;
     sigma = par.sigma; lsigma = log(sigma);
     strt = length(p0) + 1;
     p0 = [p0; lsigma];
@@ -272,27 +293,31 @@ if (par.opt_sigma == on)
 end 
 % kappa_dp 
 if (par.opt_kappa_dp == on)
+    npx = npx+1;
     kappa_dp = par.kappa_dp; lkappa_dp = log(kappa_dp);
     strt = length(p0) + 1;
     p0 = [p0; lkappa_dp];
     par.pindx.lkappa_dp = strt : length(p0);
 end
-% slopep
-if (par.opt_slopep == on)
-    slopep = par.slopep;
+% bP_T
+if (par.opt_bP_T == on)
+    npx = npx+1;
+    bP_T = par.bP_T;
     strt = length(p0) + 1;
-    p0 = [p0; slopep];
-    par.pindx.slopep = strt : length(p0);
+    p0 = [p0; bP_T];
+    par.pindx.bP_T = strt : length(p0);
 end 
-% interpp
-if (par.opt_interpp == on)
-    interpp = par.interpp; linterpp = log(interpp);
+% bP
+if (par.opt_bP == on)
+    npx = npx+1;
+    bP = par.bP; lbP = log(bP);
     strt = length(p0) + 1;
-    p0 = [p0; linterpp];
-    par.pindx.linterpp = strt : length(p0);
+    p0 = [p0; lbP];
+    par.pindx.lbP = strt : length(p0);
 end 
 % alpha 
 if (par.opt_alpha == on)
+    npx = npx+1;
     alpha = par.alpha; lalpha = log(alpha);
     strt = length(p0) + 1;
     p0 = [p0; lalpha];
@@ -300,6 +325,7 @@ if (par.opt_alpha == on)
 end 
 % beta
 if (par.opt_beta == on)
+    npx = npx+1;
     beta = par.beta; lbeta = log(beta);
     strt = length(p0) + 1;
     p0 = [p0; lbeta];
@@ -307,22 +333,25 @@ if (par.opt_beta == on)
 end
 %
 if (par.Cmodel == on)
-    % slopec
-    if (par.opt_slopec == on)
-        slopec = par.slopec;
+    % bC_T
+    if (par.opt_bC_T == on)
+        ncx = ncx + 1;
+        bC_T = par.bC_T;
         strt = length(p0) + 1;
-        p0 = [p0; slopec];
-        par.pindx.slopec = strt : length(p0);
+        p0 = [p0; bC_T];
+        par.pindx.bC_T = strt : length(p0);
     end 
-    % interpc
-    if (par.opt_interpc == on)
-        interpc = par.interpc; linterpc = log(interpc);
+    % bC
+    if (par.opt_bC == on)
+        ncx = ncx + 1;
+        bC = par.bC; lbC = log(bC);
         strt = length(p0) + 1;
-        p0 = [p0; linterpc];
-        par.pindx.linterpc = strt : length(p0);
+        p0 = [p0; lbC];
+        par.pindx.lbC = strt : length(p0);
     end 
     % d
     if (par.opt_d == on)
+        ncx = ncx + 1;
         d = par.d; ld = log(d);
         strt = length(p0) + 1;
         p0 = [p0; ld];
@@ -330,6 +359,7 @@ if (par.Cmodel == on)
     end 
     % kappa_dc
     if (par.opt_kappa_dc == on)
+        ncx = ncx + 1;
         kappa_dc = par.kappa_dc; lkappa_dc = log(kappa_dc);
         strt = length(p0) + 1;
         p0 = [p0; lkappa_dc];
@@ -337,6 +367,7 @@ if (par.Cmodel == on)
     end 
     % RR
     if (par.opt_RR == on)
+        ncx = ncx + 1;
         RR = par.RR; lRR = log(RR);
         strt = length(p0) + 1;
         p0 = [p0; lRR];
@@ -344,6 +375,7 @@ if (par.Cmodel == on)
     end
     % cc
     if (par.opt_cc == on)
+        ncx = ncx + 1;
         cc = par.cc; lcc = log(cc);
         strt = length(p0) + 1;
         p0 = [p0; lcc];
@@ -351,15 +383,19 @@ if (par.Cmodel == on)
     end
     % dd
     if (par.opt_dd == on)
+        ncx = ncx + 1;
         dd = par.dd; ldd = log(dd);
         strt = length(p0) + 1;
         p0 = [p0; ldd];
         par.pindx.ldd = strt : length(p0);
     end
+    par.ncx = ncx;
 end
+%
 if par.Omodel == on
     % slopeo
     if (par.opt_slopeo == on)
+        nox = nox + 1;
         slopeo = par.slopeo; 
         strt = length(p0) + 1;
         p0 = [p0; slopeo];
@@ -367,15 +403,17 @@ if par.Omodel == on
     end 
     % interpo
     if (par.opt_interpo == on)
+        nox = nox + 1;
         interpo = par.interpo; linterpo = log(interpo);
         strt = length(p0) + 1;
         p0 = [p0; linterpo];
         par.pindx.linterpo = strt : length(p0);
     end
 end 
-if par.Simodel == on 
+if par.Simodel == on
     % bsi
     if (par.opt_bsi == on)
+        nsx = nsx + 1;
         bsi = par.bsi; lbsi = log(bsi);
         strt = length(p0) + 1;
         p0 = [p0; lbsi];
@@ -383,6 +421,7 @@ if par.Simodel == on
     end
     % at 
     if (par.opt_at == on)
+        nsx = nsx + 1;
         at = par.at; lat = log(at);
         strt = length(p0) + 1;
         p0 = [p0; lat];
@@ -390,6 +429,7 @@ if par.Simodel == on
     end
     % bt
     if (par.opt_bt == on)
+        nsx = nsx + 1;
         bt = par.bt; lbt = log(bt);
         strt = length(p0) + 1;
         p0 = [p0; lbt];
@@ -397,6 +437,7 @@ if par.Simodel == on
     end
     % aa
     if (par.opt_aa == on)
+        nsx = nsx + 1;
         aa = par.aa;
         strt = length(p0) + 1;
         p0 = [p0; aa];
@@ -404,23 +445,26 @@ if par.Simodel == on
     end
     % bb
     if (par.opt_bb == on)
+        nsx = nsx + 1;
         bb = par.bb; lbb = log(bb);
         strt = length(p0) + 1;
         p0 = [p0; lbb];
         par.pindx.lbb = strt : length(p0);
     end
 end
+par.npx = npx; par.ncx = ncx;
+par.nox = nox; par.nsx = nsx;
 %
 %% -------------------------------------------------------------
 %
-parm.kappa_p = 1/(720*60^2) ;
-parm.p2c = 0.006+0.0069*po4obs;
-parm.nzo = 2;
+par.kappa_p = 1/(720*60^2) ;
+par.p2c = 0.006+0.0069*po4obs;
+par.nzo = 2;
 %%%%%%% prepare NPP for the model %%%%%%%%
 inan = find(isnan(npp(:)) | npp(:) < 0);
 npp(inan) = 0;
 
-% parm.VER = '/DFS-L/DATA/primeau/weilewang/COP4WWF/MSK90/fixedPO_SOxhalf';
+% par.VER = '/DFS-L/DATA/primeau/weilewang/COP4WWF/MSK90/fixedPO_SOxhalf';
 % tmp = squeeze(M3d(:,:,1)) ;
 % tmp(1:15,:) = nan ; % SO
 % tmp(65:78,55:125) = nan   ; % NP
@@ -428,16 +472,16 @@ npp(inan) = 0;
 % itarg = find(isnan(tmp(:))) ;
 % npp(itarg) = npp(itarg)*0.5   ;
 %
-parm.npp    = npp/(12*spd);
-parm.Lambda = M3d*0;
-parm.Lambda(:,:,1) = 0.5*(1/grd.dzt(1))*parm.p2c(:,:,1)./(1e-9+po4obs(:,:,1));
-parm.Lambda(:,:,2) = 0.5*(1/grd.dzt(2))*parm.p2c(:,:,2)./(1e-9+po4obs(:,:,2));
-parm.Lambda(:,:,3:end) = 0;
+par.npp    = npp/(12*spd);
+par.Lambda = M3d*0;
+par.Lambda(:,:,1) = 0.5*(1/grd.dzt(1))*par.p2c(:,:,1)./(1e-9+po4obs(:,:,1));
+par.Lambda(:,:,2) = 0.5*(1/grd.dzt(2))*par.p2c(:,:,2)./(1e-9+po4obs(:,:,2));
+par.Lambda(:,:,3:end) = 0;
 %%%%%%%%%%%%%%%%%%%% end %%%%%%%%%%%%%%%%%
-parm.p0 = p0;
+par.p0 = p0;
 x0 = p0;
 %
-myfun = @(x) neglogpost(x, parm, par);
+myfun = @(x) neglogpost(x, par);
 %
 options = optimoptions(@fminunc                  , ...
                        'Algorithm','trust-region', ...
@@ -452,13 +496,13 @@ options = optimoptions(@fminunc                  , ...
                        'FinDiffType','central'   , ...
                        'PrecondBandWidth',Inf)   ;
 %
-G_test = on;
+G_test = off;
 nip    = length(x0);
 if(G_test);
     dx = sqrt(-1)*eps.^3*eye(nip);
     for ii = 1 : nip
         x  = real(x0)+dx(:,ii);
-        [f,fx,fxx] = neglogpost(x, parm, par) ;
+        [f,fx,fxx] = neglogpost(x, par) ;
         diff = real(fx(ii)) - imag(f)/eps.^3 ;
         fprintf('%i %e  \n',ii,diff);
         diffx = real(fxx(:,ii)) - imag(fx)/eps.^3;
@@ -470,8 +514,10 @@ if(G_test);
     exit 
 else
     [xhat,fval,exitflag] = fminunc(myfun,x0,options);
-    [f,fx,fxx] = neglogpost(xhat,parm,par);
-    fname = strcat(parm.VER,'_xhat.mat');
+    [f,fx,fxx] = neglogpost(xhat,par);
+    fname = strcat(par.fname,'_xhat.mat');
+    % optimial parameter values are saved each iteration
+    % in PrintPara function as a structure, reload it
     load(fname)
     xhat.f   = f   ;
     xhat.fx  = fx  ;

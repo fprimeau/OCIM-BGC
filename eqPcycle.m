@@ -1,94 +1,88 @@
-function [parm,P,Px,Pxx] = eqPcycle(par,parm,x)
+function [par,P,Px,Pxx] = eqPcycle(x, par)
 % ip is the mapping from x to parameter names (see switch below)
 % output: P is model prediction of DIP,POP,and DOP
 % output: F partial derivative of P model w.r.t. model parameters x
 % output: Fxx hessian matrix of P model w.r.t.  model parameters x
 % unpack some useful stuff
 on = true; off = false;
-TRdiv = parm.TRdiv;
-M3d   = parm.M3d;
-grd   = parm.grd;
+TRdiv = par.TRdiv;
+M3d   = par.M3d;
+grd   = par.grd;
 
-iwet  = parm.iwet;
-nwet  = parm.nwet; % number of wet points;
-I     = parm.I   ; % make an identity matrix;
-npx = 0; % count number of P model parameters;
+iwet  = par.iwet;
+nwet  = par.nwet; % number of wet points;
+I     = par.I   ; % make an identity matrix;
+
 % unpack the parameters to be optimized
 if (par.opt_sigma == on)
-    npx = npx + 1;
     lsigma = x(par.pindx.lsigma);
     sigma  = exp(lsigma);
 else
     sigma  = par.sigma;
 end
-parm.sigma = sigma; % pass parameter to C/Si/O models
+par.sigma = sigma; % pass parameter to C/Si/O models
 
 %
 if (par.opt_kappa_dp == on)
-    npx = npx + 1;
     lkappa_dp = x(par.pindx.lkappa_dp);
     kappa_dp  = exp(lkappa_dp);
 else
     kappa_dp  = par.kappa_dp;
 end
-parm.kappa_dp = kappa_dp; % pass parameter to C/Si/O models
+par.kappa_dp = kappa_dp; % pass parameter to C/Si/O models
 
 %
-if (par.opt_slopep == on)
-    npx = npx + 1;
-    slopep = x(par.pindx.slopep);
+if (par.opt_bP_T == on)
+    bP_T = x(par.pindx.bP_T);
 else
-    slopep  = par.slopep;
+    bP_T  = par.bP_T;
 end
-parm.slopep = slopep; % pass parameter to C/Si/O models
+par.bP_T = bP_T; % pass parameter to C/Si/O models
 
 %
-if (par.opt_interpp == on)
-    npx = npx + 1;
-    linterpp = x(par.pindx.linterpp);
-    interpp  = exp(linterpp);
+if (par.opt_bP == on)
+    lbP = x(par.pindx.lbP);
+    bP  = exp(lbP);
 else
-    interpp  = par.interpp;
+    bP  = par.bP;
 end
-parm.interpp = interpp; % pass parameter to C/Si/O models
+par.bP = bP; % pass parameter to C/Si/O models
 
 %
 if (par.opt_alpha == on)
-    npx = npx + 1;
     lalpha = x(par.pindx.lalpha);
     alpha  = exp(lalpha);
 else
     alpha  = par.alpha;
 end
-parm.alpha = alpha; % pass parameter to C/Si/O models
+par.alpha = alpha; % pass parameter to C/Si/O models
 
 %
 if (par.opt_beta == on)
-    npx = npx + 1;
     lbeta = x(par.pindx.lbeta);
     beta  = exp(lbeta);
 else
     beta  = par.beta;
 end
-parm.beta = beta; % pass parameter to C/Si/O models
-parm.npx = npx;
+par.beta = beta; % pass parameter to C/Si/O models
+
 % fixed parameters
-% sigma    = parm.sigma;
-DIPbar   = M3d(iwet)*parm.DIPbar;  % gobal arerage PO4 conc.[mmol m^-3];
-kappa_g  = parm.kappa_g; % PO4 geological restore const.[s^-1];
-kappa_p  = parm.kappa_p; % POP solubilization rate constant
-npp      = parm.npp;     % net primary production
+% sigma    = par.sigma;
+DIPbar   = M3d(iwet)*par.DIPbar;  % gobal arerage PO4 conc.[mmol m^-3];
+kappa_g  = par.kappa_g; % PO4 geological restore const.[s^-1];
+kappa_p  = par.kappa_p; % POP solubilization rate constant
+npp      = par.npp;     % net primary production
 
 % build part of the biological DIP uptake operator
-Lambda     = parm.Lambda;
+Lambda     = par.Lambda;
 LAM        = 0*M3d;
 LAM(:,:,1) = (npp.^beta).*Lambda(:,:,1);
 LAM(:,:,2) = (npp.^beta).*Lambda(:,:,2);
 L          = d0(LAM(iwet));  % PO4 assimilation rate [s^-1];
-parm.L     = L;
+par.L     = L;
 
 % particle flux
-PFD = buildPFD(M3d,grd,parm,slopep,interpp);
+PFD = buildPFD(par,'POP');
 
 % build Jacobian equations.
 % column 1 dF/dDIP
@@ -141,20 +135,20 @@ elseif (par.optim & nargout > 2)
         Px(:,par.pindx.lkappa_dp) = mfactor(FFp,-tmp);
     end
 
-    % slopep
-    if (par.opt_slopep == on)
-        [~,vout] = buildPFD(M3d,grd,parm,slopep,interpp);
-        dPFDdslope = vout.dPFDdslope;
-        tmp =  [Z; dPFDdslope*POP; Z];
-        Px(:,par.pindx.slopep) = mfactor(FFp, -tmp);
+    % bP_T
+    if (par.opt_bP_T == on)
+        [~,Gout] = buildPFD(par,'POP');
+        PFD_bm = Gout.PFD_bm;
+        tmp =  [Z; PFD_bm*POP; Z];
+        Px(:,par.pindx.bP_T) = mfactor(FFp, -tmp);
     end
 
-    % interpp
-    if (par.opt_interpp == on)
-        [~,vout] = buildPFD(M3d,grd,parm,slopep,interpp);
-        dPFDdinterp = vout.dPFDdinterp;
-        tmp = interpp*[Z; dPFDdinterp*POP;  Z];
-        Px(:,par.pindx.linterpp) = mfactor(FFp,-tmp);
+    % bP
+    if (par.opt_bP == on)
+        [~,Gout] = buildPFD(par,'POP');
+        PFD_bb = Gout.PFD_bb;
+        tmp = bP*[Z; PFD_bb*POP;  Z];
+        Px(:,par.pindx.lbP) = mfactor(FFp,-tmp);
     end
     
     % alpha
@@ -180,8 +174,8 @@ elseif (par.optim & nargout > 2)
                      -sigma*alpha*dLdbeta*DIP];
         % will need L and dLdbeta for gradients of other
         % biogeochemical cycles
-        parm.L = L;
-        parm.dLdbeta = dLdbeta;
+        par.L = L;
+        par.dLdbeta = dLdbeta;
         Px(:,par.pindx.lbeta) = mfactor(FFp,-tmp);
     end
 end
@@ -221,28 +215,28 @@ elseif (par.optim & nargout > 3)
         kk = kk + 1;
     end
 
-    % sigma slopep
-    if (par.opt_sigma == on & par.opt_slopep == on)
+    % sigma bP_T
+    if (par.opt_sigma == on & par.opt_bP_T == on)
         tmp = [Z; Z; Z] + ... % d2Jdsigmadslope * P
               [Z; ... % dJdsigmadPdslope
-               sigma*alpha*L*DIPx(:,par.pindx.slopep); ...
-               -sigma*alpha*L*DIPx(:,par.pindx.slopep)] + ...
-              [Z;...  % dJdslopepdPdsigma
-               dPFDdslope*POPx(:,par.pindx.lsigma); ...
+               sigma*alpha*L*DIPx(:,par.pindx.bP_T); ...
+               -sigma*alpha*L*DIPx(:,par.pindx.bP_T)] + ...
+              [Z;...  % dJdbP_TdPdsigma
+               PFD_bm*POPx(:,par.pindx.lsigma); ...
                Z];
         
         Pxx(:,kk) = mfactor(FFp,-tmp);
         kk = kk + 1;
     end
 
-    % sigma interpp
-    if (par.opt_sigma == on & par.opt_interpp == on)
+    % sigma bP
+    if (par.opt_sigma == on & par.opt_bP == on)
         tmp = [Z; Z; Z] + ... % d2Jdsigmadinterp * P
               [Z; ... % dJdsigmadPdslope
-               sigma*alpha*L*DIPx(:,par.pindx.linterpp); ...
-               -sigma*alpha*L*DIPx(:,par.pindx.linterpp)] + ...
-              [Z; ... % dJdinterppdPdsigma
-               interpp*dPFDdinterp*POPx(:,par.pindx.lsigma); ...
+               sigma*alpha*L*DIPx(:,par.pindx.lbP); ...
+               -sigma*alpha*L*DIPx(:,par.pindx.lbP)] + ...
+              [Z; ... % dJdbPdPdsigma
+               bP*PFD_bb*POPx(:,par.pindx.lsigma); ...
                Z]; 
         
         Pxx(:,kk) = mfactor(FFp,-tmp);
@@ -294,28 +288,28 @@ elseif (par.optim & nargout > 3)
         kk = kk + 1;
     end
 
-    % kappa_dp slopep
-    if (par.opt_kappa_dp == on & par.opt_slopep == on)
+    % kappa_dp bP_T
+    if (par.opt_kappa_dp == on & par.opt_bP_T == on)
         tmp = [Z; Z; Z] + ... % d2Jdkappadslope
-              [-kappa_dp*DOPx(:,par.pindx.slopep); ... % dJdkappadPdslope
+              [-kappa_dp*DOPx(:,par.pindx.bP_T); ... % dJdkappadPdslope
                Z;...
-               kappa_dp*DOPx(:,par.pindx.slopep)] + ...
+               kappa_dp*DOPx(:,par.pindx.bP_T)] + ...
               [Z; ...  % dJdslopedPdkappa
-               dPFDdslope*POPx(:,par.pindx.lkappa_dp); ...
+               PFD_bm*POPx(:,par.pindx.lkappa_dp); ...
                Z]; 
         
         Pxx(:,kk) = mfactor(FFp,-tmp);
         kk = kk + 1;
     end
 
-    % kappa_dp interpp
-    if (par.opt_kappa_dp == on & par.opt_interpp == on)
+    % kappa_dp bP
+    if (par.opt_kappa_dp == on & par.opt_bP == on)
         tmp = [Z; Z; Z] + ... % d2Jdkappadinterp
-              [-kappa_dp*DOPx(:,par.pindx.linterpp); ... % dJdkappadPdinterp
+              [-kappa_dp*DOPx(:,par.pindx.lbP); ... % dJdkappadPdinterp
                Z;...
-               kappa_dp*DOPx(:,par.pindx.linterpp)] + ...
+               kappa_dp*DOPx(:,par.pindx.lbP)] + ...
               [Z; ...  % dJdinterpdPdkappa
-               interpp*dPFDdinterp*POPx(:,par.pindx.lkappa_dp); ...
+               bP*PFD_bb*POPx(:,par.pindx.lkappa_dp); ...
                Z]; 
         
         Pxx(:,kk) = mfactor(FFp,-tmp);
@@ -350,111 +344,110 @@ elseif (par.optim & nargout > 3)
         kk = kk + 1;
     end
 
-    % slopep slopep
-    if (par.opt_slopep == on)
-        [~,vout] = buildPFD(M3d,grd,parm,slopep,interpp);
-        d2PFDdslope2 = vout.d2PFDdslope2;
+    % bP_T bP_T
+    if (par.opt_bP_T == on)
+        [~,~,Hout] = buildPFD(par,'POP');
+        PFD_bm_bm = Hout.PFD_bm_bm;
         tmp = [Z; ... % d2Jdslope2
-               d2PFDdslope2*POP; ...
+               PFD_bm_bm*POP; ...
                Z] + ...
               2*[Z; ... % dJdslopedPslope
-               dPFDdslope*POPx(:,par.pindx.slopep);...
+               PFD_bm*POPx(:,par.pindx.bP_T);...
                Z];
         
         Pxx(:,kk) = mfactor(FFp,-tmp);
         kk = kk + 1;
     end
     
-    % slopep interpp
-    if (par.opt_slopep == on & par.opt_interpp ...
-        == on)
-        [~,vout] = buildPFD(M3d,grd,parm,slopep,interpp);
-        d2PFDdslopedinterp = vout.d2PFDdslopedinterp;
-        tmp = interpp*[Z; ...  % d2Jdslopedinterp
-                       d2PFDdslopedinterp*POP; ...
-                       Z] + ...
+    % bP_T bP
+    if (par.opt_bP_T == on & par.opt_bP == on)
+        [~,~,Hout] = buildPFD(par,'POP');
+        PFD_bm_bb = Hout.PFD_bm_bb;
+        tmp = bP*[Z; ...  % d2Jdslopedinterp
+                  PFD_bm_bb*POP; ...
+                  Z] + ...
               [Z; ... % dJdslopedPdinterp
-               dPFDdslope*POPx(:,par.pindx.linterpp);...
+               PFD_bm*POPx(:,par.pindx.lbP);...
                Z] + ...
-              interpp*[Z; ...  % dJdinterpdPdslope
-                       dPFDdinterp*POPx(:,par.pindx.slopep); ...
+              bP*[Z; ...  % dJdinterpdPdslope
+                       PFD_bb*POPx(:,par.pindx.bP_T); ...
                        Z]; 
         
         Pxx(:,kk) = mfactor(FFp,-tmp);
         kk = kk + 1;
     end
 
-    % slopep alpha
-    if (par.opt_slopep == on & par.opt_alpha == on)
+    % bP_T alpha
+    if (par.opt_bP_T == on & par.opt_alpha == on)
         tmp = [Z; Z; Z] + ... % d2Jdslopedalpha
               [Z; ... % dJdslopedPdalpha
-               dPFDdslope*POPx(:,par.pindx.lalpha);...
+               PFD_bm*POPx(:,par.pindx.lalpha);...
                Z] + ...
-              [alpha*L*DIPx(:,par.pindx.slopep); ...  % dJdalphadPdslope
-               -(1-sigma)*alpha*L*DIPx(:,par.pindx.slopep); ...
-               -sigma*alpha*L*DIPx(:,par.pindx.slopep)];
+              [alpha*L*DIPx(:,par.pindx.bP_T); ...  % dJdalphadPdslope
+               -(1-sigma)*alpha*L*DIPx(:,par.pindx.bP_T); ...
+               -sigma*alpha*L*DIPx(:,par.pindx.bP_T)];
         
         Pxx(:,kk) = mfactor(FFp,-tmp);
         kk = kk + 1;
     end
 
-    % slopep beta
-    if (par.opt_slopep == on & par.opt_beta == on)
+    % bP_T beta
+    if (par.opt_bP_T == on & par.opt_beta == on)
         tmp = [Z; Z; Z] + ... % d2Jdslopedbeta
               [Z; ... % dJdslopedPdbeta
-               dPFDdslope*POPx(:,par.pindx.lbeta);...
+               PFD_bm*POPx(:,par.pindx.lbeta);...
                Z] + ...
-              [alpha*beta*dLdbeta*DIPx(:,par.pindx.slopep);...  % dJdbetadPdkappa
-               -(1-sigma)*alpha*beta*dLdbeta*DIPx(:,par.pindx.slopep);...
-               -sigma*alpha*beta*dLdbeta*DIPx(:,par.pindx.slopep)];
+              [alpha*beta*dLdbeta*DIPx(:,par.pindx.bP_T);...  % dJdbetadPdkappa
+               -(1-sigma)*alpha*beta*dLdbeta*DIPx(:,par.pindx.bP_T);...
+               -sigma*alpha*beta*dLdbeta*DIPx(:,par.pindx.bP_T)];
         
         Pxx(:,kk) = mfactor(FFp,-tmp);
         kk = kk + 1;
     end
     
-    % interpp interpp
-    if (par.opt_interpp == on)
-        [~,vout] = buildPFD(M3d,grd,parm,slopep,interpp);
-        d2PFDdinterp2 = vout.d2PFDdinterp2;
+    % bP bP
+    if (par.opt_bP == on)
+        [~,~,Hout] = buildPFD(par,'POP');
+        PFD_bb_bb = Hout.PFD_bb_bb;
         tmp = [Z; ... % d2Jdinterp2
-               interpp*interpp*d2PFDdinterp2*POP; ...
+               bP*bP*PFD_bb_bb*POP; ...
                Z] + ...
               [Z; ... % d2Jdinterp2
-               interpp*dPFDdinterp*POP; ...
+               bP*PFD_bb*POP; ...
                Z] + ...
               2*[Z; ... % dJdinterpdPinterp
-                 interpp*dPFDdinterp*POPx(:,par.pindx.linterpp);...
+                 bP*PFD_bb*POPx(:,par.pindx.lbP);...
                  Z];
         
         Pxx(:,kk) = mfactor(FFp,-tmp);
         kk = kk + 1;
     end    
 
-    % interpp alpha
-    if (par.opt_interpp == on & par.opt_alpha == on)
+    % bP alpha
+    if (par.opt_bP == on & par.opt_alpha == on)
         tmp = [Z; Z; Z] + ... % d2Jdinterpdalpha
               [Z; ... % dJdinterpdPdalpha
-               interpp*dPFDdinterp*POPx(:,par.pindx.lalpha);...
+               bP*PFD_bb*POPx(:,par.pindx.lalpha);...
                Z] + ...
-              [alpha*L*DIPx(:,par.pindx.linterpp); ... % dJdalphadPdinterp
-               -(1-sigma)*alpha*L*DIPx(:,par.pindx.linterpp); ...
-               -sigma*alpha*L*DIPx(:,par.pindx.linterpp)];  
+              [alpha*L*DIPx(:,par.pindx.lbP); ... % dJdalphadPdinterp
+               -(1-sigma)*alpha*L*DIPx(:,par.pindx.lbP); ...
+               -sigma*alpha*L*DIPx(:,par.pindx.lbP)];  
         
         Pxx(:,kk) = mfactor(FFp,-tmp);
         kk = kk + 1;
     end
 
-    % interpp beta
-    if (par.opt_interpp == on & par.opt_beta == on)
+    % bP beta
+    if (par.opt_bP == on & par.opt_beta == on)
         tmp = [Z; ...
                Z; ...
                Z] + ... % d2Jdinterpdbeta
               [Z; ... % dJdinterpdPdbeta
-               interpp*dPFDdinterp*POPx(:,par.pindx.lbeta);...
+               bP*PFD_bb*POPx(:,par.pindx.lbeta);...
                Z] + ...
-              beta*[alpha*dLdbeta*DIPx(:,par.pindx.linterpp); ... % dJdbetadPdinterp
-                    -(1-sigma)*alpha*dLdbeta*DIPx(:,par.pindx.linterpp); ...
-                    -sigma*alpha*dLdbeta*DIPx(:,par.pindx.linterpp)];
+              beta*[alpha*dLdbeta*DIPx(:,par.pindx.lbP); ... % dJdbetadPdinterp
+                    -(1-sigma)*alpha*dLdbeta*DIPx(:,par.pindx.lbP); ...
+                    -sigma*alpha*dLdbeta*DIPx(:,par.pindx.lbP)];
         
         Pxx(:,kk) = mfactor(FFp,-tmp);
         kk = kk + 1;
@@ -499,7 +492,7 @@ elseif (par.optim & nargout > 3)
         inan = find(isnan(d2Lambdadbetadbeta(:)));
         d2Lambdadbetadbeta(inan) = 0;
         d2Ldbetadbeta = d0(d2Lambdadbetadbeta(iwet));
-        parm.d2Ldbetadbeta = d2Ldbetadbeta;
+        par.d2Ldbetadbeta = d2Ldbetadbeta;
         tmp = [alpha*beta*dLdbeta*DIP;... % d2Jdbeta2 * P
                -(1-sigma)*alpha*beta*dLdbeta*DIP;...
                -sigma*alpha*beta*dLdbeta*DIP] + ...
@@ -514,118 +507,4 @@ elseif (par.optim & nargout > 3)
         kk = kk + 1;
     end
 end
-
-%% ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-function [PFdiv,vout] = buildPFD(M3d,grd,parm,varargin)
-% this code is used to build Particle Flux Diverngence (PFD)
-%
-%                      ________________________                                        
-%                     /         A             /|  POP sinking          
-%                 top/_______________________/ |       |       
-%                    |  |                    | |       | -w   
-%                    | /        V            | /       |       
-%                 bot|/______________________|/        V
-%                                                  
-% PFD = (A*w(top)*POP(top)-A*w(bot)*POP(bot))/V;
-% add an exra layer of zeros at the bottom to ensure there is no
-% flux in or out of the domain when using periodic shift operators
-% for finite differences and averaging
-[ny,nx,nz] = size(M3d);
-M3D        = zeros(ny,nx,nz+1);
-M3D(:,:,1:end-1) = M3d;
-% add the zw coordinate at the top of the extra layer
-ZW3d = grd.ZW3d;
-ZW3d = ZW3d(:,:,[1:end,end]);
-ZW3d(:,:,end) = grd.ZW3d(:,:,end)+grd.dzt(end);
-% areas of the top of the grid box
-dAt = (grd.DXT3d.*grd.DYT3d).*M3d;
-% volume of the grid boxes
-dVt = (grd.DXT3d.*grd.DYT3d.*grd.DZT3d).*M3d;
-%
-n = nx*ny*(nz+1);
-I0 = speye(n);
-i0 = zeros(ny,nx,nz+1);
-i0(:) = 1:n;
-% periodic shifts OK because M3D has a layer of zeros on the bottom
-iu = i0(:,:,[nz+1,1:nz]); %use a periodic upward shift
-ib = i0(:,:,[2:nz+1,1]); % use a periodic downward shift
-IU = I0(iu,:);
-IB = I0(ib,:);
-% keep only wet boxes
-iocn = find(M3D(:));
-I0 = I0(iocn,:); I0 = I0(:,iocn);
-IU = IU(:,iocn); IU = IU(iocn,:);
-IB = IB(:,iocn); IB = IB(iocn,:);
-% (averages POP onto the top of the grid boxes)
-AVG = d0((I0+IU)*M3D(iocn))\(I0+IU);
-% (compute the divergence in the center of the grid boxes)
-DIV = d0(dVt(iocn))\(I0-IB)*d0(dAt(iocn));
-% (compute the flux at the top of the grid cells)
-% mimics a Martin curve flux attenuation profile
-%(see Kriest and Oschelies 2008 in Biogeosciences)
-r   = parm.kappa_p;
-MSK = M3D.*M3D(:,:,[nz+1,1:nz]);
-M   = MSK.*ZW3d;
-if length(varargin) > 1;
-    slope  = varargin{1};
-    interp = varargin{2};
-    T = parm.aveT;
-    b = slope*T+interp;
-else
-    b = varargin{1};
-end
-a = r./b;
-
-% particle sinking velocity at the top of the grid cells.
-w              = -a.*M;
-dadb           = -r./b.^2;
-dadr           = 1./b;
-dbdslope       = T;
-dbdinterp      = 1;
-dadslope       = dadb.*dbdslope;
-dadinterp      = dadb.*dbdinterp;
-dwdb           = -dadb.*M;
-dwdr           = -dadr.*M;
-dwdslope       = dwdb.*dbdslope;
-dwdinterp      = dwdb.*dbdinterp;
-%
-d2adb2           = 2*r./(b.^3);
-d2adr2           = 0;
-d2adbdr          = -1./b.^2;
-d2adslope2       = (2*r.*T.^2)./(b.^3);
-d2adinterp2      = 2*r./b.^3;
-d2adslopedinterp = 2*r*T./b.^3;
-%
-d2wdb2           = -d2adb2.*M;
-d2wdr2           = -d2adr2.*M;
-d2wdbdr          = -d2adbdr.*M;
-d2wdslope2       = -d2adslope2.*M;
-d2wdinterp2      = -d2adinterp2.*M;
-d2wdslopedinterp = -d2adslopedinterp.*M;
-%FLUX = d0(w(iocn))*AVG;
-FLUX                = d0(w(iocn))*IU;
-dFLUXdr             = d0(dwdr(iocn))*IU;
-dFLUXdb             = d0(dwdb(iocn))*IU;
-dFLUXdslope         = d0(dwdslope(iocn))*IU;
-dFLUXdinterp        = d0(dwdinterp(iocn))*IU;
-%
-d2FLUXdb2           = d0(d2wdb2(iocn))*IU;
-d2FLUXdslope2       = d0(d2wdslope2(iocn))*IU;
-d2FLUXdinterp2      = d0(d2wdinterp2(iocn))*IU;
-d2FLUXdbdr          = d0(d2wdbdr(iocn))*IU;
-d2FLUXdslopedinterp = d0(d2wdslopedinterp(iocn))*IU;
-d2FLUXdr2      = 0;
-% particle flux divergence operator
-PFdiv = DIV*FLUX;
-vout.dPFDdb             = DIV*dFLUXdb;
-vout.dPFDdr             = DIV*dFLUXdr;
-vout.dPFDdslope         = DIV*dFLUXdslope;
-vout.dPFDdinterp        = DIV*dFLUXdinterp;
-%
-vout.d2PFDdb2           = DIV*d2FLUXdb2;
-vout.d2PFDdr2           = DIV*d2FLUXdr2;
-vout.d2PFDdbdr          = DIV*d2FLUXdbdr;
-vout.d2PFDdslope2       = DIV*d2FLUXdslope2;
-vout.d2PFDdinterp2      = DIV*d2FLUXdinterp2;
-vout.d2PFDdslopedinterp = DIV*d2FLUXdslopedinterp;
 

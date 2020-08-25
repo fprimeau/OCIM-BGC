@@ -1,4 +1,4 @@
-function PrintPara(x, par, parm);
+function PrintPara(x, par);
 %
 on = true; off = false;
 %++++++++++ print out parameters to the log file
@@ -14,16 +14,16 @@ if (par.opt_kappa_dp == on)
     xhat.kappa_dp = exp(x(ikappa_dp));
 end
 
-if (par.opt_slopep == on)
-    islopep = par.pindx.slopep;
-    fprintf('current slopep is %3.2e \n', x(islopep));
-    xhat.slopep = x(islopep);
+if (par.opt_bP_T == on)
+    ibP_T = par.pindx.bP_T;
+    fprintf('current bP_T is %3.2e \n', x(ibP_T));
+    xhat.bP_T = x(ibP_T);
 end
 
-if (par.opt_interpp == on)
-    iinterpp = par.pindx.linterpp;
-    fprintf('current interpp is %3.2e \n', exp(x(iinterpp)));
-    xhat.interpp = exp(x(iinterpp));
+if (par.opt_bP == on)
+    ibP = par.pindx.lbP;
+    fprintf('current bP is %3.2e \n', exp(x(ibP)));
+    xhat.bP = exp(x(ibP));
 end
 
 if (par.opt_alpha == on)
@@ -39,16 +39,16 @@ if (par.opt_beta == on)
 end
 
 if par.Cmodel == on 
-    if (par.opt_slopec == on)
-        islopec = par.pindx.slopec;
-        fprintf('current slopec is %3.2e \n', x(islopec));
-        xhat.slopec = x(islopec);
+    if (par.opt_bC_T == on)
+        ibC_T = par.pindx.bC_T;
+        fprintf('current bC_T is %3.2e \n', x(ibC_T));
+        xhat.bC_T = x(ibC_T);
     end
     
-    if (par.opt_interpc == on)
-        iinterpc = par.pindx.linterpc;
-        fprintf('current interpc is %3.2e \n', exp(x(iinterpc)));
-        xhat.interpc = exp(x(iinterpc));
+    if (par.opt_bC == on)
+        ibC = par.pindx.lbC;
+        fprintf('current bC is %3.2e \n', exp(x(ibC)));
+        xhat.bC = exp(x(ibC));
     end
     
     if (par.opt_d == on)
@@ -135,6 +135,6 @@ if (par.Simodel==on)
 end
 %
 if (par.optim == on)
-    fname = strcat(parm.VER,'_xhat.mat');
+    fname = strcat(par.fname,'_xhat.mat');
     save(fname, 'xhat')
 end 
