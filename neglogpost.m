@@ -36,9 +36,9 @@ ip = [1, 6, 7, 8]; % index corresponding to all parameters;
 parm.P  = P ;
 parm.Px = Px;
 
-DIP = M3d+nan;  DIP(iwet) = P(1+0*nwet:1*nwet) ;
-POP = M3d+nan;  POP(iwet) = P(1+1*nwet:2*nwet) ;
-DOP = M3d+nan;  DOP(iwet) = P(1+2*nwet:3*nwet) ;
+DIP = M3d + nan;  DIP(iwet) = P(1+0*nwet : 1*nwet) ;
+POP = M3d + nan;  POP(iwet) = P(1+1*nwet : 2*nwet) ;
+DOP = M3d + nan;  DOP(iwet) = P(1+2*nwet : 3*nwet) ;
 parm.DIP = DIP(iwet);
 
 %%%%%%%%%%   End Solve P    %%%%%%%%%%%
@@ -46,12 +46,12 @@ parm.DIP = DIP(iwet);
 %%%%%%%%%%%  Solve C   %%%%%%%%%%%%%%%%
 xc = x;
 % index corresponding to all parameters;
-ic = [1,3,6,7,8,9,10,11];
-[C,Cx] = eqCcycle(xc,parm,ic);
-DIC = M3d+nan; DIC(iwet) = C(0*nwet+1:1*nwet) ;
-POC = M3d+nan; POC(iwet) = C(1*nwet+1:2*nwet) ;
-ODC = M3d+nan; DOC(iwet) = C(2*nwet+1:3*nwet) ;
-CaC = M3d+nan; CaC(iwet) = C(3*nwet+1:4*nwet) ;
+ic = [1, 3, 6, 7, 8, 9, 10, 11];
+[C, Cx] = eqCcycle(xc, parm, ic);
+DIC = M3d + nan; DIC(iwet) = C(0*nwet+1 : 1*nwet) ;
+POC = M3d + nan; POC(iwet) = C(1*nwet+1 : 2*nwet) ;
+ODC = M3d + nan; DOC(iwet) = C(2*nwet+1 : 3*nwet) ;
+CaC = M3d + nan; CaC(iwet) = C(3*nwet+1 : 4*nwet) ;
 %%%%%%%%%%%%% End solve C %%%%%%%%%%%%%%%
 
 W   = d0(dVt(iwet)/sum(dVt(iwet)));
