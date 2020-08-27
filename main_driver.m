@@ -42,21 +42,25 @@ par.fxhat = fxhat;
 VER = strcat(output_dir,mod_ver);
 %
 % Creat output file names based on which model(s) is(are) optimized
-if (par.Cmodel == off & par.Omodel == off & par.Simodel == off)
-    fname = strcat(VER,'_P');
-    %
-elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off)
-    fname = strcat(VER,'_PC');
-    %
-elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off)
-    fname = strcat(VER,'_PCO');
-    %
-elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on)
+if Gtest == on
+    fname = strcat(VER,'_GHtest');
+elseif Gtest == off
+    if (par.Cmodel == off & par.Omodel == off & par.Simodel == off)
+        fname = strcat(VER,'_P');
+        %
+    elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off)
+        fname = strcat(VER,'_PC');
+        %
+    elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off)
+        fname = strcat(VER,'_PCO');
+        %
+    elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on)
     fname = strcat(VER,'_PCSi');
     %
-elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on)
-    fname = strcat(VER,'_PCOSi');
-end 
+    elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on)
+        fname = strcat(VER,'_PCOSi');
+    end
+end
 % par.fname = 'Gtest';
 par.fname = fname;
 %
