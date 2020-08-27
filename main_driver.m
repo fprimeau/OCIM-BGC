@@ -1,25 +1,44 @@
 clc; clear all; close all
-addpath('/DFS-L/DATA/primeau/weilewang/my_func/')
-addpath('/DFS-L/DATA/primeau/weilewang/DATA/')
-addpath('/DFS-L/DATA/primeau/weilewang/DATA/OCIM2')
-addpath('/DFS-L/DATA/primeau/weilewang/GREG/Couple_CP/')
-format long
 on = true; off = false;
+% addpath according to opterating system
+if ismac 
+    addpath('~/Dropbox/myfunc')
+    addpath('~/Documents/DATA/')
+    addpath('~/Documents/DATA/OCIM')
+elseif isunix
+    addpath('/DFS-L/DATA/primeau/weilewang/my_func/')
+    addpath('/DFS-L/DATA/primeau/weilewang/DATA/')
+    addpath('/DFS-L/DATA/primeau/weilewang/DATA/OCIM2')
+end
+
+format long
 global GC GO iter
 iter = 0;
 spd  = 24*60^2;
 spa  = 365*spd;
 %
-TR_ver = 91;
-mod_ver = 'CTL_He_varP2O';
+Gtest = on ;
+Htest = on ;
+%
+TR_ver = 90;
+mod_ver = 'varP2O';
 par.optim   = on;
 par.Cmodel  = on;
 par.Omodel  = on;
-par.Simodel = off;
+par.Simodel = on;
 % save results 
 % ATTENTION: please change this directory to where you wanna
 % save your output files
-output_dir = sprintf('/DFS-L/DATA/primeau/weilewang/COP4WWF/MSK%2d/',TR_ver);
+
+if ismac
+    output_dir = sprintf('~/Documents/CP-model/MSK%2d/',TR_ver); 
+    % load optimal parameters if they exist
+    fxhat = append(output_dir,mod_ver,'_xhat.mat');
+elseif isunix
+    output_dir = sprintf('/DFS-L/DATA/primeau/weilewang/COP4WWF/MSK%2d/',TR_ver);
+    fxhat = append(output_dir,mod_ver,'_xhat.mat');
+end
+par.fxhat = fxhat;
 VER = strcat(output_dir,mod_ver);
 %
 % Creat output file names based on which model(s) is(are) optimized
@@ -54,10 +73,13 @@ if TR_ver == 90
     load co2syspar90.mat co2syspar
     load cbpm_npp_annual_90x180.mat
     load kw660_90x180.mat
-    load /DFS-L/DATA/primeau/weilewang/COP4WWF/MSK90/fixedPO_C.mat
-    load /DFS-L/DATA/primeau/weilewang/COP4WWF/MSK90/fixedPO_O2.mat
-    % load Gtest_C.mat
-    % load Gtest_O2.mat 
+    if ismac
+        load MSK90/fixedPO_C.mat
+        load MSK90/fixedPO_O2.mat
+    elseif isunix
+        load /DFS-L/DATA/primeau/weilewang/COP4WWF/MSK90/fixedPO_C.mat
+        load /DFS-L/DATA/primeau/weilewang/COP4WWF/MSK90/fixedPO_O2.mat
+    end 
     grd = grid ;
     
 elseif TR_ver == 91
@@ -84,8 +106,13 @@ elseif TR_ver == 91
     load co2syspar91.mat co2syspar
     load cbpm_npp_annual_91x180.mat
     load kw660_91x180.mat
-    load /DFS-L/DATA/primeau/weilewang/COP4WWF/MSK91/CTL_He_fixedPO_C.mat
-    load /DFS-L/DATA/primeau/weilewang/COP4WWF/MSK91/CTL_He_fixedPO_O2.mat
+    if ismac
+        load MSK91/CTL_He_fixedPO_C.mat
+        load MSK91/CTL_He_fixedPO_O2.mat
+    elseif isunix
+        load /DFS-L/DATA/primeau/weilewang/COP4WWF/MSK91/CTL_He_fixedPO_C.mat
+        load /DFS-L/DATA/primeau/weilewang/COP4WWF/MSK91/CTL_He_fixedPO_O2.mat
+    end
     M3d = output.M3d;
     grd = output.grid;
     TR  = output.TR/spa;
@@ -139,10 +166,8 @@ par.modS = modS        ;
 par.modT = modT        ;
 par.aveT = nanmean(modT(:,:,1:8),3);
 % load optimal parameters if they exist
-Fsaved = '/DFS-L/DATA/primeau/weilewang/COP4WWF/MSK90/fixedPO';
-fname = strcat(Fsaved,'_xhat.mat');
-if isfile(fname)
-    load(fname)
+if isfile(fxhat)
+    load(fxhat)
 end
 
 % P model parameters;
@@ -227,10 +252,10 @@ else
 end 
 %
 % Si model parameters
-if exist('xhat') & isfield(xhat,'bsi')
-    par.bsi = xhat.bsi;
+if exist('xhat') & isfield(xhat,'dsi')
+    par.dsi = xhat.dsi;
 else
-    par.bsi = 0.33;
+    par.dsi = 3300;
 end 
 if exist('xhat') & isfield(xhat,'at')
     par.at = xhat.at;
@@ -274,9 +299,9 @@ par.opt_kappa_dc = on; %
 par.opt_slopeo  = on; 
 par.opt_interpo = on; 
 % Si model parameters
-par.opt_bsi = on;
-par.opt_at = on;
-par.opt_bt = off;
+par.opt_dsi = on;
+par.opt_at = off;
+par.opt_bt = on;
 par.opt_aa = on;
 par.opt_bb = on;
 %% -------------------------------------------------------------
@@ -411,13 +436,13 @@ if par.Omodel == on
     end
 end 
 if par.Simodel == on
-    % bsi
-    if (par.opt_bsi == on)
+    % dsi
+    if (par.opt_dsi == on)
         nsx = nsx + 1;
-        bsi = par.bsi; lbsi = log(bsi);
+        dsi = par.dsi; ldsi = log(dsi);
         strt = length(p0) + 1;
-        p0 = [p0; lbsi];
-        par.pindx.lbsi = strt : length(p0);
+        p0 = [p0; ldsi];
+        par.pindx.ldsi = strt : length(p0);
     end
     % at 
     if (par.opt_at == on)
@@ -496,29 +521,33 @@ options = optimoptions(@fminunc                  , ...
                        'FinDiffType','central'   , ...
                        'PrecondBandWidth',Inf)   ;
 %
-G_test = off;
 nip    = length(x0);
-if(G_test);
+if(Gtest);
     dx = sqrt(-1)*eps.^3*eye(nip);
     for ii = 1 : nip
         x  = real(x0)+dx(:,ii);
-        [f,fx,fxx] = neglogpost(x, par) ;
-        diff = real(fx(ii)) - imag(f)/eps.^3 ;
-        fprintf('%i %e  \n',ii,diff);
-        diffx = real(fxx(:,ii)) - imag(fx)/eps.^3;
-        for jj = 1:length(fx)
-            fprintf('%e  ', diffx(jj));
-        end
+        if Htest == on
+            [f,fx,fxx] = neglogpost(x, par) ;
+            % print relative errors
+            diff = (real(fx(ii)) - imag(f)/eps.^3)/(imag(f)/eps.^3);
+            fprintf('%i % .3e  \n',ii,diff);
+            diffx = (real(fxx(:,ii))-imag(fx)/eps.^3)./(imag(fx)/eps.^3+eps.^3);
+            for jj = 1:length(fx)
+                fprintf('% .3e  ', diffx(jj));
+            end
+        else
+            [f,fx] = neglogpost(x, par) ;
+            diff = (real(fx(ii)) - imag(f)/eps.^3)/(imag(f)/eps.^3) ;
+            fprintf('%i % .3e  \n',ii,diff);
+            fprintf('\n');
+        end 
         fprintf('\n');
     end
     exit 
 else
     [xhat,fval,exitflag] = fminunc(myfun,x0,options);
     [f,fx,fxx] = neglogpost(xhat,par);
-    fname = strcat(par.fname,'_xhat.mat');
-    % optimial parameter values are saved each iteration
-    % in PrintPara function as a structure, reload it
-    load(fname)
+    load(fxhat)
     xhat.f   = f   ;
     xhat.fx  = fx  ;
     xhat.fxx = fxx ;
