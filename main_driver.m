@@ -17,19 +17,18 @@ iter = 0;
 spd  = 24*60^2;
 spa  = 365*spd;
 %
-Gtest = on ;
-Htest = on ;
+Gtest = off ;
+Htest = off ;
 %
-TR_ver = 90;
+TR_ver = 90 ;
 mod_ver = 'varP2O';
 par.optim   = on;
 par.Cmodel  = on;
 par.Omodel  = on;
-par.Simodel = on;
+par.Simodel = off;
 % save results 
 % ATTENTION: please change this directory to where you wanna
 % save your output files
-
 if ismac
     output_dir = sprintf('~/Documents/CP-model/MSK%2d/',TR_ver); 
     % load optimal parameters if they exist
@@ -47,25 +46,21 @@ if Gtest == on
 elseif Gtest == off
     if (par.Cmodel == off & par.Omodel == off & par.Simodel == off)
         fname = strcat(VER,'_P');
-        %
     elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off)
         fname = strcat(VER,'_PC');
-        %
     elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off)
         fname = strcat(VER,'_PCO');
-        %
     elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on)
-    fname = strcat(VER,'_PCSi');
-    %
+        fname = strcat(VER,'_PCSi');
     elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on)
         fname = strcat(VER,'_PCOSi');
     end
 end
-% par.fname = 'Gtest';
 par.fname = fname;
 %
 if TR_ver == 90
     load transport_v4.mat grid M3d TR
+    load M3d90x180x24v2.mat MSKS 
     load Sobs_90x180x24.mat
     load tempobs_90x180x24.mat
     load po4obs_90x180x24.mat       % WOA PO4 observation
@@ -99,6 +94,7 @@ elseif TR_ver == 91
     % load OCIM2_KvHIGH_noHe.mat output 
     % load OCIM2_KvHIGH_KiLOW_noHe.mat output 
     % load OCIM2_KvHIGH_KiHIGH_noHe.mat output 
+    load M3d91x180x24.mat MSKS 
     load Sobs_91x180x24.mat
     load po4obs_91x180x24.mat % WOA PO4 observation
     load tempobs_91x180x24.mat
@@ -121,10 +117,16 @@ elseif TR_ver == 91
     grd = output.grid;
     TR  = output.TR/spa;
 end
-
+% get rid of arctice o2 observations
+ARC = MSKS.ARC;
+iarc = find(ARC(:));
+o2raw(iarc)   = nan ;
+dicraw(iarc)  = nan ;
+po4raw(iarc)  = nan ;
+sio4raw(iarc) = nan ; 
 iwet = find(M3d(:)) ;
 nwet = length(iwet) ;
-dVt = grd.DXT3d.*grd.DYT3d.*grd.DZT3d;
+dVt  = grd.DXT3d.*grd.DYT3d.*grd.DZT3d;
 %
 [par.kw,par.P] = kw(M3d,grd);
 par.Salt  = Sobs    ;
@@ -140,8 +142,8 @@ par.TRdiv = -TR     ;
 par.grd   = grd     ;
 par.I     = speye(nwet);
 par.rho   = 1024.5         ; % seawater density;
-permil     = par.rho*1e-3  ; % from umol/kg to mmol/m3;
-                              %
+permil    = par.rho*1e-3  ; % from umol/kg to mmol/m3;
+                            %
 par.SIL     = Siobs;
 par.po4obs  = po4obs;
 par.o2raw   = o2raw;
@@ -164,7 +166,8 @@ par.DIPbar   = nansum(po4obs(iwet).*dVt(iwet))/nansum(dVt(iwet)); % volume
 par.taup     = 720*60^2; % (s) pic dissolution time-scale
 par.tau_TA   = 1./par.taup;
 par.kappa_gs = 1/(1e6*spa); % geological restoring time [1/s];
-                             % PME part;
+
+% PME part;
 [modT,modS] = PME(par) ;
 par.modS = modS        ;
 par.modT = modT        ;
@@ -173,7 +176,7 @@ par.aveT = nanmean(modT(:,:,1:8),3);
 if isfile(fxhat)
     load(fxhat)
 end
-
+keyboard
 % P model parameters;
 if exist('xhat') & isfield(xhat,'sigma')
     par.sigma = xhat.sigma;
@@ -285,11 +288,11 @@ end
 %% -------------------------------------------------------------
 %
 % P model parameters
-par.opt_beta = on;
+par.opt_beta  = on;
 par.opt_alpha = on;
-par.opt_sigma = off; 
-par.opt_bP_T = on; 
-par.opt_bP = on;
+par.opt_sigma = on; 
+par.opt_bP_T  = on; 
+par.opt_bP    = on;
 par.opt_kappa_dp = on;
 % C model parameters
 par.opt_d  = on; % 
@@ -555,7 +558,7 @@ else
     xhat.f   = f   ;
     xhat.fx  = fx  ;
     xhat.fxx = fxx ;
-    save(fname, 'xhat')
+    save(fxhat, 'xhat')
 end
 
 fprintf('-------------- end! ---------------\n');

@@ -3,27 +3,31 @@ addpath('/DFS-L/DATA/primeau/weilewang/DATA/');
 addpath('/DFS-L/DATA/primeau/weilewang/my_func');
 addpath('/DFS-L/DATA/primeau/weilewang/DATA/OCIM2')
 on = true; off = false;
-version = 91;
+version = 90;
+mod_ver = 'varP2O';
 Pmodel = on;
 Cmodel = on;
-Omodel = off; 
+Omodel = on; 
 Simodel = off;
 if version == 90
     load transport_v4.mat
+    load M3d90x180x24v2.mat MSKS 
     load GLODAPv2_90x180x24raw.mat
     load DICant_90x180x24.mat DICant
-    load OutputData90/PC_var_b_P.mat
-    load OutputData90/PC_var_b_C.mat
+    load /DFS-L/DATA/primeau/weilewang/COP4WWF/MSK90/varP2O_PCO.mat
     grd  = grid;
 elseif version == 91
+    load M3d91x180x24.mat MSKS 
     load OCIM2_CTL_He.mat output
     load GLODAPv2_91x180x24raw.mat
     load DICant_91x180x24.mat DICant
-    load OutputData91/CTL_He_C.mat
-    load OutputData91/CTL_He_P.mat
+    load /DFS-L/DATA/primeau/weilewang/COP4WWF/MSK91/fixedPO.mat
     grd = output.grid;
     M3d = output.M3d;
 end
+ARC  = MSKS.ARC;
+iarc = find(ARC(:));
+o2raw(iarc) = nan;
 %
 iwet = find(M3d(:));
 nwet = length(iwet);
@@ -78,9 +82,9 @@ if (Omodel == on)
     figure(nfig)
     o2obs = o2raw;
     % convert unit form [ml/l] to [umol/l].
-    o2obs = o2obs.*44.661;  
+    % o2obs = o2obs.*44.661;  
     % o2 correction based on Bianchi et al.(2012) [umol/l] .
-    o2obs = o2obs.*1.009-2.523;
+    % o2obs = o2obs.*1.009-2.523;
     io2 = find(O2(iwet)>0 & o2obs(iwet)>0);
     %
     M = O2(iwet(io2));
