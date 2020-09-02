@@ -131,9 +131,9 @@ function PrintPara(x, par);
             xhat.bb = exp(x(ibb));
         end
     end
-    %
+    x0 = x ;
     if (par.optim == on)
-        save(par.fxhat, 'xhat')
+        save(par.fxhat, 'x0','xhat')
     end 
 end
 

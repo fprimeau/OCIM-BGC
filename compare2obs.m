@@ -3,31 +3,60 @@ addpath('/DFS-L/DATA/primeau/weilewang/DATA/');
 addpath('/DFS-L/DATA/primeau/weilewang/my_func');
 addpath('/DFS-L/DATA/primeau/weilewang/DATA/OCIM2')
 on = true; off = false;
-version = 90;
-mod_ver = 'varP2O';
-Pmodel = on;
-Cmodel = on;
-Omodel = on; 
-Simodel = off;
-if version == 90
+TR_ver = 91 ;
+% mod_ver = 'varP2O_noArc';
+mod_ver = 'CTL_He_varP2O_noArc';
+Pmodel = on ;
+Cmodel = on ;
+Omodel = on ; 
+Simodel = off ;
+% save results 
+% ATTENTION: please change this directory to where you wanna
+% save your output files
+if ismac
+    input_dir = sprintf('~/Documents/CP-model/MSK%2d/',TR_ver); 
+    % load optimal parameters if they exist
+    fxhat = append(input_dir,mod_ver,'_xhat.mat');
+elseif isunix
+    input_dir = sprintf('/DFS-L/DATA/primeau/weilewang/COP4WWF/MSK%2d/',TR_ver);
+    fxhat = append(input_dir,mod_ver,'_xhat.mat');
+end
+par.fxhat = fxhat;
+VER = strcat(input_dir,mod_ver);
+% Creat output file names based on which model(s) is(are) optimized
+if (Cmodel == off & Omodel == off & Simodel == off)
+    fname = strcat(VER,'_P');
+elseif (Cmodel == on & Omodel == off & Simodel == off)
+    fname = strcat(VER,'_PC');
+elseif (Cmodel == on & Omodel == on & Simodel == off)
+    fname = strcat(VER,'_PCO');
+elseif (Cmodel == on & par.Omodel == off & Simodel == on)
+    fname = strcat(VER,'_PCSi');
+elseif (Cmodel == on & Omodel == on & Simodel == on)
+    fname = strcat(VER,'_PCOSi');
+end
+
+if TR_ver == 90
     load transport_v4.mat
     load M3d90x180x24v2.mat MSKS 
     load GLODAPv2_90x180x24raw.mat
     load DICant_90x180x24.mat DICant
-    load /DFS-L/DATA/primeau/weilewang/COP4WWF/MSK90/varP2O_PCO.mat
     grd  = grid;
-elseif version == 91
+elseif TR_ver == 91
     load M3d91x180x24.mat MSKS 
     load OCIM2_CTL_He.mat output
     load GLODAPv2_91x180x24raw.mat
     load DICant_91x180x24.mat DICant
-    load /DFS-L/DATA/primeau/weilewang/COP4WWF/MSK91/fixedPO.mat
     grd = output.grid;
     M3d = output.M3d;
 end
 ARC  = MSKS.ARC;
 iarc = find(ARC(:));
-o2raw(iarc) = nan;
+o2raw(iarc)   = nan;
+dicraw(iarc)  = nan ;
+po4raw(iarc)  = nan ;
+sio4raw(iarc) = nan ; 
+load(fname)
 %
 iwet = find(M3d(:));
 nwet = length(iwet);
@@ -98,7 +127,7 @@ if (Omodel == on)
     dx = X(3,5)-X(3,4); 
     dy = Y(4,2)-Y(3,2);
     [q,ii] = sort(density(:)*dx*dy,'descend');
-    D = density;
+    D  = density;
     D(ii) = cumsum(q);
     subplot('position',[0.2 0.2 0.6 0.6])
     contourf(X,Y,100*(1-D),cr); hold on
@@ -146,7 +175,7 @@ if (Cmodel == on)
     dx = X(3,5)-X(3,4); 
     dy = Y(4,2)-Y(3,2);
     [q,ii] = sort(density(:)*dx*dy,'descend');
-    D = density;
+    D  = density;
     D(ii) = cumsum(q);
     subplot('position',[0.2 0.2 0.6 0.6])
     contourf(X,Y,100*(1-D),cr); hold on

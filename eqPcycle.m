@@ -72,14 +72,15 @@ DIPbar   = M3d(iwet)*par.DIPbar;  % gobal arerage PO4 conc.[mmol m^-3];
 kappa_g  = par.kappa_g; % PO4 geological restore const.[s^-1];
 kappa_p  = par.kappa_p; % POP solubilization rate constant
 npp      = par.npp;     % net primary production
-
+npp1     = par.npp1 ; 
+npp2     = par.npp2 ; 
 % build part of the biological DIP uptake operator
 Lambda     = par.Lambda;
 LAM        = 0*M3d;
-LAM(:,:,1) = (npp.^beta).*Lambda(:,:,1);
-LAM(:,:,2) = (npp.^beta).*Lambda(:,:,2);
+LAM(:,:,1) = (npp1.^beta).*Lambda(:,:,1);
+LAM(:,:,2) = (npp2.^beta).*Lambda(:,:,2);
 L          = d0(LAM(iwet));  % PO4 assimilation rate [s^-1];
-par.L     = L;
+par.L      = L;
 
 % particle flux
 PFD = buildPFD(par,'POP');
@@ -162,8 +163,8 @@ elseif (par.optim & nargout > 2)
     %beta
     if (par.opt_beta == on)
         dLambdadbeta = 0*Lambda;
-        dLambdadbeta(:,:,1) = log(npp).*LAM(:,:,1);
-        dLambdadbeta(:,:,2) = log(npp).*LAM(:,:,2);
+        dLambdadbeta(:,:,1) = log(npp1).*LAM(:,:,1);
+        dLambdadbeta(:,:,2) = log(npp2).*LAM(:,:,2);
         iz = find(isinf(dLambdadbeta(:)));
         dLambdadbeta(iz) = 0;
         inan = find(isnan(dLambdadbeta(:)));
@@ -485,8 +486,8 @@ elseif (par.optim & nargout > 3)
     % beta beta
     if (par.opt_beta == on)
         d2Lambdadbetadbeta = 0*Lambda;
-        d2Lambdadbetadbeta(:,:,1) = log(npp).*log(npp).*LAM(:,:,1);
-        d2Lambdadbetadbeta(:,:,2) = log(npp).*log(npp).*LAM(:,:,2);
+        d2Lambdadbetadbeta(:,:,1) = log(npp1).*log(npp1).*LAM(:,:,1);
+        d2Lambdadbetadbeta(:,:,2) = log(npp2).*log(npp2).*LAM(:,:,2);
         iz = find(isinf(d2Lambdadbetadbeta(:)));
         d2Lambdadbetadbeta(iz) = 0;
         inan = find(isnan(d2Lambdadbetadbeta(:)));

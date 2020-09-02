@@ -20,12 +20,12 @@ spa  = 365*spd;
 Gtest = off ;
 Htest = off ;
 %
-TR_ver = 90 ;
-mod_ver = 'varP2O';
-par.optim   = on;
-par.Cmodel  = on;
-par.Omodel  = on;
-par.Simodel = off;
+TR_ver  = 91 ;
+mod_ver = 'CTL_He_varP2O_noArc';
+par.optim   = on ; 
+par.Cmodel  = on ; 
+par.Omodel  = on ; 
+par.Simodel = off ; 
 % save results 
 % ATTENTION: please change this directory to where you wanna
 % save your output files
@@ -39,6 +39,11 @@ elseif isunix
 end
 par.fxhat = fxhat;
 VER = strcat(output_dir,mod_ver);
+%
+% load optimal parameters if they exist
+% if isfile(fxhat)
+% load(fxhat)
+% end
 %
 % Creat output file names based on which model(s) is(are) optimized
 if Gtest == on
@@ -166,17 +171,13 @@ par.DIPbar   = nansum(po4obs(iwet).*dVt(iwet))/nansum(dVt(iwet)); % volume
 par.taup     = 720*60^2; % (s) pic dissolution time-scale
 par.tau_TA   = 1./par.taup;
 par.kappa_gs = 1/(1e6*spa); % geological restoring time [1/s];
-
+par.kappa_p  = 1/(720*60^2) ;
 % PME part;
 [modT,modS] = PME(par) ;
 par.modS = modS        ;
 par.modT = modT        ;
 par.aveT = nanmean(modT(:,:,1:8),3);
-% load optimal parameters if they exist
-if isfile(fxhat)
-    load(fxhat)
-end
-keyboard
+%
 % P model parameters;
 if exist('xhat') & isfield(xhat,'sigma')
     par.sigma = xhat.sigma;
@@ -201,7 +202,7 @@ end
 if exist('xhat') & isfield(xhat,'alpha')
     par.alpha = xhat.alpha;
 else 
-    par.alpha = 9.33e-04 ;
+    par.alpha = 9.33e-08 ;
 end 
 if exist('xhat') & isfield(xhat,'beta')
     par.beta = xhat.beta;
@@ -489,25 +490,27 @@ par.nox = nox; par.nsx = nsx;
 %
 %% -------------------------------------------------------------
 %
-par.kappa_p = 1/(720*60^2) ;
 par.p2c = 0.006+0.0069*po4obs;
 par.nzo = 2;
 %%%%%%% prepare NPP for the model %%%%%%%%
 inan = find(isnan(npp(:)) | npp(:) < 0);
 npp(inan) = 0;
 
-% par.VER = '/DFS-L/DATA/primeau/weilewang/COP4WWF/MSK90/fixedPO_SOxhalf';
 % tmp = squeeze(M3d(:,:,1)) ;
-% tmp(1:15,:) = nan ; % SO
+% tmp(1:15,:) = nan         ; % SO
 % tmp(65:78,55:125) = nan   ; % NP
 % tmp(35:55,90:145) = nan   ; % EP
-% itarg = find(isnan(tmp(:))) ;
-% npp(itarg) = npp(itarg)*0.5   ;
+% itarg = find(isnan(tmp(:)))  ;
+% npp(itarg) = npp(itarg)*0.5  ;
 %
 par.npp    = npp/(12*spd);
+par.npp1   = (0.5*par.npp./grd.dzt(1)).*par.p2c(:,:,1) ; 
+par.npp2   = (0.5*par.npp./grd.dzt(2)).*par.p2c(:,:,2) ; 
 par.Lambda = M3d*0;
-par.Lambda(:,:,1) = 0.5*(1/grd.dzt(1))*par.p2c(:,:,1)./(1e-9+po4obs(:,:,1));
-par.Lambda(:,:,2) = 0.5*(1/grd.dzt(2))*par.p2c(:,:,2)./(1e-9+po4obs(:,:,2));
+par.Lambda(:,:,1) = 1./(1e-6+po4obs(:,:,1));
+par.Lambda(:,:,2) = 1./(1e-6+po4obs(:,:,2));
+% par.Lambda(:,:,1) = 0.5*(1/grd.dzt(1))*par.p2c(:,:,1)./(0.1+po4obs(:,:,1));
+% par.Lambda(:,:,2) = 0.5*(1/grd.dzt(2))*par.p2c(:,:,2)./(0.1+po4obs(:,:,2));
 par.Lambda(:,:,3:end) = 0;
 %%%%%%%%%%%%%%%%%%%% end %%%%%%%%%%%%%%%%%
 par.p0 = p0;

@@ -1,16 +1,19 @@
 function [f, fx, fxx] = neglogpost(x, par)
 global iter
 on = true; off = false;
-if iter <= 10
+%
+iter = iter + 1;
+if iter == 1
+    % print out current parameter values to the log file
+    PrintPara(x, par);
+elseif iter <= 20
     % reset parameters if they are too large/small;
-    [par,x] = reset_par(x, par);
+    x = reset_par(x, par);
 end
 fprintf('current iteration is %d \n',iter);
-iter = iter + 1;
-% print out current parameter values to the log file
 PrintPara(x, par);
 %
-nx = length(x); % number of parameters
+nx   = length(x); % number of parameters
 dVt  = par.dVt  ;
 M3d  = par.M3d  ;
 iwet = par.iwet ;
@@ -19,11 +22,11 @@ nwet = par.nwet ;
 f = 0;
 %%%%%%%%%%%%%%%%%%   Solve P    %%%%%%%%%%%%%%%%%%%%%%%%
 %
-idip = find(par.po4raw(iwet)>0);
-Wp   = d0(dVt(iwet(idip))/sum(dVt(iwet(idip))));
+idip    = find(par.po4raw(iwet)>0);
+Wp      = d0(dVt(iwet(idip))/sum(dVt(iwet(idip))));
 mu_dip  = sum(Wp*par.po4raw(iwet(idip)))/sum(diag(Wp));
 var_dip = sum(Wp*(par.po4raw(iwet(idip))-mu_dip).^2)/sum(diag(Wp));
-Wp = Wp/var_dip;
+Wp      = Wp/var_dip;
 %
 [par, P, Px, Pxx] = eqPcycle(x, par);
 DIP = M3d+nan;  DIP(iwet) = P(1+0*nwet:1*nwet) ;
@@ -34,34 +37,34 @@ par.Pxx = Pxx;
 par.DIP = DIP(iwet);
 % DIP error
 ep = DIP(iwet(idip)) - par.po4raw(iwet(idip));
-f = f + 0.5*(ep.'*Wp*ep);
+f  = f + 0.5*(ep.'*Wp*ep);
 %%%%%%%%%%%%%%%%%%   End Solve P    %%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%   Solve Si       %%%%%%%%%%%%%%%%%%%%
 if (par.Simodel == on)
     %
-    isil = find(par.sio4raw(iwet)>0);
-    Ws   = d0(dVt(iwet(isil))/sum(dVt(iwet(isil))));
-    mu_sil = sum(Ws*par.sio4raw(iwet(isil)))/sum(diag(Ws));
+    isil    = find(par.sio4raw(iwet)>0);
+    Ws      = d0(dVt(iwet(isil))/sum(dVt(iwet(isil))));
+    mu_sil  = sum(Ws*par.sio4raw(iwet(isil)))/sum(diag(Ws));
     var_sil = sum(Ws*(par.sio4raw(iwet(isil))-mu_sil).^2)/sum(diag(Ws));
-    Ws = Ws/var_sil;
+    Ws      = Ws/var_sil;
     %
     [par,Si,Six,Sixx] = eqSicycle(x, par);
     SIL = M3d+nan;  SIL(iwet) = Si(1:nwet);
     DSI = M3d+nan;  DSI(iwet) = Si(nwet+1:end);
     % SiO error
     es = SIL(iwet(isil)) - par.sio4raw(iwet(isil));
-    f = f + 0.5*(es.'*Ws*es);
+    f  = f + 0.5*(es.'*Ws*es);
 end
 %%%%%%%%%%%%%%%%%%   End Solve Si    %%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%     Solve C   %%%%%%%%%%%%%%%%%%%%%%%%
 if (par.Cmodel == on)
-    idic = find(par.dicraw(iwet)>0);
-    Wc   = d0(dVt(iwet(idic))/sum(dVt(iwet(idic))));
-    mu_dic = sum(Wc*par.dicraw(iwet(idic)))/sum(diag(Wc));
+    idic    = find(par.dicraw(iwet)>0);
+    Wc      = d0(dVt(iwet(idic))/sum(dVt(iwet(idic))));
+    mu_dic  = sum(Wc*par.dicraw(iwet(idic)))/sum(diag(Wc));
     var_dic = sum(Wc*(par.dicraw(iwet(idic))-mu_dic).^2)/sum(diag(Wc));
-    Wc = Wc/var_dic;
+    Wc      = Wc/var_dic;
     
     [par, C, Cx, Cxx] = eqCcycle(x, par);
     DIC = M3d+nan; DIC(iwet) = C(0*nwet+1:1*nwet) ;
@@ -82,17 +85,16 @@ end
 %%%%%%%%%%%%%%%%%%   Solve O    %%%%%%%%%%%%%%%%%%%%%%%%
 if (par.Omodel == on)
     %
-    io2 = find(par.o2raw(iwet)>0);
-    Wo  = d0(dVt(iwet(io2))/sum(dVt(iwet(io2))));
-    mu_o2 = sum(Wo*par.o2raw(iwet(io2)))/sum(diag(Wo));
+    io2    = find(par.o2raw(iwet)>0);
+    Wo     = d0(dVt(iwet(io2))/sum(dVt(iwet(io2))));
+    mu_o2  = sum(Wo*par.o2raw(iwet(io2)))/sum(diag(Wo));
     var_o2 = sum(Wo*(par.o2raw(iwet(io2))-mu_o2).^2)/sum(diag(Wo));
-    Wo = Wo/var_o2;
+    Wo     = Wo/var_o2;
     %
     [par, O, Ox, Oxx] = eqOcycle(x, par);
     O2 = M3d+nan;  O2(iwet) = O;
-    %
-    eo  = O2(iwet(io2)) - par.o2raw(iwet(io2));
-    f   = f + 0.5*(eo.'*Wo*eo);
+    eo = O2(iwet(io2)) - par.o2raw(iwet(io2));
+    f  = f + 0.5*(eo.'*Wo*eo);
 end
 %%%%%%%%%%%%%%%%%%   End Solve O    %%%%%%%%%%%%%%%%%%%%
 fprintf('current objective function value is %3.3e \n',f);

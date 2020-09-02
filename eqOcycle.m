@@ -32,7 +32,7 @@ function [par, O2, Ox, Oxx] = eqOcycle(x, par)
         keyboard
     else
         % reset the global variable for the next call eqOcycle
-        GO = real(O2) + 1e-5*randn(par.nwet,1);
+        GO = real(O2) + 1e-7*randn(par.nwet,1);
         X0 = GO;
         F = O_eqn(O2, x, par);
         if norm(F) > 1e-12

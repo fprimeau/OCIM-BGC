@@ -1,12 +1,13 @@
-function  [par, x] = reset_par(x, par);
+function  x = reset_par(x, par);
+    global iter
     on = true; off = false;
-    %++++++++++ check if the optimization routine suggests strange
+    load(par.fxhat,'x0')
+    % check if the optimization routine suggests strange
+    fb = 2 ;  fs = 0.5 ;
+    % gradually decrease the constrains    
+    fb = fb * 1.1^iter ;
+    fs = fs * 0.9^iter ; 
     % parameter values
-    A = isfield(par,'x0');
-    if A == 0
-        x0 = par.p0;
-    end
-    
     if (par.opt_sigma == on)
         isigma = par.pindx.lsigma;
         xnew = exp(x(isigma));
@@ -20,7 +21,7 @@ function  [par, x] = reset_par(x, par);
         ikappa_dp = par.pindx.lkappa_dp;
         xnew = exp(x(ikappa_dp));
         xold = exp(x0(ikappa_dp));
-        if (xnew > 5*xold | xnew < 0.2*xold);
+        if (xnew > fb*xold | xnew < fs*xold);
             x(ikappa_dp) = x0(ikappa_dp);
         end
     end
@@ -38,7 +39,7 @@ function  [par, x] = reset_par(x, par);
         ibP = par.pindx.lbP;
         xnew = exp(x(ibP));
         xold = exp(x0(ibP));
-        if (xnew > 5*xold | xnew < 0.2*xold);
+        if (xnew > fb*xold | xnew < fs*xold);
             x(ibP) = x0(ibP);
         end
     end
@@ -47,7 +48,7 @@ function  [par, x] = reset_par(x, par);
         ialpha = par.pindx.lalpha;
         xnew = exp(x(ialpha));
         xold = exp(x0(ialpha));
-        if (xnew > 2*xold | xnew < 0.5*xold);
+        if (xnew > fb*xold | xnew < fs*xold);
             x(ialpha) = x0(ialpha);
         end
     end
@@ -56,12 +57,12 @@ function  [par, x] = reset_par(x, par);
         ibeta = par.pindx.lbeta;
         xnew = exp(x(ibeta));
         xold = exp(x0(ibeta));
-        if (xnew > 2*xold | xnew < 0.5*xold);
+        if (xnew > fb*xold | xnew < fs*xold);
             x(ibeta) = x0(ibeta);
         end
     end
 
-    if par.Cmodel == on 
+    if (par.Cmodel == on) 
         if (par.opt_bC_T == on)
             ibC_T = par.pindx.bC_T;
             xnew = x(ibC_T);
@@ -75,7 +76,7 @@ function  [par, x] = reset_par(x, par);
             ibC = par.pindx.lbC;
             xnew = exp(x(ibC));
             xold = exp(x0(ibC));
-            if (xnew > 10*xold | xnew < 0.1*xold);
+            if (xnew > 3 | xnew < 0.3);
                 x(ibC) = x0(ibC);
             end
         end
@@ -84,7 +85,7 @@ function  [par, x] = reset_par(x, par);
             id = par.pindx.ld;
             xnew = exp(x(id));
             xold = exp(x0(id));
-            if (xnew > 5*xold | xnew < 0.2*xold);
+            if (xnew > fb*xold | xnew < fs*xold);
                 x(id) = x0(id);
             end
         end
@@ -93,7 +94,7 @@ function  [par, x] = reset_par(x, par);
             ikappa_dc = par.pindx.lkappa_dc;
             xnew = exp(x(ikappa_dc));
             xold = exp(x0(ikappa_dc));
-            if (xnew > 5*xold | xnew < 0.2*xold);
+            if (xnew > fb*xold | xnew < fs*xold);
                 x(ikappa_dc) = x0(ikappa_dc);
             end
         end
@@ -102,7 +103,7 @@ function  [par, x] = reset_par(x, par);
             iRR = par.pindx.lRR;
             xnew = exp(x(iRR));
             xold = exp(x0(iRR));
-            if (xnew > 5*xold | xnew < 0.2*xold);
+            if (xnew > fb*xold | xnew < fs*xold);
                 x(iRR) = x0(iRR);
             end
         end
@@ -111,7 +112,7 @@ function  [par, x] = reset_par(x, par);
             icc = par.pindx.lcc;
             xnew = exp(x(icc));
             xold = exp(x0(icc));
-            if (xnew > 5*xold | xnew < 0.2*xold);
+            if (xnew > fb*xold | xnew < fs*xold);
                 x(icc) = x0(icc);
             end
         end
@@ -120,7 +121,7 @@ function  [par, x] = reset_par(x, par);
             idd = par.pindx.ldd;
             xnew = exp(x(idd));
             xold = exp(x0(idd));
-            if (xnew > 5*xold | xnew < 0.2*xold);
+            if (xnew > fb*xold | xnew < fs*xold);
                 x(idd) = x0(idd);
             end
         end
@@ -140,7 +141,7 @@ function  [par, x] = reset_par(x, par);
             iinterpo = par.pindx.linterpo;
             xnew = exp(x(iinterpo));
             xold = exp(x0(iinterpo));
-            if (xnew > 5*xold | xnew < 0.2*xold);
+            if (xnew > fb*xold | xnew < fs*xold);
                 x(iinterpo) = x0(iinterpo);
             end
         end
@@ -152,7 +153,7 @@ function  [par, x] = reset_par(x, par);
             idsi = par.pindx.ldsi;
             xnew = exp(x(idsi));
             xold = exp(x0(idsi));
-            if (xnew > 2*xold | xnew < 0.5*xold);
+            if (xnew > 5000 | xnew < 1000);
                 x(idsi) = x0(idsi);
             end
         end
@@ -161,7 +162,7 @@ function  [par, x] = reset_par(x, par);
             iat = par.pindx.lat;
             xnew = exp(x(iat));
             xold = exp(x0(iat));
-            if (xnew > 5*xold | xnew < 0.2*xold);
+            if (xnew > fb*xold | xnew < fs*xold);
                 x(iat) = x0(iat);
             end
         end
@@ -188,13 +189,10 @@ function  [par, x] = reset_par(x, par);
             ibb = par.pindx.lbb;
             xnew = exp(x(ibb));
             xold = exp(x0(ibb));
-            if (xnew > 5*xold | xnew < 0.2*xold);
+            if (xnew > fb*xold | xnew < fs*xold);
                 x(ibb) = x0(ibb);
             end
         end    
     end
-    % reset par.p0;
-    par.p0 = x;
-    %+++++++++restore the parameter values back to their original ones.
 end
 
