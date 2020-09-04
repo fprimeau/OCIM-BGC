@@ -5,9 +5,9 @@ addpath('/DFS-L/DATA/primeau/weilewang/DATA/OCIM2')
 on = true;      off = false;
 spd  = 24*60^2; spa  = 365*spd;
 %
-TR_ver  = 91 ;
-mod_ver = 'CTL_He_noArc';
-% mod_ver = 'noArc';
+TR_ver  = 90 ;
+% mod_ver = 'CTL_He_noArc';
+mod_ver = 'noArc';
 %
 Cmodel  = on ;
 Omodel  = off ;

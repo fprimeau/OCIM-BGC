@@ -3,9 +3,9 @@ addpath('/DFS-L/DATA/primeau/weilewang/DATA/');
 addpath('/DFS-L/DATA/primeau/weilewang/my_func');
 addpath('/DFS-L/DATA/primeau/weilewang/DATA/OCIM2')
 on = true; off = false;
-TR_ver = 90 ;
-mod_ver = 'noArc';
-% mod_ver = 'CTL_He_noArc';
+TR_ver = 91 ;
+% mod_ver = 'noArc';
+mod_ver = 'CTL_He_noArc';
 Pmodel  = on ;
 Cmodel  = on ;
 Omodel  = off ; 
