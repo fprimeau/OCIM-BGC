@@ -20,31 +20,22 @@ spa  = 365*spd;
 Gtest = off ;
 Htest = off ;
 %
-TR_ver  = 91 ;
-mod_ver = 'CTL_He_varP2O_noArc';
+TR_ver  = 90 ;
+mod_ver = 'noArc';
 par.optim   = on ; 
 par.Cmodel  = on ; 
-par.Omodel  = on ; 
+par.Omodel  = off ; 
 par.Simodel = off ; 
 % save results 
 % ATTENTION: please change this directory to where you wanna
 % save your output files
 if ismac
     output_dir = sprintf('~/Documents/CP-model/MSK%2d/',TR_ver); 
-    % load optimal parameters if they exist
-    fxhat = append(output_dir,mod_ver,'_xhat.mat');
 elseif isunix
     output_dir = sprintf('/DFS-L/DATA/primeau/weilewang/COP4WWF/MSK%2d/',TR_ver);
-    fxhat = append(output_dir,mod_ver,'_xhat.mat');
 end
-par.fxhat = fxhat;
+
 VER = strcat(output_dir,mod_ver);
-%
-% load optimal parameters if they exist
-% if isfile(fxhat)
-% load(fxhat)
-% end
-%
 % Creat output file names based on which model(s) is(are) optimized
 if Gtest == on
     fname = strcat(VER,'_GHtest');
@@ -61,7 +52,15 @@ elseif Gtest == off
         fname = strcat(VER,'_PCOSi');
     end
 end
-par.fname = fname;
+par.fname = fname ; 
+% load optimal parameters if they exist
+fxhat = strcat(fname,'_xhat.mat');
+par.fxhat = fxhat ; 
+%
+% load optimal parameters if they exist
+% if isfile(fxhat)
+% load(fxhat)
+% end
 %
 if TR_ver == 90
     load transport_v4.mat grid M3d TR

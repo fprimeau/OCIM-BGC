@@ -76,7 +76,7 @@ if (ierr ~= 0)
     keyboard
 else
     % reset the global variable for the next call eqCcycle
-    GC = real(C) + 1e-8*randn(4*nwet,1);
+    GC = real(C) + 1e-6*randn(4*nwet,1);
     X0 = GC;
     F = C_eqn(C,x,par);
     % test if norm of F small enough, if now rerun nsnew;

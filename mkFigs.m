@@ -5,13 +5,13 @@ addpath('/DFS-L/DATA/primeau/weilewang/DATA/OCIM2')
 on = true;      off = false;
 spd  = 24*60^2; spa  = 365*spd;
 %
-TR_ver  = 90 ;
-% mod_ver = 'CTL_He_varP2O_noArc';
-mod_ver = 'varP2O_noArc';
+TR_ver  = 91 ;
+mod_ver = 'CTL_He_noArc';
+% mod_ver = 'noArc';
 %
-Cmodel  = on;
-Omodel  = on;
-Simodel = off;
+Cmodel  = on ;
+Omodel  = off ;
+Simodel = off ;
 % save results
 % ATTENTION: please change this directory to where you wanna
 if ismac
@@ -24,7 +24,17 @@ elseif isunix
     fxhat = append(input_dir,mod_ver,'_xhat.mat');
 end
 VER   = strcat(input_dir,mod_ver);
-fname = strcat(VER,'_PCO');
+if (Cmodel == off & Omodel == off & Simodel == off)
+    fname = strcat(VER,'_P');
+elseif (Cmodel == on & Omodel == off & Simodel == off)
+    fname = strcat(VER,'_PC');
+elseif (Cmodel == on & Omodel == on & Simodel == off)
+    fname = strcat(VER,'_PCO');
+elseif (Cmodel == on & Omodel == off & Simodel == on)
+    fname = strcat(VER,'_PCSi');
+elseif (Cmodel == on & Omodel == on & Simodel == on)
+    fname = strcat(VER,'_PCOSi');
+end
 
 if TR_ver == 90
     load transport_v4.mat

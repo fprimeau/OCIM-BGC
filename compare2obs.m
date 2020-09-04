@@ -3,12 +3,12 @@ addpath('/DFS-L/DATA/primeau/weilewang/DATA/');
 addpath('/DFS-L/DATA/primeau/weilewang/my_func');
 addpath('/DFS-L/DATA/primeau/weilewang/DATA/OCIM2')
 on = true; off = false;
-TR_ver = 91 ;
-% mod_ver = 'varP2O_noArc';
-mod_ver = 'CTL_He_varP2O_noArc';
-Pmodel = on ;
-Cmodel = on ;
-Omodel = on ; 
+TR_ver = 90 ;
+mod_ver = 'noArc';
+% mod_ver = 'CTL_He_noArc';
+Pmodel  = on ;
+Cmodel  = on ;
+Omodel  = off ; 
 Simodel = off ;
 % save results 
 % ATTENTION: please change this directory to where you wanna
@@ -161,11 +161,10 @@ if (Cmodel == on)
     rho = 1024.5     ; % seawater density;
     permil = rho*1e-3; % from umol/kg to mmol/m3;
     DICobs = dicraw*permil; % GLODAP dic obs [mmol/m3];
-    human_co2 = DICant*permil;
     iDIC = find(DICobs(iwet)>0);
     %
     O = DICobs(iwet(iDIC));
-    M = DIC(iwet(iDIC)) + DICant(iwet(iDIC));
+    M = DIC(iwet(iDIC)); % already including anthropogenic CO2 
     rsquare(O,M)
     %
     data = [O, M];
