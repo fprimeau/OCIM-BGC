@@ -20,7 +20,7 @@ Delta = sqrt(surface_mean((Z-mu).^2));
 
 % standardize the regressor variables
 ZR = (Z-mu)/Delta; par.ZR = ZR;
-keyboard
+
 vout.O2P = slopeo*ZR + interpo;
 vout.dO2Pdslopeo = ZR;
 vout.dO2Pdinterpo = sparse(nwet,1)+1;

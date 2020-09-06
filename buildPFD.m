@@ -29,15 +29,15 @@ function [PFdiv,Gout,Hout] = buildPFD(par,Ptype)
         if ( strcmp(Ptype,'POP') )
             % extract the parameters
             % use bb = 0 for a constant b value
-            bb = par.bP;  % intercept
-            bm = par.bP_T; % slope
+            bb = par.bP   ;  % intercept
+            bm = par.bP_T ;  % slope
         elseif ( strcmp(Ptype,'POC') )
             % extract the parameters
             % use bm = 0 for a constant b value
-            bb = par.bC;   % intercept
-            bm = par.bC_T; % slope
+            bb = par.bC   ;  % intercept
+            bm = par.bC_T ;  % slope
         end
-        b = bb+bm*T;
+        b = bb+bm*T ;
         % particle sinking velocity at the top of the grid cells.
         % mimic a Martin curve flux attenuation profile (see Kriest and
         % Oschelies 2008 in Biogeosciences)
