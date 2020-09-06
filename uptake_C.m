@@ -23,8 +23,8 @@ if par.optim == off
     Gx = [];
 elseif (par.optim & nargout > 1)
     % gradient of uptake operator
-    nx  = par.npx;
-    Gpx = zeros(nwet,nx);
+    npx  = par.npx;
+    Gpx  = zeros(nwet,npx);
     DIPx = par.Px(1:nwet,:);
     dLdbeta = par.dLdbeta;    
     if (par.opt_alpha)
@@ -53,8 +53,14 @@ elseif (par.optim & nargout > 2)
         Gxx(:,kk) = Gp*DIPxx(:,kk);
     end
 
-    % sigma kappa_dp
-    if (par.opt_sigma & par.opt_kappa_dp)
+    % sigma kP_T
+    if (par.opt_sigma & par.opt_kP_T)
+        kk = kk + 1;
+        Gxx(:,kk) = Gp*DIPxx(:,kk);
+    end
+
+    % sigma kdP
+    if (par.opt_sigma & par.opt_kdP)
         kk = kk + 1;
         Gxx(:,kk) = Gp*DIPxx(:,kk);
     end
@@ -84,37 +90,75 @@ elseif (par.optim & nargout > 2)
         Gxx(:,kk) = Gp*DIPxx(:,kk) + ...
             d0(Gpx(:,pindx.lbeta))*DIPx(:,pindx.lsigma);
     end
-
-    % kappa_dp kappa_dp
-    if (par.opt_kappa_dp)
+    %%%%
+    % kP_T kP_T
+    if (par.opt_kP_T)
         kk = kk + 1;
         Gxx(:,kk) = Gp*DIPxx(:,kk);
     end
 
-    % kappa_dp bP_T
-    if (par.opt_kappa_dp & par.opt_bP_T)
+    % kP_T kdP
+    if (par.opt_kP_T & par.opt_kdP)
         kk = kk + 1;
         Gxx(:,kk) = Gp*DIPxx(:,kk);
     end
 
-    % kappa_dp bP
-    if (par.opt_kappa_dp & par.opt_bP)
+    % kP_T bP_T
+    if (par.opt_kP_T & par.opt_bP_T)
         kk = kk + 1;
         Gxx(:,kk) = Gp*DIPxx(:,kk);
     end
 
-    % kappa_dp alpha
-    if (par.opt_kappa_dp & par.opt_alpha)
+    % kP_T bP
+    if (par.opt_kP_T & par.opt_bP)
+        kk = kk + 1;
+        Gxx(:,kk) = Gp*DIPxx(:,kk);
+    end
+
+    % kP_T alpha
+    if (par.opt_kP_T & par.opt_alpha)
+        kk = kk + 1;
+        Gxx(:,kk) = Gp*DIPxx(:, kk) + ...
+            d0(Gpx(:,pindx.lalpha))*DIPx(:,pindx.kP_T);
+    end
+
+    % kP_T beta
+    if (par.opt_kP_T & par.opt_beta)
         kk = kk + 1;
         Gxx(:,kk) = Gp*DIPxx(:,kk) + ...
-            d0(Gpx(:,pindx.lalpha))*DIPx(:,pindx.lkappa_dp);
+            d0(Gpx(:,pindx.lbeta))*DIPx(:,pindx.kP_T);
+    end
+    
+    % kdP kdP
+    if (par.opt_kdP)
+        kk = kk + 1;
+        Gxx(:,kk) = Gp*DIPxx(:,kk);
     end
 
-    % kappa_dp beta
-    if (par.opt_kappa_dp & par.opt_beta)
+    % kdP bP_T
+    if (par.opt_kdP & par.opt_bP_T)
+        kk = kk + 1;
+        Gxx(:,kk) = Gp*DIPxx(:,kk);
+    end
+
+    % kdP bP
+    if (par.opt_kdP & par.opt_bP)
+        kk = kk + 1;
+        Gxx(:,kk) = Gp*DIPxx(:,kk);
+    end
+
+    % kdP alpha
+    if (par.opt_kdP & par.opt_alpha)
         kk = kk + 1;
         Gxx(:,kk) = Gp*DIPxx(:,kk) + ...
-            d0(Gpx(:,pindx.lbeta))*DIPx(:,pindx.lkappa_dp);
+            d0(Gpx(:,pindx.lalpha))*DIPx(:,pindx.lkdP);
+    end
+
+    % kdP beta
+    if (par.opt_kdP & par.opt_beta)
+        kk = kk + 1;
+        Gxx(:,kk) = Gp*DIPxx(:,kk) + ...
+            d0(Gpx(:,pindx.lbeta))*DIPx(:,pindx.lkdP);
     end
 
     % bP_T bP_T

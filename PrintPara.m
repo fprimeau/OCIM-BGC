@@ -7,10 +7,16 @@ function PrintPara(x, par);
         xhat.sigma = exp(x(isigma));
     end
 
-    if (par.opt_kappa_dp == on)
-        ikappa_dp = par.pindx.lkappa_dp;
-        fprintf('current kappa_dp is % 3.2e \n', exp(x(ikappa_dp)));
-        xhat.kappa_dp = exp(x(ikappa_dp));
+    if (par.opt_kP_T == on)
+        ikP_T = par.pindx.kP_T;
+        fprintf('current kP_T is     % 3.2e \n', x(ikP_T));
+        xhat.kP_T = x(ikP_T);
+    end
+    
+    if (par.opt_kdP == on)
+        ikdP = par.pindx.lkdP;
+        fprintf('current kdP is      % 3.2e \n', exp(x(ikdP)));
+        xhat.kdP = exp(x(ikdP));
     end
 
     if (par.opt_bP_T == on)
@@ -55,11 +61,17 @@ function PrintPara(x, par);
             fprintf('current d is        % 3.2e \n', exp(x(id)));
             xhat.d = exp(x(id));
         end
+
+        if (par.opt_kC_T == on)
+            ikC_T = par.pindx.kC_T;
+            fprintf('current kC_T is     % 3.2e \n', x(ikC_T));
+            xhat.kC_T = x(ikC_T);
+        end
         
-        if (par.opt_kappa_dc == on)
-            ikappa_dc = par.pindx.lkappa_dc;
-            fprintf('current kappa_dc is % 3.2e \n', exp(x(ikappa_dc)));
-            xhat.kappa_dc = exp(x(ikappa_dc));
+        if (par.opt_kdC == on)
+            ikdC = par.pindx.lkdC;
+            fprintf('current kdC is      % 3.2e \n', exp(x(ikdC)));
+            xhat.kdC = exp(x(ikdC));
         end
         
         if (par.opt_RR == on)

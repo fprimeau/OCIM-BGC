@@ -5,9 +5,9 @@ addpath('/DFS-L/DATA/primeau/weilewang/DATA/OCIM2')
 on = true;      off = false;
 spd  = 24*60^2; spa  = 365*spd;
 %
-TR_ver  = 91 ;
-mod_ver = 'CTL_He_noArc';
-% mod_ver = 'noArc';
+TR_ver  = 90 ;
+% mod_ver = 'CTL_He_noArc';
+mod_ver = 'noArc';
 %
 Cmodel  = on ;
 Omodel  = off ;
@@ -16,12 +16,9 @@ Simodel = off ;
 % ATTENTION: please change this directory to where you wanna
 if ismac
     input_dir = sprintf('~/Documents/CP-model/MSK%2d/',TR_ver); 
-    % load optimal parameters if they exist
-    fxhat = append(output_dir,mod_ver,'_xhat.mat');
 elseif isunix 
     input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/COP4WWF/' ...
                         'MSK%2d/'],TR_ver);
-    fxhat = append(input_dir,mod_ver,'_xhat.mat');
 end
 VER   = strcat(input_dir,mod_ver);
 if (Cmodel == off & Omodel == off & Simodel == off)
@@ -35,7 +32,8 @@ elseif (Cmodel == on & Omodel == off & Simodel == on)
 elseif (Cmodel == on & Omodel == on & Simodel == on)
     fname = strcat(VER,'_PCOSi');
 end
-
+% load optimal parameters if they exist
+fxhat = strcat(fname,'_xhat.mat');
 if TR_ver == 90
     load transport_v4.mat
     load Sobs_90x180x24.mat     % woa2013 salinity data.
@@ -70,31 +68,24 @@ iwet = find(M3d(:));
 nwet = length(iwet);
 I    = speye(nwet);  
 DIP  = DIP(iwet) ;
-DIC  = DIC(iwet) ;
-POC  = POC(iwet) ;
-DOC  = DOC(iwet) ;
 PO4  = po4obs(iwet) ;  
 dAt  = grd.DXT3d.*grd.DYT3d;
 dVt  = dAt.*grd.DZT3d;
 
 dzt   = grd.dzt;
 sigma = xhat.sigma ; 
+bP   = xhat.bP   ;
+bP_T = xhat.bP_T ;
+kP_T = xhat.kP_T ;
+kdP  = xhat.kdP  ;
 % DOP remineralization rate constant. 
-kappa4p = xhat.kappa_dp ; 
+kappa4p = xhat.kdP ; 
 % linear parameter of npp to DIP assimilation function. 
 alpha   = xhat.alpha ; 
 % exponential parameter of npp to DIN assimilation function.
 beta    = xhat.beta ; 
 % POP disolution constant [s^-1];
 kappa_p = 1/(720*60^2) ;   
-% DOP remineralization rate constant. 
-kappa4c = xhat.kappa_dc ;
-cc      = xhat.cc ;
-dd      = xhat.dd ;
-bP      = xhat.bP ;
-bP_T    = xhat.bP_T ;
-bC      = xhat.bC   ;
-bC_T    = xhat.bC_T ;
 par.taup   = 720*60^2; % (s) pic dissolution time-scale
 par.tau_TA = 1./par.taup;
 par.M3d    = M3d   ;
@@ -108,26 +99,58 @@ par.Salt   = Sobs  ;
 
 % PME part;
 [modT,modS] = PME(par) ;
-par.modT    = modT ;
-par.modS    = modS ;
-aveT = nanmean(modT(:,:,1:8),3);
+par.modT = modT ;
+par.modS = modS ;
+tmpT     = modT(iwet)  ;
+Tz       = zscore(tmpT);
+Tz3d     = M3d + nan   ;
+Tz3d(iwet) = Tz    ;
+aveT = nanmean(Tz3d(:,:,1:3),3) ;
 
 nfig = 1;
 figure(nfig)
 bP2D = bP_T*aveT + bP ;
 pcolor(bP2D); colorbar;shading flat 
-
+title('b4P')
+%
+nfig = nfig + 1;
+figure(nfig)
+kP3d = M3d + nan;
+kP3d(iwet) = (1./(kP_T * Tz * 1e-8 + kdP))/spd; 
+pcolor(kP3d(:,:,1));colorbar;shading flat
+title('k4P')
 if Cmodel == on
+    % DOP remineralization rate constant. 
+    kC_T = xhat.kC_T ;
+    kdC  = xhat.kdC  ;
+    cc   = xhat.cc   ;
+    dd   = xhat.dd   ;
+    bC   = xhat.bC   ;
+    bC_T = xhat.bC_T ;
+    %
+    DIC  = DIC(iwet) ;
+    POC  = POC(iwet) ;
+    DOC  = DOC(iwet) ;
+    %
+    nfig = nfig + 1;
+    figure(nfig)
+    kC3d = M3d + nan;
+    kC3d(iwet) = (1./(kC_T * Tz * 1e-8 + kdC))/spd; 
+    pcolor(kC3d(:,:,1));colorbar;shading flat
+    title('kd4C')
+    %
     nfig = nfig + 1;
     figure(nfig)
     bC2D = bC_T*aveT + bC ; 
-    pcolor(bC2D); colorbar;shading flat 
+    pcolor(bC2D); colorbar;shading flat
+    title('b4C')
     %
     nfig = nfig + 1;
     figure(nfig)
     C2P = M3d + nan ;
     C2P(iwet)  = 1./(cc*PO4 + dd);
     pcolor(C2P(:,:,1)); colorbar;shading flat
+    title('C:P uptake ratio')
 end
 
 if Omodel == on

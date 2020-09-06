@@ -36,9 +36,9 @@ function [G,Gx,Gxx,Gp,par] = uptake_Si(par)
             DIPx(:,isigma) = par.Px(1:nwet,isigma);
         end
 
-        if (par.opt_kappa_dp == on)
-            ikappa_dp = pindx.lkappa_dp;
-            DIPx(:,ikappa_dp) = par.Px(1:nwet,ikappa_dp);
+        if (par.opt_kdP == on)
+            ikdP = pindx.lkdP;
+            DIPx(:,ikdP) = par.Px(1:nwet,ikdP);
         end
 
         if (par.opt_bP_T == on)
@@ -98,8 +98,8 @@ function [G,Gx,Gxx,Gp,par] = uptake_Si(par)
             Gxx(:,kk) = Gp*DIPxx(:, kk);
             kk = kk + 1;
         end
-        % sigma kappa_dp
-        if (par.opt_sigma == on & par.opt_kappa_dp == on)
+        % sigma kdP
+        if (par.opt_sigma == on & par.opt_kdP == on)
             Gxx(:,kk) = Gp*DIPxx(:, kk);
             kk = kk + 1;
         end
@@ -125,30 +125,30 @@ function [G,Gx,Gxx,Gp,par] = uptake_Si(par)
                 Gp*DIPxx(:, kk);
             kk = kk + 1;
         end
-        % kappa_dp kappa_dp
-        if (par.opt_kappa_dp == on)
+        % kdP kdP
+        if (par.opt_kdP == on)
             Gxx(:,kk) = Gp*DIPxx(:, kk);
             kk = kk + 1;
         end
-        % kappa_dp bP_T
-        if (par.opt_kappa_dp == on & par.opt_bP_T == on)
+        % kdP bP_T
+        if (par.opt_kdP == on & par.opt_bP_T == on)
             Gxx(:,kk) = Gp*DIPxx(:, kk);
             kk = kk + 1;
         end
-        % kappa_dp bP
-        if (par.opt_kappa_dp == on & par.opt_bP == on)
+        % kdP bP
+        if (par.opt_kdP == on & par.opt_bP == on)
             Gxx(:,kk) = Gp*DIPxx(:, kk);
             kk = kk + 1;
         end
-        % kappa_dp alpha
-        if (par.opt_kappa_dp == on & par.opt_alpha == on)
-            Gxx(:,kk) = d0(dGpdalpha)*DIPx(:, pindx.lkappa_dp) + ...
+        % kdP alpha
+        if (par.opt_kdP == on & par.opt_alpha == on)
+            Gxx(:,kk) = d0(dGpdalpha)*DIPx(:, pindx.lkdP) + ...
                 Gp*DIPxx(:, kk);
             kk = kk + 1;
         end
-        % kappa_dp beta
-        if (par.opt_kappa_dp == on & par.opt_beta == on)
-            Gxx(:,kk) = d0(dGpdbeta)*DIPx(:, pindx.lkappa_dp) + ...
+        % kdP beta
+        if (par.opt_kdP == on & par.opt_beta == on)
+            Gxx(:,kk) = d0(dGpdbeta)*DIPx(:, pindx.lkdP) + ...
                 Gp*DIPxx(:, kk);
             kk = kk + 1;
         end
@@ -258,26 +258,26 @@ function [G,Gx,Gxx,Gp,par] = uptake_Si(par)
                 Gxx(:, kk) = bb*Gp*DIPx(:,pindx.lsigma).*dSi2Cdbb;
                 kk = kk + 1;
             end
-            % kappa_dp dsi
-            if (par.opt_kappa_dp == on & par.opt_dsi == on)
+            % kdP dsi
+            if (par.opt_kdP == on & par.opt_dsi == on)
                 kk = kk + 1;
             end
-            % kappa_dp at
-            if (par.opt_kappa_dp == on & par.opt_at == on)
+            % kdP at
+            if (par.opt_kdP == on & par.opt_at == on)
                 kk = kk + 1;
             end
-            % kappa_dp bt
-            if (par.opt_kappa_dp == on & par.opt_bt == on)
+            % kdP bt
+            if (par.opt_kdP == on & par.opt_bt == on)
                 kk = kk + 1;
             end
-            % kappa_dp aa
-            if (par.opt_kappa_dp == on & par.opt_aa == on)
-                Gxx(:, kk) = Gp*DIPx(:,pindx.lkappa_dp).*dSi2Cdaa;
+            % kdP aa
+            if (par.opt_kdP == on & par.opt_aa == on)
+                Gxx(:, kk) = Gp*DIPx(:,pindx.lkdP).*dSi2Cdaa;
                 kk = kk + 1;
             end
-            % kappa_dp bb
-            if (par.opt_kappa_dp == on & par.opt_bb == on)
-                Gxx(:, kk) = bb*Gp*DIPx(:,pindx.lkappa_dp).*dSi2Cdbb;
+            % kdP bb
+            if (par.opt_kdP == on & par.opt_bb == on)
+                Gxx(:, kk) = bb*Gp*DIPx(:,pindx.lkdP).*dSi2Cdbb;
                 kk = kk + 1;
             end
             % slope dsi
