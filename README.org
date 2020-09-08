@@ -1,3 +1,4 @@
+* TODO clean up the transient_co2.m code and add it to the repo
 ** The file atmhist.txt is from the supplementary materials of the following article
 article {JGRC:JGRC12521,
 author = {Graven, H. D. and Gruber, N. and Key, R. and Khatiwala, S. and Giraud, X.},
@@ -13,3 +14,5 @@ keywords = {Oceans, Numerical modeling, Carbon cycling, Chemical tracers, Gases,
 year = {2012},
 note = {C10005},
 }
+* TODO make a tree of file dependencies
+* TODO make a table of optimizable parameters with descriptions, units, etc
