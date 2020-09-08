@@ -1,4 +1,4 @@
-function [parm, O2, Ox, Oxx] = eqOcycle(par, parm, x)
+function [par, O2, Ox, Oxx] = eqOcycle(par, x)
     on = true; off = false;
     global GO
     pindx = par.pindx;
@@ -7,69 +7,71 @@ function [parm, O2, Ox, Oxx] = eqOcycle(par, parm, x)
     nox = 0; % count Omodel parameters
     if (par.opt_slopeo == on)
         nox = nox + 1;
-        parm.slopeo = x(pindx.slopeo);
+        par.slopeo = x(pindx.slopeo);
     else
-        parm.slopeo  = par.slopeo;
+        par.slopeo  = par.slopeo;
     end
     
     % interpo
     if (par.opt_interpo == on)
         nox = nox + 1;
         linterpo = x(pindx.linterpo);
-        parm.interpo  = exp(linterpo);
+        par.interpo  = exp(linterpo);
     else
-        parm.interpo  = par.interpo;
+        par.interpo  = par.interpo;
     end
-    parm.nox = nox;
+    par.nox = nox;
     %
     X0  = GO;
     options.iprint = 1;
     options.atol = 5e-8; options.rtol = 5e-8 ;
-    [O2,ierr] = nsnew(X0,@(X) O_eqn(X,par,parm,x),options) ;
+    [O2,ierr] = nsnew(X0,@(X) O_eqn(X,par,x),options) ;
 
     if (ierr ~=0)
         fprintf('o2model did not converge.\n') ;
         keyboard
     else
         % reset the global variable for the next call eqOcycle
-        GO = real(O2) + 1e-6*randn(parm.nwet,1);
+        GO = real(O2) + 1e-6*randn(par.nwet,1);
         X0 = GO;
-        F = O_eqn(O2, par, parm, x);
+        F = O_eqn(O2, par, x);
         if norm(F) > 1e-12
-            [O2,ierr] = nsnew(X0,@(X) O_eqn(X,par,parm,x),options);
+            [O2,ierr] = nsnew(X0,@(X) O_eqn(X,par,x),options);
         end
         % Compute the gradient of the solution wrt the parameters
-        [F, FD, Ox, Oxx] = O_eqn(O2, par, parm, x);
+        [F, FD, Ox, Oxx] = O_eqn(O2, par, x);
     end
 
-function [F, FD, Ox, Oxx] = O_eqn(O2, par, parm, x)
+end
+
+function [F, FD, Ox, Oxx] = O_eqn(O2, par, x)
     on = true; off = false;
     pindx = par.pindx;
     %
     % fixed parameters
-    iwet = parm.iwet;
-    nwet = parm.nwet;
-    TRdiv = parm.TRdiv;
+    iwet = par.iwet;
+    nwet = par.nwet;
+    TRdiv = par.TRdiv;
     I = speye(nwet);
-    PO4 = parm.po4obs(iwet);
+    PO4 = par.po4obs(iwet);
     % variables from C model
-    DOC = parm.DOC;
+    DOC = par.DOC;
     %
     % tunable parameters;
-    kappa_dc = parm.kappa_dc;
-    slopeo   = parm.slopeo;
-    interpo  = parm.interpo;
+    kappa_dc = par.kappa_dc;
+    slopeo   = par.slopeo;
+    interpo  = par.interpo;
     %
-    vout = mkO2P(parm);
+    vout = mkO2P(par);
     O2P  = vout.O2P;
     dO2Pdslopeo  = vout.dO2Pdslopeo;
     dO2Pdinterpo = vout.dO2Pdinterpo;
     %
     % O2 saturation concentration
-    [KO2,o2sat] = Fsea2air_o2(parm);
+    [KO2,o2sat] = Fsea2air_o2(par);
     
     % rate of o2 production
-    G = parm.G;
+    G = par.G;
     PO2 = G*O2P;
 
     % parobolic function for o2 consumption
@@ -90,13 +92,13 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par, parm, x)
     %
     %% ----------------- Gradient -------------------
     if (nargout > 2);
-        npx = parm.npx;
-        ncx = parm.ncx;
-        nox = parm.nox;
+        npx = par.npx;
+        ncx = par.ncx;
+        nox = par.nox;
         nx = npx + ncx + nox;
         Ox = sparse(nwet, nx);
-        Gx = parm.Gx;
-        DOCx = parm.DOCx;
+        Gx = par.Gx;
+        DOCx = par.DOCx;
         % P model only parameters
         for jj = 1:npx
             tmp = -d0(Gx(:,jj))*O2P + ...
@@ -131,8 +133,8 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par, parm, x)
     %% ------------------- Hessian -------------------------
     if (nargout > 3);
         %
-        Gxx = parm.Gxx;
-        DOCxx  = parm.DOCxx;
+        Gxx = par.Gxx;
+        DOCxx  = par.DOCxx;
         Oxx = sparse(nwet,nchoosek(nx,2)+nx);
         % P model parameters
         kk = 0;
@@ -275,3 +277,6 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par, parm, x)
             Oxx(:,kk) = mfactor(FD, -tmp);
         end
     end
+    
+end
+

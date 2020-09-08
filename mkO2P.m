@@ -5,8 +5,8 @@ interpo  = parm.interpo;
 %
 iwet = parm.iwet;
 nwet = parm.nwet;
-sal  = parm.ss;
-sst  = parm.sst;
+sal  = parm.Smod;
+sst  = parm.Tmod;
 smsk = parm.M3d;
 smsk(:,:,2:end) = 0;
 isrf = find(smsk(iwet));

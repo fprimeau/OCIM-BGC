@@ -1,0 +1,15 @@
+** The file atmhist.txt is from the supplementary materials of the following article
+article {JGRC:JGRC12521,
+author = {Graven, H. D. and Gruber, N. and Key, R. and Khatiwala, S. and Giraud, X.},
+title = {Changing controls on oceanic radiocarbon: New insights on shallow-to-deep ocean exchange and anthropogenic CO2 uptake},
+journal = {Journal of Geophysical Research: Oceans},
+volume = {117},
+number = {C10},
+issn = {2156-2202},
+url = {http://dx.doi.org/10.1029/2012JC008074},
+doi = {10.1029/2012JC008074},
+pages = {n/a--n/a},
+keywords = {Oceans, Numerical modeling, Carbon cycling, Chemical tracers, Gases, anthropogenic CO2, bomb radiocarbon, ocean modeling, transient tracers},
+year = {2012},
+note = {C10005},
+}

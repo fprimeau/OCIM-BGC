@@ -1,24 +1,69 @@
-clc; clear all; close all
+% Set some read-only paths:
+tic
 addpath('/DFS-L/DATA/primeau/weilewang/my_func/')
 addpath('/DFS-L/DATA/primeau/weilewang/DATA/')
-addpath('/DFS-L/DATA/primeau/weilewang/DATA/OCIM2')
 addpath('/DFS-L/DATA/primeau/weilewang/GREG/Couple_CP/')
-format long
+addpath('/DFS-L/DATA/primeau/weilewang/DATA/OCIM2')
+% Set some a read-write path:
+par.VER = "/DFS-L/DATA/primeau/fprimeau/OCIM_BGC_OUTPUT/MSK91";
+
+%
+%% -------------------------------------------------------------
 on = true; off = false;
-global GC GO iter
-iter = 0;
+%
+%  choose which elements to include in the model
+%  par.Pmodel hard coded on. In other words the Pmodel is essential.
+%
+par.Cmodel = off; % C-cycle model 
+par.Omodel = off; % O2-cycle model
+if (par.Omodel == on )
+  par.Cmodel = on;
+end
+par.Simodel = off;% Si-cycle model
+
+%
+% Choose which parameters to optimize
+%
+% P model parameters
+par.opt_beta = on;
+par.opt_alpha = on;
+par.opt_sigma = off; 
+par.opt_slopep = on; 
+par.opt_interpp = on;
+par.opt_kappa_dp = on;
+% C model parameters
+par.opt_d = on;  
+par.opt_RR = on; 
+par.opt_cc = on;
+par.opt_dd = on;
+par.opt_slopec = on;
+par.opt_interpc = on; 
+par.opt_kappa_dc = on; 
+% O model parameters
+par.opt_slopeo = off; 
+par.opt_interpo = off; 
+% Si model parameters
+par.opt_bsi = on;
+par.opt_at = on;
+par.opt_bt = off;
+par.opt_aa = on;
+par.opt_bb = on;
+%% -------------------------------------------------------------
+
+%
+%  choose 91 or 90 for the version of OCIM used to construct the tracer
+%  transport operator
+%   version 90 has only one transport operator taken from Primeau et al. (2013)
+%   version 91 has lots of choices. See below.
+%
 spd  = 24*60^2;
 spa  = 365*spd;
 %
-version = 91;
-par.Cmodel = off;
-par.Omodel = off;
-par.Simodel = off;
+version = 90;
 %
 if version == 90
-    parm.VER = "/DFS-L/DATA/primeau/weilewang/OutputCoupledCPO/MSK90/PCO_var_b";
     
-    load transport_v4.mat grid M3d TR
+    load transport_v4.mat grid M3d TR % this is the only choice
     load Sobs_90x180x24.mat
     load tempobs_90x180x24.mat
     load po4obs_90x180x24.mat % WOA PO4 observation
@@ -31,12 +76,13 @@ if version == 90
     load cbpm_npp_annual_90x180.mat
     load kw660_90x180.mat
     load /DFS-L/DATA/primeau/weilewang/OutputCoupledCPO/MSK90/temp_dep_b_C.mat
+    PIC = CaC;  clear CaC
     load /DFS-L/DATA/primeau/weilewang/OutputCoupledCPO/MSK90/temp_dep_b_O2.mat
     grd  = grid         ;
     
 elseif version == 91
-    parm.VER = "/DFS-L/DATA/primeau/weilewang/OutputCoupledCPO/MSK91/PCO_CTL_He";
 
+    % uncomment only one version of OCIM2 
     load OCIM2_CTL_He.mat output 
     % load OCIM2_KiLOW_He.mat output 
     % load OCIM2_KiHIGH_He.mat output 
@@ -61,62 +107,75 @@ elseif version == 91
     load cbpm_npp_annual_91x180.mat
     load kw660_91x180.mat
     load /DFS-L/DATA/primeau/weilewang/OutputCoupledCPO/MSK91/PCO_CTL_He_C.mat
+    PIC = CaC; % clear CaC
     load /DFS-L/DATA/primeau/weilewang/OutputCoupledCPO/MSK91/PCO_CTL_He_O2.mat
     M3d = output.M3d;
     grd = output.grid;
     TR  = output.TR/spa;
 end
 
+%
+format long
+global GC GO iter
+iter = 0;
+%
+%
+[ny,nx,nz] = size(M3d);
+all_nan = nan(ny,nx,nz);
 iwet = find(M3d(:)) ;
 nwet = length(iwet) ;
 dVt = grd.DXT3d.*grd.DYT3d.*grd.DZT3d;
 %
-parm.Salt  = Sobs    ;
-parm.Temp  = tempobs ;
-parm.dVt   = dVt     ;
-parm.Kw660 = Kw660   ;
-parm.p4    = p4      ;
-parm.c2p   = 110     ;
-parm.M3d   = M3d     ;
-parm.iwet  = iwet    ;
-parm.nwet  = nwet    ;
-parm.TRdiv = -TR     ;
-parm.grd   = grd     ;
-parm.I     = speye(nwet);
-parm.Tobs  = tempobs;
-parm.rho   = 1024.5         ; % seawater density;
-permil     = parm.rho*1e-3  ; % from umol/kg to mmol/m3;
+par.Salt  = Sobs    ;
+par.Temp  = tempobs ;
+par.dVt   = dVt     ;
+par.Kw660 = Kw660   ;
+par.p4    = p4      ;
+par.c2p   = 110     ;
+par.M3d   = M3d     ;
+par.iwet  = iwet    ;
+par.nwet  = nwet    ;
+par.TRdiv = -TR     ;
+par.grd   = grd     ;
+par.I     = speye(nwet);
+par.Tobs  = tempobs;
+par.rho   = 1024.5         ; % seawater density;
+permil     = par.rho*1e-3  ; % from umol/kg to mmol/m3;
                               %
-parm.SIL     = Siobs;
-parm.po4obs  = po4obs;
-parm.o2raw   = o2raw;
-parm.po4raw  = po4raw;
-parm.sio4raw = sio4raw;
-parm.dicraw  = dicraw*permil; % GLODAP dic obs [mmol/m3];
-parm.human_co2 = DICant*permil;
+par.SIL     = Siobs;
+par.po4obs  = po4obs;
+par.o2raw   = o2raw;
+par.po4raw  = po4raw;
+par.sio4raw = sio4raw;
+par.dicraw  = dicraw*permil; % GLODAP dic obs [mmol/m3];
+par.human_co2 = DICant*permil;
 
-GC = real([DIC(iwet); POC(iwet); DOC(iwet); CaC(iwet)]);
-GO = real(O2(iwet)) + 1e-5*randn(parm.nwet,1);
+% Global variables used as initial iterates for the nonlinear solvers for
+% the CO2-system (GC) and for the O2. O2 is nonlinear because microbes
+% switch from O2 to NO3 to respire organic matter where [O2] is too low.
+GC = real([DIC(iwet); POC(iwet); DOC(iwet); PIC(iwet)]);
+GO = real(O2(iwet)) + 1e-5*randn(par.nwet,1);
 
 % transiant CO2 concentraion;
-parm.year      = splco2_mod(:,1) ;
-parm.pco2_air  = splco2_mod(:,2) ;
-parm.co2syspar = co2syspar       ;
+par.year      = splco2_mod(:,1) ;
+par.pco2_air  = splco2_mod(:,2) ;
+par.co2syspar = co2syspar       ;
 
-parm.kappa_g = 1/(1e6*spa); % geological restoring time [1/s];
-parm.SILbar  = nansum(Siobs(iwet).*dVt(iwet))/nansum(dVt(iwet));
-parm.DIPbar  = nansum(po4obs(iwet).*dVt(iwet))/nansum(dVt(iwet)); % volume
-parm.taup    = 720*60^2; % (s) pic dissolution time-scale
-parm.tau_TA  = 1./parm.taup;
+par.kappa_g = 1/(1e6*spa); % geological restoring time [1/s];
+par.SILbar  = nansum(Siobs(iwet).*dVt(iwet))/nansum(dVt(iwet));
+par.DIPbar  = nansum(po4obs(iwet).*dVt(iwet))/nansum(dVt(iwet)); % volume
+par.taup    = 720*60^2; % (s) pic dissolution time-scale
+par.tau_TA  = 1./par.taup;
 par.kappa_da = 0.5e-7    ;
+
 % PME part;
-[Tmod,Smod] = PME(parm) ;
-parm.Smod  = Smod   ;
-parm.Tmod = Tmod;
-parm.aveT  = nanmean(Tmod(:,:,1:8),3);
+[Tmod,Smod] = PME(par) ;
+par.Smod  = Smod   ;
+par.Tmod = Tmod;
+par.aveT  = nanmean(Tmod(:,:,1:8),3);
 
 %
-% P model parameters;
+% Default P model parameters;
 par.sigma    = 1/3      ;
 par.kappa_dp = 4.44e-08 ;
 par.slopep   = 0 ;
@@ -124,7 +183,7 @@ par.interpp  = 0.89 ;
 par.alpha    = 9.33e-04 ;
 par.beta     = 1.16e-01 ;
                           
-% C model parameters                                      
+% Default C model parameters                                      
 par.slopec   = 0 ;
 par.interpc  = 1.06e+00 ;
 par.d        = 2.25e+03 ;
@@ -133,44 +192,17 @@ par.RR       = 6.37e-02 ;
 par.cc       = 5.77e-03 ;
 par.dd       = 3.39e-03 ;
 %
-% O model parameters
+% Default O2 model parameters
 par.slopeo   = 0.0e+00 ;
 par.interpo  = 1.70e+02 ;
 
-% Si model parameters
+% Default Si model parameters
 par.bsi = 0.33;
 par.at = 1.32e16/spd;
 par.bt = 11481;
 par.aa = 1;
 par.bb = 0.968;
 par.kappa_gs = 1/(1e6*spa); % geological restoring time [1/s];
-%% -------------------------------------------------------------
-%
-% P model parameters
-par.opt_beta = on;
-par.opt_alpha = on;
-par.opt_sigma = off; 
-par.opt_slopep = on; 
-par.opt_interpp = on;
-par.opt_kappa_dp = on;
-% C model parameters
-par.opt_d = on; % 
-par.opt_RR = on; % 
-par.opt_cc = on;
-par.opt_dd = on;
-par.opt_slopec = on;
-par.opt_interpc = on; %
-par.opt_kappa_dc = on; %
-% O model parameters
-par.opt_slopeo = off; 
-par.opt_interpo = off; 
-% Si model parameters
-par.opt_bsi = on;
-par.opt_at = on;
-par.opt_bt = off;
-par.opt_aa = on;
-par.opt_bb = on;
-%% -------------------------------------------------------------
 p0 = [];
 % sigma 
 if (par.opt_sigma == on)
@@ -322,9 +354,9 @@ end
 %
 %% -------------------------------------------------------------
 %
-parm.kappa_p = 1/(720*60^2) ;
-parm.p2c = 0.006+0.0069*po4obs;
-parm.nzo = 2;
+par.kappa_p = 1/(720*60^2) ;
+par.p2c = 0.006+0.0069*po4obs;
+par.nzo = 2;
 %%%%%%% prepare NPP for the model %%%%%%%%
 inan = find(isnan(npp(:)) | npp(:)<0);
 npp(inan) = 0;
@@ -334,16 +366,62 @@ npp(inan) = 0;
 % tmp(35:55,90:145) = nan; % EP
 % iso = find(isnan(tmp));
 % npp(iso) = npp(iso)*0.5;
-parm.npp    = npp/(12*spd);
-parm.Lambda = M3d*0;
-parm.Lambda(:,:,1) = 0.5*(1/grd.dzt(1))*parm.p2c(:,:,1)./(1e-9+po4obs(:,:,1));
-parm.Lambda(:,:,2) = 0.5*(1/grd.dzt(2))*parm.p2c(:,:,2)./(1e-9+po4obs(:,:,2));
-parm.Lambda(:,:,3:end) = 0;
+par.npp    = npp/(12*spd);
+par.Lambda = M3d*0;
+par.Lambda(:,:,1) = 0.5*(1/grd.dzt(1))*par.p2c(:,:,1)./(1e-9+po4obs(:,:,1));
+par.Lambda(:,:,2) = 0.5*(1/grd.dzt(2))*par.p2c(:,:,2)./(1e-9+po4obs(:,:,2));
+par.Lambda(:,:,3:end) = 0;
 %%%%%%%%%%%%%%%%%%%% end %%%%%%%%%%%%%%%%%
-parm.p0 = p0;
+par.p0 = p0;
 x0 = p0;
+
 %
-myfun = @(x) neglogpost(x, parm, par);
+%
+fprintf('Computing the equilibrium P-cycle solution...');
+tic
+[par, P, Px, Pxx] = eqPcycle(par, x0);
+[DIP,POP,DOP] = deal(all_nan,all_nan,all_nan);
+[DIP(iwet),POP(iwet),DOP(iwet)] = deal(P(1:nwet),P(nwet+1:2*nwet),P(2*nwet+1:3*nwet));
+par.Px  = Px;
+par.Pxx = Pxx;
+par.DIP = DIP(iwet);
+toc
+%
+%
+if (par.Cmodel == on)
+    fprintf('Computing the equilibrium C-cycle solution...');
+    tic
+    [par, C, Cx, Cxx] = eqCcycle(par, x0);
+    [DIC,POC,DOC,PIC] = deal(all_nan,all_nan,all_nan,all_nan);
+    [DIC(iwet),POC(iwet),DOC(iwet),PIC(iwet)] = deal(C(1:nwet),C(nwet+1:2*nwet),...
+                                                     C(2*nwet+1:3*nwet),C(3*nwet+1:4*nwet));
+    
+    par.DIC = DIC(iwet);      par.DOC = DOC(iwet);
+    par.DICx = Cx(1:nwet,:);  par.DOCx = Cx(2*nwet+1:3*nwet,:);
+    par.DICxx = Cxx(1:nwet,:);  par.DOCxx = Cxx(2*nwet+1:3*nwet,:)
+    toc
+end
+%
+%
+if (par.Omodel == on)
+    fprintf('Computing the equilibrium O2-cycle solution...');
+    tic
+    [par, O, Ox, Oxx] = eqOcycle(par, x0);
+    O2 = all_nan;
+    O2(iwet) = O;
+    toc
+end
+%
+%
+if (par.Simodel == on)
+    fprintf('Computing the equilibrium Si-cycle solution...');
+    [par,Si,Six,Sixx] = eqSicycle(par, x);
+    keyboard
+end
+    
+%
+par_old = par;
+myfun = @(x) neglogpost(x, par,par_old);
 %
 options = optimoptions(@fminunc                  , ...
                        'Algorithm','trust-region', ...
@@ -364,7 +442,7 @@ if(G_test);
     dx = sqrt(-1)*eps.^3*eye(nip);
     for ii = 1:nip
         x  = real(x0)+dx(:,ii);
-        [f,fx,fxx] = neglogpost(x, parm, par) ;
+        [f,fx,fxx] = neglogpost(x, par,par_old) ;
         diff = real(fx(ii)) - imag(f)/eps.^3 ;
         fprintf('%i %e  \n',ii,diff);
         diffx = real(fxx(:,ii)) - imag(fx)/eps.^3;
@@ -376,9 +454,11 @@ if(G_test);
     end
 else
     [xhat,fval,exitflag] = fminunc(myfun,x0,options);
-    [f,fx,fxx] = neglogpost(xhat,parm,par);
-    fname = strcat(parm.VER,'_xhat');
+    [f,fx,fxx] = neglogpost(xhat,par,par_old);
+    fname = strcat(par.VER,'_xhat');
     save(fname, 'xhat','fx', 'fxx')
+
 end
 
 fprintf('------------ END! ---------------\n');
+toc

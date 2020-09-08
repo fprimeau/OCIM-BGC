@@ -1,19 +1,19 @@
-function [G,Gx,Gxx] = uptake_C(par,parm)
+function [G,Gx,Gxx] = uptake_C(par)
 %
 pindx = par.pindx;
 % unpack the parameters to be optimized
-alpha = parm.alpha;
-beta  = parm.beta;
+alpha = par.alpha;
+beta  = par.beta;
 
-iwet = parm.iwet;
-nwet = parm.nwet;
+iwet = par.iwet;
+nwet = par.nwet;
 % of uptake operator
-po4obs = parm.po4obs(iwet);
+po4obs = par.po4obs(iwet);
 % P uptake operator
-L = parm.L;  
-dLdbeta = parm.dLdbeta;
+L = par.L;  
+dLdbeta = par.dLdbeta;
 
-DIP = parm.DIP;
+DIP = par.DIP;
 G   = d0(alpha*L*DIP); 
 Gp  = alpha*L;   
 
@@ -21,9 +21,9 @@ Gp  = alpha*L;
 % grad DIP
 if (nargout >1)
     % gradient of uptake operator
-    nx  = parm.npx;
+    nx  = par.npx;
     Gpx = zeros(nwet,nx);
-    DIPx = parm.Px(1:nwet,:);
+    DIPx = par.Px(1:nwet,:);
     
     if (par.opt_alpha)
         ialpha = pindx.lalpha;
@@ -41,8 +41,8 @@ end
 %% ------------------------------------------------
 if (nargout >2)
     kk = 0;
-    DIPxx = parm.Pxx(1:nwet,:);
-    d2Ldbetadbeta = parm.d2Ldbetadbeta;
+    DIPxx = par.Pxx(1:nwet,:);
+    d2Ldbetadbeta = par.d2Ldbetadbeta;
     % sigma sigma
     if (par.opt_sigma)
         kk = kk + 1;
@@ -186,3 +186,5 @@ if (nargout >2)
             2*d0(Gpx(:,pindx.lbeta))*DIPx(:,pindx.lbeta);
     end
 end
+end
+
