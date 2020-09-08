@@ -89,8 +89,8 @@ if (varargout > 1) % compute the gradient w.r.t. the parameters
         Gout.PFD_bb = DIV*FLUX_bb;
         
     elseif( strcmp(Ptype,'PIC') )    
-        w_d = -r;
-        FLUX_d = d0(w_d(iwet))*IU;
+        w_d = -r*M;
+        Flux_d = d0(w_d(iwet))*IU;
         Gout.PFD_d = DIV*FLUX_d;
     elseif ( strcmp(Ptype,'bSi') )
         a_b  = -r./b.^2; % derivative of a w.r.t. b
