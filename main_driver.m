@@ -20,11 +20,11 @@ spa  = 365*spd;
 Gtest = off ;
 Htest = off ;
 %
-TR_ver  = 91 ;
-mod_ver = 'CTL_He_noArc';
+TR_ver  = 90 ;
+mod_ver = 'noArc';
 par.optim   = on ; 
 par.Cmodel  = on ; 
-par.Omodel  = off ; 
+par.Omodel  = on ; 
 par.Simodel = off ; 
 % save results 
 % ATTENTION: please change this directory to where you wanna
@@ -61,7 +61,7 @@ par.fxhat = fxhat ;
 % if isfile(fxhat)
 % load(fxhat)
 % end
-%
+
 if TR_ver == 90
     load transport_v4.mat grid M3d TR
     load M3d90x180x24v2.mat MSKS 
@@ -161,47 +161,48 @@ par.dicraw  = dicraw*permil; % GLODAP dic obs [mmol/m3];
 par.human_co2 = DICant*permil;
 
 GC = real([DIC(iwet); POC(iwet); DOC(iwet); CaC(iwet)]);
-GO = real(O2(iwet)) + 1e-7*randn(par.nwet,1);
+GO = real(O2(iwet)) + 1e-9*randn(par.nwet,1);
 
 % transiant CO2 concentraion;
 par.year      = splco2_mod(:,1) ;
 par.pco2_air  = splco2_mod(:,2) ;
 par.co2syspar = co2syspar       ;
 
-par.kappa_g  = 1/(1e6*spa); % geological restoring time [1/s];
-par.SILbar   = nansum(Siobs(iwet).*dVt(iwet))/nansum(dVt(iwet));
-par.DIPbar   = nansum(po4obs(iwet).*dVt(iwet))/nansum(dVt(iwet)); % volume
-par.taup     = 720*60^2 ; % (s) pic dissolution time-scale
+par.kappa_g  = 1/(1e6*spa)  ; % geological restoring time [1/s];
+par.SILbar   = nansum(Siobs(iwet).*dVt(iwet))/nansum(dVt(iwet))  ;
+par.DIPbar   = nansum(po4obs(iwet).*dVt(iwet))/nansum(dVt(iwet)) ;
+par.taup     = 720*60^2     ; % (s) pic dissolution time-scale
 par.tau_TA   = 1./par.taup  ;
 par.kappa_gs = 1/(1e6*spa)  ; % geological restoring time [1/s];
 par.kappa_p  = 1/(720*60^2) ;
 % PME part;
-[modT,modS] = PME(par)  ;
-par.modS    = modS      ;
-par.modT    = modT      ;
-Tz  = zscore(modT(iwet));
-Tz3d        = M3d + nan ;
-Tz3d(iwet)  = Tz        ;
+[modT,modS] = PME(par)   ;
+par.modS    = modS       ;
+par.modT    = modT       ;
+Tz  = zscore(modT(iwet)) ;
+Tz3d        = M3d + nan  ;
+Tz3d(iwet)  = Tz         ;
 par.aveT    = nanmean(Tz3d(:,:,1:3),3) ;
-par.Tz      = Tz*1e-8   ;
+par.Tz      = Tz*1e-8    ;
+
 % P model parameters;
 if exist('xhat') & isfield(xhat,'sigma')
-    par.sigma = xhat.sigma;
+    par.sigma = xhat.sigma ;
 else 
     par.sigma = 1/3 ;
 end
 if exist('xhat') & isfield(xhat,'kP_T')
-    par.kP_T = xhat.kP_T;
+    par.kP_T = xhat.kP_T ;
 else 
     par.kP_T = 0 ; 
 end 
 if exist('xhat') & isfield(xhat,'kdP')
-    par.kdP = xhat.kdP;
+    par.kdP = xhat.kdP ;
 else 
     par.kdP = 4.44e-08 ;
 end 
 if exist('xhat') & isfield(xhat,'bP_T')
-    par.bP_T = xhat.bP_T;
+    par.bP_T = xhat.bP_T ;
 else 
     par.bP_T = 0 ;
 end 
@@ -211,14 +212,14 @@ else
     par.bP  = 0.89 ;
 end 
 if exist('xhat') & isfield(xhat,'alpha')
-    par.alpha = xhat.alpha;
+    par.alpha = xhat.alpha ;
 else 
-    par.alpha = 9.33e-08 ;
+    par.alpha = 9.33e-08   ;
 end 
 if exist('xhat') & isfield(xhat,'beta')
-    par.beta = xhat.beta;
+    par.beta = xhat.beta ;
 else
-    par.beta = 1.16e-01 ;
+    par.beta = 1.16e-01  ;
 end 
 
 % C model parameters                                      
@@ -264,6 +265,16 @@ else
 end 
 %
 % O model parameters
+if exist('xhat') & isfield(xhat,'O2C_T')
+    par.O2C_T = xhat.O2C_T ;
+else 
+    par.O2C_T = 0.0e+00 ;
+end 
+if exist('xhat') & isfield(xhat,'rO2C')
+    par.rO2C = xhat.rO2C ;
+else 
+    par.rO2C = 170/117 ;
+end 
 if exist('xhat') & isfield(xhat,'slopeo')
     par.slopeo = xhat.slopeo ;
 else 
@@ -277,59 +288,61 @@ end
 %
 % Si model parameters
 if exist('xhat') & isfield(xhat,'dsi')
-    par.dsi = xhat.dsi;
+    par.dsi = xhat.dsi ;
 else
-    par.dsi = 3300;
+    par.dsi = 3300     ;
 end 
 if exist('xhat') & isfield(xhat,'at')
-    par.at = xhat.at;
+    par.at = xhat.at   ;
 else
     par.at = 1.32e16/spd;
 end 
 if exist('xhat') & isfield(xhat,'bt')
-    par.bt = xhat.bt ;
+    par.bt = xhat.bt   ;
 else 
-    par.bt = 11481;
+    par.bt = 11481     ;
 end 
 if exist('xhat') & isfield(xhat,'aa')
-    par.aa = xhat.aa ;
+    par.aa = xhat.aa   ;
 else
-    par.aa = 1;
+    par.aa = 1         ;
 end 
 if exist('xhat') & isfield(xhat,'bb')
-    par.bb = xhat.bb;
+    par.bb = xhat.bb   ;
 else 
-    par.bb = 0.968;
+    par.bb = 0.968     ;
 end 
 
 %% -------------------------------------------------------------
 %
 % P model parameters
-par.opt_beta  = on;
-par.opt_alpha = on;
-par.opt_sigma = on; 
-par.opt_bP_T  = on; 
-par.opt_bP    = on;
-par.opt_kP_T  = on;
-par.opt_kdP   = on;
+par.opt_beta  = on ;
+par.opt_alpha = on ;
+par.opt_sigma = on ; 
+par.opt_bP_T  = on ; 
+par.opt_bP    = on ;
+par.opt_kP_T  = on ;
+par.opt_kdP   = on ;
 % C model parameters
-par.opt_d  = on; % 
-par.opt_RR = on; % 
-par.opt_cc = on;
-par.opt_dd = on;
-par.opt_bC_T = on;
-par.opt_bC   = on; %
-par.opt_kC_T = on;
-par.opt_kdC  = on; %
+par.opt_d     = on ; 
+par.opt_RR    = on ; 
+par.opt_cc    = on ;
+par.opt_dd    = on ;
+par.opt_bC_T  = on ;
+par.opt_bC    = on ; 
+par.opt_kC_T  = on ;
+par.opt_kdC   = on ; 
 % O model parameters
-par.opt_slopeo  = on; 
-par.opt_interpo = on; 
+par.opt_O2C_T   = on ;
+par.opt_rO2C    = on ;
+par.opt_slopeo  = on ; 
+par.opt_interpo = on ; 
 % Si model parameters
-par.opt_dsi = on;
-par.opt_at  = off;
-par.opt_bt  = on;
-par.opt_aa  = on;
-par.opt_bb  = on;
+par.opt_dsi = on  ;
+par.opt_at  = off ;
+par.opt_bt  = on  ;
+par.opt_aa  = on  ;
+par.opt_bb  = on  ;
 %% -------------------------------------------------------------
 npx = 0; ncx = 0;
 nox = 0; nsx = 0;
@@ -337,201 +350,218 @@ p0 = [];
 % sigma
 if (par.opt_sigma == on)
     npx    = npx + 1;
-    sigma  = par.sigma;
-    lsigma = log(sigma);
-    strt   = length(p0) + 1;
-    p0     = [p0; lsigma];
+    sigma  = par.sigma      ;
+    lsigma = log(sigma)     ;
+    strt   = length(p0) + 1 ;
+    p0     = [p0; lsigma]   ;
     par.pindx.lsigma = strt : length(p0);
 end 
 % kP_T
 if (par.opt_kP_T == on)
-    npx  = npx + 1;
-    kP_T = par.kP_T; 
-    strt = length(p0) + 1;
-    p0   = [p0; kP_T];
+    npx  = npx + 1        ;
+    kP_T = par.kP_T       ; 
+    strt = length(p0) + 1 ;
+    p0   = [p0; kP_T]     ;
     par.pindx.kP_T = strt : length(p0);
 end
 % kdP 
 if (par.opt_kdP == on)
-    npx  = npx + 1;
-    kdP  = par.kdP;
-    lkdP = log(kdP);
-    strt = length(p0) + 1;
-    p0   = [p0; lkdP];
+    npx  = npx + 1        ;
+    kdP  = par.kdP        ;
+    lkdP = log(kdP)       ;
+    strt = length(p0) + 1 ;
+    p0   = [p0; lkdP]     ;
     par.pindx.lkdP = strt : length(p0);
 end
 % bP_T
 if (par.opt_bP_T == on)
-    npx  = npx + 1;
-    bP_T = par.bP_T;
-    strt = length(p0) + 1;
-    p0   = [p0; bP_T];
+    npx  = npx + 1        ;
+    bP_T = par.bP_T       ;
+    strt = length(p0) + 1 ;
+    p0   = [p0; bP_T]     ;
     par.pindx.bP_T = strt : length(p0);
 end 
 % bP
 if (par.opt_bP == on)
-    npx  = npx + 1;
-    bP   = par.bP;
-    lbP  = log(bP);
-    strt = length(p0) + 1;
-    p0   = [p0; lbP];
-    par.pindx.lbP = strt : length(p0);
+    npx  = npx + 1        ;
+    bP   = par.bP         ;
+    lbP  = log(bP)        ;
+    strt = length(p0) + 1 ;
+    p0   = [p0; lbP]      ;
+    par.pindx.lbP = strt  : length(p0);
 end 
 % alpha 
 if (par.opt_alpha == on)
-    npx    = npx + 1;
-    alpha  = par.alpha;
-    lalpha = log(alpha);
-    strt   = length(p0) + 1;
-    p0     = [p0; lalpha];
+    npx    = npx + 1        ;
+    alpha  = par.alpha      ;
+    lalpha = log(alpha)     ;
+    strt   = length(p0) + 1 ;
+    p0     = [p0; lalpha]   ;
     par.pindx.lalpha = strt : length(p0);
 end 
 % beta
 if (par.opt_beta == on)
-    npx   = npx + 1;
-    beta  = par.beta;
-    lbeta = log(beta);
-    strt  = length(p0) + 1;
-    p0    = [p0; lbeta];
+    npx   = npx + 1        ;
+    beta  = par.beta       ;
+    lbeta = log(beta)      ;
+    strt  = length(p0) + 1 ;
+    p0    = [p0; lbeta]    ;
     par.pindx.lbeta = strt : length(p0);
 end
 %
 if (par.Cmodel == on)
     % bC_T
     if (par.opt_bC_T == on)
-        ncx  = ncx + 1;
-        bC_T = par.bC_T;
-        strt = length(p0) + 1;
-        p0   = [p0; bC_T];
+        ncx  = ncx + 1        ;
+        bC_T = par.bC_T       ;
+        strt = length(p0) + 1 ;
+        p0   = [p0; bC_T]     ;
         par.pindx.bC_T = strt : length(p0);
     end 
     % bC
     if (par.opt_bC == on)
-        ncx  = ncx + 1;
-        bC   = par.bC;
-        lbC  = log(bC);
-        strt = length(p0) + 1;
-        p0   = [p0; lbC];
-        par.pindx.lbC = strt : length(p0);
+        ncx  = ncx + 1        ;
+        bC   = par.bC         ;
+        lbC  = log(bC)        ;
+        strt = length(p0) + 1 ;
+        p0   = [p0; lbC]      ;
+        par.pindx.lbC = strt  : length(p0);
     end 
     % d
     if (par.opt_d == on)
-        ncx  = ncx + 1;
-        d    = par.d;
-        ld   = log(d);
-        strt = length(p0) + 1;
-        p0   = [p0; ld];
-        par.pindx.ld = strt : length(p0);
+        ncx  = ncx + 1        ;
+        d    = par.d          ;
+        ld   = log(d)         ;
+        strt = length(p0) + 1 ;
+        p0   = [p0; ld]       ;
+        par.pindx.ld = strt   : length(p0);
     end 
     % kC_T
     if (par.opt_kC_T == on)
-        ncx  = ncx + 1;
-        kC_T = par.kC_T; 
-        strt = length(p0) + 1;
-        p0   = [p0; kC_T];
+        ncx  = ncx + 1        ;
+        kC_T = par.kC_T       ;  
+        strt = length(p0) + 1 ;
+        p0   = [p0; kC_T]     ;
         par.pindx.kC_T = strt : length(p0);
     end
     % kdC
     if (par.opt_kdC == on)
-        ncx  = ncx + 1;
-        kdC  = par.kdC;
-        lkdC = log(kdC);
-        strt = length(p0) + 1;
-        p0   = [p0; lkdC];
+        ncx  = ncx + 1        ;
+        kdC  = par.kdC        ;
+        lkdC = log(kdC)       ;
+        strt = length(p0) + 1 ;
+        p0   = [p0; lkdC]     ;
         par.pindx.lkdC = strt : length(p0);
     end 
     % RR
     if (par.opt_RR == on)
-        ncx  = ncx + 1;
-        RR   = par.RR;
-        lRR  = log(RR);
-        strt = length(p0) + 1;
-        p0   = [p0; lRR];
-        par.pindx.lRR = strt : length(p0);
+        ncx  = ncx + 1        ;
+        RR   = par.RR         ;
+        lRR  = log(RR)        ;
+        strt = length(p0) + 1 ;
+        p0   = [p0; lRR]      ;
+        par.pindx.lRR = strt  : length(p0);
     end
     % cc
     if (par.opt_cc == on)
-        ncx  = ncx + 1;
-        cc   = par.cc;
-        lcc  = log(cc);
-        strt = length(p0) + 1;
-        p0   = [p0; lcc];
-        par.pindx.lcc = strt : length(p0);
+        ncx  = ncx + 1        ;
+        cc   = par.cc         ;
+        lcc  = log(cc)        ;
+        strt = length(p0) + 1 ;
+        p0   = [p0; lcc]      ;
+        par.pindx.lcc = strt  : length(p0);
     end
     % dd
     if (par.opt_dd == on)
-        ncx  = ncx + 1;
-        dd   = par.dd;
-        ldd  = log(dd);
-        strt = length(p0) + 1;
-        p0   = [p0; ldd];
-        par.pindx.ldd = strt : length(p0);
+        ncx  = ncx + 1        ;
+        dd   = par.dd         ;
+        ldd  = log(dd)        ;
+        strt = length(p0) + 1 ;
+        p0   = [p0; ldd]      ;
+        par.pindx.ldd = strt  : length(p0);
     end
     par.ncx = ncx;
 end
 %
 if par.Omodel == on
+    % O2C_T
+    if (par.opt_O2C_T == on)
+        nox   = nox + 1        ;
+        O2C_T = par.O2C_T      ; 
+        strt  = length(p0)+1   ;
+        p0    = [p0; O2C_T]    ;
+        par.pindx.O2C_T = strt : length(p0);
+    end 
+    % rO2C
+    if (par.opt_rO2C == on)
+        nox   = nox + 1        ;
+        rO2C  = par.rO2C       ;
+        lrO2C = log(rO2C)      ;
+        strt  = length(p0) + 1 ;
+        p0    = [p0; lrO2C]    ;
+        par.pindx.lrO2C = strt : length(p0);
+    end 
     % slopeo
     if (par.opt_slopeo == on)
-        nox    = nox + 1;
-        slopeo = par.slopeo; 
-        strt   = length(p0) + 1;
-        p0     = [p0; slopeo];
+        nox    = nox + 1        ;
+        slopeo = par.slopeo     ; 
+        strt   = length(p0) + 1 ;
+        p0     = [p0; slopeo]   ;
         par.pindx.slopeo = strt : length(p0);
     end 
     % interpo
     if (par.opt_interpo == on)
-        nox      = nox + 1;
-        interpo  = par.interpo;
-        linterpo = log(interpo);
-        strt     = length(p0) + 1;
-        p0       = [p0; linterpo];
+        nox      = nox + 1        ;
+        interpo  = par.interpo    ;
+        linterpo = log(interpo)   ;
+        strt     = length(p0) + 1 ;
+        p0       = [p0; linterpo] ;
         par.pindx.linterpo = strt : length(p0);
     end
 end 
 if par.Simodel == on
     % dsi
     if (par.opt_dsi == on)
-        nsx  = nsx + 1;
-        dsi  = par.dsi;
-        ldsi = log(dsi);
-        strt = length(p0) + 1;
-        p0   = [p0; ldsi];
+        nsx  = nsx + 1        ;
+        dsi  = par.dsi        ;
+        ldsi = log(dsi)       ;
+        strt = length(p0) + 1 ;
+        p0   = [p0; ldsi]     ;
         par.pindx.ldsi = strt : length(p0);
     end
     % at 
     if (par.opt_at == on)
-        nsx  = nsx + 1;
-        at   = par.at;
-        lat  = log(at);
+        nsx  = nsx + 1       ;
+        at   = par.at        ;
+        lat  = log(at)       ;
         strt = length(p0) + 1;
-        p0   = [p0; lat];
+        p0   = [p0; lat]     ;
         par.pindx.lat = strt : length(p0);
     end
     % bt
     if (par.opt_bt == on)
-        nsx  = nsx + 1;
-        bt   = par.bt;
-        lbt  = log(bt);
+        nsx  = nsx + 1       ;
+        bt   = par.bt        ;
+        lbt  = log(bt)       ;
         strt = length(p0) + 1;
-        p0   = [p0; lbt];
+        p0   = [p0; lbt]     ;
         par.pindx.lbt = strt : length(p0);
     end
     % aa
     if (par.opt_aa == on)
-        nsx  = nsx + 1;
-        aa   = par.aa;
+        nsx  = nsx + 1       ;
+        aa   = par.aa        ;
         strt = length(p0) + 1;
-        p0   = [p0; aa];
-        par.pindx.aa = strt : length(p0);
+        p0   = [p0; aa]      ;
+        par.pindx.aa = strt  : length(p0);
     end
     % bb
     if (par.opt_bb == on)
-        nsx  = nsx + 1;
-        bb   = par.bb;
-        lbb  = log(bb);
+        nsx  = nsx + 1       ;
+        bb   = par.bb        ;
+        lbb  = log(bb)       ;
         strt = length(p0) + 1;
-        p0   = [p0; lbb];
+        p0   = [p0; lbb]     ;
         par.pindx.lbb = strt : length(p0);
     end
 end
@@ -540,11 +570,11 @@ par.nox = nox; par.nsx = nsx;
 %
 %% -------------------------------------------------------------
 %
-par.p2c = 0.006+0.0069*po4obs;
-par.nzo = 2;
+par.p2c = 0.006+0.0069*po4obs ;
+par.nzo = 2 ;
 %%%%%%% prepare NPP for the model %%%%%%%%
-inan = find(isnan(npp(:)) | npp(:) < 0);
-npp(inan) = 0;
+inan = find(isnan(npp(:)) | npp(:) < 0) ;
+npp(inan) = 0 ;
 
 % tmp = squeeze(M3d(:,:,1)) ;
 % tmp(1:15,:) = nan         ; % SO
@@ -553,15 +583,14 @@ npp(inan) = 0;
 % itarg = find(isnan(tmp(:)))  ;
 % npp(itarg) = npp(itarg)*0.5  ;
 %
-par.npp    = npp/(12*spd);
+par.npp    = npp/(12*spd) ;
 par.npp1   = (0.5*par.npp./grd.dzt(1)).*par.p2c(:,:,1) ; 
 par.npp2   = (0.5*par.npp./grd.dzt(2)).*par.p2c(:,:,2) ; 
-par.Lambda = M3d*0;
-par.Lambda(:,:,1) = 1./(1e-6+po4obs(:,:,1));
-par.Lambda(:,:,2) = 1./(1e-6+po4obs(:,:,2));
-% par.Lambda(:,:,1) = 0.5*(1/grd.dzt(1))*par.p2c(:,:,1)./(0.1+po4obs(:,:,1));
-% par.Lambda(:,:,2) = 0.5*(1/grd.dzt(2))*par.p2c(:,:,2)./(0.1+po4obs(:,:,2));
-par.Lambda(:,:,3:end) = 0;
+par.Lambda = M3d*0 ;
+par.Lambda(:,:,1) = 1./(1e-6+po4obs(:,:,1)) ;
+par.Lambda(:,:,2) = 1./(1e-6+po4obs(:,:,2)) ;
+
+par.Lambda(:,:,3:end) = 0 ;
 %%%%%%%%%%%%%%%%%%%% end %%%%%%%%%%%%%%%%%
 par.p0 = p0;
 x0 = p0;
@@ -584,7 +613,7 @@ options = optimoptions(@fminunc                  , ...
 nip = length(x0);
 if(Gtest);
     dx = sqrt(-1)*eps.^3*eye(nip);
-    for ii = 1 : nip
+    for ii = 11 : nip
         x  = real(x0)+dx(:,ii);
         if Htest == on
             [f,fx,fxx] = neglogpost(x, par) ;
@@ -603,7 +632,7 @@ if(Gtest);
         end 
         fprintf('\n');
     end
-    exit 
+    keyboard 
 else
     [xhat,fval,exitflag] = fminunc(myfun,x0,options);
     [f,fx,fxx] = neglogpost(xhat,par);

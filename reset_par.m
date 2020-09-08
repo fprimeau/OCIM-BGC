@@ -121,15 +121,15 @@ function  x = reset_par(x, par);
         end
 
         if (par.opt_kC_T == on & par.opt_kdC == on)
-            ikC_T    = par.pindx.kC_T;
-            kC_T_new = x(ikC_T);
-            kC_T_old = x0(ikC_T);
+            ikC_T = par.pindx.kC_T;
+            kC_T1 = x(ikC_T);
+            kC_T0 = x0(ikC_T);
             %
-            ikdC     = par.pindx.lkdC;
-            kdC_new  = exp(x(ikdC));
-            kdC_old  = exp(x0(ikdC));
+            ikdC  = par.pindx.lkdC;
+            kdC1  = exp(x(ikdC));
+            kdC0  = exp(x0(ikdC));
             %
-            kC = kC_T_new*par.Tz + kdC_new ;
+            kC = kC_T1*par.Tz + kdC1 ;
             if any(kC < 0)
                 x(ikC_T) = x0(ikC_T);
             end
@@ -173,6 +173,30 @@ function  x = reset_par(x, par);
     end 
     % ------------------------------------------------------------
     if (par.Omodel == on)
+        if (par.opt_O2C_T == on & par.opt_rO2C == on)
+            iO2C_T = par.pindx.O2C_T;
+            O2C_T1 = x(iO2C_T);
+            O2C_T0 = x0(iO2C_T);
+            %
+            irO2C = par.pindx.lrO2C;
+            rO2C1 = exp(x(irO2C));
+            rO2C0 = exp(x0(irO2C));
+            %
+            O2C = O2C_T1*par.Tz + rO2C1 ;
+            if (any(O2C) < 0) ;
+                x(iO2C_T) = x0(iO2C_T);
+            end
+        end
+        
+        if (par.opt_O2C_T == off & par.opt_rO2C == on)
+            irO2C = par.pindx.lrO2C;
+            xnew  = exp(x(irO2C));
+            xold  = exp(x0(irO2C));
+            if (xnew > fb*xold | xnew < fs*xold);
+                x(irO2C) = x0(irO2C);
+            end
+        end
+
         if (par.opt_slopeo == on)
             islopeo = par.pindx.slopeo;
             xnew    = abs(x(islopeo));

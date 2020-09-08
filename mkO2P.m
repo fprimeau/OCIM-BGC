@@ -10,7 +10,7 @@ modT = par.modT;
 smsk = par.M3d;
 smsk(:,:,2:end) = 0;
 isrf = find(smsk(iwet));
-dVs = par.dVt(iwet(isrf));
+dVs  = par.dVt(iwet(isrf));
 surface_mean = @(x) sum(x(isrf).*dVs)/sum(dVs);
 
 % compute the mean of the regressor variable
