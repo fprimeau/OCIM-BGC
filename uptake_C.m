@@ -26,13 +26,14 @@ elseif (par.optim & nargout > 1)
     npx  = par.npx;
     Gpx  = zeros(nwet,npx);
     DIPx = par.Px(1:nwet,:);
-    dLdbeta = par.dLdbeta;    
+    
     if (par.opt_alpha)
         ialpha = pindx.lalpha;
         Gpx(:,ialpha) = diag(alpha*L); % dGdlog_alpha
     end
 
     if (par.opt_beta)
+        dLdbeta = par.dLdbeta;    
         ibeta = pindx.lbeta;
         Gpx(:,ibeta) = diag(beta*alpha*dLdbeta); % dGdlog_beta
     end
@@ -46,7 +47,7 @@ if par.optim == off
 elseif (par.optim & nargout > 2)
     kk = 0;
     DIPxx = par.Pxx(1:nwet,:);
-    d2Ldbetadbeta = par.d2Ldbetadbeta;
+    
     % sigma sigma
     if (par.opt_sigma)
         kk = kk + 1;
@@ -228,6 +229,7 @@ elseif (par.optim & nargout > 2)
     % beta beta
     if (par.opt_beta)
         kk = kk + 1;
+        d2Ldbetadbeta = par.d2Ldbetadbeta;
         d2Gpdlogbeta2 = beta*alpha*dLdbeta + ...
             beta^2*alpha*d2Ldbetadbeta;
         Gxx(:,kk) = Gp*DIPxx(:,kk) + d2Gpdlogbeta2*DIP + ...
