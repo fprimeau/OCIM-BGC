@@ -1,6 +1,45 @@
 function PrintPara(x, par);
+    global iter
     on = true; off = false;
+    %++++++++++ print out all parameters to the log file
+    if iter == 0
+        fprintf('All parameters \n')
+        fprintf('-----------------------------------------------\n')
+        fprintf('current sigma   is  % 3.2e \n', par.sigma) ;
+        fprintf('current kP_T    is  % 3.2e \n', par.kP_T)  ;
+        fprintf('current kdP     is  % 3.2e \n', par.kdP)   ;
+        fprintf('current bP_T    is  % 3.2e \n', par.bP_T)  ;
+        fprintf('current bP      is  % 3.2e \n', par.bP)    ;
+        fprintf('current alpha   is  % 3.2e \n', par.alpha) ;
+        fprintf('current beta    is  % 3.2e \n', par.beta)  ;
+        if (par.Cmodel == on)
+            fprintf('current bC_T    is  % 3.2e \n', par.bC_T) ;
+            fprintf('current bC      is  % 3.2e \n', par.bC)   ;
+            fprintf('current d       is  % 3.2e \n', par.d)    ;
+            fprintf('current kC_T    is  % 3.2e \n', par.kC_T) ;
+            fprintf('current kdC     is  % 3.2e \n', par.kdC)  ;
+            fprintf('current RR      is  % 3.2e \n', par.RR)   ;
+            fprintf('current cc      is  % 3.2e \n', par.cc)   ;
+            fprintf('current dd      is  % 3.2e \n', par.dd)   ;
+        end 
+        if (par.Omodel == on)
+            fprintf('current O2C_T   is  % 3.2e \n', par.O2C_T) ;
+            fprintf('current rO2C    is  % 3.2e \n', par.rO2C)  ;
+            fprintf('current O2P_T   is  % 3.2e \n', par.O2P_T) ;
+            fprintf('current rO2P    is  % 3.2e \n', par.rO2P)  ;
+        end
+        if (par.Simodel==on)
+            fprintf('current dsi     is  % 3.2e \n', par.dsi)  ;
+            fprintf('current at      is  % 3.2e \n', par.at)   ;
+            fprintf('current bt      is  % 3.2e \n', par.bt)   ;
+            fprintf('current aa      is  % 3.2e \n', par.iaa)  ;
+            fprintf('current bb      is  % 3.2e \n\n', par.bb) ;
+        end
+        fprintf('-----------------------------------------------\n\n')
+    end 
     %++++++++++ print out parameters to the log file
+    fprintf('Tunable parameters \n')
+    fprintf('-----------------------------------------------\n')
     if (par.opt_sigma == on)
         isigma = par.pindx.lsigma;
         fprintf('current sigma   is  % 3.2e \n', exp(x(isigma)));
@@ -106,16 +145,16 @@ function PrintPara(x, par);
             xhat.rO2C = exp(x(irO2C));
         end
 
-        if (par.opt_slopeo == on)
-            islopeo = par.pindx.slopeo;
-            fprintf('current slopeo  is  % 3.2e \n', x(islopeo));
-            xhat.slopeo = x(islopeo);
+        if (par.opt_O2P_T == on)
+            iO2P_T = par.pindx.O2P_T;
+            fprintf('current O2P_T   is  % 3.2e \n', x(iO2P_T));
+            xhat.O2P_T = x(iO2P_T);
         end
         
-        if (par.opt_interpo == on)
-            iinterpo = par.pindx.linterpo;
-            fprintf('current interpo is  % 3.2e \n', exp(x(iinterpo)));
-            xhat.interpo = exp(x(iinterpo));
+        if (par.opt_rO2P == on)
+            irO2P = par.pindx.lrO2P;
+            fprintf('current rO2P    is  % 3.2e \n', exp(x(irO2P)));
+            xhat.rO2P = exp(x(irO2P));
         end
     end
     % ------------------------------------------------------------
@@ -144,7 +183,7 @@ function PrintPara(x, par);
         % aa
         if (par.opt_aa == on)
             iaa = par.pindx.aa;
-            fprintf('current aa      is   % 3.2e \n', x(iaa));
+            fprintf('current aa      is  % 3.2e \n', x(iaa));
             xhat.aa = x(iaa);
         end
         
@@ -160,4 +199,3 @@ function PrintPara(x, par);
         save(par.fxhat, 'x0','xhat')
     end 
 end
-

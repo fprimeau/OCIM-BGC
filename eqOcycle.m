@@ -3,31 +3,31 @@ function [par, O2, Ox, Oxx] = eqOcycle(x, par)
     global GO
     pindx = par.pindx ;
     % unpack the parameters to be optimized
-    % slopeo
+    % O2C_T
     if (par.opt_O2C_T == on)
         par.O2C_T = x(pindx.O2C_T) ;
     end
     
-    % interpo
+    % rO2C
     if (par.opt_rO2C == on)
         lrO2C    = x(pindx.lrO2C) ;
         par.rO2C = exp(lrO2C)     ;
     end
-    % slopeo
-    if (par.opt_slopeo == on)
-        par.slopeo = x(pindx.slopeo) ;
+    % O2P_T
+    if (par.opt_O2P_T == on)
+        par.O2P_T = x(pindx.O2P_T) ;
     end
     
-    % interpo
-    if (par.opt_interpo == on)
-        linterpo    = x(pindx.linterpo) ;
-        par.interpo = exp(linterpo)     ;
+    % rO2P
+    if (par.opt_rO2P == on)
+        lrO2P    = x(pindx.lrO2P) ;
+        par.rO2P = exp(lrO2P)     ;
     end
     %
     X0  = GO;
     options.iprint = 1 ;
-    options.atol   = 1e-10 ;
-    options.rtol   = 1e-10 ;
+    options.atol   = 1e-12 ;
+    options.rtol   = 1e-12 ;
     [O2,ierr] = nsnew(X0,@(X) O_eqn(X, x, par),options) ;
 
     if (ierr ~= 0)
@@ -50,28 +50,28 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, x, par)
     pindx = par.pindx ;
     %
     % fixed parameters
-    iwet = par.iwet   ;
-    nwet = par.nwet   ;
+    iwet  = par.iwet   ;
+    nwet  = par.nwet   ;
     TRdiv = par.TRdiv ;
-    I = speye(nwet)   ;
-    PO4 = par.po4obs(iwet) ;
+    I     = speye(nwet)   ;
+    PO4   = par.po4obs(iwet) ;
     % variables from C model
     DOC  = par.DOC    ;
     Tz   = par.Tz     ;
     %
     % tunable parameters;
-    O2C_T   = par.O2C_T   ; 
-    rO2C    = par.rO2C    ;
-    kC_T    = par.kC_T    ;
-    kdC     = par.kdC     ;
-    slopeo  = par.slopeo  ;
-    interpo = par.interpo ;
-    kC      = d0(kC_T * Tz + kdC) ; 
+    O2C_T = par.O2C_T   ; 
+    rO2C  = par.rO2C    ;
+    kC_T  = par.kC_T    ;
+    kdC   = par.kdC     ;
+    O2P_T = par.O2P_T  ;
+    rO2P  = par.rO2P ;
+    kC    = d0(kC_T * Tz + kdC) ; 
     %
     vout = mkO2P(par) ;
     O2P  = vout.O2P   ;
-    dO2Pdslopeo  = vout.dO2Pdslopeo  ;
-    dO2Pdinterpo = vout.dO2Pdinterpo ;
+    dO2PdO2P_T = vout.dO2PdO2P_T ;
+    dO2PdrO2P  = vout.dO2PdrO2P  ;
     %
     % O2 saturation concentration
     vout  = Fsea2air(par,'O2') ;
@@ -149,14 +149,14 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, x, par)
             Ox(:,pindx.lrO2C) = mfactor(FD, -tmp) ;
         end 
         
-        if (par.opt_slopeo == on) 
-            tmp = -G*dO2Pdslopeo ;  
-            Ox(:,pindx.slopeo) = mfactor(FD, -tmp) ;
+        if (par.opt_O2P_T == on) 
+            tmp = -G*dO2PdO2P_T ;  
+            Ox(:,pindx.O2P_T) = mfactor(FD, -tmp) ;
         end
 
-        if (par.opt_interpo == on) 
-            tmp = -interpo*diag(G) ; 
-            Ox(:,pindx.linterpo) = mfactor(FD, -tmp) ;
+        if (par.opt_rO2P == on) 
+            tmp = -rO2P*diag(G) ; 
+            Ox(:,pindx.lrO2P) = mfactor(FD, -tmp) ;
         end
     end
 
@@ -300,8 +300,8 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, x, par)
         end 
         
         % P and O model only parameters
-        dO2Pdp{1} = dO2Pdslopeo ;
-        dO2Pdp{2} = interpo*dO2Pdinterpo ;
+        dO2Pdp{1} = dO2PdO2P_T ;
+        dO2Pdp{2} = rO2P*dO2PdrO2P ;
         for ju = 1 : npx
             for jo = (npx+ncx+1) : (npx+ncx+nox)
                 kk = kk + 1 ;
@@ -317,12 +317,12 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, x, par)
                           kC*DOCx(:,ju).*dRdO.*Ox(:,jo).*O2C + ...
                           Ox(:,ju).*d2LdO2.*Ox(:,jo) ;
 
-                elseif (par.opt_slopeo == on & jo == pindx.slopeo)
+                elseif (par.opt_O2P_T == on & jo == pindx.O2P_T)
                     tmp = -d0(Gx(:,ju))*dO2Pdp{1} + ...
                           kC*DOCx(:,ju).*dRdO.*Ox(:,jo).*O2C + ...
                           Ox(:,ju).*d2LdO2.*Ox(:,jo) ;
 
-                elseif (par.opt_interpo == on & jo == pindx.linterpo)
+                elseif (par.opt_rO2P == on & jo == pindx.lrO2P)
                     tmp = -d0(Gx(:,ju))*dO2Pdp{2} + ...
                           kC*DOCx(:,ju).*dRdO.*Ox(:,jo).*O2C + ...
                           Ox(:,ju).*d2LdO2.*Ox(:,jo) ;
@@ -401,7 +401,7 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, x, par)
                         
                     end 
                 end
-                Oxx(:,kk) = mfactor(FD, -tmp)      ;
+                Oxx(:,kk) = mfactor(FD, -tmp) ;
             end 
         end 
         
@@ -423,19 +423,19 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, x, par)
 
             Oxx(:,kk) = mfactor(FD, -tmp) ;
         end             
-        % O2C_T slopeo
-        if (par.opt_O2C_T == on & par.opt_slopeo == on)
+        % O2C_T O2P_T
+        if (par.opt_O2C_T == on & par.opt_O2P_T == on)
             kk = kk + 1 ;
-            tmp = kC*DOC.*(O2C_O2C_T*dRdO.*Ox(:,pindx.slopeo)) + ...
-                  Ox(:,pindx.O2C_T).*d2LdO2.*Ox(:,pindx.slopeo) ;
+            tmp = kC*DOC.*(O2C_O2C_T*dRdO.*Ox(:,pindx.O2P_T)) + ...
+                  Ox(:,pindx.O2C_T).*d2LdO2.*Ox(:,pindx.O2P_T) ;
 
             Oxx(:,kk) = mfactor(FD, -tmp) ;
         end             
-        % O2C_T interpo
-        if (par.opt_O2C_T == on & par.opt_interpo == on)
+        % O2C_T rO2P
+        if (par.opt_O2C_T == on & par.opt_rO2P == on)
             kk = kk + 1 ;
-            tmp = kC*DOC.*(O2C_O2C_T*dRdO.*Ox(:,pindx.linterpo)) + ...
-                  Ox(:,pindx.O2C_T).*d2LdO2.*Ox(:,pindx.linterpo) ;
+            tmp = kC*DOC.*(O2C_O2C_T*dRdO.*Ox(:,pindx.lrO2P)) + ...
+                  Ox(:,pindx.O2C_T).*d2LdO2.*Ox(:,pindx.lrO2P) ;
 
             Oxx(:,kk) = mfactor(FD, -tmp) ;
         end             
@@ -448,41 +448,41 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, x, par)
 
             Oxx(:,kk) = mfactor(FD, -tmp) ;
         end 
-        %rO2C slopeo
-        if (par.opt_rO2C == on & par.opt_slopeo == on)
+        %rO2C O2P_T
+        if (par.opt_rO2C == on & par.opt_O2P_T == on)
             kk = kk + 1 ;
-            tmp = kC*DOC.*(O2C_rO2C*dRdO.*Ox(:,pindx.slopeo)) + ...
-                  Ox(:,pindx.lrO2C).*d2LdO2.*Ox(:,pindx.slopeo) ;
+            tmp = kC*DOC.*(O2C_rO2C*dRdO.*Ox(:,pindx.O2P_T)) + ...
+                  Ox(:,pindx.lrO2C).*d2LdO2.*Ox(:,pindx.O2P_T) ;
 
             Oxx(:,kk) = mfactor(FD, -tmp) ;
         end 
-        % rO2C interpo
-        if (par.opt_rO2C == on & par.opt_interpo == on)
+        % rO2C rO2P
+        if (par.opt_rO2C == on & par.opt_rO2P == on)
             kk = kk + 1 ;
-            tmp = kC*DOC.*(O2C_rO2C*dRdO.*Ox(:,pindx.linterpo)) + ...
-                  Ox(:,pindx.lrO2C).*d2LdO2.*Ox(:,pindx.linterpo) ;
+            tmp = kC*DOC.*(O2C_rO2C*dRdO.*Ox(:,pindx.lrO2P)) + ...
+                  Ox(:,pindx.lrO2C).*d2LdO2.*Ox(:,pindx.lrO2P) ;
 
             Oxx(:,kk) = mfactor(FD, -tmp) ;
         end
-        % slopeo slopeo
-        if (par.opt_slopeo == on)
+        % O2P_T O2P_T
+        if (par.opt_O2P_T == on)
             kk = kk + 1 ;
-            tmp = Ox(:,pindx.slopeo).*d2LdO2.*Ox(:,pindx.slopeo) ;
+            tmp = Ox(:,pindx.O2P_T).*d2LdO2.*Ox(:,pindx.O2P_T) ;
 
             Oxx(:,kk) = mfactor(FD, -tmp) ;
         end
-        % slopeo interpo
-        if (par.opt_slopeo & par.opt_interpo)
+        % O2P_T rO2P
+        if (par.opt_O2P_T & par.opt_rO2P)
             kk = kk + 1 ;
-            tmp = Ox(:,pindx.slopeo).*d2LdO2.*Ox(:,pindx.linterpo) ;
+            tmp = Ox(:,pindx.O2P_T).*d2LdO2.*Ox(:,pindx.lrO2P) ;
 
             Oxx(:,kk) = mfactor(FD, -tmp) ;
         end
-        % interpo interpo
-        if (par.opt_interpo == on) 
+        % rO2P rO2P
+        if (par.opt_rO2P == on) 
             kk = kk + 1 ;
-            tmp = -interpo*diag(G) + ...
-                  Ox(:,pindx.linterpo).*d2LdO2.*Ox(:,pindx.linterpo) ;
+            tmp = -rO2P*diag(G) + ...
+                  Ox(:,pindx.lrO2P).*d2LdO2.*Ox(:,pindx.lrO2P) ;
             
             Oxx(:,kk) = mfactor(FD, -tmp) ;
         end

@@ -38,7 +38,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
     aa  = par.aa;
     bb  = par.bb;
     dsi = par.dsi;
-    kappa_gs = par.kappa_gs;
+    kappa_g = par.kappa_g;
     T   = par.modT(iwet) + 273.15;
     kappa_si = at * exp(-bt./T);
     par.kappa_si = kappa_si;
@@ -75,13 +75,13 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
     par.PFDs = PFdiv;
     % build Jacobian matrix
     % +++++++++++++++++++++++++++++++++++++++++
-    % F = ([TRdiv*SIL + G*Si2C*SIL - kappa_si*DSI + kappa_gs*(SIL-SILbar);...
+    % F = ([TRdiv*SIL + G*Si2C*SIL - kappa_si*DSI + kappa_g*(SIL-SILbar);...
     % PFdiv*DSI - G*Si2C*SIL + kappa_si*DSI]);
     tic 
-    Jac = [[TRdiv+kappa_gs*I+d0(G*Si2C), -d0(kappa_si)];...
+    Jac = [[TRdiv+kappa_g*I+d0(G*Si2C), -d0(kappa_si)];...
            [                -d0(G*Si2C),  PFdiv+d0(kappa_si)]];
     
-    RHS = [[SILbar*kappa_gs]; ...
+    RHS = [[SILbar*kappa_g]; ...
            [sparse(nwet,1)]];
     
     FD = mfactor(Jac);

@@ -227,7 +227,7 @@ function [G,Gx,Gxx,Gp,par] = uptake_Si(par)
             aa  = par.aa;
             bb  = par.bb;
             dsi = par.dsi;
-            kappa_gs  = par.kappa_gs;
+            kappa_g  = par.kappa_g;
             % number of parameter combinations;
             if (nsx >=2)
                 ncs = nchoosek(nsx,2)+nsx + npx*nsx;
