@@ -33,7 +33,7 @@ function [par, O2, Ox, Oxx] = eqOcycle(x, par)
     fprintf('Solving O model ...\n') ;
     [O2,ierr] = nsnew(X0,@(X) O_eqn(X, x, par),options) ;
     if (ierr ~= 0)
-        fprintf('o2model did not converge.\n') ;
+        fprintf('O2model did not converge.\n') ;
         exit 
     else
         % reset the global variable for the next call eqOcycle
