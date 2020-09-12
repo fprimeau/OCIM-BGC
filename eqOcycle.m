@@ -24,20 +24,21 @@ function [par, O2, Ox, Oxx] = eqOcycle(x, par)
     %
     X0  = GO;
     options.iprint = 1;
-    options.atol = 1e-10; options.rtol = 1e-10 ;
+    options.atol = 1e-14;
+    options.rtol = 1e-14 ;
     [O2,ierr] = nsnew(X0,@(X) O_eqn(X, x, par),options) ;
 
     if (ierr ~=0)
         fprintf('o2model did not converge.\n') ;
-        keyboard
+        exit 
     else
-        % reset the global variable for the next call eqOcycle
+        reset the global variable for the next call eqOcycle
         GO = real(O2) + 1e-5*randn(par.nwet,1);
         X0 = GO;
-        F = O_eqn(O2, x, par);
-        if norm(F) > 1e-12
-            [O2,ierr] = nsnew(X0,@(X) O_eqn(X, x, par),options);
-        end
+        % F = O_eqn(O2, x, par);
+        % if norm(F) > 1e-12
+            % [O2,ierr] = nsnew(X0,@(X) O_eqn(X, x, par),options);
+        % end
         % Compute the gradient of the solution wrt the parameters
         [F, FD, Ox, Oxx] = O_eqn(O2, x, par);
     end

@@ -66,8 +66,8 @@ else
 end
 %
 options.iprint = 1;
-options.atol = 5e-9 ;
-options.rtol = 5e-9 ;
+options.atol = 1e-10 ;
+options.rtol = 1e-10 ;
 
 X0  = GC;
 [C,ierr] = nsnew(X0,@(X) C_eqn(X,x,par),options) ;

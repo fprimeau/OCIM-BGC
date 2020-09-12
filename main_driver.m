@@ -25,7 +25,7 @@ mod_ver = 'varP2O';
 par.optim   = on;
 par.Cmodel  = on;
 par.Omodel  = on;
-par.Simodel = on;
+par.Simodel = off;
 % save results 
 % ATTENTION: please change this directory to where you wanna
 % save your output files
