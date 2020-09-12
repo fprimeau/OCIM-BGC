@@ -7,7 +7,7 @@ function  x = ResetPara(x, par);
     % gradually decrease the constrains    
     fb = fb * 1.5^iter ;
     fs = 1./fb         ;
-    fprintf('current fb is %3.3e', fb)
+    fprintf('current fb is %3.3e \n', fb)
     % parameter values
     pindx = par.pindx  ;
     

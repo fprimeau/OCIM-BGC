@@ -19,7 +19,7 @@ Gtest = off ;
 Htest = off ;
 par.optim   = on ; 
 par.Cmodel  = on ; 
-par.Omodel  = off ; 
+par.Omodel  = on ; 
 par.Simodel = off ;
 %
 GridVer   = 91 ;
