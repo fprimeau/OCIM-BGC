@@ -7,7 +7,7 @@ function  x = ResetPara(x, par);
     % gradually decrease the constrains    
     fb = fb * 1.5^iter ;
     fs = 1./fb         ;
-    fprintf('current fb is %3.3e', fb)
+    fprintf('current fb is %3.3e \n', fb)
     % parameter values
     pindx = par.pindx  ;
     
@@ -69,8 +69,7 @@ function  x = ResetPara(x, par);
         %
         bb1   = par.bP     ; 
         bP    = bm1*par.aveT + bb1 ;
-        mbP   = nanmean(bP(:))     ;
-        if  mbP < 0.3 | mbP > 4
+        if min(bP(:)) < 0.3 | max(bP(:)) > 4
             x(ibP_T) = x0(ibP_T)   ;
         end
     end
@@ -85,8 +84,7 @@ function  x = ResetPara(x, par);
         bb0  = exp(x0(ibP)) ;
         %
         bP   = bm1*par.aveT + bb1 ;
-        mbP  = nanmean(bP(:))     ;
-        if  mbP < 0.3 | mbP > 4
+        if min(bP(:)) < 0.3 | max(bP(:)) > 4
             x(ibP_T) = x0(ibP_T) ;
             x(ibP)   = x0(ibP);
         end
@@ -126,8 +124,7 @@ function  x = ResetPara(x, par);
             bm0   = x0(ibC_T)   ;
             %
             bC   = bm1*par.aveT + par.bC ;
-            mbC  = nanmean(bC(:))        ;
-            if mbC < 0.3 | mbC > 4
+            if min(bC(:)) < 0.3 | max(bC(:)) > 4
                 x(ibC_T) = x0(ibC_T) ;
             end
         end
@@ -142,8 +139,7 @@ function  x = ResetPara(x, par);
             bb0  = exp(x0(ibC)) ;
             %
             bC   = bm1*par.aveT + bb1 ;
-            mbC  = nanmean(bC(:))        ;
-            if mbC < 0.3 | mbC > 4
+            if min(bC(:)) < 0.3 | max(bC(:)) > 4
                 x(ibC_T) = x0(ibC_T) ;
                 x(ibC)   = x0(ibC) ;
             end
