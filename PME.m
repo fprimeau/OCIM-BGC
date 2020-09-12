@@ -32,6 +32,7 @@ Tsurf = par.Temp(iwet);
 fprintf('Factoring the big matrix for surface temperature 1...'); tic
 modT(iwet) = mfactor(FB,Isrf*Tsurf*par.tau_TA);
 toc
+fprintf('\n')
 clear memory
 clear B 
 %

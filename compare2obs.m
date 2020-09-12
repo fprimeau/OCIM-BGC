@@ -3,27 +3,85 @@ addpath('/DFS-L/DATA/primeau/weilewang/DATA/');
 addpath('/DFS-L/DATA/primeau/weilewang/my_func');
 addpath('/DFS-L/DATA/primeau/weilewang/DATA/OCIM2')
 on = true; off = false;
-version = 91;
-Pmodel = on;
-Cmodel = on;
-Omodel = off; 
-Simodel = off;
-if version == 90
+TR_ver = 91 ;
+%
+Pmodel  = on ;
+Cmodel  = on ;
+Omodel  = off ;
+Simodel = off ;
+%
+GridVer   = 91 ;
+operator = 'A' ;
+if GridVer == 90
+    TRdivVer = 'Tv4' ;
+elseif GridVer == 91 
+    switch(operator)
+      case 'A'
+        TRdivVer = 'CTL_He'   ;
+      case 'B'
+        TRdivVer = 'CTL_noHe' ;
+      case 'C'
+        TRdivVer = 'KiHIGH_He'   ;
+      case 'D'
+        TRdivVer = 'KiHIGH_noHe' ;
+      case 'E'
+        TRdivVer = 'KvHIGH_KiLOW_He'  ;
+      case 'F'
+        TRdivVer = 'KvHIGH_KiLOW_noHe';
+      case 'G'
+        TRdivVer = 'KiLOW_He'   ;
+      case 'H'
+        TRdivVer = 'KiLOW_noHe' ;
+      case 'I'
+        TRdivVer = 'KvHIGH_He'  ;
+      case 'J'
+        TRdivVer = 'KvHIGH_noHe';
+      case 'K'
+        TRdivVer = 'KvHIGH_KiHIGH_noHe';
+    end 
+end 
+
+if ismac
+    input_dir = sprintf('~/Documents/CP-model/MSK%2d/',GridVer); 
+elseif isunix
+    input_dir = sprintf('/DFS-L/DATA/primeau/weilewang/COP4WWF/MSK%2d/',GridVer);
+end
+VER = strcat(input_dir,TRdivVer);
+% Creat output file names based on which model(s) is(are) optimized
+if (Cmodel == off & Omodel == off & Simodel == off)
+    fname = strcat(VER,'_P');
+elseif (Cmodel == on & Omodel == off & Simodel == off)
+    fname = strcat(VER,'_PC');
+elseif (Cmodel == on & Omodel == on & Simodel == off)
+    fname = strcat(VER,'_PCO');
+elseif (Cmodel == on & par.Omodel == off & Simodel == on)
+    fname = strcat(VER,'_PCSi');
+elseif (Cmodel == on & Omodel == on & Simodel == on)
+    fname = strcat(VER,'_PCOSi');
+end
+
+if GridVer == 90
     load transport_v4.mat
+    load M3d90x180x24v2.mat MSKS 
     load GLODAPv2_90x180x24raw.mat
     load DICant_90x180x24.mat DICant
-    load OutputData90/PC_var_b_P.mat
-    load OutputData90/PC_var_b_C.mat
     grd  = grid;
-elseif version == 91
-    load OCIM2_CTL_He.mat output
+elseif GridVer == 91
+    OperName = sprintf('OCIM2_%s',TRdivVer);
+    load(OperName,'output') ;
+    load M3d91x180x24.mat MSKS 
     load GLODAPv2_91x180x24raw.mat
     load DICant_91x180x24.mat DICant
-    load OutputData91/CTL_He_C.mat
-    load OutputData91/CTL_He_P.mat
     grd = output.grid;
     M3d = output.M3d;
 end
+ARC  = MSKS.ARC;
+iarc = find(ARC(:));
+o2raw(iarc)   = nan;
+dicraw(iarc)  = nan ;
+po4raw(iarc)  = nan ;
+sio4raw(iarc) = nan ; 
+load(fname)
 %
 iwet = find(M3d(:));
 nwet = length(iwet);
@@ -31,6 +89,10 @@ dVt  = grd.DXT3d.*grd.DYT3d.*grd.DZT3d;
 nfig = 0;
 %%%%%%%%%%%%%%%%% compare DIP  %%%%%%%%%%%%%%w
 if (Pmodel == on)
+    if ~exist('DIP')
+        DIP = data.DIP ;
+    end 
+    
     nfig = nfig+1;
     figure(nfig)
     DIPobs = po4raw; 
@@ -38,9 +100,9 @@ if (Pmodel == on)
     O = DIPobs(iwet(ipo4));
     M = DIP(iwet(ipo4));
     rsquare(O,M)
-    data = [O,M];
+    OvsM = [O,M];
     W = (dVt(iwet(ipo4))./sum(dVt(iwet(ipo4))));
-    [bandwidth,density,X,Y] = mykde2d(data,200,[0 0],[4 4],W);
+    [bandwidth,density,X,Y] = mykde2d(OvsM,200,[0 0],[4 4],W);
     cr = 5:5:95;
     dx = X(3,5)-X(3,4); 
     dy = Y(4,2)-Y(3,2);
@@ -74,27 +136,30 @@ end
 
 %% ---------------------------------------------------
 if (Omodel == on)
+    if ~exist('O2')
+        O2 = data.O2 ;
+    end 
     nfig = nfig + 1;
     figure(nfig)
     o2obs = o2raw;
     % convert unit form [ml/l] to [umol/l].
-    o2obs = o2obs.*44.661;  
+    % o2obs = o2obs.*44.661;  
     % o2 correction based on Bianchi et al.(2012) [umol/l] .
-    o2obs = o2obs.*1.009-2.523;
+    % o2obs = o2obs.*1.009-2.523;
     io2 = find(O2(iwet)>0 & o2obs(iwet)>0);
     %
     M = O2(iwet(io2));
     O = o2obs(iwet(io2));
     rsquare(O,M)
-    data = [O, M];
+    OvsM = [O, M];
     %
     W = (dVt(iwet(io2))./sum(dVt(iwet(io2))));
-    [bandwidth,density,X,Y] = mykde2d(data,200,[0 0],[300 300],W);
+    [bandwidth,density,X,Y] = mykde2d(OvsM,200,[0 0],[300 300],W);
     cr = 5:5:95;
     dx = X(3,5)-X(3,4); 
     dy = Y(4,2)-Y(3,2);
     [q,ii] = sort(density(:)*dx*dy,'descend');
-    D = density;
+    D  = density;
     D(ii) = cumsum(q);
     subplot('position',[0.2 0.2 0.6 0.6])
     contourf(X,Y,100*(1-D),cr); hold on
@@ -123,26 +188,28 @@ end
 
 %% -----------------------------------------------------
 if (Cmodel == on)
+    if ~exist('DIC')
+        DIC = data.DIC ;
+    end 
     nfig = nfig + 1;
     figure(nfig)
     rho = 1024.5     ; % seawater density;
     permil = rho*1e-3; % from umol/kg to mmol/m3;
     DICobs = dicraw*permil; % GLODAP dic obs [mmol/m3];
-    human_co2 = DICant*permil;
     iDIC = find(DICobs(iwet)>0);
     %
     O = DICobs(iwet(iDIC));
-    M = DIC(iwet(iDIC)) + DICant(iwet(iDIC));
+    M = DIC(iwet(iDIC)); % already including anthropogenic CO2 
     rsquare(O,M)
     %
-    data = [O, M];
+    OvsM = [O, M];
     W = (dVt(iwet(iDIC))./sum(dVt(iwet(iDIC))));
-    [bandwidth,density,X,Y] = mykde2d(data,200,[2000 2000],[2500 2500],W);
+    [bandwidth,density,X,Y] = mykde2d(OvsM,200,[2000 2000],[2500 2500],W);
     cr = 5:5:95;
     dx = X(3,5)-X(3,4); 
     dy = Y(4,2)-Y(3,2);
     [q,ii] = sort(density(:)*dx*dy,'descend');
-    D = density;
+    D  = density;
     D(ii) = cumsum(q);
     subplot('position',[0.2 0.2 0.6 0.6])
     contourf(X,Y,100*(1-D),cr); hold on
@@ -171,6 +238,10 @@ end
 
 %% -----------------------------------------------------
 if (Simodel == on)
+    if ~exist(SIL)
+        SIL = data.SIL ;
+    end 
+    
     nfig = nfig + 1;
     figure(nfig)
     iSIL = find(SIL(iwet)>0 & sio4raw(iwet)>0);
@@ -178,10 +249,10 @@ if (Simodel == on)
     cr = 5:5:95;
     M = SIL(iwet(iSIL));
     O = sio4raw(iwet(iSIL));
-    data = [O, M];
+    OvsM = [O, M];
     rsquare(O,M)
     W = (dVt(iwet(iSIL))./sum(dVt(iwet(iSIL))));
-    [bandwidth,density,X,Y] = mykde2d(data,500,[0 0],[200 200],W);
+    [bandwidth,density,X,Y] = mykde2d(OvsM,500,[0 0],[200 200],W);
     
     dx = X(3,5)-X(3,4); 
     dy = Y(4,2)-Y(3,2);
