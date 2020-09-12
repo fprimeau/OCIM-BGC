@@ -20,17 +20,17 @@ function par = SetPara(par)
     if exist('xhat') & isfield(xhat,'kP_T')
         par.kP_T = xhat.kP_T ;
     else 
-        par.kP_T = 6.05e-01 ;
+        par.kP_T = 1.35 ;
     end 
     if exist('xhat') & isfield(xhat,'kdP')
         par.kdP = xhat.kdP ;
     else 
-        par.kdP = 9.11e-08 ; 
+        par.kdP = 1.01e-07 ; 
     end 
     if exist('xhat') & isfield(xhat,'bP_T')
         par.bP_T = xhat.bP_T ;
     else 
-        par.bP_T = 7.08e-02 ;
+        par.bP_T = 6.36e-02 ;
     end 
     if exist('xhat') & isfield(xhat,'bP')
         par.bP  = xhat.bP ;
@@ -40,54 +40,54 @@ function par = SetPara(par)
     if exist('xhat') & isfield(xhat,'alpha')
         par.alpha = xhat.alpha ;
     else 
-        par.alpha = 2.79e-07   ;
+        par.alpha = 1.95e-07   ;
     end 
     if exist('xhat') & isfield(xhat,'beta')
         par.beta = xhat.beta ;
     else
-        par.beta = 3.73e-02  ;
+        par.beta = 3.59e-02  ;
     end 
 
     % C model parameters                                      
     if exist('xhat') & isfield(xhat,'bC_T')
         par.bC_T = xhat.bC_T ;
     else
-        par.bC_T = -1.65e-01 ;
+        par.bC_T =  8.11e-02 ; 
     end 
     if exist('xhat') & isfield(xhat,'bC')
         par.bC = xhat.bC ;
     else
-        par.bC = 1.33    ;
+        par.bC = 1.40    ;
     end 
     if exist('xhat') & isfield(xhat,'d')
         par.d = xhat.d   ;
     else
-        par.d = 2.13e+03 ;
+        par.d = 3.73e+03 ;
     end 
     if exist('xhat') & isfield(xhat,'kC_T')
         par.kC_T = xhat.kC_T;
     else 
-        par.kC_T = 1.41  ; 
+        par.kC_T = 2.27 ;
     end 
     if exist('xhat') & isfield(xhat,'kdC')
         par.kdC = xhat.kdC ;
     else 
-        par.kdC = 3.43e-08 ;
+        par.kdC = 5.05e-08 ;
     end 
     if exist('xhat') & isfield(xhat,'RR')
         par.RR = xhat.RR  ;
     else
-        par.RR = 1.71e-02    ;
+        par.RR = 8.80e-03    ;
     end
     if exist('xhat') & isfield(xhat,'cc')
         par.cc = xhat.cc  ;
     else
-        par.cc = 2.65e-03 ;
+        par.cc = 1.0e-03 ;
     end 
     if exist('xhat') & isfield(xhat,'dd')
         par.dd = xhat.dd  ;
     else 
-        par.dd = 6.76e-03 ;
+        par.dd = 5.35e-03 ;
     end 
     %
     % O model parameters

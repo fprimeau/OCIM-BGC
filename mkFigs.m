@@ -1,10 +1,16 @@
 clc; clear all; close all
 on = true;      off = false;
 spd  = 24*60^2; spa  = 365*spd;
-addpath('/DFS-L/DATA/primeau/weilewang/DATA')
-addpath('/DFS-L/DATA/primeau/weilewang/my_func')
-addpath('/DFS-L/DATA/primeau/weilewang/DATA/OCIM2')
-%
+% addpath according to opterating system
+if ismac 
+    addpath('~/Dropbox/myfunc'     )
+    addpath('~/Documents/DATA/'    )
+    addpath('~/Documents/DATA/OCIM')
+else 
+    addpath('/DFS-L/DATA/primeau/weilewang/DATA')
+    addpath('/DFS-L/DATA/primeau/weilewang/my_func')
+    addpath('/DFS-L/DATA/primeau/weilewang/DATA/OCIM2')
+end 
 format long
 %
 Cmodel  = on ;
@@ -12,7 +18,7 @@ Omodel  = off ;
 Simodel = off ;
 %
 GridVer   = 91 ;
-operator = 'B' ;
+operator = 'A' ;
 if GridVer == 90
     TRdivVer = 'Tv4' ;
 elseif GridVer == 91 

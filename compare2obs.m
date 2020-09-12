@@ -1,7 +1,13 @@
 clc; clear all; close all
-addpath('/DFS-L/DATA/primeau/weilewang/DATA/');
-addpath('/DFS-L/DATA/primeau/weilewang/my_func');
-addpath('/DFS-L/DATA/primeau/weilewang/DATA/OCIM2')
+if ismac 
+    addpath('~/Dropbox/myfunc'     )
+    addpath('~/Documents/DATA/'    )
+    addpath('~/Documents/DATA/OCIM')
+else 
+    addpath('/DFS-L/DATA/primeau/weilewang/DATA/');
+    addpath('/DFS-L/DATA/primeau/weilewang/my_func');
+    addpath('/DFS-L/DATA/primeau/weilewang/DATA/OCIM2')
+end 
 on = true; off = false;
 TR_ver = 91 ;
 %
