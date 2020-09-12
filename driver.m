@@ -18,7 +18,7 @@ format long
 Gtest = on ;
 Htest = on ;
 par.optim   = on ; 
-par.Cmodel  = off ; 
+par.Cmodel  = on ; 
 par.Omodel  = off ; 
 par.Simodel = off ;
 %
@@ -145,7 +145,7 @@ if GridVer == 90
         if isfile(fname)
             load(fname)
         else
-            load initCO_91x180x24.mat
+            load initCO_90x180x24.mat
         end
     end 
     grd = grid ;
@@ -176,6 +176,7 @@ elseif GridVer == 91
     grd = output.grid;
     TR  = output.TR/spa;
 end
+
 % get rid of arctice o2 observations
 ARC  = MSKS.ARC;
 iarc = find(ARC(:));
@@ -283,7 +284,7 @@ options = optimoptions(@fminunc                  , ...
 nip = length(x0);
 if(Gtest);
     dx = sqrt(-1)*eps.^3*eye(nip);
-    for ii = 1 : nip
+    for ii = 6 : nip
         x  = real(x0)+dx(:,ii);
         if Htest == on
             [f,fx,fxx] = neglogpost(x, par) ;

@@ -56,10 +56,10 @@ if (par.opt_dd)
     par.dd = exp(ldd);
 end
 %
-options.iprint = 1 ; 
-options.atol = 1e-12 ;
-options.rtol = 1e-12 ;
-
+options.iprint = 0 ; 
+options.atol = 1e-10 ;
+options.rtol = 1e-10 ;
+fprintf('Solving C model ...\n') ;
 X0  = GC;
 [C,ierr] = nsnew(X0,@(X) C_eqn(X,x,par),options) ;
 if (ierr ~= 0)
@@ -67,13 +67,13 @@ if (ierr ~= 0)
     keyboard
 else
     % reset the global variable for the next call eqCcycle
-    GC = real(C) + 1e-6*randn(4*nwet,1);
-    X0 = GC;
-    F = C_eqn(C,x,par);
+    % GC = real(C) + 1e-6*randn(4*nwet,1);
+    % X0 = GC;
+    % F = C_eqn(C,x,par);
     % test if norm of F small enough, if now rerun nsnew;
-    if norm(F) > 1e-12
-        [C,ierr] = nsnew(X0,@(X) C_eqn(X,x,par),options);
-    end 
+    % if norm(F) > 1e-12
+        % [C,ierr] = nsnew(X0,@(X) C_eqn(X,x,par),options);
+    % end 
     %
     [F,FD,Cx,Cxx,par] = C_eqn(C,x,par);
 end

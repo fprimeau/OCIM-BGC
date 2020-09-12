@@ -114,7 +114,7 @@ Fp{3,3} = TRdiv + d0(kP) ;
 RHS = [kappa_g*DIPbar;...
        sparse(nwet,1);...
        sparse(nwet,1)];
-
+fprintf('Solving P model ...\n') ;
 % dP/dt + Fp*P = RHS
 % factoring Jacobian matrix
 FFp = mfactor(cell2mat(Fp));

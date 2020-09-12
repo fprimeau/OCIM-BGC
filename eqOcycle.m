@@ -25,11 +25,12 @@ function [par, O2, Ox, Oxx] = eqOcycle(x, par)
     end
     %
     X0  = GO;
-    options.iprint = 1 ;
+    options.iprint = 0 ;
     options.atol   = 1e-12 ;
     options.rtol   = 1e-12 ;
-    [O2,ierr] = nsnew(X0,@(X) O_eqn(X, x, par),options) ;
 
+    fprintf('Solving O model ...\n') ;
+    [O2,ierr] = nsnew(X0,@(X) O_eqn(X, x, par),options) ;
     if (ierr ~= 0)
         fprintf('o2model did not converge.\n') ;
         keyboard

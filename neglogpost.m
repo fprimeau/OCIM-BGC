@@ -8,7 +8,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
     end
     % reset parameters if optimization routine
     % suggests strange parameter values ;
-    if iter <= 20
+    if iter <= 10
         x = ResetPara(x, par) ;
     end
     % print current parameters 

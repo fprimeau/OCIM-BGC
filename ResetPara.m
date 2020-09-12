@@ -5,10 +5,10 @@ function  x = ResetPara(x, par);
     %
     fb = 2 ;  fs = 0.5 ;
     % gradually decrease the constrains    
-    fb = fb * 1.1^iter ;
-    fs = fs * 0.9^iter ; 
+    fb = fb * 1.2^iter ;
+    fs = fs * 0.8^iter ; 
     % parameter values
-    pindx = par.pindx ;
+    pindx = par.pindx  ;
     
     if (par.opt_sigma == on)
         isigma = pindx.lsigma      ;
@@ -26,8 +26,8 @@ function  x = ResetPara(x, par);
         %
         kP1  = kP_T1*par.Tz + par.kdP ;
         kP0  = kP_T0*par.Tz + par.kdP ;
-        mkP1 = mean(kP1) ;
-        mkP0 = mean(kP0) ; 
+        mkP1 = mean(kP1)  ;
+        mkP0 = mean(kP0)  ; 
         if any(kP1 < 0) | mkP1 > fb*mkP0 | mkP1 < fs*mkP0
             x(ikP_T) = x0(ikP_T) ;
         end
@@ -48,10 +48,11 @@ function  x = ResetPara(x, par);
         mkP0 = mean(kP0) ; 
         if any(kP1 < 0) | mkP1 > fb*mkP0 | mkP1 < fs*mkP0
             x(ikP_T) = x0(ikP_T) ;
+            x(ikdP)  = x0(ikdP)  ;
         end
     end
     
-    if (par.opt_kdP == on)
+    if (par.opt_kP_T == off & par.opt_kdP == on)
         ikdP = pindx.lkdP     ;
         xnew = exp(x(ikdP))   ;
         xold = exp(x0(ikdP))  ;
@@ -68,30 +69,31 @@ function  x = ResetPara(x, par);
         bb1   = par.bP     ; 
         bP    = bm1*par.aveT + bb1 ;
         if any(bP(:) < 0.3) | max(bP(:)) > 4
-            x(ibP_T) = x0(ibP_T) ;
+            x(ibP_T) = x0(ibP_T)   ;
         end
     end
 
     if (par.opt_bP_T == on & par.opt_bP == on)
-        ibP_T = pindx.bP_T ;
-        bm1   = x(ibP_T)   ;
-        bm0   = x0(ibP_T)  ;
+        ibP_T = pindx.bP_T  ;
+        bm1   = x(ibP_T)    ;
+        bm0   = x0(ibP_T)   ;
         %
-        ibP  = pindx.lbP   ;
-        bb1  = exp(x(ibP)) ;
-        bb0  = exp(x0(ibP));
+        ibP  = pindx.lbP    ;
+        bb1  = exp(x(ibP))  ;
+        bb0  = exp(x0(ibP)) ;
         %
         bP   = bm1*par.aveT + bb1 ;
         if any(bP(:) < 0.3) | max(bP(:)) > 4
             x(ibP_T) = x0(ibP_T) ;
+            x(ibP)   = x0(ibP);
         end
     end
-
-    if (par.opt_bP == on)
+    [
+    if (par.opt_bP_T == off & par.opt_bP == on)
         ibP  = pindx.lbP    ;
         xnew = exp(x(ibP))  ;
         xold = exp(x0(ibP)) ;
-        if (xnew > 0.3 | xnew < 4) ;
+        if (xnew < 0.3 | xnew < 4) ;
             x(ibP) = x0(ibP);
         end
     end
@@ -116,9 +118,9 @@ function  x = ResetPara(x, par);
 
     if (par.Cmodel == on) 
         if (par.opt_bC_T == on & par.opt_bC == off)
-            ibC_T = pindx.bC_T ;
-            bm1   = x(ibC_T)   ;
-            bm0   = x0(ibC_T)  ;
+            ibC_T = pindx.bC_T  ;
+            bm1   = x(ibC_T)    ;
+            bm0   = x0(ibC_T)   ;
             %
             bC   = bm1*par.aveT + par.bC ;
             if any(bC(:) < 0.3) | max(bC(:)) > 4
@@ -126,7 +128,7 @@ function  x = ResetPara(x, par);
             end
         end
 
-        if (par.opt_bC_T == on & par.opt_bC == on)
+        if (par.opt_bC_T == on  & par.opt_bC == on)
             ibC_T = pindx.bC_T  ;
             bm1   = x(ibC_T)    ;
             bm0   = x0(ibC_T)   ;
@@ -138,10 +140,11 @@ function  x = ResetPara(x, par);
             bC   = bm1*par.aveT + bb1 ;
             if any(bC(:) < 0.3) | max(bC(:)) > 4
                 x(ibC_T) = x0(ibC_T) ;
+                x(ibC)   = x0(ibC) ;
             end
         end
         
-        if (par.opt_bC == on)
+        if (par.opt_bC_T == off & par.opt_bC == on)
             ibC  = pindx.lbC    ;
             xnew = exp(x(ibC))  ;
             xold = exp(x0(ibC)) ;
@@ -151,11 +154,11 @@ function  x = ResetPara(x, par);
         end
         
         if (par.opt_d == on)
-            id   = pindx.ld ;
-            xnew = exp(x(id))   ;
-            xold = exp(x0(id))  ;
-            if (xnew > fb*xold  | xnew < fs*xold) ;
-                x(id) = x0(id)  ;
+            id   = pindx.ld    ;
+            xnew = exp(x(id))  ;
+            xold = exp(x0(id)) ;
+            if (xnew > fb*xold | xnew < fs*xold) ;
+                x(id) = x0(id) ;
             end
         end
 
@@ -188,6 +191,7 @@ function  x = ResetPara(x, par);
             mkC0 = mean(kC0) ; 
             if any(kC1 < 0) | mkC1 > fb*mkC0 | mkC1 < fs*mkC0
                 x(ikC_T) = x0(ikC_T) ;
+                x(ikdC)  = x0(ikdC) ;
             end
         end
 
