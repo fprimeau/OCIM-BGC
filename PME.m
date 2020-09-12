@@ -1,4 +1,3 @@
-%%%%%%%%%%%%%%%%%%%%%%%%  PME part  %%%%%%%%%%%%%%%%%%%%%%%%
 function [modT,modS] = PME(par)
     M3d = par.M3d;
     grd = par.grd;
