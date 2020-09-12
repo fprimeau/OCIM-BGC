@@ -15,14 +15,14 @@ elseif isunix
 end
 format long
 %
-Gtest = on ;
-Htest = on ;
+Gtest = off ;
+Htest = off ;
 par.optim   = on ; 
 par.Cmodel  = on ; 
 par.Omodel  = off ; 
 par.Simodel = off ;
 %
-GridVer   = 90 ;
+GridVer   = 91 ;
 operator = 'A' ;
 if GridVer == 90
     TRdivVer = 'Tv4' ;

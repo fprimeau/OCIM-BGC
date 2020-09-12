@@ -47,6 +47,7 @@ function [par, O2, Ox, Oxx] = eqOcycle(x, par)
         % Compute the gradient of the solution wrt the parameters
         [F, FD, Ox, Oxx] = O_eqn(O2, x, par) ;
     end
+end
 
 function [F, FD, Ox, Oxx] = O_eqn(O2, x, par)
     on = true; off = false;
@@ -490,3 +491,6 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, x, par)
             Oxx(:,kk) = mfactor(FD, -tmp) ;
         end
     end
+
+end
+

@@ -41,4 +41,4 @@ function [kw,p] = kw(M3d,grd);
     msk = M3d(:,:,1);
     ilnd = find(msk(:)==0);
     kw(ilnd) = NaN;
-    
+end 

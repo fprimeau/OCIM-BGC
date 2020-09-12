@@ -88,7 +88,7 @@ function  x = ResetPara(x, par);
             x(ibP)   = x0(ibP);
         end
     end
-    [
+
     if (par.opt_bP_T == off & par.opt_bP == on)
         ibP  = pindx.lbP    ;
         xnew = exp(x(ibP))  ;
