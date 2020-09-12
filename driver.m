@@ -121,7 +121,7 @@ elseif Gtest == off
 end
 par.fname = fname ; 
 % load optimal parameters if they exist
-fxhat = strcat(fname,'_xhat.mat');
+fxhat     = strcat(fname,'_xhat.mat');
 par.fxhat = fxhat ; 
 %
 if GridVer == 90
