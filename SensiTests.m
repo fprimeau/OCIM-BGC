@@ -207,11 +207,15 @@ par = SetPara(par) ;
 PrintPara(p0, par) ;
 % PME part;
 [modT,modS] = PME(par)   ;
-modT        = modT + 2   ;
 par.modS    = modS       ;
 par.modT    = modT       ;
-par.aveT    = nanmean(modT(:,:,1:3),3) ;
-par.Tz      = modT(iwet)*1e-9 ;
+Tz0   = (modT(iwet)-mean(modT(iwet)))/std(modT(iwet)) ;
+modT1 = modT + 2  ;
+Tz1   = (modT1(iwet)-mean(modT(iwet)))/std(modT(iwet)) ;
+Tz3d  = M3d + nan ;
+Tz3d(iwet)  = Tz1 ;
+par.aveT    = nanmean(Tz3d(:,:,1:3),3) ;
+par.Tz      = Tz1*1e-8 ;
 
 %%%%%%% prepare NPP for the model %%%%%%%%
 par.nzo = 2 ;
@@ -264,12 +268,46 @@ figure(nfig)
 % make a zonal average of age for the Pacific basin
 PAC = MSKS.PAC;
 PZA = squeeze(nansum(PAC.*dDIP.*dVt,2)./sum(PAC.*dVt,2))';
-
-contourf(grd.yt,-grd.zt,PZA); colorbar
-xlabel('latitutde (deg)');
+subplot(2,1,1) ;
+contourf(grd.yt,-grd.zt(1:9),PZA(1:9,:),[-0.015:0.005:0.025]); 
+caxis([-0.015 0.025])
+colorbar
+% xlabel('latitutde (deg)');
 ylabel('depth (m)');
 t = 'Pacific zonal average DIP anormally';
 title(t)
+
+subplot(2,1,2) ;
+contourf(grd.yt,-grd.zt(10:end),PZA(10:end,:),[-0.015:0.005:0.025]);
+caxis([-0.015 0.025])
+colorbar
+xlabel('latitutde (deg)');
+ylabel('depth (m)');
+% t = 'Pacific zonal average DIP anormally';
+% title(t)
+
+nfig = nfig + 1;
+figure(nfig)
+% make a zonal average of age for the Pacific basin
+ATL = MSKS.ATL;
+PZA = squeeze(nansum(ATL.*dDIP.*dVt,2)./sum(ATL.*dVt,2))';
+subplot(2,1,1) ;
+contourf(grd.yt,-grd.zt(1:9),PZA(1:9,:),[-0.015:0.005:0.025]); 
+caxis([-0.015 0.025])
+colorbar
+% xlabel('latitutde (deg)');
+ylabel('depth (m)');
+t = 'Pacific zonal average DIP anormally';
+title(t)
+
+subplot(2,1,2) ;
+contourf(grd.yt,-grd.zt(10:end),PZA(10:end,:),[-0.015:0.005:0.025]);
+caxis([-0.015 0.025])
+colorbar
+xlabel('latitutde (deg)');
+ylabel('depth (m)');
+% t = 'Pacific zonal average DIP anormally';
+% title(t)
 
 if Cmodel == on 
     DIC = data.DIC ;
@@ -303,11 +341,48 @@ if Cmodel == on
     PAC = MSKS.PAC;
     PZA = squeeze(nansum(PAC.*dDIC.*dVt,2)./sum(PAC.*dVt,2))';
     
-    contourf(grd.yt,-grd.zt,PZA); colorbar
+    subplot(2,1,1) ;
+    contourf(grd.yt,-grd.zt(1:9),PZA(1:9,:),[-80:10:-10]);
+    caxis([-80 -10])
+    colorbar
+    % xlabel('latitutde (deg)');
+    ylabel('depth (m)');
+    t = 'Pacific zonal average DIP anormally';
+    title(t)
+
+    subplot(2,1,2) ;
+    contourf(grd.yt,-grd.zt(10:end),PZA(10:end,:),[-80:10:-10]); 
+    caxis([-80 -10])
+    colorbar
     xlabel('latitutde (deg)');
     ylabel('depth (m)');
-    t = 'Pacific zonal average DIC anormally';
+    % t = 'Pacific zonal average DIP anormally';
+    % title(t)
+
+    nfig = nfig + 1;
+    figure(nfig)
+    % make a zonal average of age for the Pacific basin
+    ATL = MSKS.ATL;
+    PZA = squeeze(nansum(ATL.*dDIC.*dVt,2)./sum(ATL.*dVt,2))';
+    
+    subplot(2,1,1) ;
+    contourf(grd.yt,-grd.zt(1:9),PZA(1:9,:),[-80:10:-10]);
+    caxis([-80 -10])
+    colorbar
+    % xlabel('latitutde (deg)');
+    ylabel('depth (m)');
+    t = 'Pacific zonal average DIP anormally';
     title(t)
+
+    subplot(2,1,2) ;
+    contourf(grd.yt,-grd.zt(10:end),PZA(10:end,:),[-80:10:-10]); 
+    caxis([-80 -10])
+    colorbar
+    xlabel('latitutde (deg)');
+    ylabel('depth (m)');
+    % t = 'Pacific zonal average DIP anormally';
+    % title(t)
+
 end
 
 if Omodel == on 

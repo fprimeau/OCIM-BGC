@@ -38,8 +38,8 @@ function [par, O2, Ox, Oxx] = eqOcycle(x, par)
         ncx  = par.ncx ;
         nox  = par.nox ;
         nx   = npx + ncx + nox  ;
-        Ox   = sparse(nwet, nx) ;
-        Oxx  = sparse(nwet,nchoosek(nx,2)+nx) ;
+        Ox   = sparse(par.nwet, nx) ;
+        Oxx  = sparse(par.nwet, nchoosek(nx,2)+nx) ;
     else
         % reset the global variable for the next call eqOcycle
         GO = real(O2) + 1e-7*randn(par.nwet,1) ;

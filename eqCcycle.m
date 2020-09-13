@@ -65,16 +65,16 @@ function [par, C, Cx, Cxx] = eqCcycle(x, par)
     [C,ierr] = nsnew(X0,@(X) C_eqn(X,x,par),options) ;
     if (ierr ~= 0)
         fprintf('eqCcycle did not converge.\n') ;
-        npx  = par.npx ;
-        ncx  = par.ncx ;
+        npx  = par.npx   ;
+        ncx  = par.ncx   ;
         nx   = npx + ncx ;
-        Cx   = sparse(nwet, nx) ;
-        Cxx  = sparse(nwet,nchoosek(nx,2)+nx) ;
+        Cx   = sparse(par.nwet, nx) ;
+        Cxx  = sparse(par.nwet, nchoosek(nx,2)+nx) ;
     else
         % reset the global variable for the next call eqCcycle
-        GC = real(C) + 1e-6*randn(4*nwet,1);
+        GC = real(C) + 1e-6*randn(4*nwet,1) ;
         X0 = GC;
-        F = C_eqn(C,x,par);
+        F = C_eqn(C,x,par) ;
         % test if norm of F small enough, if now rerun nsnew;
         if norm(F) > 1e-12
             [C,ierr] = nsnew(X0,@(X) C_eqn(X,x,par),options);
