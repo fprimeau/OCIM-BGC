@@ -34,7 +34,12 @@ function [par, O2, Ox, Oxx] = eqOcycle(x, par)
     [O2,ierr] = nsnew(X0,@(X) O_eqn(X, x, par),options) ;
     if (ierr ~= 0)
         fprintf('O2model did not converge.\n') ;
-        exit 
+        npx  = par.npx ;
+        ncx  = par.ncx ;
+        nox  = par.nox ;
+        nx   = npx + ncx + nox  ;
+        Ox   = sparse(nwet, nx) ;
+        Oxx  = sparse(nwet,nchoosek(nx,2)+nx) ;
     else
         % reset the global variable for the next call eqOcycle
         GO = real(O2) + 1e-7*randn(par.nwet,1) ;
