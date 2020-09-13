@@ -454,6 +454,3 @@ upbar  = R.upbar      ;
 lowbar = R.lowbar     ;
 name   = string(name) ;
 T = table(xhat,upbar,lowbar,'RowNames',name)
-
-
-
