@@ -1,13 +1,13 @@
 function [modT,modS] = PME(par)
-    M3d = par.M3d;
-    grd = par.grd;
-    iwet = par.iwet;
-    nwet = par.nwet;
+    M3d   = par.M3d;
+    grd   = par.grd;
+    iwet  = par.iwet;
+    nwet  = par.nwet;
     TRdiv = par.TRdiv;
-    dVt = par.dVt;
-    I    = speye(nwet);   % make an identity matrix;
+    dVt   = par.dVt;
+    I     = speye(nwet);   % make an identity matrix;
 
-    tmp  = M3d;
+    tmp   = M3d;
     tmp(:,:,2:end) = 0;
     isrf = find(tmp(iwet)); 
     Isrf = d0(tmp(iwet));

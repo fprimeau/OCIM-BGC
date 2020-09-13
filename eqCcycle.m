@@ -76,7 +76,9 @@ function [par, C, Cx, Cxx] = eqCcycle(x, par)
             [C,ierr] = nsnew(X0,@(X) C_eqn(X,x,par),options);
         end 
         %
-        [F,FD,Cx,Cxx,par] = C_eqn(C,x,par);
+        if nargout > 2
+            [F,FD,Cx,Cxx,par] = C_eqn(C,x,par);
+        end 
     end
 end
 

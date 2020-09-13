@@ -8,9 +8,9 @@ function par = SetPara(par)
     par.tau_TA   = 1./par.taup  ;
     par.kappa_p  = 1/(720*60^2) ;
     % load optimal parameters if they exist
-    % if isfile(par.fxhat)
-    % load(par.fxhat)
-    % end
+    if isfile(par.fxhat)
+        load(par.fxhat)
+    end
 
     if exist('xhat') & isfield(xhat,'sigma')
         par.sigma = xhat.sigma ;

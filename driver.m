@@ -235,11 +235,8 @@ par = SetPara(par) ;
 [modT,modS] = PME(par)   ;
 par.modS    = modS       ;
 par.modT    = modT       ;
-Tz  = zscore(modT(iwet)) ;
-Tz3d        = M3d + nan  ;
-Tz3d(iwet)  = Tz         ;
-par.aveT    = nanmean(Tz3d(:,:,1:3),3) ;
-par.Tz      = Tz*1e-8    ;
+par.aveT    = nanmean(modT(:,:,1:3),3) ;
+par.Tz      = modT(iwet)*1e-9 ;
 %
 %%%%%%% prepare NPP for the model %%%%%%%%
 par.nzo = 2 ;
