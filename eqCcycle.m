@@ -65,7 +65,11 @@ function [par, C, Cx, Cxx] = eqCcycle(x, par)
     [C,ierr] = nsnew(X0,@(X) C_eqn(X,x,par),options) ;
     if (ierr ~= 0)
         fprintf('eqCcycle did not converge.\n') ;
-        exit
+        npx  = par.npx ;
+        ncx  = par.ncx ;
+        nx   = npx + ncx ;
+        Cx   = sparse(nwet, nx) ;
+        Cxx  = sparse(nwet,nchoosek(nx,2)+nx) ;
     else
         % reset the global variable for the next call eqCcycle
         GC = real(C) + 1e-6*randn(4*nwet,1);
