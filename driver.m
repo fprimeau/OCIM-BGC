@@ -23,7 +23,7 @@ par.Omodel  = on ;
 par.Simodel = off ;
 %
 GridVer   = 91 ;
-operator = 'A' ;
+operator = 'C' ;
 if GridVer == 90
     TRdivVer = 'Tv4' ;
 elseif GridVer == 91 
@@ -235,8 +235,12 @@ par = SetPara(par) ;
 [modT,modS] = PME(par)   ;
 par.modS    = modS       ;
 par.modT    = modT       ;
-par.aveT    = nanmean(modT(:,:,1:3),3) ;
-par.Tz      = modT(iwet)*1e-9 ;
+Tz    = (modT(iwet)-mean(modT(iwet)))/std(modT(iwet)) ;
+Tz3d  = M3d + nan ;
+Tz3d(iwet)  = Tz  ;
+
+par.aveT    = nanmean(Tz3d(:,:,1:3),3) ;
+par.Tz      = Tz3d(iwet)*1e-8 ;
 %
 %%%%%%% prepare NPP for the model %%%%%%%%
 par.nzo = 2 ;
@@ -251,9 +255,9 @@ npp(inan) = 0 ;
 % itarg = find(isnan(tmp(:)))  ;
 % npp(itarg) = npp(itarg)*0.5  ;
 %
-par.npp    = npp/(12*spd) ;
-par.npp1   = (0.5*par.npp./grd.dzt(1)).*par.p2c(:,:,1) ; 
-par.npp2   = (0.5*par.npp./grd.dzt(2)).*par.p2c(:,:,2) ; 
+par.npp   = npp/(12*spd) ;
+par.npp1  = (0.5*par.npp./grd.dzt(1)).*par.p2c(:,:,1) ; 
+par.npp2  = (0.5*par.npp./grd.dzt(2)).*par.p2c(:,:,2) ; 
 par.Lambda = M3d*0 ;
 par.Lambda(:,:,1) = 1./(1e-6+po4obs(:,:,1)) ;
 par.Lambda(:,:,2) = 1./(1e-6+po4obs(:,:,2)) ;
