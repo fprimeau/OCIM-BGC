@@ -108,11 +108,11 @@ if Gtest == on
     fname = strcat(VER,'_GHtest');
 elseif Gtest == off
     if (par.Cmodel == off & par.Omodel == off & par.Simodel == off)
-        fname = strcat(VER,'_P_absT');
+        fname = strcat(VER,'_P');
     elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off)
-        fname = strcat(VER,'_PC_absT');
+        fname = strcat(VER,'_PC');
     elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off)
-        fname = strcat(VER,'_PCO_absT');
+        fname = strcat(VER,'_PCO');
     elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on)
         fname = strcat(VER,'_PCSi');
     elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on)
@@ -238,9 +238,8 @@ par.modT    = modT       ;
 Tz    = (modT(iwet)-mean(modT(iwet)))/std(modT(iwet)) ;
 Tz3d  = M3d + nan ;
 Tz3d(iwet)  = Tz  ;
-
+par.Tz      = Tz*1e-8 ;
 par.aveT    = nanmean(Tz3d(:,:,1:3),3) ;
-par.Tz      = Tz3d(iwet)*1e-8 ;
 %
 %%%%%%% prepare NPP for the model %%%%%%%%
 par.nzo = 2 ;
@@ -264,8 +263,8 @@ par.Lambda(:,:,2) = 1./(1e-6+po4obs(:,:,2)) ;
 
 par.Lambda(:,:,3:end) = 0 ;
 %%%%%%%%%%%%%%%%%%%% end %%%%%%%%%%%%%%%%%
-par.p0 = p0;
-x0 = p0;
+par.p0 = p0 ;
+x0     = p0 ;
 %
 myfun = @(x) neglogpost(x, par);
 %
