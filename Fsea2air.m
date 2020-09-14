@@ -7,8 +7,8 @@ function vout = Fsea2air(par, Gtype)
     tmp(:,:,2:end) = 0;
     isrf = find(tmp(iwet));
 
-    vSST  = par.modT(iwet(isrf));
-    vSSS  = par.modS(iwet(isrf));
+    vSST = par.modT(iwet(isrf));
+    vSSS = par.modS(iwet(isrf));
     
     tmp = M3d*0;
     tmp(:,:,1) = par.kw;
