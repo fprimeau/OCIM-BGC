@@ -13,7 +13,7 @@ TR_ver = 91 ;
 %
 Pmodel  = on ;
 Cmodel  = on ;
-Omodel  = off ;
+Omodel  = on ;
 Simodel = off ;
 %
 GridVer   = 91 ;
@@ -59,7 +59,7 @@ if (Cmodel == off & Omodel == off & Simodel == off)
 elseif (Cmodel == on & Omodel == off & Simodel == off)
     fname = strcat(VER,'_PC');
 elseif (Cmodel == on & Omodel == on & Simodel == off)
-    fname = strcat(VER,'_PCO');
+    fname = strcat(VER,'_PCO_absT');
 elseif (Cmodel == on & par.Omodel == off & Simodel == on)
     fname = strcat(VER,'_PCSi');
 elseif (Cmodel == on & Omodel == on & Simodel == on)
