@@ -141,6 +141,7 @@ if isfield(xhat,'kP_T')
     kP3d = M3d + nan ;
     kP3d(iwet) = (1./(kP_T * Tz * 1e-8 + kdP))/spd ; 
     pcolor(kP3d(:,:,2));colorbar;shading flat
+    caxis([80 140])
     title('ka4P')
     saveas(gcf,'Figs91/kappa4P.png')
 end
@@ -167,6 +168,7 @@ if Cmodel == on
         kC3d = M3d + nan ;
         kC3d(iwet) = (1./(kC_T * Tz * 1e-8 + kdC))/spd; 
         pcolor(kC3d(:,:,2));colorbar;shading flat
+        caxis([100 600])
         title('kd4C')
         saveas(gcf,'Figs91/kappa4C.png')
     end

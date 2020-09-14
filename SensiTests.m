@@ -115,7 +115,7 @@ elseif (Cmodel == on & Omodel == off & Simodel == on)
 elseif (Cmodel == on & Omodel == on & Simodel == on)
     fname = strcat(VER,'_PCOSi');
 end
-
+pfname    = strcat(fname,'_pert.mat');
 par.fname = fname ; 
 % load optimal parameters if they exist
 fxhat     = strcat(fname,'_xhat.mat');
@@ -163,14 +163,15 @@ load(fname)
 load(fxhat) 
 % get rid of arctice o2 observations
 ARC  = MSKS.ARC;
-iarc = find(ARC(:));
+iarc = find(ARC(:)) ;
 o2raw(iarc)   = nan ;
 dicraw(iarc)  = nan ;
 po4raw(iarc)  = nan ;
 sio4raw(iarc) = nan ; 
 iwet = find(M3d(:)) ;
 nwet = length(iwet) ;
-dVt  = grd.DXT3d.*grd.DYT3d.*grd.DZT3d;
+dAt  = grd.DXT3d.*grd.DYT3d ;
+dVt  = dAt.*grd.DZT3d ;
 %
 [par.kw,par.P] = kw(M3d,grd);
 par.Salt  = Sobs    ;
@@ -204,22 +205,22 @@ par = SetPara(par) ;
 % assign them corresponding indices.
 [p0, par] = PackPar(par) ;
 %
-PrintPara(p0, par) ;
+PrintPara(p0, par)     ;
 % PME part;
-[modT,modS] = PME(par)   ;
-par.modS    = modS       ;
-par.modT    = modT       ;
+[modT,modS] = PME(par) ;
+par.modS    = modS     ;
+par.modT    = modT     ;
 Tz0   = (modT(iwet)-mean(modT(iwet)))/std(modT(iwet)) ;
-modT1 = modT + 2  ;
+modT1 = modT + 2       ;
 Tz1   = (modT1(iwet)-mean(modT(iwet)))/std(modT(iwet)) ;
-Tz3d  = M3d + nan ;
-Tz3d(iwet)  = Tz1 ;
+Tz3d  = M3d + nan      ;
+Tz3d(iwet)  = Tz1      ;
 par.aveT    = nanmean(Tz3d(:,:,1:3),3) ;
 par.Tz      = Tz1*1e-8 ;
 
 %%%%%%% prepare NPP for the model %%%%%%%%
-par.nzo = 2 ;
-par.p2c = 0.006+0.0069*po4obs ;
+par.nzo   = 2 ;
+par.p2c   = 0.006+0.0069*po4obs ;
 inan = find(isnan(npp(:)) | npp(:) < 0) ;
 npp(inan) = 0 ;
 
@@ -244,11 +245,19 @@ POP = data.POP ;
 DOP = data.DOP ;
 
 par.DIPbar = nansum(po4obs(iwet).*dVt(iwet))/nansum(dVt(iwet)) ;
-[par, P ] = eqPcycle(p0, par) ;
-%
-pDIP = M3d+nan ;  pDIP(iwet) = P(1+0*nwet:1*nwet) ;
-pPOP = M3d+nan ;  pPOP(iwet) = P(1+1*nwet:2*nwet) ;
-pDOP = M3d+nan ;  pDOP(iwet) = P(1+2*nwet:3*nwet) ;
+
+if isfile(pfname)
+    load(pfname)
+    pDIP = pdata.DIP ;
+    pDOP = pdata.DOP ;
+    pPOP = pdata.POP ;
+else 
+    [par, P ] = eqPcycle(p0, par) ;
+    %
+    pDIP = M3d+nan ;  pDIP(iwet) = P(1+0*nwet:1*nwet) ;
+    pPOP = M3d+nan ;  pPOP(iwet) = P(1+1*nwet:2*nwet) ;
+    pDOP = M3d+nan ;  pDOP(iwet) = P(1+2*nwet:3*nwet) ;
+end 
 par.DIP  = pDIP(iwet) ;
 nfig = 0 ;
 nfig = nfig + 1 ;
@@ -263,7 +272,7 @@ ylabel('depth (m)')
 t = sprintf('DIP anomally x = %4.1f deg', 170);
 title(t);
 
-nfig = nfig + 1;
+nfig = nfig + 1 ;
 figure(nfig)
 % make a zonal average of age for the Pacific basin
 PAC = MSKS.PAC;
@@ -287,7 +296,7 @@ set(gcf, 'InvertHardcopy', 'off')
 exportfig(gcf,'Figs91/pza_dip','fontmode','fixed','fontsize',12, ...
           'color','rgb','renderer','painters')
 %
-nfig = nfig + 1;
+nfig = nfig + 1 ;
 figure(nfig)
 % make a zonal average of age for the Pacific basin
 ATL = MSKS.ATL;
@@ -309,76 +318,132 @@ set(gcf, 'InvertHardcopy', 'off')
 exportfig(gcf,'Figs91/aza_dip','fontmode','fixed','fontsize',12, ...
           'color','rgb','renderer','painters')
 
-if Cmodel == on 
-    DIC = data.DIC ;
-    POC = data.POC ;
-    DOC = data.DOC ; 
-    CaC = data.CaC ;
+nfig = nfig + 1 ;
+figure(nfig)
+pcolor(nanmean(dDIP(:,:,1:3),3));colorbar;shading flat
+set(gca,'color','black')
+colormap(darkb2r(-0.01, 0.05)), colorbar
+set(gcf, 'InvertHardcopy', 'off')
+exportfig(gcf,'Figs91/surface_dip_anomaly','fontmode','fixed','fontsize',12, ...
+          'color','rgb','renderer','painters')
     
-    GC = real([DIC(iwet); POC(iwet); DOC(iwet); CaC(iwet)]);
-    [par, C ] = eqCcycle(p0, par) ;
-    pDIC = M3d+nan ;  pDIC(iwet) = C(0*nwet+1:1*nwet) ;
-    pPOC = M3d+nan ;  pPOC(iwet) = C(1*nwet+1:2*nwet) ;
-    pDOC = M3d+nan ;  pDOC(iwet) = C(2*nwet+1:3*nwet) ;
-    pCaC = M3d+nan ;  pCaC(iwet) = C(3*nwet+1:4*nwet) ;
-    par.DIC  = DIC(iwet) ;
-    par.DOC  = DOC(iwet) ;
-    dDIC = pDIC - data.DIC ;
-    nfig = nfig + 1;
+if Cmodel == on 
+    if isfile(pfname)
+        pDIC = pdata.DIC ;
+        pDOC = pdata.DOC ;
+        pPOC = pdata.POC ;
+        pCaC = pdata.CaC ;
+    else
+        DIC = data.DIC ;
+        POC = data.POC ;
+        DOC = data.DOC ; 
+        CaC = data.CaC ;
+        
+        GC = real([DIC(iwet); POC(iwet); DOC(iwet); CaC(iwet)]);
+        [par, C ] = eqCcycle(p0, par) ;
+        pDIC = M3d+nan ;  pDIC(iwet) = C(0*nwet+1:1*nwet) ;
+        pPOC = M3d+nan ;  pPOC(iwet) = C(1*nwet+1:2*nwet) ;
+        pDOC = M3d+nan ;  pDOC(iwet) = C(2*nwet+1:3*nwet) ;
+        pCaC = M3d+nan ;  pCaC(iwet) = C(3*nwet+1:4*nwet) ;
+        par.DIC  = pDIC(iwet) ;
+        par.DOC  = pDOC(iwet) ;
+    end
+
+    dDIC = pDIC + par.human_co2 - data.DIC ;
+    nfig = nfig + 1 ;
     figure(nfig)
     % make a zonal cross section of the age
     contourf(grd.yt,-grd.zt,squeeze(dDIC(:,170,:))')
     set(gca,'color','black') 
-    colormap(darkb2r(-90, -10)), colorbar
+    colormap(darkb2r(-15, 15)), colorbar
     xlabel('latitude (deg)');
     ylabel('depth (m)')
     t = sprintf('DIC anomaly x = %4.1f deg', 170);
     title(t);
-    
-    nfig = nfig + 1;
+
+    nfig = nfig + 1 ;
     figure(nfig)
     % make a zonal average of age for the Pacific basin
     PAC = MSKS.PAC;
     PZA = squeeze(nansum(PAC.*dDIC.*dVt,2)./sum(PAC.*dVt,2))';
-    
     subplot(2,1,1) ;
-    contourf(grd.yt,-grd.zt(1:9),PZA(1:9,:),[-90:10:-10]);
+    contourf(grd.yt,-grd.zt(1:9),PZA(1:9,:),[-15:2:15]);
     set(gca,'color','black') 
-    colormap(darkb2r(-90, -10)), colorbar
+    colormap(darkb2r(-15, 15)), colorbar
     ylabel('depth (m)');
     title('Pacific zonal average DIP anomaly')
     %
     subplot(2,1,2) ;
-    contourf(grd.yt,-grd.zt(10:end),PZA(10:end,:),[-90:10:-10]); 
+    contourf(grd.yt,-grd.zt(10:end),PZA(10:end,:),[-15:2:15]); 
     set(gca,'color','black') 
-    colormap(darkb2r(-90, -10)), colorbar
+    colormap(darkb2r(-15, 15)), colorbar
     xlabel('latitutde (deg)');
     ylabel('depth (m)');
     set(gcf, 'InvertHardcopy', 'off')
     exportfig(gcf,'Figs91/pza_dic','fontmode','fixed','fontsize',12, ...
               'color','rgb','renderer','painters')
 
-    nfig = nfig + 1;
+    nfig = nfig + 1 ;
     figure(nfig)
     % make a zonal average of age for the Pacific basin
     ATL = MSKS.ATL;
     AZA = squeeze(nansum(ATL.*dDIC.*dVt,2)./sum(ATL.*dVt,2))';
     subplot(2,1,1) ;
-    contourf(grd.yt,-grd.zt(1:9),AZA(1:9,:),[-80:10:-10]);
+    contourf(grd.yt,-grd.zt(1:9),AZA(1:9,:),[-15:2:15]);
     set(gca,'color','black') 
-    colormap(darkb2r(-90, -10)), colorbar
+    colormap(darkb2r(-15, 15)), colorbar
     ylabel('depth (m)');
     title('Atlantic zonal average DIC anomaly')
-
+    %
     subplot(2,1,2) ;
-    contourf(grd.yt,-grd.zt(10:end),AZA(10:end,:),[-80:10:-10]); 
+    contourf(grd.yt,-grd.zt(10:end),AZA(10:end,:),[-15:2:15]); 
     set(gca,'color','black') 
-    colormap(darkb2r(-90, -10)), colorbar
+    colormap(darkb2r(-15, 15)), colorbar
     xlabel('latitutde (deg)');
     ylabel('depth (m)');
     set(gcf, 'InvertHardcopy', 'off')
     exportfig(gcf,'Figs91/aza_dic','fontmode','fixed','fontsize',12, ...
               'color','rgb','renderer','painters')
+
+    nfig = nfig + 1 ;
+    figure(nfig)
+    pcolor(nanmean(dDIC(:,:,1:3),3));colorbar;shading flat
+    set(gca,'color','black')
+    colormap(darkb2r(-5, 20)), colorbar
+    set(gcf, 'InvertHardcopy', 'off')
+    exportfig(gcf,'Figs91/surface_dic_anomaly','fontmode','fixed','fontsize',12, ...
+              'color','rgb','renderer','painters')
+
+    % Out-gasing
+    % control model 
+    par.modT = modT ;
+    par.DIC  = data.DIC(iwet) - par.human_co2(iwet) ;
+    vout  = Fsea2air(par, 'CO2') ;
+    Fs2a0 = M3d + nan;
+    Fs2a0(iwet) = vout.JgDIC*spa ; % mmol/m3/s -> mmol/m3/y
+    flux0 = Fs2a0(:,:,1)*grd.dzt(1)/1000 ; % mmol/m3/s -> mol/m2/y
+    sF0   = flux0.*dAt(:,:,1) ;
+    sF0   = nansum(sF0(:))    ;
+    % perturbation model
+    par.modT = modT + 2 ;
+    par.DIC  = pdata.DIC(iwet) ; 
+    vout = Fsea2air(par, 'CO2') ;
+    Fs2a1 = M3d + nan;
+    Fs2a1(iwet) = vout.JgDIC*spa ; % mmol/m3/s -> mmol/m3/y
+    flux1 = Fs2a1(:,:,1)*grd.dzt(1)/1000; % mmol/m3/s -> mol/m2/y
+    sF1   = flux1.*dAt(:,:,1) ;
+    sF1   = nansum(sF1(:))    ;
+
+    nfig = nfig + 1 ;
+    figure(nfig)
+    pcolor(flux1-flux0);colorbar;shading flat
+    set(gca,'color','black')
+    colormap(darkb2r(-5, 20)), colorbar
+    set(gcf, 'InvertHardcopy', 'off')
+    exportfig(gcf,'Figs91/Cflux_anomaly','fontmode','fixed','fontsize',12, ...
+              'color','rgb','renderer','painters')
+
+    fprintf('Total changes of Sea-to-air flux is %3.3f Pg\n', (sF1-sF0)*12/1e15);
 end
 
 if Omodel == on 
