@@ -20,9 +20,7 @@ function vout = Fsea2air(par, Gtype)
     if strcmp(Gtype,'CO2')
         co2syspar = par.co2syspar;
         
-        tmp = M3d+nan;
-        tmp(iwet) = par.DIC;
-        vDICs = tmp(iwet(isrf));
+        vDICs = par.DIC(isrf) ;
         
         scco2 = 2073.1 - 125.62*vSST + 3.6276*vSST.^2 - 0.043219*vSST.^3;
         kw    = kw.*sqrt(660./scco2);
