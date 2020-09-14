@@ -20,7 +20,7 @@ function par = SetPara(par)
     if exist('xhat') & isfield(xhat,'kP_T')
         par.kP_T = xhat.kP_T ;
     else 
-        par.kP_T = 1.35 ;
+        par.kP_T = 0 ;
     end 
     if exist('xhat') & isfield(xhat,'kdP')
         par.kdP = xhat.kdP ;
@@ -30,7 +30,7 @@ function par = SetPara(par)
     if exist('xhat') & isfield(xhat,'bP_T')
         par.bP_T = xhat.bP_T ;
     else 
-        par.bP_T = 6.36e-02 ;
+        par.bP_T = 0 ;
     end 
     if exist('xhat') & isfield(xhat,'bP')
         par.bP  = xhat.bP ;
@@ -52,7 +52,7 @@ function par = SetPara(par)
     if exist('xhat') & isfield(xhat,'bC_T')
         par.bC_T = xhat.bC_T ;
     else
-        par.bC_T =  8.11e-02 ; 
+        par.bC_T =  0 ;
     end 
     if exist('xhat') & isfield(xhat,'bC')
         par.bC = xhat.bC ;
@@ -67,7 +67,7 @@ function par = SetPara(par)
     if exist('xhat') & isfield(xhat,'kC_T')
         par.kC_T = xhat.kC_T;
     else 
-        par.kC_T = 2.27 ;
+        par.kC_T = 0 ;
     end 
     if exist('xhat') & isfield(xhat,'kdC')
         par.kdC = xhat.kdC ;

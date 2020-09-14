@@ -108,11 +108,11 @@ if Gtest == on
     fname = strcat(VER,'_GHtest');
 elseif Gtest == off
     if (par.Cmodel == off & par.Omodel == off & par.Simodel == off)
-        fname = strcat(VER,'_P');
+        fname = strcat(VER,'_P_absT');
     elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off)
-        fname = strcat(VER,'_PC');
+        fname = strcat(VER,'_PC_absT');
     elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off)
-        fname = strcat(VER,'_PCO');
+        fname = strcat(VER,'_PCO_absT');
     elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on)
         fname = strcat(VER,'_PCSi');
     elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on)
