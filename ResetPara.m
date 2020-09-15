@@ -254,8 +254,9 @@ function  x = ResetPara(x, par);
             rO2C1 = exp(x(irO2C)) ;
             rO2C0 = exp(x0(irO2C));
             %
-            O2C = O2C_T1*par.Tz + rO2C1 ;
+            O2C = O2C_T1*par.Tz*1e8 + rO2C1 ;
             if (any(O2C) < 0) ;
+                x(irO2C)  = x0(irO2C);
                 x(iO2C_T) = x0(iO2C_T) ;
             end
         end
