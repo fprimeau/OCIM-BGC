@@ -116,33 +116,33 @@ Lambda(:,:,2) = 0.5*(1/grd.dzt(2))*p2c(:,:,2)./(1e-9+po4obs(:,:,2));
 Lambda(:,:,3:end) = 0;
 
 % DIP assimilation
-Lambda(:,:,1) = (npp.^beta).*Lambda(:,:,1);
-Lambda(:,:,2) = (npp.^beta).*Lambda(:,:,2);
-L             = d0(Lambda(iwet)); % per second
+Lambda(:,:,1) = (npp.^beta).*Lambda(:,:,1) ;
+Lambda(:,:,2) = (npp.^beta).*Lambda(:,:,2) ;
+L             = d0(Lambda(iwet))           ; % per second
 
 % preparation for adjoint method.
-W = d0(dVt(iwet));
+W = d0(dVt(iwet)) ;
 C2P3D = M3d + nan ;
-C2P3D(iwet) = 1./(cc*PO4 + dd);
-nn = 3;
+C2P3D(iwet) = 1./(cc*PO4 + dd) ;
+nn = 3 ;
 
 %%%%%%%%%----------------%%%%%%%%%%%%%%
 % calculate model primary production.
-G         = M3d*0;
-G(iwet)   = alpha*L*DIP ; % primary production in P unit.
-Int_CNPP  = 0*M3d(:,:,1);
-Int_PNPP  = 0*M3d(:,:,1);
+G        = M3d*0        ;
+G(iwet)  = alpha*L*DIP  ; % primary production in P unit.
+Int_CNPP = 0*M3d(:,:,1) ;
+Int_PNPP = 0*M3d(:,:,1) ;
 
 for ij = 1:nn
     Int_CNPP = Int_CNPP + G(:,:,ij).*grd.dzt(ij).*C2P3D(:,:,ij)*12;
     Int_PNPP = Int_PNPP + G(:,:,ij).*grd.dzt(ij); 
 end
-PNPP = Int_PNPP*spa*1e-3;
-CNPP = Int_CNPP*spa*1e-3; % convert production from mg C/m^3/s to g
-                          % C/m^2/year;
-tem_CNPP = CNPP.*dAt(:,:,1)*1e-15;
-Sum_CNPP = nansum(tem_CNPP(:));
-fprintf('Model NPP is %3.3e \n',Sum_CNPP);
+PNPP = Int_PNPP*spa*1e-3 ;
+CNPP = Int_CNPP*spa*1e-3 ; % convert production from mg C/m^3/s to g
+                           % C/m^2/year;
+tem_CNPP = CNPP.*dAt(:,:,1)*1e-15 ;
+Sum_CNPP = nansum(tem_CNPP(:))    ;
+fprintf('Model NPP is %3.3e \n',Sum_CNPP) ;
 
 %%%%%%%%% -------------- %%%%%%%%%%%%%%%
 PFD = buildPFD(par, 'POC'); 
