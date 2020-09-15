@@ -23,7 +23,7 @@ par.Omodel  = on ;
 par.Simodel = off ;
 %
 GridVer   = 91 ;
-operator = 'B' ;
+operator = 'A' ;
 if GridVer == 90
     TRdivVer = 'Tv4' ;
 elseif GridVer == 91 

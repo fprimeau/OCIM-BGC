@@ -27,8 +27,8 @@ function [par, O2, Ox, Oxx] = eqOcycle(x, par)
     X0  = GO;
 
     options.iprint = 0 ;
-    options.atol   = 1e-12 ;
-    options.rtol   = 1e-12 ;
+    options.atol   = 1e-10 ;
+    options.rtol   = 1e-10 ;
 
     fprintf('Solving O model ...\n') ;
     [O2,ierr] = nsnew(X0,@(X) O_eqn(X, x, par),options) ;
@@ -45,7 +45,7 @@ function [par, O2, Ox, Oxx] = eqOcycle(x, par)
         GO = real(O2) + 1e-7*randn(par.nwet,1) ;
         X0 = GO ;
         F = O_eqn(O2, x, par) ;
-        if (norm(F) > 1e-12)
+        if (norm(F) > 1e-10)
             [O2,ierr] = nsnew(X0,@(X) O_eqn(X, x, par),options) ;
         end
         if nargout > 2
@@ -68,6 +68,7 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, x, par)
     % variables from C model
     DOC  = par.DOC    ;
     Tz   = par.Tz     ;
+    TZ   = par.Tz*1e8 ;
     %
     % tunable parameters;
     O2C_T = par.O2C_T   ; 
@@ -96,7 +97,7 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, x, par)
     dRdO   = 0.5 - 0.5*tanh(O2-10).^2 ;
     d2RdO2 = -2*d0(dRdO)*tanh(O2-10)  ;
      
-    O2C    = O2C_T*Tz + rO2C ; 
+    O2C    = O2C_T*TZ + rO2C ; 
     % rate of o2 utilization
     LO2    = kC*DOC.*O2C.*R  ;
     dLdO   = d0(kC*DOC.*O2C.*dRdO) ;
@@ -148,7 +149,7 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, x, par)
 
         % O model only parameters
         if (par.opt_O2C_T == on)
-            O2C_O2C_T = d0(par.Tz) ; 
+            O2C_O2C_T = d0(TZ) ; 
             tmp = kC*DOC.*(O2C_O2C_T*R) ; 
             Ox(:,pindx.O2C_T) = mfactor(FD, -tmp) ;
         end
