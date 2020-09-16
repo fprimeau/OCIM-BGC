@@ -14,7 +14,7 @@ end
 format long
 %
 Cmodel  = on ;
-Omodel  = off ;
+Omodel  = on ;
 Simodel = off ;
 %
 GridVer   = 91 ;
@@ -129,7 +129,7 @@ if isfield(xhat,'bP_T')
     bP2D = bP_T*aveT + bP   ;
     pcolor(bP2D) ; colorbar ; shading flat 
     title('b4P')
-    saveas(gcf,'Figs91/b4P.png')
+    % saveas(gcf,'Figs91/b4P.png')
 end
     
 if isfield(xhat,'kP_T')
@@ -143,7 +143,7 @@ if isfield(xhat,'kP_T')
     pcolor(kP3d(:,:,2));colorbar;shading flat
     caxis([80 140])
     title('ka4P')
-    saveas(gcf,'Figs91/kappa4P.png')
+    % saveas(gcf,'Figs91/kappa4P.png')
 end
 
 if Cmodel == on
@@ -157,7 +157,7 @@ if Cmodel == on
         bC2D = bC_T*aveT + bC  ; 
         pcolor(bC2D); colorbar ; shading flat
         title('b4C')
-        saveas(gcf,'Figs91/b4C.png')
+        % saveas(gcf,'Figs91/b4C.png')
     end 
 
     if isfield(xhat,'kC_T') 
@@ -170,7 +170,7 @@ if Cmodel == on
         pcolor(kC3d(:,:,2));colorbar;shading flat
         caxis([100 600])
         title('kd4C')
-        saveas(gcf,'Figs91/kappa4C.png')
+        % saveas(gcf,'Figs91/kappa4C.png')
     end
 
     if isfield(xhat,'cc')
@@ -183,7 +183,7 @@ if Cmodel == on
         C2P(iwet)  = 1./(cc*PO4 + dd) ;
         pcolor(C2P(:,:,1)); colorbar;shading flat
         title('C:P uptake ratio')
-        saveas(gcf,'Figs91/CP ratio.png')
+        % saveas(gcf,'Figs91/CP ratio.png')
     end 
 end
 
@@ -194,7 +194,7 @@ if Omodel == on
         O2C_T = xhat.O2C_T ;
         rO2C  = xhat.rO2C  ;
         O2C   = M3d + nan  ;
-        O2C(iwet) = (O2C_T * Tz * 1e-8 + rO2C) ; 
+        O2C(iwet) = (O2C_T * Tz + rO2C) ; 
         pcolor(O2C(:,:,10)); colorbar; shading flat
         title('O2C consumption ratio')
     end 

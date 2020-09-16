@@ -34,24 +34,25 @@ function [par, O2, Ox, Oxx] = eqOcycle(x, par)
     [O2,ierr] = nsnew(X0,@(X) O_eqn(X, x, par),options) ;
     if (ierr ~= 0)
         fprintf('O2model did not converge.\n') ;
-        npx  = par.npx ;
-        ncx  = par.ncx ;
-        nox  = par.nox ;
-        nx   = npx + ncx + nox  ;
-        Ox   = sparse(par.nwet, nx) ;
-        Oxx  = sparse(par.nwet, nchoosek(nx,2)+nx) ;
+
+        F = O_eqn(O2, x, par) ;
+
+        if (norm(F) < 1e-6)  
+            % Compute the gradient of the solution wrt the parameters
+            GO = real(O2) + 1e-7*randn(par.nwet,1) ;
+            [F, FD, Ox, Oxx] = O_eqn(O2, x, par) ;
+        else 
+            npx  = par.npx ;
+            ncx  = par.ncx ;
+            nox  = par.nox ;
+            nx   = npx + ncx + nox  ;
+            Ox   = sparse(par.nwet, nx) ;
+            Oxx  = sparse(par.nwet, nchoosek(nx,2)+nx) ;
+        end 
     else
         % reset the global variable for the next call eqOcycle
         GO = real(O2) + 1e-7*randn(par.nwet,1) ;
-        X0 = GO ;
-        F = O_eqn(O2, x, par) ;
-        if (norm(F) > 1e-10)
-            [O2,ierr] = nsnew(X0,@(X) O_eqn(X, x, par),options) ;
-        end
-        if nargout > 2
-            % Compute the gradient of the solution wrt the parameters
-            [F, FD, Ox, Oxx] = O_eqn(O2, x, par) ;
-        end
+        [F, FD, Ox, Oxx] = O_eqn(O2, x, par) ;
     end
 end
 

@@ -65,7 +65,7 @@ if par.Simodel == on
 end 
 fprintf('\n')
 % P model parameters
-par.opt_sigma = off ; 
+par.opt_sigma = on ; 
 par.opt_kP_T  = on ;
 par.opt_kdP   = on ;
 par.opt_bP_T  = on ; 
@@ -284,7 +284,7 @@ options = optimoptions(@fminunc                  , ...
 nip = length(x0);
 if(Gtest);
     dx = sqrt(-1)*eps.^3*eye(nip);
-    for ii = 6 : nip
+    for ii = nip-4 : nip
         x  = real(x0)+dx(:,ii);
         if Htest == on
             [f,fx,fxx] = neglogpost(x, par) ;
