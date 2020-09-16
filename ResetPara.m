@@ -260,7 +260,7 @@ function  x = ResetPara(x, par);
                 x(iO2C_T) = x0(iO2C_T) ;
             end
         end
-        
+
         if (par.opt_O2C_T == off & par.opt_rO2C == on)
             irO2C = pindx.lrO2C    ;
             xnew  = exp(x(irO2C))  ;

@@ -218,6 +218,7 @@ GO = real(O2(iwet)) + 1e-9*randn(par.nwet,1);
 % transiant CO2 concentraion;
 par.year      = splco2_mod(:,1) ;
 par.pco2_air  = splco2_mod(:,2) ;
+par.pco2atm   = splco2_mod(1,2) ;
 par.co2syspar = co2syspar       ;
 
 par.SILbar = nansum(Siobs(iwet).*dVt(iwet))/nansum(dVt(iwet))  ;
