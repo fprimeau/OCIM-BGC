@@ -1,4 +1,6 @@
 function par = SetPara(par)
+    on   = true   ;
+    off  = false  ;
     spd  = 24*60^2;
     spa  = 365*spd;
 
@@ -8,7 +10,7 @@ function par = SetPara(par)
     par.tau_TA   = 1./par.taup  ;
     par.kappa_p  = 1/(720*60^2) ;
     % load optimal parameters if they exist
-    if isfile(par.fxhat)
+    if isfile(par.fxhat) & par.LoadOpt == on 
         load(par.fxhat)
     end
 
@@ -77,7 +79,7 @@ function par = SetPara(par)
     if exist('xhat') & isfield(xhat,'RR')
         par.RR = xhat.RR  ;
     else
-        par.RR = 8.80e-03    ;
+        par.RR = 9.5e-02    ;
     end
     if exist('xhat') & isfield(xhat,'cc')
         par.cc = xhat.cc  ;

@@ -62,7 +62,7 @@ function [par, C, Cx, Cxx] = eqCcycle(x, par)
     fprintf('Solving C model ...\n') ;
 
     X0  = GC;
-    [C,ierr] = nsnew(X0,@(X) C_eqn(X,x,par),options) ;
+    [C,ierr] = nsnew(X0,@(X) C_eqn(X, par),options) ;
     if (ierr ~= 0)
         fprintf('eqCcycle did not converge.\n') ;
         npx  = par.npx   ;
@@ -70,23 +70,24 @@ function [par, C, Cx, Cxx] = eqCcycle(x, par)
         nx   = npx + ncx ;
         Cx   = sparse(par.nwet, nx) ;
         Cxx  = sparse(par.nwet, nchoosek(nx,2)+nx) ;
+        [par.G,par.Gx,par.Gxx] = uptake_C(par) ;
     else
         % reset the global variable for the next call eqCcycle
         GC = real(C) + 1e-6*randn(4*nwet,1) ;
         X0 = GC;
-        F = C_eqn(C,x,par) ;
+        F = C_eqn(C, par) ;
         % test if norm of F small enough, if now rerun nsnew;
         if norm(F) > 1e-12
-            [C,ierr] = nsnew(X0,@(X) C_eqn(X,x,par),options);
+            [C,ierr] = nsnew(X0,@(X) C_eqn(X, par),options);
         end 
         %
         if nargout > 2
-            [F,FD,Cx,Cxx,par] = C_eqn(C,x,par);
+            [F,FD,Cx,Cxx,par] = C_eqn(C, par);
         end 
     end
 end
 
-function [F,FD,Cx,Cxx,par] = C_eqn(X,x,par)    
+function [F,FD,Cx,Cxx,par] = C_eqn(X, par)    
 % unpack some useful stuff
     on = true; off = false;
     grd   = par.grd   ;
@@ -155,21 +156,21 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X,x,par)
         
         % colum 2 dFdPOC
         Jc{1,2} = 0*I ;
-        Jc{2,2} = PFDc+kappa_p*I ;
+        Jc{2,2} = PFDc + kappa_p*I ;
         Jc{3,2} = -kappa_p*I ;
         Jc{4,2} = 0*I ;
         
         % colum 3 dFdDOC
         Jc{1,3} = -kC ;
         Jc{2,3} = 0*I ;
-        Jc{3,3} = TRdiv+kC ;
+        Jc{3,3} = TRdiv + kC ;
         Jc{4,3} = 0*I ;
         
         % colum 4 dFdPIC
         Jc{1,4} = -kappa_p*I ;
         Jc{2,4} = 0*I ;
         Jc{3,4} = 0*I ;
-        Jc{4,4} = PFDa+kappa_p*I ;
+        Jc{4,4} = PFDa + kappa_p*I ;
         
         % factorize Jacobian matrix
         FD = mfactor(cell2mat(Jc)) ;

@@ -1,6 +1,5 @@
 % indices
 clc; clear all; close all
-global GC GO 
 on   = true    ; off = false    ;
 spd  = 24*60^2 ; spa  = 365*spd ;
 % addpath according to opterating system
@@ -18,6 +17,7 @@ format long
 Cmodel  = on ; 
 Omodel  = off ; 
 Simodel = off ;
+LoadOpt = on  ;
 %
 GridVer   = 91 ;
 operator = 'A' ;
@@ -66,6 +66,8 @@ par.optim     = off    ;
 par.Cmodel    = Cmodel ;
 par.Omodel    = Omodel ;
 par.Simodel   = Simodel;
+par.LoadOpt   = LoadOpt;
+%
 par.opt_sigma = off ; 
 par.opt_kP_T  = on ;
 par.opt_kdP   = on ;
@@ -219,10 +221,6 @@ Tz3d(iwet)  = Tz1      ;
 par.aveT    = nanmean(Tz3d(:,:,1:3),3) ;
 par.Tz      = Tz1*1e-8 ;
 
-% volumes and areas from T99
-Na  = 1.773e20     ; % molar volume of atmosphere
-SA  = dAt          ;
-VT  = dVt          ;
 
 %%%%%%% prepare NPP for the model %%%%%%%%
 par.nzo   = 2 ;
@@ -230,13 +228,6 @@ par.p2c   = 0.006+0.0069*po4obs ;
 inan = find(isnan(npp(:)) | npp(:) < 0) ;
 npp(inan) = 0 ;
 
-% tmp = squeeze(M3d(:,:,1)) ;
-% tmp(1:15,:) = nan         ; % SO
-% tmp(65:78,55:125) = nan   ; % NP
-% tmp(35:55,90:145) = nan   ; % EP
-% itarg = find(isnan(tmp(:)))  ;
-% npp(itarg) = npp(itarg)*0.5  ;
-%
 par.npp    = npp/(12*spd) ;
 par.npp1   = (0.5*par.npp./grd.dzt(1)).*par.p2c(:,:,1) ; 
 par.npp2   = (0.5*par.npp./grd.dzt(2)).*par.p2c(:,:,2) ; 
@@ -275,149 +266,281 @@ end
 par.DIP  = pDIP(iwet) ;
 
 %%% Solve for steady-state carbon distribution
-% step forward in time with step dt (yr)
-dt = 0.1*spa ;
+options.iprint = 1 ; 
+options.atol = 1e-10 ;
+options.rtol = 1e-10 ;
+fprintf('Solving C model ...\n') ;
 
-% total carbon inventory
-CT = 2.87805e18 ;
-
+% initial guess 
 DIC = data.DIC(iwet) ;  POC = data.POC(iwet) ;
 DOC = data.DOC(iwet) ;  PIC = data.CaC(iwet) ;
 pco2atm = par.pco2_air(1) ;  % uatm
-C(:,1)  = [DIC; POC; DOC; PIC; pco2atm] ;
+
+C  = [DIC; POC; DOC; PIC; pco2atm] ;
+% C  = [DIC; POC; DOC; PIC] ;
+
+X0  = C ;
+[C,ierr] = nsnew(X0,@(X) C_eqn(X, par),options) ;
+if (ierr ~= 0)
+    fprintf('eqCcycle did not converge.\n') ;
+end
+
+%%%%
+function [F,FD] = C_eqn(X, par)
+    grd   = par.grd   ;
+    M3d   = par.M3d   ;
+    TRdiv = par.TRdiv ;
+    iwet  = par.iwet  ;
+    nwet  = par.nwet  ;
+    I     = par.I     ;
+    % volumes and areas from T99
+    Na  = 1.773e20/1000 ; % molar volume of atmosphere
+
+    Tz  = par.Tz ;
+    DIC = X(0*nwet+1:1*nwet) ; 
+    POC = X(1*nwet+1:2*nwet) ;
+    DOC = X(2*nwet+1:3*nwet) ;
+    PIC = X(3*nwet+1:4*nwet) ;
+    par.pco2atm = X(end) ;
+    %
+    PO4 = par.po4obs(iwet);
+    %
+    % fixed parameters
+    kappa_p = par.kappa_p ;
+    % parameters need to be optimized
+    sigma = par.sigma ;
+    d     = par.d     ;
+    RR    = par.RR    ;
+    bC_T  = par.bC_T  ;
+    bC    = par.bC    ;
+    kC_T  = par.kC_T  ;
+    kdC   = par.kdC   ;
+    alpha = par.alpha ;
+    beta  = par.beta  ;
+    cc    = par.cc    ;
+    dd    = par.dd    ;
+    dVt   = par.dVt   ;
+    vw    = dVt(iwet)./Na ;
+    
+    kC    = d0(kC_T * Tz + kdC) ;
+    C2P   = 1./(cc*PO4 + dd) ;
+    par.C2P = C2P ;
+    % particle flux div_rergence [s^-1];
+    PFDa = buildPFD(par,'PIC') ;
+    PFDc = buildPFD(par,'POC') ;
+    par.PFDa = PFDa ;
+    par.PFDc = PFDc ;
+    par.DIC  = DIC  ;
+    % Air-Sea gas exchange
+    vout  = Fsea2air(par, 'CO2');
+    KG    = vout.KG    ; % flux_dic 
+    KA    = vout.KA    ; % flux_co2atm
+    JgDIC = vout.JgDIC ; % flux mmol/m3/s 
+    % biological DIC uptake operator
+    G = uptake_C(par); par.G = G;
+
+    eq1 =     (1+RR)*G*C2P + TRdiv*DIC - kC*DOC - kappa_p*PIC - JgDIC;
+    eq2 = -(1-sigma)*G*C2P + (PFDc+kappa_p*I)*POC;
+    eq3 =     -sigma*G*C2P + (TRdiv+kC)*DOC - kappa_p*POC;
+    eq4 =        -RR*G*C2P + (PFDa+kappa_p*I)*PIC;
+    eqa =         JgDIC'*vw ; % umol/mol/s 
+
+    F   = [eq1; eq2; eq3; eq4; eqa];
+    
+    if nargout > 1
+        % % column 1 dFdDIC
+        Jc{1,1} = TRdiv - KG ; 
+        Jc{2,1} = 0*I ;
+        Jc{3,1} = 0*I ; 
+        Jc{4,1} = 0*I ;
+        
+        % % column 2 dFdPOC
+        Jc{1,2} =  0*I ;
+        Jc{2,2} =  PFDc + kappa_p*I ;
+        Jc{3,2} = -kappa_p*I ;
+        Jc{4,2} =  0*I ;
+        
+        % % column 3 dFdDOC
+        Jc{1,3} = -kC ;
+        Jc{2,3} = 0*I ;
+        Jc{3,3} = TRdiv + kC ;
+        Jc{4,3} = 0*I ;
+        
+        % % column 4 dFdPIC
+        Jc{1,4} = -kappa_p*I ;
+        Jc{2,4} = 0*I ;
+        Jc{3,4} = 0*I ;
+        Jc{4,4} = PFDa + kappa_p*I ;
+
+        % Jacobian without Atmosphere box
+        PIII = cell2mat(Jc) ;
+
+        % % column 1 dFdDIC
+        Jc{5,1} = KG*vw ;
+        % % column 5 dFdatmco2
+        Jc{1,5} = -KA ;
+        Jc{5,5} =  KA'*vw ;
+        
+        AIII = [[PIII, sparse(4*nwet,1)]; sparse(1,4*nwet+1)];
+        AIII(5,1:nwet) = Jc{5,1} ;
+        AIII(1:nwet,5) = Jc{1,5} ;
+        AIII(5,5)      = Jc{5,5} ;
+        
+        FD  = mfactor(AIII) ;
+        
+    end 
+end 
+
+
+
+% step forward in time with step dt (yr)
+% dt = 1*spa ;
+
+% total carbon inventory
+% CT = 2.87805e18 ;
+
+% DIC = data.DIC(iwet) ;  POC = data.POC(iwet) ;
+% DOC = data.DOC(iwet) ;  PIC = data.CaC(iwet) ;
+% pco2atm = par.pco2_air(1) ;  % uatm
+% C(:,1)  = [DIC; POC; DOC; PIC; pco2atm] ;
 
 % biological DIC uptake operator
-G = uptake_C(par); par.G = G;
-kappa_p  = par.kappa_p ;
-sigma    = par.sigma ;
-kC_T     = par.kC_T  ;
-kdC      = par.kdC   ;
-cc       = par.cc    ;
-dd       = par.dd    ;
-RR       = par.RR    ;
-PO4      = po4obs(iwet) ;
-kC    = d0(kC_T * par.Tz + kdC) ;
-C2P   = 1./(cc*PO4 + dd) ;
-par.C2P = C2P ;
+% G = uptake_C(par); par.G = G;
+% kappa_p  = par.kappa_p ;
+% sigma    = par.sigma ;
+% kC_T     = par.kC_T  ;
+% kdC      = par.kdC   ;
+% cc       = par.cc    ;
+% dd       = par.dd    ;
+% RR       = par.RR    ;
+% PO4      = po4obs(iwet) ;
+% kC    = d0(kC_T * par.Tz + kdC) ;
+% C2P   = 1./(cc*PO4 + dd) ;
+% par.C2P = C2P ;
 % particle flux div_rergence [s^-1];
-PFDa = buildPFD(par,'PIC') ;
-PFDc = buildPFD(par,'POC') ;
-par.PFDa = PFDa ;
-par.PFDc = PFDc ;
-par.DIC  = DIC  ;
-par.pco2atm = pco2atm ;
+% PFDa = buildPFD(par,'PIC') ;
+% PFDc = buildPFD(par,'POC') ;
+% par.PFDa = PFDa ;
+% par.PFDc = PFDc ;
+% par.DIC  = DIC  ;
+% par.pco2atm = pco2atm ;
+% TRdiv = par.TRdiv  ;
+% I     = speye(nwet);
+% vout  = Fsea2air(par, 'CO2')   ;
+% JgDIC = vout.JgDIC ;
 
-% eq1 =     (1+RR)*G*C2P + TRdiv*DIC - kC*DOC - kappa_p*PIC - JgDIC;
-% eq2 = -(1-sigma)*G*C2P + (PFDc+kappa_p*I)*POC;
-% eq3 =     -sigma*G*C2P + (TRdiv+kC)*DOC - kappa_p*POC;
-% eq4 =        -RR*G*C2P + (PFDa+kappa_p*I)*PIC;
-% eqa =   sum(JgDIC.*dVt(iwet))/Na;
 
 % F   = [eq1; eq2; eq3; eq4; eqa];
 % construct the LHS matrix for the offline model
 % disp('Preparing LHS and RHS matrix:')
 % colum 1 dFdDIC
 % number of time-steps
-l  = 1e5 ;
-    
-for t  = 1 : 5
-    vout  = Fsea2air(par, 'CO2')   ;
-    JgDIC = vout.JgDIC ;
-    KG    = vout.KG    ;
-    KA    = vout.KA    ;
-    TRdiv = par.TRdiv  ;
-    I     = speye(nwet);
+% l  = 1e5 ;
 
-    % % column 1 dFdDIC
-    Jc{1,1} = -KG ; 
-    Jc{2,1} = 0*I ;
-    Jc{3,1} = 0*I ; 
-    Jc{4,1} = 0*I ;
-    Jc{5,1} = sum(diag(KG).*dVt(iwet))/Na ;
-    
-    % % column 2 dFdPOC
-    Jc{1,2} =  0*I ;
-    Jc{2,2} =  kappa_p*I ;
-    Jc{3,2} = -kappa_p*I ;
-    Jc{4,2} =  0*I ;
-    Jc{5,2} =    0 ;
-    
-    % % column 3 dFdDOC
-    Jc{1,3} = -kC ;
-    Jc{2,3} = 0*I ;
-    Jc{3,3} =  kC ;
-    Jc{4,3} = 0*I ;
-    Jc{5,3} =   0 ;
-    
-    % % column 4 dFdPIC
-    Jc{1,4} = -kappa_p*I ;
-    Jc{2,4} = 0*I ;
-    Jc{3,4} = 0*I ;
-    Jc{4,4} =  kappa_p*I ;
-    Jc{5,4} =   0 ;
-    
-    % % column 5 dFdatmco2
-    Jc{1,5} = -sum(KA.*dVt(iwet))/Na ;
-    Jc{2,5} = 0 ;
-    Jc{3,5} = 0 ;
-    Jc{4,5} = 0 ;
-    Jc{5,5} =  sum(KA.*dVt(iwet))/Na ;
-    
-    PI = [[  I, 0*I, 0*I, 0*I]; ...
-          [0*I,   I, 0*I, 0*I]; ...
-          [0*I, 0*I,   I, 0*I]; ...
-          [0*I, 0*I, 0*I,   I]];
-    
-    AI = [[PI, zeros(4*nwet,1)]; zeros(1,4*nwet+1)];
-    AI(end,end) = 1;
-    
-    PII = [[TRdiv,  0*I,   0*I,  0*I]; ...
-           [  0*I, PFDc,   0*I,  0*I]; ...
-           [  0*I,  0*I, TRdiv,  0*I]; ...
-           [  0*I,  0*I,   0*I, PFDa]];
-    
-    AII = [[PII, zeros(4*nwet,1)]; zeros(1,4*nwet+1)];
-    
-    PIII = [[Jc{1,1},Jc{1,2},Jc{1,3},Jc{1,4}]; ...
-            [Jc{2,1},Jc{2,2},Jc{2,3},Jc{2,4}]; ...
-            [Jc{3,1},Jc{3,2},Jc{3,3},Jc{3,4}]; ...
-            [Jc{4,1},Jc{4,2},Jc{4,3},Jc{4,4}]];
-    
-    AIII = [[PIII, zeros(4*nwet,1)]; zeros(1,4*nwet+1)];
-    AIII(5,1) = Jc{5,1} ;
-    AIII(1,5) = Jc{1,5} ;
-    AIII(5,5) = Jc{5,5} ;
-    
-    A = AI + (dt/2)*(AII - AIII) ;
-    
-    B = AI - (dt/2)*(AII - AIII) ;
-    
-    tic
-    fprintf('factoring a huge matrix...\n');
-    FA = mfactor(A);
-    fprintf('done! \nstart time stepping....\n');
-    toc
-    
-    C  = mfactor(FA, B*C) ;
-    DIC = C(0*nwet+1:1*nwet) ;
-    POC = C(1*nwet+1:2*nwet) ;
-    DOC = C(2*nwet+1:3*nwet) ;
-    PIC = C(3*nwet+1:4*nwet) ;
-    par.pco2atm = C(end) ;
+% for t  = 1 : l
+% vout  = Fsea2air(par, 'CO2')   ;
+% JgDIC = vout.JgDIC ;
+% KG    = vout.KG    ;
+% KA    = vout.KA    ;
 
-    eq1 =     (1+RR)*G*C2P + TRdiv*DIC - kC*DOC - kappa_p*PIC - JgDIC;
-    eq2 = -(1-sigma)*G*C2P + (PFDc+kappa_p*I)*POC;
-    eq3 =     -sigma*G*C2P + (TRdiv+kC)*DOC - kappa_p*POC;
-    eq4 =        -RR*G*C2P + (PFDa+kappa_p*I)*PIC;
-    eqa =   sum(JgDIC.*dVt(iwet))/Na;
+% column 1 dFdDIC
+% Jc{1,1} = TRdiv - KG ; 
+% Jc{2,1} = 0*I ;
+% Jc{3,1} = 0*I ; 
+% Jc{4,1} = 0*I ;
+% Jc{5,1} = diag(KG).*dVt(iwet)*1000./Na ;
 
-    F   = [eq1; eq2; eq3; eq4; eqa];
-    plot(t, norm(F), 'ro'); hold on; drawnow 
+% % column 2 dFdPOC
+% Jc{1,2} =  0*I ;
+% Jc{2,2} =  PFDc + kappa_p*I ;
+% Jc{3,2} = -kappa_p*I ;
+% Jc{4,2} =  0*I ;
+% Jc{5,2} =    0 ;
 
-    if(norm(F) < 1.5e-11)
-        break
-    end
-end
+% % column 3 dFdDOC
+% Jc{1,3} = -kC ;
+% Jc{2,3} = 0*I ;
+% Jc{3,3} = TRdiv + kC ;
+% Jc{4,3} = 0*I ;
+% Jc{5,3} =   0 ;
+
+% % column 4 dFdPIC
+% Jc{1,4} = -kappa_p*I ;
+% Jc{2,4} = 0*I ;
+% Jc{3,4} = 0*I ;
+% Jc{4,4} =  PFD + kappa_p*I ;
+% Jc{5,4} =   0 ;
+
+% % column 5 dFdatmco2
+% Jc{1,5} = -KA ;
+% Jc{2,5} =   0 ;
+% Jc{3,5} =   0 ;
+% Jc{4,5} =   0 ;
+% Jc{5,5} =  sum(KA.*dVt(iwet)*1000)/Na ;
+
+% PI = [[  I, 0*I, 0*I, 0*I]; ...
+% [0*I,   I, 0*I, 0*I]; ...
+% [0*I, 0*I,   I, 0*I]; ...
+% [0*I, 0*I, 0*I,   I]];
+
+% AI = [[PI, sparse(4*nwet,1)]; sparse(1,4*nwet+1)];
+% AI(end,end) = 1;
+
+% PII = [[TRdiv,  0*I,   0*I,  0*I]; ...
+% [  0*I, PFDc,   0*I,  0*I]; ...
+% [  0*I,  0*I, TRdiv,  0*I]; ...
+% [  0*I,  0*I,   0*I, PFDa]];
+
+% AII = [[PII, sparse(4*nwet,1)]; sparse(1,4*nwet+1)];
+
+% PIII = [[Jc{1,1},Jc{1,2},Jc{1,3},Jc{1,4}]; ...
+% [Jc{2,1},Jc{2,2},Jc{2,3},Jc{2,4}]; ...
+% [Jc{3,1},Jc{3,2},Jc{3,3},Jc{3,4}]; ...
+% [Jc{4,1},Jc{4,2},Jc{4,3},Jc{4,4}]];
+
+% AIII = [[PIII, sparse(4*nwet,1)]; sparse(1,4*nwet+1)];
+% AIII(5,1:nwet) = Jc{5,1} ;
+% AIII(1:nwet,5) = Jc{1,5} ;
+% AIII(5,5) = Jc{5,5} ;
+
+% A = AI - (dt/2)*(AII + AIII) ;
+
+% B = AI + (dt/2)*(AII + AIII) ;
+% keyboard
+% tic
+% fprintf('factoring a huge matrix...\n');
+% FA = mfactor(A);
+% fprintf('done! \nstart time stepping....\n');
+% toc
+
+% C  = mfactor(FA, B*C) ;
+% Jac = AII + AIII ;
+% FD  = mfactor(PIII) ;
+
+% eq1 =     (1+RR)*G*C2P + TRdiv*DIC - kC*DOC - kappa_p*PIC - JgDIC;
+% eq2 = -(1-sigma)*G*C2P + (PFDc+kappa_p*I)*POC;
+% eq3 =     -sigma*G*C2P + (TRdiv+kC)*DOC - kappa_p*POC;
+% eq4 =        -RR*G*C2P + (PFDa+kappa_p*I)*PIC;
+% eqa =   sum(JgDIC.*dVt(iwet)*1000)/Na; % umol/mol 
+
+% F   = [eq1; eq2; eq3; eq4; eqa] ;
+
+% dC = -mfactor(FD, F) ;
+% C = C + dC ;
+
+% DIC = C(0*nwet+1:1*nwet) ;
+% POC = C(1*nwet+1:2*nwet) ;
+% DOC = C(2*nwet+1:3*nwet) ;
+% PIC = C(3*nwet+1:4*nwet) ;
+% par.pco2atm = C(end) ;
+
+% fprintf('current error %3.3e \n', norm(F))
+% plot(t, norm(F), 'ro'); hold on; drawnow 
+
+% if(norm(F) < 1.5e-11)
+% break
+% end
+% end
 % C = C(:,1:t) ;
 
 % figure(1)

@@ -27,9 +27,9 @@ function vout = Fsea2air(par, Gtype)
         pco2atm = par.pco2atm        ;  % uatm
         %
         % co2surf unit umol/kg;
-        % k0 unit 
+        % k0 unit mol/kg/atm
         [co2surf,k0] = eqco2(vDICs,co2syspar) ;
-        co2sat = k0*pco2atm.*P ; %mol/kg/atm -> umol/kg
+        co2sat = k0*pco2atm    ; %mol/kg/atm -> umol/kg
         tmp    = M3d*0         ;
         tmp(iwet(isrf)) = KCO2.*(co2sat - co2surf) ;
         JgDIC  = tmp(iwet)     ;
@@ -40,8 +40,9 @@ function vout = Fsea2air(par, Gtype)
         tmp             = M3d*0         ;
         tmp(iwet(isrf)) = KCO2.*(g_k0.*pco2atm - g_co2)*1024.5/1000 ;
         vout.KG         = d0(tmp(iwet)) ;
+
         tmp             = M3d*0         ;
-        tmp(iwet(isrf)) = KCO2.*k0      ;
+        tmp(iwet(isrf)) = KCO2.*k0*1024.5/1000 ;
         vout.KA         = tmp(iwet)     ;
         
         % Hessian

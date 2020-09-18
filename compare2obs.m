@@ -59,7 +59,7 @@ if (Cmodel == off & Omodel == off & Simodel == off)
 elseif (Cmodel == on & Omodel == off & Simodel == off)
     fname = strcat(VER,'_PC');
 elseif (Cmodel == on & Omodel == on & Simodel == off)
-    fname = strcat(VER,'_PCO_absT');
+    fname = strcat(VER,'_PCO');
 elseif (Cmodel == on & par.Omodel == off & Simodel == on)
     fname = strcat(VER,'_PCSi');
 elseif (Cmodel == on & Omodel == on & Simodel == on)
@@ -82,8 +82,8 @@ elseif GridVer == 91
     M3d = output.M3d;
 end
 ARC  = MSKS.ARC;
-iarc = find(ARC(:));
-o2raw(iarc)   = nan;
+iarc = find(ARC(:)) ;
+o2raw(iarc)   = nan ;
 dicraw(iarc)  = nan ;
 po4raw(iarc)  = nan ;
 sio4raw(iarc) = nan ; 
@@ -140,58 +140,6 @@ if (Pmodel == on)
     % exportfig(gcf,'DIP_MvsO','fontmode','fixed','fontsize',12,'color','rgb','renderer','painters')
 end 
 
-%% ---------------------------------------------------
-if (Omodel == on)
-    if ~exist('O2')
-        O2 = data.O2 ;
-    end 
-    nfig = nfig + 1;
-    figure(nfig)
-    o2obs = o2raw;
-    % convert unit form [ml/l] to [umol/l].
-    % o2obs = o2obs.*44.661;  
-    % o2 correction based on Bianchi et al.(2012) [umol/l] .
-    % o2obs = o2obs.*1.009-2.523;
-    io2 = find(O2(iwet)>0 & o2obs(iwet)>0);
-    %
-    M = O2(iwet(io2));
-    O = o2obs(iwet(io2));
-    rsquare(O,M)
-    OvsM = [O, M];
-    %
-    W = (dVt(iwet(io2))./sum(dVt(iwet(io2))));
-    [bandwidth,density,X,Y] = mykde2d(OvsM,200,[0 0],[300 300],W);
-    cr = 5:5:95;
-    dx = X(3,5)-X(3,4); 
-    dy = Y(4,2)-Y(3,2);
-    [q,ii] = sort(density(:)*dx*dy,'descend');
-    D  = density;
-    D(ii) = cumsum(q);
-    subplot('position',[0.2 0.2 0.6 0.6])
-    contourf(X,Y,100*(1-D),cr); hold on
-    contour(X,Y,100*(1-D),cr);
-    
-    caxis([5 95])
-    %set(gca,'FontSize',16);
-    grid on
-    axis square
-    xlabel('Observed O2 (mmol/m^3)');
-    ylabel('Model O2 (mmol/m^3)');
-    % title('model V.S. observation')
-    plot([0 300],[0 300],'r--','linewidth',2);
-    
-    subplot('position',[0.82 0.2 0.05 0.6]);
-    contourf([1 2],cr,[cr(:),cr(:)],cr); hold on
-    contour([1 2],cr,[cr(:),cr(:)],cr);
-    hold off
-    %set(gca,'FontSize',14);
-    set(gca,'XTickLabel',[]);
-    set(gca,'YAxisLocation','right');
-    set(gca,'TickLength',[0 0])
-    ylabel('(percentile)')
-    % exportfig(gcf,'O2_MvsO','fontmode','fixed','fontsize',12,'color','rgb','renderer','painters')
-end 
-
 %% -----------------------------------------------------
 if (Cmodel == on)
     if ~exist('DIC')
@@ -241,6 +189,55 @@ if (Cmodel == on)
     ylabel('(percentile)')
     % exportfig(gcf,'DIC_MvsO','fontmode','fixed','fontsize',12,'color','rgb','renderer','painters')
 end
+
+%% ---------------------------------------------------
+if (Omodel == on)
+    if ~exist('O2')
+        O2 = data.O2 ;
+    end 
+    nfig = nfig + 1;
+    figure(nfig)
+    o2obs = o2raw;
+    
+    io2 = find(O2(iwet)>0 & o2obs(iwet)>0);
+    %
+    M = O2(iwet(io2));
+    O = o2obs(iwet(io2));
+    rsquare(O, M)
+    OvsM = [O, M];
+    %
+    W = (dVt(iwet(io2))./sum(dVt(iwet(io2))));
+    [bandwidth,density,X,Y] = mykde2d(OvsM,200,[0 0],[300 300],W);
+    cr = 5:5:95;
+    dx = X(3,5)-X(3,4); 
+    dy = Y(4,2)-Y(3,2);
+    [q,ii] = sort(density(:)*dx*dy,'descend');
+    D  = density;
+    D(ii) = cumsum(q);
+    subplot('position',[0.2 0.2 0.6 0.6])
+    contourf(X,Y,100*(1-D),cr); hold on
+    contour(X,Y,100*(1-D),cr);
+    
+    caxis([5 95])
+    %set(gca,'FontSize',16);
+    grid on
+    axis square
+    xlabel('Observed O2 (mmol/m^3)');
+    ylabel('Model O2 (mmol/m^3)');
+    % title('model V.S. observation')
+    plot([0 300],[0 300],'r--','linewidth',2);
+    
+    subplot('position',[0.82 0.2 0.05 0.6]);
+    contourf([1 2],cr,[cr(:),cr(:)],cr); hold on
+    contour([1 2],cr,[cr(:),cr(:)],cr);
+    hold off
+    %set(gca,'FontSize',14);
+    set(gca,'XTickLabel',[]);
+    set(gca,'YAxisLocation','right');
+    set(gca,'TickLength',[0 0])
+    ylabel('(percentile)')
+    % exportfig(gcf,'O2_MvsO','fontmode','fixed','fontsize',12,'color','rgb','renderer','painters')
+end 
 
 %% -----------------------------------------------------
 if (Simodel == on)

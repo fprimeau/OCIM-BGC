@@ -21,6 +21,7 @@ par.optim   = on ;
 par.Cmodel  = on ; 
 par.Omodel  = on ; 
 par.Simodel = off ;
+par.LoadOpt = off ; % if load optimial par. 
 %
 GridVer   = 91 ;
 operator = 'A' ;
@@ -78,7 +79,8 @@ par.opt_bC    = on ;
 par.opt_d     = on ;
 par.opt_kC_T  = on ;
 par.opt_kdC   = on ; 
-par.opt_RR    = on ; 
+par.opt_R_Si  = off ; 
+par.opt_rR    = off ; 
 par.opt_cc    = on ;
 par.opt_dd    = on ;
 % O model parameters
@@ -112,7 +114,7 @@ elseif Gtest == off
     elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off)
         fname = strcat(VER,'_PC');
     elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off)
-        fname = strcat(VER,'_PCO');
+        fname = strcat(VER,'_PCO_fRR');
     elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on)
         fname = strcat(VER,'_PCSi');
     elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on)
@@ -241,6 +243,7 @@ Tz3d  = M3d + nan ;
 Tz3d(iwet)  = Tz  ;
 par.Tz      = Tz*1e-8 ;
 par.aveT    = nanmean(Tz3d(:,:,1:3),3) ;
+keyboard
 %
 %%%%%%% prepare NPP for the model %%%%%%%%
 par.nzo = 2 ;
