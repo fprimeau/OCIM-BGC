@@ -1,4 +1,4 @@
-function [G,Gx,Gxx] = uptake_C(par)
+function [G, Gx, Gxx] = uptake_C(par)
     on = true; off = false;
     %
     pindx = par.pindx;
@@ -13,9 +13,9 @@ function [G,Gx,Gxx] = uptake_C(par)
     % P uptake operator
     L = par.L;  
 
-    DIP = par.DIP;
-    G   = d0(alpha*L*DIP); 
-    Gp  = alpha*L;   
+    DIP = par.DIP ;
+    G   = d0(alpha*L*DIP) ; 
+    Gp  = alpha*L ;   
 
     % Gradient
     % grad DIP

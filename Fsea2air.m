@@ -18,13 +18,13 @@ function vout = Fsea2air(par, Gtype)
     P   = tmp(iwet(isrf)) ;
 
     if strcmp(Gtype, 'CO2')
+        
+        pco2atm   = par.pco2atm      ;  % uatm
+        vDICs     = par.DIC(isrf)    ;
         co2syspar = par.co2syspar    ;
-        vDICs = par.DIC(isrf)        ;
         scco2 = 2073.1 - 125.62*vSST + 3.6276*vSST.^2 - 0.043219*vSST.^3;
         kw    = kw.*sqrt(660./scco2) ;
         KCO2  = kw/grd.dzt(1)        ;
-
-        pco2atm = par.pco2atm        ;  % uatm
         %
         % co2surf unit umol/kg;
         % k0 unit mol/kg/atm

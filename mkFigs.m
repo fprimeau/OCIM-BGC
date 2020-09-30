@@ -16,6 +16,7 @@ format long
 Cmodel  = on ;
 Omodel  = on ;
 Simodel = off ;
+fscale  = 0.0 ;
 %
 GridVer   = 91 ;
 operator = 'A' ;
@@ -60,14 +61,23 @@ VER   = strcat(input_dir,TRdivVer);
 if (Cmodel == off & Omodel == off & Simodel == off)
     fname = strcat(VER,'_P');
 elseif (Cmodel == on & Omodel == off & Simodel == off)
-    fname = strcat(VER,'_PC');
+    base_name = strcat(VER,'_PC');
+    catDOC = sprintf('_DOC%2.0e',fscale);
+    fname = strcat(base_name,catDOC);
 elseif (Cmodel == on & Omodel == on & Simodel == off)
-    fname = strcat(VER,'_PCO');
-elseif (Cmodel == on & Omodel == off & Simodel == on)
-    fname = strcat(VER,'_PCSi');
+    base_name = strcat(VER,'_PCO');
+    catDOC = sprintf('_DOC%2.0e',fscale);
+    fname = strcat(base_name,catDOC);
+elseif (Cmodel == on & par.Omodel == off & Simodel == on)
+    base_name = strcat(VER,'_PCSi');
+    catDOC = sprintf('_DOC%2.0e',fscale);
+    fname = strcat(base_name,catDOC);
 elseif (Cmodel == on & Omodel == on & Simodel == on)
-    fname = strcat(VER,'_PCOSi');
+    base_name = strcat(VER,'_PCOSi');
+    catDOC = sprintf('_DOC%2.0e',fscale);
+    fname = strcat(base_name,catDOC);
 end
+
 % load optimal parameters if they exist
 fxhat = strcat(fname,'_xhat.mat');
 if GridVer == 90
@@ -76,6 +86,7 @@ if GridVer == 90
     load tempobs_90x180x24.mat
     load Siobs_90x180x24.mat Siobs
     load po4obs_90x180x24.mat
+    load PME_TS_90x180x24.mat modT modS
     grd  = grid; 
 elseif GridVer == 91
     OperName = sprintf('OCIM2_%s',TRdivVer);
@@ -84,6 +95,7 @@ elseif GridVer == 91
     load tempobs_91x180x24.mat
     load Siobs_91x180x24.mat Siobs
     load po4obs_91x180x24.mat
+    load PME_TS_91x180x24.mat modT modS
     M3d = output.M3d    ;
     grd = output.grid   ;
     TR  = output.TR/spa ;
@@ -101,6 +113,7 @@ dzt  = grd.dzt;
 kappa_p    = 1/(720*60^2)   ;   
 par.taup   = 720*60^2    ; % (s) pic dissolution time-scale
 par.tau_TA = 1./par.taup ;
+par.tauPIC = (1/0.38)*spd;
 par.M3d    = M3d     ;
 par.grd    = grd     ;
 par.iwet   = iwet    ;
@@ -111,7 +124,7 @@ par.Temp   = tempobs ;
 par.Salt   = Sobs    ;
 
 % PME part;
-[modT,modS] = PME(par)  ;
+% [modT,modS] = PME(par)  ;
 par.modT = modT         ;
 par.modS = modS         ;
 tmpT     = modT(iwet)   ;
@@ -141,7 +154,7 @@ if isfield(xhat,'kP_T')
     kP3d = M3d + nan ;
     kP3d(iwet) = (1./(kP_T * Tz * 1e-8 + kdP))/spd ; 
     pcolor(kP3d(:,:,2));colorbar;shading flat
-    caxis([80 140])
+    % caxis([80 140])
     title('ka4P')
     % saveas(gcf,'Figs91/kappa4P.png')
 end
@@ -168,7 +181,7 @@ if Cmodel == on
         kC3d = M3d + nan ;
         kC3d(iwet) = (1./(kC_T * Tz * 1e-8 + kdC))/spd; 
         pcolor(kC3d(:,:,2));colorbar;shading flat
-        caxis([100 600])
+        % caxis([100 600])
         title('kd4C')
         % saveas(gcf,'Figs91/kappa4C.png')
     end
@@ -200,6 +213,7 @@ if Omodel == on
     end 
 
     if isfield(xhat,'O2P_T')
+        par.opt_O2P_T = on      ;
         nfig = nfig + 1         ;
         figure(nfig)
         par.O2P_T  = xhat.O2P_T ;

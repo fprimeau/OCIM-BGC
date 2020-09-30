@@ -21,42 +21,44 @@ par.optim   = on ;
 par.Cmodel  = on ; 
 par.Omodel  = on ; 
 par.Simodel = off ;
-par.LoadOpt = off ; % if load optimial par. 
+par.LoadOpt = on  ; % if load optimial par. 
+par.fscale  = 0.0 ; % factor to weigh DOC in the objective function
 %
-GridVer   = 91 ;
-operator = 'A' ;
+GridVer   = 91    ;
+operator = 'A'    ;
 if GridVer == 90
     TRdivVer = 'Tv4' ;
 elseif GridVer == 91 
     switch(operator)
       case 'A'
-        TRdivVer = 'CTL_He'   ;
+        TRdivVer = 'CTL_He'             ;
       case 'B'
-        TRdivVer = 'CTL_noHe' ;
+        TRdivVer = 'CTL_noHe'           ;
       case 'C'
-        TRdivVer = 'KiHIGH_He'   ;
+        TRdivVer = 'KiHIGH_He'          ;
       case 'D'
-        TRdivVer = 'KiHIGH_noHe' ;
+        TRdivVer = 'KiHIGH_noHe'        ;
       case 'E'
-        TRdivVer = 'KvHIGH_KiLOW_He'  ;
+        TRdivVer = 'KvHIGH_KiLOW_He'    ;
       case 'F'
-        TRdivVer = 'KvHIGH_KiLOW_noHe';
+        TRdivVer = 'KvHIGH_KiLOW_noHe'  ;
       case 'G'
-        TRdivVer = 'KiLOW_He'   ;
+        TRdivVer = 'KiLOW_He'           ;
       case 'H'
-        TRdivVer = 'KiLOW_noHe' ;
+        TRdivVer = 'KiLOW_noHe'         ;
       case 'I'
-        TRdivVer = 'KvHIGH_He'  ;
+        TRdivVer = 'KvHIGH_He'          ;
       case 'J'
-        TRdivVer = 'KvHIGH_noHe';
+        TRdivVer = 'KvHIGH_noHe'        ;
       case 'K'
-        TRdivVer = 'KvHIGH_KiHIGH_noHe';
+        TRdivVer = 'KvHIGH_KiHIGH_noHe' ;
     end 
 end 
 
 fprintf('Transport version: % s \n', TRdivVer)
 if par.Cmodel == on
     fprintf('---- C model is on ---- \n')
+    fprintf('DOC scaling factor is %2.2e \n', par.fscale)
 end
 if par.Omodel == on
     fprintf('---- O model is on ---- \n')
@@ -65,6 +67,7 @@ if par.Simodel == on
     fprintf('---- Si model is on ---- \n')
 end 
 fprintf('\n')
+
 % P model parameters
 par.opt_sigma = on ; 
 par.opt_kP_T  = on ;
@@ -76,6 +79,7 @@ par.opt_alpha = on ;
 % C model parameters
 par.opt_bC_T  = on ;
 par.opt_bC    = on ; 
+par.opt_kPIC  = off ;
 par.opt_d     = on ;
 par.opt_kC_T  = on ;
 par.opt_kdC   = on ; 
@@ -112,13 +116,21 @@ elseif Gtest == off
     if (par.Cmodel == off & par.Omodel == off & par.Simodel == off)
         fname = strcat(VER,'_P');
     elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off)
-        fname = strcat(VER,'_PC');
+        base_name = strcat(VER,'_PC');
+        catDOC = sprintf('_DOC%2.0e',par.fscale);
+        fname = strcat(base_name,catDOC);
     elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off)
-        fname = strcat(VER,'_PCO_fRR');
+        base_name = strcat(VER,'_PCOv3');
+        catDOC = sprintf('_DOC%2.0e',par.fscale);
+        fname = strcat(base_name,catDOC);
     elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on)
-        fname = strcat(VER,'_PCSi');
+        base_name = strcat(VER,'_PCSi');
+        catDOC = sprintf('_DOC%2.0e',par.fscale);
+        fname = strcat(base_name,catDOC);
     elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on)
-        fname = strcat(VER,'_PCOSi');
+        base_name = strcat(VER,'_PCOSi');
+        catDOC = sprintf('_DOC%2.0e',par.fscale);
+        fname = strcat(base_name,catDOC);
     end
 end
 par.fname = fname ; 
@@ -134,11 +146,13 @@ if GridVer == 90
     load po4obs_90x180x24.mat       % WOA PO4 observation
     load Siobs_90x180x24.mat Siobs
     %
+    load PME_TS_90x180x24.mat modT modS
     load DICant_90x180x24.mat
     load GLODAPv2_90x180x24raw.mat
     load splco2_mod_monthly.mat     % monthly CO2 data
     load co2syspar90.mat co2syspar
     load cbpm_npp_annual_90x180.mat
+    load DOMobs_90x180x24.mat
     load kw660_90x180.mat
     if ismac
         load MSK90/fixedPO_C.mat
@@ -162,17 +176,23 @@ elseif GridVer == 91
     load tempobs_91x180x24.mat
     load Siobs_91x180x24.mat Siobs
     %
+    load PME_TS_91x180x24.mat modT modS
     load DICant_91x180x24.mat
     load GLODAPv2_91x180x24raw.mat
     load splco2_mod_monthly % monthly CO2 data
     load co2syspar91.mat co2syspar
     load cbpm_npp_annual_91x180.mat
+    load DOMobs_91x180x24.mat
     load kw660_91x180.mat
     if ismac
         load MSK91/CTL_He_fixedPO_C.mat
         load MSK91/CTL_He_fixedPO_O2.mat
     elseif isunix
-        load initCO_91x180x24.mat
+        if isfile(fname)
+            load(fname)
+        else 
+            load initCO_91x180x24.mat
+        end 
     end
     M3d = output.M3d;
     grd = output.grid;
@@ -182,10 +202,11 @@ end
 % get rid of arctice o2 observations
 ARC  = MSKS.ARC;
 iarc = find(ARC(:));
-o2raw(iarc)   = nan ;
-dicraw(iarc)  = nan ;
-po4raw(iarc)  = nan ;
-sio4raw(iarc) = nan ; 
+% DOCobs(iarc)  = nan ;
+% o2raw(iarc)   = nan ;
+% dicraw(iarc)  = nan ;
+% po4raw(iarc)  = nan ;
+% sio4raw(iarc) = nan ; 
 iwet = find(M3d(:)) ;
 nwet = length(iwet) ;
 dVt  = grd.DXT3d.*grd.DYT3d.*grd.DZT3d;
@@ -211,12 +232,14 @@ par.po4obs  = po4obs  ;
 par.o2raw   = o2raw   ;
 par.po4raw  = po4raw  ;
 par.sio4raw = sio4raw ;
+par.docraw  = DOCobs - DOCref ;
 par.dicraw  = dicraw*permil; % GLODAP dic obs [mmol/m3];
 par.human_co2 = DICant*permil;
 
-GC = real([DIC(iwet); POC(iwet); DOC(iwet); CaC(iwet)]);
+DIC = DIC - par.human_co2 ;
 GO = real(O2(iwet)) + 1e-9*randn(par.nwet,1);
-
+GC = real([DIC(iwet); POC(iwet); DOC(iwet); CaC(iwet)]);
+GC = GC + 1e-6*randn(4*nwet,1) ;
 % transiant CO2 concentraion;
 par.year      = splco2_mod(:,1) ;
 par.pco2_air  = splco2_mod(:,2) ;
@@ -235,22 +258,21 @@ par = SetPara(par) ;
 [p0, par] = PackPar(par) ;
 %
 % PME part;
-[modT,modS] = PME(par)   ;
+% [modT,modS] = PME(par)   ; keyboard
 par.modS    = modS       ;
 par.modT    = modT       ;
-Tz    = (modT(iwet)-mean(modT(iwet)))/std(modT(iwet)) ;
-Tz3d  = M3d + nan ;
-Tz3d(iwet)  = Tz  ;
-par.Tz      = Tz*1e-8 ;
-par.aveT    = nanmean(Tz3d(:,:,1:3),3) ;
-keyboard
-%
+Tz   = (modT(iwet)-mean(modT(iwet)))/std(modT(iwet)) ;
+Tz3d = M3d + nan ;
+Tz3d(iwet) = Tz  ;
+par.Tz     = Tz*1e-8 ;
+par.aveT   = nanmean(Tz3d(:,:,1:3),3) ;
+
 %%%%%%% prepare NPP for the model %%%%%%%%
 par.nzo = 2 ;
 par.p2c = 0.006+0.0069*po4obs ;
 inan = find(isnan(npp(:)) | npp(:) < 0) ;
 npp(inan) = 0 ;
-
+keyboard    
 % tmp = squeeze(M3d(:,:,1)) ;
 % tmp(1:15,:) = nan         ; % SO
 % tmp(65:78,55:125) = nan   ; % NP
@@ -288,7 +310,7 @@ options = optimoptions(@fminunc                  , ...
 nip = length(x0);
 if(Gtest);
     dx = sqrt(-1)*eps.^3*eye(nip);
-    for ii = nip-4 : nip
+    for ii = 3 : nip
         x  = real(x0)+dx(:,ii);
         if Htest == on
             [f,fx,fxx] = neglogpost(x, par) ;

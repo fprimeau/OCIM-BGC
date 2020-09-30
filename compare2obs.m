@@ -15,6 +15,7 @@ Pmodel  = on ;
 Cmodel  = on ;
 Omodel  = on ;
 Simodel = off ;
+fscale  = 0.0 ; % factor to weigh DOC in the objective function
 %
 GridVer   = 91 ;
 operator = 'A' ;
@@ -57,13 +58,21 @@ VER = strcat(input_dir,TRdivVer);
 if (Cmodel == off & Omodel == off & Simodel == off)
     fname = strcat(VER,'_P');
 elseif (Cmodel == on & Omodel == off & Simodel == off)
-    fname = strcat(VER,'_PC');
+    base_name = strcat(VER,'_PC');
+    catDOC = sprintf('_DOC%2.0e',fscale);
+    fname = strcat(base_name,catDOC);
 elseif (Cmodel == on & Omodel == on & Simodel == off)
-    fname = strcat(VER,'_PCO');
+    base_name = strcat(VER,'_PCO');
+    catDOC = sprintf('_DOC%2.0e',fscale);
+    fname = strcat(base_name,catDOC);
 elseif (Cmodel == on & par.Omodel == off & Simodel == on)
-    fname = strcat(VER,'_PCSi');
+    base_name = strcat(VER,'_PCSi');
+    catDOC = sprintf('_DOC%2.0e',fscale);
+    fname = strcat(base_name,catDOC);
 elseif (Cmodel == on & Omodel == on & Simodel == on)
-    fname = strcat(VER,'_PCOSi');
+    base_name = strcat(VER,'_PCOSi');
+    catDOC = sprintf('_DOC%2.0e',fscale);
+    fname = strcat(base_name,catDOC);
 end
 
 if GridVer == 90
@@ -78,11 +87,13 @@ elseif GridVer == 91
     load M3d91x180x24.mat MSKS 
     load GLODAPv2_91x180x24raw.mat
     load DICant_91x180x24.mat DICant
+    load DOMobs_91x180x24.mat
     grd = output.grid;
     M3d = output.M3d;
 end
 ARC  = MSKS.ARC;
 iarc = find(ARC(:)) ;
+DOCobs(iarc)  = nan ;
 o2raw(iarc)   = nan ;
 dicraw(iarc)  = nan ;
 po4raw(iarc)  = nan ;
@@ -108,7 +119,7 @@ if (Pmodel == on)
     rsquare(O,M)
     OvsM = [O,M];
     W = (dVt(iwet(ipo4))./sum(dVt(iwet(ipo4))));
-    [bandwidth,density,X,Y] = mykde2d(OvsM,200,[0 0],[4 4],W);
+    [bandwidth,density,X,Y] = mykde2d(OvsM,100,[0 0],[4 4],W);
     cr = 5:5:95;
     dx = X(3,5)-X(3,4); 
     dy = Y(4,2)-Y(3,2);
@@ -137,7 +148,8 @@ if (Pmodel == on)
     set(gca,'YAxisLocation','right');
     set(gca,'TickLength',[0 0])
     ylabel('(percentile)')
-    % exportfig(gcf,'DIP_MvsO','fontmode','fixed','fontsize',12,'color','rgb','renderer','painters')
+    % exportfig(gcf,'DIP_MvsO','fontmode','fixed','fontsize',12, ... 
+              % 'color','rgb','renderer','painters')
 end 
 
 %% -----------------------------------------------------
@@ -158,7 +170,7 @@ if (Cmodel == on)
     %
     OvsM = [O, M];
     W = (dVt(iwet(iDIC))./sum(dVt(iwet(iDIC))));
-    [bandwidth,density,X,Y] = mykde2d(OvsM,200,[2000 2000],[2500 2500],W);
+    [bandwidth,density,X,Y] = mykde2d(OvsM,100,[2000 2000],[2500 2500],W);
     cr = 5:5:95;
     dx = X(3,5)-X(3,4); 
     dy = Y(4,2)-Y(3,2);
@@ -187,7 +199,56 @@ if (Cmodel == on)
     set(gca,'YAxisLocation','right');
     set(gca,'TickLength',[0 0])
     ylabel('(percentile)')
-    % exportfig(gcf,'DIC_MvsO','fontmode','fixed','fontsize',12,'color','rgb','renderer','painters')
+    % exportfig(gcf,'DIC_MvsO','fontmode','fixed','fontsize',12,...
+              % 'color','rgb','renderer','painters')
+    
+    if isfield(data,'DOC') 
+        DOC = data.DOC ;
+    end 
+    
+    nfig = nfig + 1;
+    figure(nfig)
+    DOCobs = DOCobs - DOCref ;
+    iDOC = find(DOCobs(iwet)>0 & DOC(iwet)>0);
+    %
+    O = DOCobs(iwet(iDOC));
+    M = DOC(iwet(iDOC)); 
+    
+    rsquare(M, O)
+    OvsM = [O, M];
+    
+    W = dVt(iwet(iDOC))./sum(dVt(iwet(iDOC)));
+    [bandwidth,density,X,Y] = mykde2d(OvsM,500,[0 0],[50 50],W);
+    cr = 5:5:95;
+    dx = X(3,5)-X(3,4); 
+    dy = Y(4,2)-Y(3,2);
+    [q,ii] = sort(density(:)*dx*dy,'descend');
+    D  = density;
+    D(ii) = cumsum(q);
+    subplot('position',[0.2 0.2 0.6 0.6])
+    contourf(X,Y,100*(1-D),cr); hold on
+    contour(X,Y,100*(1-D),cr);
+    
+    caxis([5 95])
+    %set(gca,'FontSize',16);
+    grid on
+    axis square
+    xlabel('Observed DOC (mmol/m^3)');
+    ylabel('Model DOC (mmol/m^3)');
+    % title('model V.S. observation')
+    plot([0 50],[0 50],'r--','linewidth',2);
+    
+    subplot('position',[0.82 0.2 0.05 0.6]);
+    contourf([1 2],cr,[cr(:),cr(:)],cr); hold on
+    contour([1 2],cr,[cr(:),cr(:)],cr);
+    hold off
+    %set(gca,'FontSize',14);
+    set(gca,'XTickLabel',[]);
+    set(gca,'YAxisLocation','right');
+    set(gca,'TickLength',[0 0])
+    ylabel('(percentile)')
+    % exportfig(gcf,'DOC_MvsO','fontmode','fixed','fontsize',12,...
+              % 'color','rgb','renderer','painters')
 end
 
 %% ---------------------------------------------------
@@ -207,7 +268,7 @@ if (Omodel == on)
     OvsM = [O, M];
     %
     W = (dVt(iwet(io2))./sum(dVt(iwet(io2))));
-    [bandwidth,density,X,Y] = mykde2d(OvsM,200,[0 0],[300 300],W);
+    [bandwidth,density,X,Y] = mykde2d(OvsM,100,[0 0],[300 300],W);
     cr = 5:5:95;
     dx = X(3,5)-X(3,4); 
     dy = Y(4,2)-Y(3,2);
@@ -270,8 +331,8 @@ if (Simodel == on)
     %set(gca,'FontSize',16);
     grid on
     axis square
-    xlabel('Observed DIC (mmol/m^3)');
-    ylabel('Model DIC (mmol/m^3)');
+    xlabel('Observed SIL (mmol/m^3)');
+    ylabel('Model SIL (mmol/m^3)');
     % title('model V.S. observation')
     plot([0 200],[0 200],'r--','linewidth',2);
     
@@ -284,5 +345,5 @@ if (Simodel == on)
     set(gca,'YAxisLocation','right');
     set(gca,'TickLength',[0 0])
     ylabel('(percentile)')
-    % exportfig(gcf,'DIC_MvsO','fontmode','fixed','fontsize',12,'color','rgb','renderer','painters')
+    % exportfig(gcf,'SIL_MvsO','fontmode','fixed','fontsize',12,'color','rgb','renderer','painters')
 end 

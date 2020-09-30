@@ -332,19 +332,19 @@ if Cmodel == on
         pDIC = pdata.DIC ;
         pDOC = pdata.DOC ;
         pPOC = pdata.POC ;
-        pCaC = pdata.CaC ;
+        pPIC = pdata.PIC ;
     else
         DIC = data.DIC ;
         POC = data.POC ;
         DOC = data.DOC ; 
-        CaC = data.CaC ;
+        PIC = data.PIC ;
         
-        GC = real([DIC(iwet); POC(iwet); DOC(iwet); CaC(iwet)]);
+        GC = real([DIC(iwet); POC(iwet); DOC(iwet); PIC(iwet)]);
         [par, C ] = eqCcycle(p0, par) ;
         pDIC = M3d+nan ;  pDIC(iwet) = C(0*nwet+1:1*nwet) ;
         pPOC = M3d+nan ;  pPOC(iwet) = C(1*nwet+1:2*nwet) ;
         pDOC = M3d+nan ;  pDOC(iwet) = C(2*nwet+1:3*nwet) ;
-        pCaC = M3d+nan ;  pCaC(iwet) = C(3*nwet+1:4*nwet) ;
+        pPIC = M3d+nan ;  pPIC(iwet) = C(3*nwet+1:4*nwet) ;
         par.DIC  = pDIC(iwet) ;
         par.DOC  = pDOC(iwet) ;
     end
@@ -414,36 +414,6 @@ if Cmodel == on
     exportfig(gcf,'Figs91/surface_dic_anomaly','fontmode','fixed','fontsize',12, ...
               'color','rgb','renderer','painters')
 
-    % Out-gasing
-    % control model 
-    par.modT = modT ;
-    par.DIC  = data.DIC(iwet) - par.human_co2(iwet) ;
-    vout  = Fsea2air(par, 'CO2') ;
-    Fs2a0 = M3d + nan;
-    Fs2a0(iwet) = vout.JgDIC*spa ; % mmol/m3/s -> mmol/m3/y
-    flux0 = Fs2a0(:,:,1)*grd.dzt(1)/1000 ; % mmol/m3/s -> mol/m2/y
-    sF0   = flux0.*dAt(:,:,1) ;
-    sF0   = nansum(sF0(:))    ;
-    % perturbation model
-    par.modT = modT + 2 ;
-    par.DIC  = pdata.DIC(iwet) ; 
-    vout = Fsea2air(par, 'CO2') ;
-    Fs2a1 = M3d + nan;
-    Fs2a1(iwet) = vout.JgDIC*spa ; % mmol/m3/s -> mmol/m3/y
-    flux1 = Fs2a1(:,:,1)*grd.dzt(1)/1000; % mmol/m3/s -> mol/m2/y
-    sF1   = flux1.*dAt(:,:,1) ;
-    sF1   = nansum(sF1(:))    ;
-
-    nfig = nfig + 1 ;
-    figure(nfig)
-    pcolor(flux1-flux0);colorbar;shading flat
-    set(gca,'color','black')
-    colormap(darkb2r(-5, 20)), colorbar
-    set(gcf, 'InvertHardcopy', 'off')
-    exportfig(gcf,'Figs91/Cflux_anomaly','fontmode','fixed','fontsize',12, ...
-              'color','rgb','renderer','painters')
-
-    fprintf('Total changes of Sea-to-air flux is %3.3f Pg\n', (sF1-sF0)*12/1e15);
 end
 
 if Omodel == on 

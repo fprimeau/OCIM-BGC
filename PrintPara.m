@@ -15,10 +15,12 @@ function PrintPara(x, par);
         if (par.Cmodel == on)
             fprintf('current bC_T    is  % 3.2e \n', par.bC_T) ;
             fprintf('current bC      is  % 3.2e \n', par.bC)   ;
+            fprintf('current kPIC    is  % 3.2e \n', par.kPIC) ;
             fprintf('current d       is  % 3.2e \n', par.d)    ;
             fprintf('current kC_T    is  % 3.2e \n', par.kC_T) ;
             fprintf('current kdC     is  % 3.2e \n', par.kdC)  ;
-            fprintf('current RR      is  % 3.2e \n', par.RR)   ;
+            fprintf('current R_Si    is  % 3.2e \n', par.R_Si) ;
+            fprintf('current rR      is  % 3.2e \n', par.rR)   ;
             fprintf('current cc      is  % 3.2e \n', par.cc)   ;
             fprintf('current dd      is  % 3.2e \n', par.dd)   ;
         end 
@@ -95,6 +97,12 @@ function PrintPara(x, par);
             xhat.bC = exp(x(ibC));
         end
         
+        if (par.opt_kPIC == on)
+            ikPIC = par.pindx.lkPIC;
+            fprintf('current kPIC    is  % 3.2e \n', exp(x(ikPIC)));
+            xhat.kPIC = exp(x(ikPIC));
+        end
+
         if (par.opt_d == on)
             id = par.pindx.ld;
             fprintf('current d       is  % 3.2e \n', exp(x(id)));
@@ -108,15 +116,21 @@ function PrintPara(x, par);
         end
         
         if (par.opt_kdC == on)
-            ikdC = par.pindx.lkdC;
+            ikdC = par.pindx.lkdC   ;
             fprintf('current kdC     is  % 3.2e \n', exp(x(ikdC)));
-            xhat.kdC = exp(x(ikdC));
+            xhat.kdC = exp(x(ikdC)) ;
         end
         
-        if (par.opt_RR == on)
-            iRR = par.pindx.lRR;
-            fprintf('current RR      is  % 3.2e \n', exp(x(iRR)));
-            xhat.RR = exp(x(iRR));
+        if (par.opt_R_Si == on)
+            iR_Si = par.pindx.lR_Si ;
+            fprintf('current R_Si    is  % 3.2e \n', exp(x(iR_Si)));
+            xhat.R_Si = exp(x(iR_Si)) ;
+        end
+
+        if (par.opt_rR == on)
+            irR = par.pindx.lrR;
+            fprintf('current rR      is  % 3.2e \n', exp(x(irR)));
+            xhat.rR = exp(x(irR));
         end
         
         if (par.opt_cc == on)

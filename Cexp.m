@@ -85,6 +85,7 @@ bC_T    = xhat.bC_T ;
 % (s) pic dissolution time-scale
 par.taup   = 720*60^2 ; 
 par.tau_TA = 1./par.taup ;
+par.tauPIC = (1/0.38)*spd;
 par.M3d    = M3d   ;
 par.grd    = grd   ;
 par.iwet   = iwet  ;

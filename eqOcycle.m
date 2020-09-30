@@ -34,10 +34,11 @@ function [par, O2, Ox, Oxx] = eqOcycle(x, par)
     [O2,ierr] = nsnew(X0,@(X) O_eqn(X, par),options) ;
     if (ierr ~= 0)
         fprintf('O2model did not converge.\n') ;
-
         F = O_eqn(O2, par) ;
 
         if (norm(F) < 1e-6)  
+            options.atol   = 1e-7 ;
+            options.rtol   = 1e-7 ;
             % Compute the gradient of the solution wrt the parameters
             GO = real(O2) + 1e-7*randn(par.nwet,1) ;
             [F, FD, Ox, Oxx] = O_eqn(O2, par) ;

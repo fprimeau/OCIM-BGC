@@ -37,30 +37,32 @@ function [PFdiv,Gout,Hout] = buildPFD(par,Ptype)
             bb = par.bC   ;  % intercept
             bm = par.bC_T ;  % slope
         end
-        b = bb+bm*T ;
+        b = bb + bm*T ;
         % particle sinking velocity at the top of the grid cells.
         % mimic a Martin curve flux attenuation profile (see Kriest and
         % Oschelies 2008 in Biogeosciences)
-        r =  par.kappa_p; % dissolution rate
-        a =  r./b;
-        w = -a.*M;
+        r =  par.kappa_p ; % dissolution rate
+        a =  r./b ;
+        w = -a.*M ; keyboard
         % 'upwind' sinking flux operator
         % defined at the top of the grid cell
-        FLUX = d0(w(iwet))*IU;
+        FLUX = d0(w(iwet))*IU ;
     elseif ( strcmp(Ptype,'PIC') )
-        r = 1./par.taup;
-        d = par.d; % e-folding length scale for PIC flux attenuation
-        w = -r*d*MSK;
-        FLUX = d0(w(iwet))*IU;
+        r = 1./par.tauPIC ;
+        % e-folding length scale for PIC flux attenuation
+        d = par.d         ; 
+        w = -r.*d.*MSK    ;
+        FLUX = d0(w(iwet))*IU ;
+        
     elseif ( strcmp(Ptype,'bSi') )
         % Define a temperature dependent dissolution rate
         % Sarmiento and Gruber text book
-        T  =  par.modT + 273.15;
-        at =  par.at; 
-        bt =  par.bt;
-        d  =  par.dsi;
-        r  =  at*exp(-bt./T);
-        w  =  MSK; 
+        T  = par.modT + 273.15;
+        at = par.at  ; 
+        bt = par.bt  ;
+        d  = par.dsi ;
+        r  = at*exp(-bt./T);
+        w  = MSK; 
         w(:,:,2:end-1)  = -r(:,:,2:end)*d;
         FLUX = d0(w(iwet))*IU;
     end
@@ -69,34 +71,37 @@ function [PFdiv,Gout,Hout] = buildPFD(par,Ptype)
 
     if (nargout > 1) % compute the gradient w.r.t. the parameters
         if ( strcmp(Ptype,'POP') | strcmp(Ptype,'POC') )
-            a_b  = -r./b.^2;  % derivative of a w.r.t. b
-            a_r  = 1./b;      % derivative of a w.r.t. r
-            b_bb = 1;         % derivative of b w.r.t. bb
-            b_bm = T;         % derivative of b w.r.t. bm
-            w_b  = -a_b.*M;   % derivative of w w.r.t. b
-            w_r  = -a_r.*M;   % derivative of w w.r.t. r
-            w_bm = w_b.*b_bm; % derivative of w w.r.t. bm
-            w_bb = w_b.*b_bb; % derivative of w w.r.t. bb
+            a_b  = -r./b.^2  ; % derivative of a w.r.t. b
+            a_r  = 1./b      ; % derivative of a w.r.t. r
+            b_bb = 1         ; % derivative of b w.r.t. bb
+            b_bm = T         ; % derivative of b w.r.t. bm
+            w_b  = -a_b.*M   ; % derivative of w w.r.t. b
+            w_r  = -a_r.*M   ; % derivative of w w.r.t. r
+            w_bm = w_b.*b_bm ; % derivative of w w.r.t. bm
+            w_bb = w_b.*b_bb ; % derivative of w w.r.t. bb
             
-            FLUX_r = d0(w_r(iwet))*IU;
-            FLUX_b = d0(w_b(iwet))*IU;
-            FLUX_bm = d0(w_bm(iwet))*IU;
-            FLUX_bb = d0(w_bb(iwet))*IU;
+            FLUX_r  = d0(w_r(iwet))*IU  ;
+            FLUX_b  = d0(w_b(iwet))*IU  ;
+            FLUX_bm = d0(w_bm(iwet))*IU ;
+            FLUX_bb = d0(w_bb(iwet))*IU ;
 
-            Gout.PFD_b  = DIV*FLUX_b;
-            Gout.PFD_r  = DIV*FLUX_r;
-            Gout.PFD_bm = DIV*FLUX_bm;
-            Gout.PFD_bb = DIV*FLUX_bb;
+            Gout.PFD_b  = DIV*FLUX_b  ;
+            Gout.PFD_r  = DIV*FLUX_r  ;
+            Gout.PFD_bm = DIV*FLUX_bm ;
+            Gout.PFD_bb = DIV*FLUX_bb ;
             
         elseif( strcmp(Ptype,'PIC') )
-            w_d = -r*MSK;
-            FLUX_d = d0(w_d(iwet))*IU;
-            Gout.PFD_d = DIV*FLUX_d;
-            
+            w_d    = -r.*MSK ;
+            w_k    = -d.*MSK ;
+            FLUX_d = d0(w_d(iwet))*IU ;
+            FLUX_k = d0(w_k(iwet))*IU ;
+            Gout.PFD_d = DIV*FLUX_d   ;
+            Gout.PFD_k = DIV*FLUX_k   ;
+
         elseif ( strcmp(Ptype,'bSi') )
-            w_d  = MSK;
-            w_at = MSK;
-            w_bt = MSK;
+            w_d  = MSK ;
+            w_at = MSK ;
+            w_bt = MSK ;
             
             w_at_tmp = -d*exp(-bt./T);
             w_bt_tmp = (d*r)./T;
@@ -104,16 +109,16 @@ function [PFdiv,Gout,Hout] = buildPFD(par,Ptype)
             w_at(:,:,2:end-1) = w_at_tmp(:,:,2:end);
             w_bt(:,:,2:end-1) = w_bt_tmp(:,:,2:end);
             
-            FLUX_d  = d0(w_d(iwet))*IU;
-            FLUX_at = d0(w_at(iwet))*IU;
-            FLUX_bt = d0(w_bt(iwet))*IU;
+            FLUX_d  = d0(w_d(iwet))*IU  ;
+            FLUX_at = d0(w_at(iwet))*IU ;
+            FLUX_bt = d0(w_bt(iwet))*IU ;
             
-            Gout.PFD_d  = DIV*FLUX_d;
-            Gout.PFD_at = DIV*FLUX_at;
-            Gout.PFD_bt = DIV*FLUX_bt;
+            Gout.PFD_d  = DIV*FLUX_d  ;
+            Gout.PFD_at = DIV*FLUX_at ;
+            Gout.PFD_bt = DIV*FLUX_bt ;
         end
     end
-
+    
     if (nargout > 2) % compute the hessian w.r.t. the parameters
         if ( strcmp(Ptype,'POP') | strcmp(Ptype,'POC') )
             a_b_b = 2*r./(b.^3);           % derivative of a_b w.r.t. b
@@ -144,10 +149,15 @@ function [PFdiv,Gout,Hout] = buildPFD(par,Ptype)
             Hout.PFD_bm_bb = DIV*FLUX_bm_bb;
             
         elseif ( strcmp(Ptype,'PIC') )
-            w_d_d = 0;
-            FLUX_d_d = w_d_d*IU;
-            Hout.PFD_d_d = DIV*FLUX_d_d;
-            
+            w_d_d = 0 ;
+            w_k_k = 0 ;
+            w_d_k = -MSK ;
+            FLUX_d_d = w_d_d*IU ;
+            FLUX_k_k = w_k_k*IU ;
+            FLUX_d_k = d0(w_d_k(iwet))*IU ;
+            Hout.PFD_d_d = DIV*FLUX_d_d   ;
+            Hout.PFD_k_k = DIV*FLUX_k_k   ;
+            Hout.PFD_d_k = DIV*FLUX_d_k   ;
         elseif ( strcmp(Ptype,'bSi') )
             r_at_at =  0;
             r_bt_bt =  r./T.^2;

@@ -17,14 +17,20 @@ function [par, C, Cx, Cxx] = eqCcycle(x, par)
 
     % bC
     if (par.opt_bC == on)
-        lbC = x(par.pindx.lbC);
-        par.bC  = exp(lbC);
+        lbC = x(par.pindx.lbC) ;
+        par.bC  = exp(lbC)     ;
+    end
+
+    % kPIC
+    if (par.opt_kPIC == on)
+        lkPIC = x(par.pindx.lkPIC) ;
+        par.kPIC = exp(lkPIC)      ;
     end
 
     % d
     if (par.opt_d == on)
-        ld = x(par.pindx.ld);
-        par.d = exp(ld);
+        ld = x(par.pindx.ld) ;
+        par.d = exp(ld)      ;
     end
 
     % kC_T
@@ -38,10 +44,16 @@ function [par, C, Cx, Cxx] = eqCcycle(x, par)
         par.kdC  = exp(lkdC);
     end
 
-    % RR
-    if (par.opt_RR == on)
-        lRR = x(par.pindx.lRR);
-        par.RR = exp(lRR);
+    % R_Si
+    if (par.opt_R_Si == on)
+        lR_Si = x(par.pindx.lR_Si);
+        par.R_Si = exp(lR_Si) ;
+    end
+
+    % rR
+    if (par.opt_rR == on)
+        lrR = x(par.pindx.lrR);
+        par.rR = exp(lrR);
     end
 
     % cc
@@ -56,7 +68,7 @@ function [par, C, Cx, Cxx] = eqCcycle(x, par)
         par.dd = exp(ldd);
     end
     %
-    options.iprint = 0 ; 
+    options.iprint = 0   ; 
     options.atol = 1e-10 ;
     options.rtol = 1e-10 ;
     fprintf('Solving C model ...\n') ;
@@ -68,8 +80,8 @@ function [par, C, Cx, Cxx] = eqCcycle(x, par)
         npx  = par.npx   ;
         ncx  = par.ncx   ;
         nx   = npx + ncx ;
-        Cx   = sparse(par.nwet, nx) ;
-        Cxx  = sparse(par.nwet, nchoosek(nx,2)+nx) ;
+        Cx   = sparse(4*par.nwet, nx) ;
+        Cxx  = sparse(4*par.nwet, nchoosek(nx,2)+nx) ;
         [par.G,par.Gx,par.Gxx] = uptake_C(par) ;
     else
         % reset the global variable for the next call eqCcycle
@@ -108,18 +120,27 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
     % fixed parameters
     kappa_p = par.kappa_p ;
     % parameters need to be optimized
-    sigma = par.sigma ;
-    d     = par.d     ;
-    RR    = par.RR    ;
-    bC_T  = par.bC_T  ;
-    bC    = par.bC    ;
-    kC_T  = par.kC_T  ;
-    kdC   = par.kdC   ;
     alpha = par.alpha ;
     beta  = par.beta  ;
+    sigma = par.sigma ;
+    bC_T  = par.bC_T  ;
+    bC    = par.bC    ;
+    kPIC  = par.kPIC  ;
+    d     = par.d     ;
+    kC_T  = par.kC_T  ;
+    kdC   = par.kdC   ;
+    R_Si  = par.R_Si  ;
+    rR    = par.rR    ;
     cc    = par.cc    ;
     dd    = par.dd    ;
-
+    
+    % PIC to production ratio 
+    vout  = mkPIC2P(par) ;
+    RR    = vout.RR    ;
+    RR_Si = vout.RR_Si ;
+    RR_rR = vout.RR_rR ;
+    clear vout 
+    % kappa_dc ;
     kC    = d0(kC_T * Tz + kdC) ;
     C2P   = 1./(cc*PO4 + dd) ;
     par.C2P = C2P ;
@@ -134,14 +155,15 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
     KG    = vout.KG;
     KGG   = vout.KGG;
     JgDIC = vout.JgDIC;
+    clear vout 
     % biological DIC uptake operator
     G = uptake_C(par); par.G = G;
-
-    eq1 =     (1+RR)*G*C2P + TRdiv*DIC - kC*DOC - kappa_p*PIC - JgDIC;
-    eq2 = -(1-sigma)*G*C2P + (PFDc+kappa_p*I)*POC;
-    eq3 =     -sigma*G*C2P + (TRdiv+kC)*DOC - kappa_p*POC;
-    eq4 =        -RR*G*C2P + (PFDa+kappa_p*I)*PIC;
-
+    
+    eq1 = (I+(1-sigma)*RR)*(G*C2P) + TRdiv*DIC - kC*DOC - kPIC*PIC - JgDIC;
+    eq2 = -(1-sigma)*G*C2P + (PFDc+kappa_p*I)*POC      ;
+    eq3 = -sigma*G*C2P + (TRdiv+kC)*DOC - kappa_p*POC  ;
+    eq4 = -(1-sigma)*RR*(G*C2P) + (PFDa+kPIC*I)*PIC ; 
+    
     F   = [eq1; eq2; eq3; eq4];
 
     if nargout > 1
@@ -167,10 +189,10 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
         Jc{4,3} = 0*I ;
         
         % colum 4 dFdPIC
-        Jc{1,4} = -kappa_p*I ;
+        Jc{1,4} = -kPIC*I ;
         Jc{2,4} = 0*I ;
         Jc{3,4} = 0*I ;
-        Jc{4,4} = PFDa + kappa_p*I ;
+        Jc{4,4} = PFDa + kPIC*I ;
         
         % factorize Jacobian matrix
         FD = mfactor(cell2mat(Jc)) ;
@@ -191,74 +213,74 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
         % P model parameters
         % sigma
         if (par.opt_sigma == on)
-            tmp = [Z; ...
+            tmp = [sigma*RR*G*C2P; ...
                    -sigma*G*C2P; ...
                    sigma*G*C2P; ...
-                   Z] + ...
-                  [-(1+RR)*d0(Gx(:,pindx.lsigma))*C2P; ...
+                   -sigma*RR*G*C2P] + ...
+                  [-d0((I+(1-sigma)*RR)*Gx(:,pindx.lsigma))*C2P; ...
                    (1-sigma)*d0(Gx(:,pindx.lsigma))*C2P; ...
                    sigma*d0(Gx(:,pindx.lsigma))*C2P; ...
-                   RR*d0(Gx(:,pindx.lsigma))*C2P];
+                   d0((1-sigma)*RR*Gx(:,pindx.lsigma))*C2P];
             
             Cx(:,pindx.lsigma) = mfactor(FD, tmp);
         end
 
         % kP_T
         if (par.opt_kP_T == on)
-            tmp = [-(1+RR)*d0(Gx(:,pindx.kP_T))*C2P; ...
+            tmp = [-d0((I+(1-sigma)*RR)*Gx(:,pindx.kP_T))*C2P; ...
                    (1-sigma)*d0(Gx(:,pindx.kP_T))*C2P; ...
                    sigma*d0(Gx(:,pindx.kP_T))*C2P; ...
-                   RR*d0(Gx(:,pindx.kP_T))*C2P];
+                   d0((1-sigma)*RR*Gx(:,pindx.kP_T))*C2P];
             
             Cx(:,pindx.kP_T) = mfactor(FD, tmp);
         end
         
         % kdP
         if (par.opt_kdP == on)
-            tmp = [-(1+RR)*d0(Gx(:,pindx.lkdP))*C2P; ...
+            tmp = [-d0((I+(1-sigma)*RR)*Gx(:,pindx.lkdP))*C2P; ...
                    (1-sigma)*d0(Gx(:,pindx.lkdP))*C2P; ...
                    sigma*d0(Gx(:,pindx.lkdP))*C2P; ...
-                   RR*d0(Gx(:,pindx.lkdP))*C2P];
+                   d0((1-sigma)*RR*Gx(:,pindx.lkdP))*C2P];
             
             Cx(:,pindx.lkdP) = mfactor(FD, tmp);
         end
         
         % bP_T
         if (par.opt_bP_T == on)
-            tmp = [-(1+RR)*d0(Gx(:,pindx.bP_T))*C2P; ...
+            tmp = [-d0((I+(1-sigma)*RR)*Gx(:,pindx.bP_T))*C2P; ...
                    (1-sigma)*d0(Gx(:,pindx.bP_T))*C2P; ...
                    sigma*d0(Gx(:,pindx.bP_T))*C2P; ...
-                   RR*d0(Gx(:,pindx.bP_T))*C2P];
+                   d0((1-sigma)*RR*Gx(:,pindx.bP_T))*C2P];
             
             Cx(:,pindx.bP_T) = mfactor(FD, tmp);
         end
         
         % bP
         if (par.opt_bP == on)
-            tmp = [-(1+RR)*d0(Gx(:,pindx.lbP))*C2P;...
+            tmp = [-d0((I+(1-sigma)*RR)*Gx(:,pindx.lbP))*C2P;...
                    (1-sigma)*d0(Gx(:,pindx.lbP))*C2P;...
                    sigma*d0(Gx(:,pindx.lbP))*C2P;...
-                   RR*d0(Gx(:,pindx.lbP))*C2P];
+                   d0((1-sigma)*RR*Gx(:,pindx.lbP))*C2P];
             
             Cx(:,pindx.lbP) = mfactor(FD, tmp);
         end
         
         % alpha
         if (par.opt_alpha == on)
-            tmp = [-(1+RR)*d0(Gx(:,pindx.lalpha))*C2P; ...
+            tmp = [-d0((I+(1-sigma)*RR)*Gx(:,pindx.lalpha))*C2P; ...
                    (1-sigma)*d0(Gx(:,pindx.lalpha))*C2P; ...
                    sigma*d0(Gx(:,pindx.lalpha))*C2P; ...
-                   RR*d0(Gx(:,pindx.lalpha))*C2P];
+                   d0((1-sigma)*RR*Gx(:,pindx.lalpha))*C2P];
             
             Cx(:,pindx.lalpha) = mfactor(FD, tmp);
         end
         
         % beta
         if (par.opt_beta == on)
-            tmp = [-(1+RR)*d0(Gx(:,pindx.lbeta))*C2P;...
+            tmp = [-d0((I+(1-sigma)*RR)*Gx(:,pindx.lbeta))*C2P;...
                    (1-sigma)*d0(Gx(:,pindx.lbeta))*C2P;...
                    sigma*d0(Gx(:,pindx.lbeta))*C2P;...
-                   RR*d0(Gx(:,pindx.lbeta))*C2P];
+                   d0((1-sigma)*RR*Gx(:,pindx.lbeta))*C2P];
             
             Cx(:,pindx.lbeta) = mfactor(FD, tmp);
         end
@@ -281,6 +303,24 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
             tmp = bC*[Z; -PFD_bb*POC; Z; Z];
             
             Cx(:,pindx.lbC) = mfactor(FD, tmp);
+        end
+
+        % kPIC
+        if (par.opt_kPIC == on)
+            [~,Gout]  = buildPFD(par,'PIC') ;
+            PFD_k     = Gout.PFD_k ;
+            par.PFD_k = PFD_k      ;
+            % tmp = [Z; ...
+                   % Z; ...
+                   % Z; ...
+                   % -kPIC*PFD_k*PIC] ;
+
+            tmp = [kPIC*PIC; ...
+                   Z; ...
+                   Z; ...
+                   -kPIC*PIC];
+            
+            Cx(:,pindx.lkPIC) = mfactor(FD, tmp) ;
         end
         
         % d
@@ -310,30 +350,43 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
             
             Cx(:,pindx.lkdC) = mfactor(FD, tmp);
         end
-        
-        % RR
-        if (par.opt_RR == on)
-            tmp = RR*[-G*C2P; Z; Z; G*C2P];
+
+        % R_Si
+        if (par.opt_R_Si == on)
+            tmp = [-(1-sigma)*RR_Si*(G*C2P); ...
+                   Z; ...
+                   Z; ...
+                   (1-sigma)*RR_Si*(G*C2P)];
             
-            Cx(:,pindx.lRR) = mfactor(FD, tmp);
+            Cx(:,pindx.lR_Si) = mfactor(FD, tmp);
+        end
+        
+        % rR
+        if (par.opt_rR == on)
+            tmp = [-(1-sigma)*RR_rR*(G*C2P); ...
+                   Z; ...
+                   Z; ...
+                   (1-sigma)*RR_rR*(G*C2P)];
+            
+            Cx(:,pindx.lrR) = mfactor(FD, tmp);
         end
         
         % cc
         if (par.opt_cc == on)
-            tmp = cc*[-(1+RR)*G*C2P_cc; ...
+            tmp = cc*[-(I+(1-sigma)*RR)*(G*C2P_cc); ...
                       (1-sigma)*G*C2P_cc; ...
                       sigma*G*C2P_cc; ...
-                      RR*G*C2P_cc];
+                      (1-sigma)*RR*(G*C2P_cc)];
             
             Cx(:,pindx.lcc) = mfactor(FD, tmp);
         end
         
         % dd
         if (par.opt_dd == on)
-            tmp = dd*[-(1+RR)*G*C2P_dd; ...
+            tmp = dd*[-(I+(1-sigma)*RR)*(G*C2P_dd); ...
                       (1-sigma)*G*C2P_dd; ...
                       sigma*G*C2P_dd; ...
-                      RR*G*C2P_dd];
+                      (1-sigma)*RR*(G*C2P_dd)];
             
             Cx(:,pindx.ldd) = mfactor(FD, tmp);
         end
@@ -361,41 +414,41 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
                 if (par.opt_sigma == on)
                     % sigma sigma
                     if (jj == jk & jj == pindx.lsigma)
-                        tmp = sigma*[Z; ...
+                        tmp = sigma*[RR*G*C2P + 2*d0(RR*Gx(:,jj))*C2P; ...
                                      -G*C2P - 2*d0(Gx(:,jj))*C2P;...
-                                     G*C2P + 2*d0(Gx(:,jj))*C2P;...
-                                     Z] + ...
-                              [-(1+RR)*d0(Gxx(:,kk))*C2P; ...
+                                      G*C2P + 2*d0(Gx(:,jj))*C2P;...
+                                     -RR*G*C2P - 2*d0(RR*Gx(:,jj))*C2P] + ...
+                              [-d0((I+(1-sigma)*RR)*Gxx(:,kk))*C2P; ...
                                (1-sigma)*d0(Gxx(:,kk))*C2P; ...
                                sigma*d0(Gxx(:,kk))*C2P; ...
-                               RR*d0(Gxx(:,kk))*C2P];
+                               d0((1-sigma)*RR*Gxx(:,kk))*C2P];
                         
                         Cxx(:,kk) = mfactor(FD, tmp);
                         %pairs not assciated with sigma;
                     elseif (jj ~= pindx.lsigma & jk ~= pindx.lsigma)
-                        tmp = [-(1+RR)*d0(Gxx(:,kk))*C2P; ...
+                        tmp = [-d0((I+(1-sigma)*RR)*Gxx(:,kk))*C2P; ...
                                (1-sigma)*d0(Gxx(:,kk))*C2P; ...
                                sigma*d0(Gxx(:,kk))*C2P; ...
-                               RR*d0(Gxx(:,kk))*C2P];
+                               d0((1-sigma)*RR*Gxx(:,kk))*C2P];
                         
                         Cxx(:,kk) = mfactor(FD, tmp);
                     else 
-                        tmp = [Z;
+                        tmp = [RR*sigma*d0(Gx(:,jk))*C2P; ...
                                -sigma*d0(Gx(:,jk))*C2P; ...
                                sigma*d0(Gx(:,jk))*C2P; ...
-                               Z] + ...
-                              [-(1+RR)*d0(Gxx(:,kk))*C2P; ...
+                               -RR*sigma*d0(Gx(:,jk))*C2P] + ...
+                              [-d0((I+(1-sigma)*RR)*Gxx(:,kk))*C2P; ...
                                (1-sigma)*d0(Gxx(:,kk))*C2P; ...
                                sigma*d0(Gxx(:,kk))*C2P; ...
-                               RR*d0(Gxx(:,kk))*C2P];
+                               d0((1-sigma)*RR*Gxx(:,kk))*C2P];
                         
                         Cxx(:,kk) = mfactor(FD, tmp);
                     end
                 else 
-                    tmp = [-(1+RR)*d0(Gxx(:,kk))*C2P; ...
+                    tmp = [-d0((I+(1-sigma)*RR)*Gxx(:,kk))*C2P; ...
                            (1-sigma)*d0(Gxx(:,kk))*C2P; ...
                            sigma*d0(Gxx(:,kk))*C2P; ...
-                           RR*d0(Gxx(:,kk))*C2P];
+                           d0((1-sigma)*RR*Gxx(:,kk))*C2P];
                     
                     Cxx(:,kk) = mfactor(FD, tmp);
                     % sigma foo
@@ -423,6 +476,17 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
                     Z ; ...
                     Z];
             
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
+
+        % sigma kPIC
+        if (par.opt_sigma & par.opt_kPIC)
+            kk = kk + 1;
+            tmp =  [kPIC*PICx(:,pindx.lsigma) ; ...
+                    Z ;
+                    Z ; ...
+                    [-kPIC*PICx(:,pindx.lsigma)]];
+            % -kPIC*PFD_k*PICx(:,pindx.lsigma) + ...
             Cxx(:,kk) = mfactor(FD, tmp);
         end
         
@@ -459,13 +523,32 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
             Cxx(:,kk) = mfactor(FD, tmp);
         end
         
-        % sigma RR
-        if (par.opt_sigma & par.opt_RR)
+        % sigma R_Si
+        if (par.opt_sigma & par.opt_R_Si)
             kk = kk + 1;
-            tmp = RR*[-d0(Gx(:,pindx.lsigma))*C2P; ...
-                      Z ; ...
-                      Z ; ...
-                      d0(Gx(:,pindx.lsigma))*C2P];
+            tmp = [sigma*RR_Si*G*C2P ; ...
+                   Z ; ...
+                   Z ; ...
+                   -sigma*RR_Si*G*C2P] + ... 
+                  [-d0((1-sigma)*RR_Si*Gx(:,pindx.lsigma))*C2P; ...
+                   Z ; ...
+                   Z ; ...
+                   d0((1-sigma)*RR_Si*Gx(:,pindx.lsigma))*C2P];
+            
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
+
+        % sigma rR
+        if (par.opt_sigma & par.opt_rR)
+            kk = kk + 1;
+            tmp = [sigma*RR_rR*G*C2P ; ...
+                   Z ; ...
+                   Z ; ...
+                   -sigma*RR_rR*G*C2P] + ... 
+                  [-d0((1-sigma)*RR_rR*Gx(:,pindx.lsigma))*C2P; ...
+                   Z ; ...
+                   Z ; ...
+                   d0((1-sigma)*RR_rR*Gx(:,pindx.lsigma))*C2P];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
@@ -473,10 +556,14 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
         % sigma cc
         if (par.opt_sigma & par.opt_cc)
             kk  = kk + 1;
-            tmp = cc*[-(1+RR)*d0(Gx(:,pindx.lsigma))*C2P_cc; ...
-                      (1-sigma)*d0(Gx(:,pindx.lsigma))*C2P_cc-sigma*G*C2P_cc; ...
-                      sigma*d0(Gx(:,pindx.lsigma))*C2P_cc+sigma*G*C2P_cc; ...
-                      RR*d0(Gx(:,pindx.lsigma))*C2P_cc];
+            tmp = cc*[RR*sigma*G*C2P_cc; ...
+                      -sigma*G*C2P_cc; ...
+                      sigma*G*C2P_cc; ...
+                      -RR*sigma*G*C2P_cc] + ...
+                  cc*[-d0((I+(1-sigma)*RR)*Gx(:,pindx.lsigma))*C2P_cc; ...
+                      (1-sigma)*d0(Gx(:,pindx.lsigma))*C2P_cc; ... 
+                      sigma*d0(Gx(:,pindx.lsigma))*C2P_cc; ... 
+                      d0((1-sigma)*RR*Gx(:,pindx.lsigma))*C2P_cc];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
@@ -484,10 +571,14 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
         % sigma dd
         if (par.opt_sigma & par.opt_dd)
             kk  = kk + 1;
-            tmp = dd*[-(1+RR)*d0(Gx(:,pindx.lsigma))*C2P_dd; ...
-                      (1-sigma)*d0(Gx(:,pindx.lsigma))*C2P_dd-sigma*G*C2P_dd; ...
-                      sigma*d0(Gx(:,pindx.lsigma))*C2P_dd+sigma*G*C2P_dd; ...
-                      RR*d0(Gx(:,pindx.lsigma))*C2P_dd];
+            tmp = dd*[RR*sigma*G*C2P_dd; ...
+                      -sigma*G*C2P_dd; ...
+                      sigma*G*C2P_dd; ...
+                      -RR*sigma*G*C2P_dd] + ...
+                  dd*[-d0((I+(1-sigma)*RR)*Gx(:,pindx.lsigma))*C2P_dd; ...
+                      (1-sigma)*d0(Gx(:,pindx.lsigma))*C2P_dd; ...
+                      sigma*d0(Gx(:,pindx.lsigma))*C2P_dd; ... 
+                      d0((1-sigma)*RR*Gx(:,pindx.lsigma))*C2P_dd];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
@@ -510,6 +601,17 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
                    -bC*PFD_bb*POCx(:,pindx.kP_T); ...
                    Z ; ...
                    Z];
+            
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
+
+        % kP_T kPIC
+        if (par.opt_kP_T & par.opt_kPIC)
+            kk = kk + 1;
+            tmp =  [kPIC*PICx(:,pindx.kP_T) ; ...
+                    Z ;
+                    Z ; ...
+                    -kPIC*PICx(:,pindx.kP_T)];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
@@ -547,13 +649,24 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
             Cxx(:,kk) = mfactor(FD, tmp);
         end
         
-        % kP_T RR
-        if (par.opt_kP_T & par.opt_RR)
+        % kP_T R_Si
+        if (par.opt_kP_T & par.opt_R_Si)
             kk = kk + 1;
-            tmp = [-RR*d0(Gx(:,pindx.kP_T))*C2P; ...
+            tmp = [-d0((1-sigma)*RR_Si*Gx(:,pindx.kP_T))*C2P; ...
                    Z ; ...
                    Z ; ...
-                   RR*d0(Gx(:,pindx.kP_T))*C2P];
+                   d0((1-sigma)*RR_Si*Gx(:,pindx.kP_T))*C2P];
+            
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
+
+        % kP_T RR_rR
+        if (par.opt_kP_T & par.opt_rR)
+            kk = kk + 1;
+            tmp = [-d0((1-sigma)*RR_rR*Gx(:,pindx.kP_T))*C2P; ...
+                   Z ; ...
+                   Z ; ...
+                   d0((1-sigma)*RR_rR*Gx(:,pindx.kP_T))*C2P];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
@@ -561,10 +674,10 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
         % kP_T cc
         if (par.opt_kP_T & par.opt_cc)
             kk = kk + 1;
-            tmp = cc*[-(1+RR)*d0(Gx(:,pindx.kP_T))*C2P_cc; ...
+            tmp = cc*[-d0((I+(1-sigma)*RR)*Gx(:,pindx.kP_T))*C2P_cc; ...
                       (1-sigma)*d0(Gx(:,pindx.kP_T))*C2P_cc; ...
                       sigma*d0(Gx(:,pindx.kP_T))*C2P_cc; ...
-                      RR*d0(Gx(:,pindx.kP_T))*C2P_cc];
+                      d0((1-sigma)*RR*Gx(:,pindx.kP_T))*C2P_cc];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
@@ -572,10 +685,10 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
         % kP_T dd
         if (par.opt_kP_T & par.opt_dd)
             kk = kk + 1;
-            tmp = dd*[-(1+RR)*d0(Gx(:,pindx.kP_T))*C2P_dd; ...
+            tmp = dd*[-d0((I+(1-sigma)*RR)*Gx(:,pindx.kP_T))*C2P_dd; ...
                       (1-sigma)*d0(Gx(:,pindx.kP_T))*C2P_dd; ...
                       sigma*d0(Gx(:,pindx.kP_T))*C2P_dd; ...
-                      RR*d0(Gx(:,pindx.kP_T))*C2P_dd];
+                      d0((1-sigma)*RR*Gx(:,pindx.kP_T))*C2P_dd];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
@@ -598,6 +711,17 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
                    -bC*PFD_bb*POCx(:,pindx.lkdP); ...
                    Z ; ...
                    Z];
+            
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
+
+        % kdP kPIC
+        if (par.opt_kdP & par.opt_kPIC)
+            kk = kk + 1;
+            tmp =  [kPIC*PICx(:,pindx.lkdP) ; ...
+                    Z ;
+                    Z ; ...
+                    -kPIC*PICx(:,pindx.lkdP)];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
@@ -635,13 +759,24 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
             Cxx(:,kk) = mfactor(FD, tmp);
         end
         
-        % kdP RR
-        if (par.opt_kdP & par.opt_RR)
+        % kdP R_Si
+        if (par.opt_kdP & par.opt_R_Si)
             kk  = kk + 1;
-            tmp = [-RR*d0(Gx(:,pindx.lkdP))*C2P; ...
+            tmp = [-d0((1-sigma)*RR_Si*Gx(:,pindx.lkdP))*C2P; ...
                    Z ; ...
                    Z ; ...
-                   RR*d0(Gx(:,pindx.lkdP))*C2P];
+                   d0((1-sigma)*RR_Si*Gx(:,pindx.lkdP))*C2P];
+            
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
+
+        % kdP rR
+        if (par.opt_kdP & par.opt_rR)
+            kk  = kk + 1;
+            tmp = [-d0((1-sigma)*RR_rR*Gx(:,pindx.lkdP))*C2P; ...
+                   Z ; ...
+                   Z ; ...
+                   d0((1-sigma)*RR_rR*Gx(:,pindx.lkdP))*C2P];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
@@ -649,10 +784,10 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
         % kdP cc
         if (par.opt_kdP & par.opt_cc)
             kk  = kk + 1;
-            tmp = cc*[-(1+RR)*d0(Gx(:,pindx.lkdP))*C2P_cc; ...
+            tmp = cc*[-d0((I+(1-sigma)*RR)*Gx(:,pindx.lkdP))*C2P_cc; ...
                       (1-sigma)*d0(Gx(:,pindx.lkdP))*C2P_cc; ...
                       sigma*d0(Gx(:,pindx.lkdP))*C2P_cc; ...
-                      RR*d0(Gx(:,pindx.lkdP))*C2P_cc];
+                      d0((1-sigma)*RR*Gx(:,pindx.lkdP))*C2P_cc];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
@@ -660,10 +795,10 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
         % kdP dd
         if (par.opt_kdP & par.opt_dd)
             kk  = kk + 1;
-            tmp = dd*[-(1+RR)*d0(Gx(:,pindx.lkdP))*C2P_dd; ...
+            tmp = dd*[-d0((I+(1-sigma)*RR)*Gx(:,pindx.lkdP))*C2P_dd; ...
                       (1-sigma)*d0(Gx(:,pindx.lkdP))*C2P_dd; ...
                       sigma*d0(Gx(:,pindx.lkdP))*C2P_dd; ...
-                      RR*d0(Gx(:,pindx.lkdP))*C2P_dd];
+                      d0((1-sigma)*RR*Gx(:,pindx.lkdP))*C2P_dd];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
@@ -686,6 +821,17 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
                    -bC*PFD_bb*POCx(:,pindx.bP_T); ...
                    Z ; ...
                    Z];
+            
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
+
+        % bP_T kPIC
+        if (par.opt_bP_T & par.opt_kPIC)
+            kk = kk + 1;
+            tmp =  [kPIC*PICx(:,pindx.bP_T) ; ...
+                    Z ;
+                    Z ; ...
+                    -kPIC*PICx(:,pindx.bP_T)];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
@@ -723,13 +869,24 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
             Cxx(:,kk) = mfactor(FD, tmp);
         end
         
-        % bP_T RR
-        if (par.opt_bP_T & par.opt_RR)
+        % bP_T R_Si
+        if (par.opt_bP_T & par.opt_R_Si)
             kk = kk + 1;
-            tmp = RR*[-d0(Gx(:,pindx.bP_T))*C2P; ...
-                      Z ; ...
-                      Z ; ...
-                      d0(Gx(:,pindx.bP_T))*C2P];
+            tmp = [-d0((1-sigma)*RR_Si*Gx(:,pindx.bP_T))*C2P ; ...
+                   Z ; ...
+                   Z ; ...
+                   d0((1-sigma)*RR_Si*Gx(:,pindx.bP_T))*C2P] ;
+            
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
+
+        % bP_T rR
+        if (par.opt_bP_T & par.opt_rR)
+            kk = kk + 1;
+            tmp = [-d0((1-sigma)*RR_rR*Gx(:,pindx.bP_T))*C2P; ...
+                   Z ; ...
+                   Z ; ...
+                   d0((1-sigma)*RR_rR*Gx(:,pindx.bP_T))*C2P];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
@@ -737,10 +894,10 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
         % bP_T cc
         if (par.opt_bP_T & par.opt_cc)
             kk = kk + 1;
-            tmp = cc*[-(1+RR)*d0(Gx(:,pindx.bP_T))*C2P_cc; ...
+            tmp = cc*[-d0((I+(1-sigma)*RR)*Gx(:,pindx.bP_T))*C2P_cc; ...
                       (1-sigma)*d0(Gx(:,pindx.bP_T))*C2P_cc; ...
                       sigma*d0(Gx(:,pindx.bP_T))*C2P_cc; ...
-                      RR*d0(Gx(:,pindx.bP_T))*C2P_cc];
+                      d0((1-sigma)*RR*Gx(:,pindx.bP_T))*C2P_cc];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
@@ -748,10 +905,10 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
         % bP_T dd
         if (par.opt_bP_T & par.opt_dd)
             kk = kk + 1;
-            tmp = dd*[-(1+RR)*d0(Gx(:,pindx.bP_T))*C2P_dd; ...
+            tmp = dd*[-d0((I+(1-sigma)*RR)*Gx(:,pindx.bP_T))*C2P_dd; ...
                       (1-sigma)*d0(Gx(:,pindx.bP_T))*C2P_dd; ...
                       sigma*d0(Gx(:,pindx.bP_T))*C2P_dd; ...
-                      RR*d0(Gx(:,pindx.bP_T))*C2P_dd];
+                      d0((1-sigma)*RR*Gx(:,pindx.bP_T))*C2P_dd];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
@@ -774,6 +931,17 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
                    -bC*PFD_bb*POCx(:,pindx.lbP); ...
                    Z; ...
                    Z];
+            
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
+
+        % bP kPIC
+        if (par.opt_bP & par.opt_kPIC)
+            kk = kk + 1;
+            tmp =  [kPIC*PICx(:,pindx.lbP) ; ...
+                    Z ;
+                    Z ; ...
+                    -kPIC*PICx(:,pindx.lbP)];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
@@ -811,13 +979,24 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
             Cxx(:,kk) = mfactor(FD, tmp);
         end
         
-        % bP RR
-        if (par.opt_bP & par.opt_RR)
+        % bP R_Si
+        if (par.opt_bP & par.opt_R_Si)
             kk = kk + 1;
-            tmp = RR*[-d0(Gx(:,pindx.lbP))*C2P; ...
-                      Z ; ...
-                      Z ; ...
-                      d0(Gx(:,pindx.lbP))*C2P];
+            tmp = [-d0((1-sigma)*RR_Si*Gx(:,pindx.lbP))*C2P; ...
+                   Z ; ...
+                   Z ; ...
+                   d0((1-sigma)*RR_Si*Gx(:,pindx.lbP))*C2P];
+            
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
+
+        % bP rR
+        if (par.opt_bP & par.opt_rR)
+            kk = kk + 1;
+            tmp = [-d0((1-sigma)*RR_rR*Gx(:,pindx.lbP))*C2P; ...
+                   Z ; ...
+                   Z ; ...
+                   d0((1-sigma)*RR_rR*Gx(:,pindx.lbP))*C2P];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
@@ -825,10 +1004,10 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
         % bP cc
         if (par.opt_bP & par.opt_cc)
             kk = kk + 1;
-            tmp = cc*[-(1+RR)*d0(Gx(:,pindx.lbP))*C2P_cc; ...
+            tmp = cc*[-d0((I+(1-sigma)*RR)*Gx(:,pindx.lbP))*C2P_cc; ...
                       (1-sigma)*d0(Gx(:,pindx.lbP))*C2P_cc;...
                       sigma*d0(Gx(:,pindx.lbP))*C2P_cc;...
-                      RR*d0(Gx(:,pindx.lbP))*C2P_cc];
+                      d0((1-sigma)*RR*Gx(:,pindx.lbP))*C2P_cc];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
@@ -836,10 +1015,10 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
         % bP dd
         if (par.opt_bP & par.opt_dd)
             kk = kk + 1;
-            tmp = dd*[-(1+RR)*d0(Gx(:,pindx.lbP))*C2P_dd; ...
+            tmp = dd*[-d0((I+(1-sigma)*RR)*Gx(:,pindx.lbP))*C2P_dd; ...
                       (1-sigma)*d0(Gx(:,pindx.lbP))*C2P_dd;...
                       sigma*d0(Gx(:,pindx.lbP))*C2P_dd;...
-                      RR*d0(Gx(:,pindx.lbP))*C2P_dd];
+                      d0((1-sigma)*RR*Gx(:,pindx.lbP))*C2P_dd];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
@@ -862,6 +1041,17 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
                    -bC*PFD_bb*POCx(:,pindx.lalpha); ...
                    Z ; ...
                    Z];
+            
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
+
+        % alpha kPIC
+        if (par.opt_alpha & par.opt_kPIC)
+            kk = kk + 1;
+            tmp =  [kPIC*PICx(:,pindx.lalpha) ; ...
+                    Z ;
+                    Z ; ...
+                    -kPIC*PICx(:,pindx.lalpha)];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
@@ -899,13 +1089,24 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
             Cxx(:,kk) = mfactor(FD, tmp);
         end
         
-        % alpha RR
-        if (par.opt_alpha & par.opt_RR)
+        % alpha R_Si
+        if (par.opt_alpha & par.opt_R_Si)
             kk  = kk + 1;
-            tmp = RR*[-d0(Gx(:,pindx.lalpha))*C2P; ...
-                      Z ; ...
-                      Z ; ...
-                      d0(Gx(:,pindx.lalpha))*C2P];
+            tmp = [-d0((1-sigma)*RR_Si*Gx(:,pindx.lalpha))*C2P; ...
+                   Z ; ...
+                   Z ; ...
+                   d0((1-sigma)*RR_Si*Gx(:,pindx.lalpha))*C2P];
+            
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
+
+        % alpha rR
+        if (par.opt_alpha & par.opt_rR)
+            kk  = kk + 1;
+            tmp = [-d0((1-sigma)*RR_rR*Gx(:,pindx.lalpha))*C2P; ...
+                   Z ; ...
+                   Z ; ...
+                   d0((1-sigma)*RR_rR*Gx(:,pindx.lalpha))*C2P];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
@@ -913,10 +1114,10 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
         % alpha cc
         if (par.opt_alpha & par.opt_cc)
             kk  = kk + 1;
-            tmp = cc*[-(1+RR)*d0(Gx(:,pindx.lalpha))*C2P_cc; ...
+            tmp = cc*[-d0((I+(1-sigma)*RR)*Gx(:,pindx.lalpha))*C2P_cc; ...
                       (1-sigma)*d0(Gx(:,pindx.lalpha))*C2P_cc; ...
                       sigma*d0(Gx(:,pindx.lalpha))*C2P_cc; ...
-                      RR*d0(Gx(:,pindx.lalpha))*C2P_cc];
+                      d0((1-sigma)*RR*Gx(:,pindx.lalpha))*C2P_cc];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
@@ -924,10 +1125,10 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
         % alpha dd
         if (par.opt_alpha & par.opt_dd)
             kk = kk + 1;
-            tmp = dd*[-(1+RR)*d0(Gx(:,pindx.lalpha))*C2P_dd; ...
+            tmp = dd*[-d0((I+(1-sigma)*RR)*Gx(:,pindx.lalpha))*C2P_dd; ...
                       (1-sigma)*d0(Gx(:,pindx.lalpha))*C2P_dd; ...
                       sigma*d0(Gx(:,pindx.lalpha))*C2P_dd; ...
-                      RR*d0(Gx(:,pindx.lalpha))*C2P_dd];
+                      d0((1-sigma)*RR*Gx(:,pindx.lalpha))*C2P_dd];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
@@ -950,6 +1151,17 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
                    -bC*PFD_bb*POCx(:,pindx.lbeta); ...
                    Z ; ...
                    Z];
+            
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
+
+        % beta kPIC
+        if (par.opt_beta & par.opt_kPIC)
+            kk = kk + 1;
+            tmp =  [kPIC*PICx(:,pindx.lbeta) ; ...
+                    Z ;
+                    Z ; ...
+                    -kPIC*PICx(:,pindx.lbeta)];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
@@ -987,13 +1199,24 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
             Cxx(:,kk) = mfactor(FD, tmp);
         end
         
-        % beta RR
-        if (par.opt_beta & par.opt_RR)
+        % beta R_Si
+        if (par.opt_beta & par.opt_R_Si)
             kk = kk + 1;
-            tmp = RR*[-d0(Gx(:,pindx.lbeta))*C2P; ...
-                      Z ; ...
-                      Z ; ...
-                      d0(Gx(:,pindx.lbeta))*C2P];
+            tmp = [-d0((1-sigma)*RR_Si*Gx(:,pindx.lbeta))*C2P; ...
+                   Z ; ...
+                   Z ; ...
+                   d0((1-sigma)*RR_Si*Gx(:,pindx.lbeta))*C2P];
+            
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
+
+        % beta rR
+        if (par.opt_beta & par.opt_rR)
+            kk = kk + 1;
+            tmp = [-d0((1-sigma)*RR_rR*Gx(:,pindx.lbeta))*C2P; ...
+                   Z ; ...
+                   Z ; ...
+                   d0((1-sigma)*RR_rR*Gx(:,pindx.lbeta))*C2P];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
@@ -1001,10 +1224,10 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
         % beta cc
         if (par.opt_beta & par.opt_cc)
             kk = kk + 1;
-            tmp = cc*[-(1+RR)*d0(Gx(:,pindx.lbeta))*C2P_cc; ...
+            tmp = cc*[-d0((I+(1-sigma)*RR)*Gx(:,pindx.lbeta))*C2P_cc; ...
                       (1-sigma)*d0(Gx(:,pindx.lbeta))*C2P_cc; ...
                       sigma*d0(Gx(:,pindx.lbeta))*C2P_cc; ...
-                      RR*d0(Gx(:,pindx.lbeta))*C2P_cc];
+                      d0((1-sigma)*RR*Gx(:,pindx.lbeta))*C2P_cc];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
@@ -1012,10 +1235,10 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
         % beta dd
         if (par.opt_beta & par.opt_dd)
             kk = kk + 1;
-            tmp = dd*[-(1+RR)*d0(Gx(:,pindx.lbeta))*C2P_dd; ...
+            tmp = dd*[-d0((I+(1-sigma)*RR)*Gx(:,pindx.lbeta))*C2P_dd; ...
                       (1-sigma)*d0(Gx(:,pindx.lbeta))*C2P_dd; ...
                       sigma*d0(Gx(:,pindx.lbeta))*C2P_dd; ...
-                      RR*d0(Gx(:,pindx.lbeta))*C2P_dd];
+                      d0((1-sigma)*RR*Gx(:,pindx.lbeta))*C2P_dd];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
@@ -1046,6 +1269,17 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
                      PFD_bm*POCx(:,pindx.lbC) - ...
                      bC*PFD_bb*POCx(:,pindx.bC_T)];
                     Z; Z];
+            
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
+
+        % bC_T kPIC
+        if (par.opt_bC_T & par.opt_kPIC)
+            kk = kk + 1;
+            tmp =  [kPIC*PICx(:,pindx.bC_T) ; ...
+                    -PFD_bm*POCx(:,pindx.lkPIC); ...
+                    Z ; ...
+                    -kPIC*PICx(:,pindx.bC_T)];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
@@ -1083,11 +1317,22 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
             Cxx(:,kk) = mfactor(FD, tmp);
         end
         
-        % bC_T RR
-        if (par.opt_bC_T & par.opt_RR)
+        % bC_T R_Si
+        if (par.opt_bC_T & par.opt_R_Si)
             kk = kk + 1;
             tmp = [Z ; ...
-                   -PFD_bm*POCx(:,pindx.lRR); ...
+                   -PFD_bm*POCx(:,pindx.lR_Si); ...
+                   Z ; ...
+                   Z];
+            
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
+
+        % bC_T rR
+        if (par.opt_bC_T & par.opt_rR)
+            kk = kk + 1;
+            tmp = [Z ; ...
+                   -PFD_bm*POCx(:,pindx.lrR); ...
                    Z ; ...
                    Z];
             
@@ -1130,6 +1375,17 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
+
+        % bC kPIC
+        if (par.opt_bC & par.opt_kPIC)
+            kk = kk + 1;
+            tmp =  [kPIC*PICx(:,pindx.lbC) ; ...
+                    -PFD_bb*POCx(:,pindx.lkPIC); ...
+                    Z ; ...
+                    -kPIC*PICx(:,pindx.lbC)];
+            
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
         
         % bC d
         if (par.opt_bC & par.opt_d)
@@ -1164,11 +1420,22 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
             Cxx(:,kk) = mfactor(FD, tmp);
         end
         
-        % bC RR
-        if (par.opt_bC & par.opt_RR)
+        % bC R_Si
+        if (par.opt_bC & par.opt_R_Si)
             kk = kk + 1;
             tmp = bC*[Z ; ...
-                      -PFD_bb*POCx(:,pindx.lRR); ...
+                      -PFD_bb*POCx(:,pindx.lR_Si); ...
+                      Z ; ...
+                      Z];
+            
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
+
+        % bC rR
+        if (par.opt_bC & par.opt_rR)
+            kk = kk + 1;
+            tmp = bC*[Z ; ...
+                      -PFD_bb*POCx(:,pindx.lrR); ...
                       Z ; ...
                       Z];
             
@@ -1196,7 +1463,107 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
+
+        % kPIC kPIC
+        if (par.opt_kPIC & par.opt_kPIC)
+            kk = kk + 1;
+            [~,~,Hout] = buildPFD(par,'PIC');
+            PFD_k_k = Hout.PFD_k_k;
+            par.PFD_k_k = PFD_k_k;
+            tmp =  [kPIC*PIC + 2*kPIC*PICx(:,pindx.lkPIC) ; ...
+                    Z ;
+                    Z ; ...
+                    -kPIC*PIC - 2*kPIC*PICx(:,pindx.lkPIC)];
+                     % -kPIC*PFD_k*PIC - kPIC*kPIC*PFD_k_k*PIC + ...
+                     % -2*kPIC*PFD_k*PICx(:,pindx.lkPIC)]];
+            
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
+
+        % kPIC d
+        if (par.opt_kPIC & par.opt_d)
+            kk = kk + 1;
+            [~,~,Hout] = buildPFD(par,'PIC');
+            PFD_d_k = Hout.PFD_d_k;
+            par.PFD_d_k = PFD_d_k;
+            tmp =  [kPIC*PICx(:,pindx.ld) ; ...
+                    Z ;
+                    Z ; ...
+                    [-kPIC*PICx(:,pindx.ld) + ...
+                     -d*PFD_d*PICx(:,pindx.lkPIC)]];
+            % -d*kPIC*PFD_d_k*PIC + ...
+            % -kPIC*PFD_k*PICx(:,pindx.ld) + ...
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
+
+        % kPIC kC_T
+        if (par.opt_kPIC & par.opt_kC_T)
+            kk  = kk + 1;
+            tmp = [[kC_kC_T*DOCx(:,pindx.lkPIC) + ...
+                    kPIC*PICx(:,pindx.kC_T)]; ...
+                   Z; ...
+                   -kC_kC_T*DOCx(:,pindx.lkPIC); ...
+                   -kPIC*PICx(:,pindx.kC_T)];
+            
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
         
+        % kPIC kdC
+        if (par.opt_kPIC & par.opt_kdC)
+            kk = kk + 1;
+            tmp = [[kC_kdC*DOCx(:,pindx.lkPIC) + ...
+                    kPIC*PICx(:,pindx.lkdC)]; ...
+                   Z ; ...
+                   -kC_kdC*DOCx(:,pindx.lkPIC); ...
+                   -kPIC*PICx(:,pindx.lkdC)];
+            
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
+        
+        % kPIC R_Si
+        if (par.opt_kPIC & par.opt_R_Si)
+            kk = kk + 1;
+            tmp = [kPIC*PICx(:,pindx.lR_Si); ...
+                   Z; ...
+                   Z; ...
+                   -kPIC*PICx(:,pindx.lR_Si)];
+            
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
+
+        % kPIC rR
+        if (par.opt_kPIC & par.opt_rR)
+            kk = kk + 1;
+            tmp = [kPIC*PICx(:,pindx.lrR); ...
+                   Z; ...
+                   Z; ...
+                   -kPIC*PICx(:,pindx.lrR)];
+            
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
+        
+        % kPIC cc
+        if (par.opt_kPIC & par.opt_cc)
+            kk = kk + 1;
+            tmp = [kPIC*PICx(:,pindx.lcc); ...
+                   Z; ...
+                   Z; ...
+                   -kPIC*PICx(:,pindx.lcc)];
+            
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
+        
+        % kPIC dd
+        if (par.opt_kPIC & par.opt_dd)
+            kk = kk + 1;
+            tmp = [kPIC*PICx(:,pindx.ldd) ; ...
+                   Z; ...
+                   Z; ...
+                   -kPIC*PICx(:,pindx.ldd)];
+            
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
+
         % d d
         if (par.opt_d & par.opt_d)
             kk = kk + 1;
@@ -1206,7 +1573,8 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
             tmp = d*[Z ; ...
                      Z ; ...
                      Z ; ...
-                     -PFD_d*PIC-d*PFD_d_d*PIC-2*PFD_d*PICx(:,pindx.ld)];
+                     [-PFD_d*PIC - d*PFD_d_d*PIC + ...
+                      -2*PFD_d*PICx(:,pindx.ld)]];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
@@ -1233,13 +1601,24 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
             Cxx(:,kk) = mfactor(FD, tmp);
         end
         
-        % d RR
-        if (par.opt_d & par.opt_RR)
+        % d R_Si
+        if (par.opt_d & par.opt_R_Si)
             kk = kk + 1;
             tmp = [Z; ...
                    Z; ...
                    Z; ...
-                   -d*PFD_d*PICx(:,pindx.lRR)];
+                   -d*PFD_d*PICx(:,pindx.lR_Si)];
+            
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
+
+        % d rR
+        if (par.opt_d & par.opt_rR)
+            kk = kk + 1;
+            tmp = [Z; ...
+                   Z; ...
+                   Z; ...
+                   -d*PFD_d*PICx(:,pindx.lrR)];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
@@ -1292,12 +1671,23 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
             Cxx(:,kk) = mfactor(FD, tmp);
         end
 
-        % kC_T RR
-        if (par.opt_kC_T & par.opt_RR)
+        % kC_T R_Si
+        if (par.opt_kC_T & par.opt_R_Si)
             kk = kk + 1;
-            tmp = [kC_kC_T*DOCx(:,pindx.lRR); ...
+            tmp = [kC_kC_T*DOCx(:,pindx.lR_Si); ...
                    Z; ...
-                   -kC_kC_T*DOCx(:,pindx.lRR); ...
+                   -kC_kC_T*DOCx(:,pindx.lR_Si); ...
+                   Z];
+            
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
+
+        % kC_T rR
+        if (par.opt_kC_T & par.opt_rR)
+            kk = kk + 1;
+            tmp = [kC_kC_T*DOCx(:,pindx.lrR); ...
+                   Z; ...
+                   -kC_kC_T*DOCx(:,pindx.lrR); ...
                    Z];
             
             Cxx(:,kk) = mfactor(FD, tmp);
@@ -1336,12 +1726,23 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
             Cxx(:,kk) = mfactor(FD, tmp);
         end
         
-        % kdC RR
-        if (par.opt_kdC & par.opt_RR)
+        % kdC R_Si
+        if (par.opt_kdC & par.opt_R_Si)
             kk = kk + 1;
-            tmp = kC_kdC*[DOCx(:,pindx.lRR); ...
+            tmp = kC_kdC*[DOCx(:,pindx.lR_Si); ...
                           Z; ...
-                          -DOCx(:,pindx.lRR); ...
+                          -DOCx(:,pindx.lR_Si); ...
+                          Z];
+            
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
+
+        % kdC rR
+        if (par.opt_kdC & par.opt_rR)
+            kk = kk + 1;
+            tmp = kC_kdC*[DOCx(:,pindx.lrR); ...
+                          Z; ...
+                          -DOCx(:,pindx.lrR); ...
                           Z];
             
             Cxx(:,kk) = mfactor(FD, tmp);
@@ -1368,47 +1769,89 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
-        
-        % RR RR
-        if (par.opt_RR)
+        %%%%%%
+        % R_Si R_Si
+        if (par.opt_R_Si)
             kk = kk + 1;
-            tmp = -RR*[G*C2P; ...
-                       Z ; ...
-                       Z ; ...
-                       -G*C2P];
+            tmp = [-(1-sigma)*RR_Si*(G*C2P); ...
+                   Z ; ...
+                   Z ; ...
+                   (1-sigma)*RR_Si*(G*C2P)];
+            
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
+
+        % R_Si rR
+        if (par.opt_R_Si & par.opt_rR)
+            kk = kk + 1;
+            tmp = [Z; Z ; Z ; Z];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
         
-        % RR cc
-        if (par.opt_RR & par.opt_cc)
+        % R_Si cc
+        if (par.opt_R_Si & par.opt_cc)
             kk = kk + 1;
-            tmp = -cc*RR*[G*C2P_cc; ...
-                          Z ; ...
-                          Z ; ...
-                          -G*C2P_cc];
+            tmp = [-cc*(1-sigma)*RR_Si*(G*C2P_cc); ...
+                   Z ; ...
+                   Z ; ...
+                   cc*(1-sigma)*RR_Si*(G*C2P_cc)];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
         
-        % RR dd
-        if (par.opt_RR & par.opt_dd)
+        % R_Si dd
+        if (par.opt_R_Si & par.opt_dd)
             kk = kk + 1;
-            tmp = -dd*RR*[G*C2P_dd; ...
-                          Z; ...
-                          Z; ...
-                          -G*C2P_dd];
+            tmp = [-dd*(1-sigma)*RR_Si*(G*C2P_dd); ...
+                   Z; ...
+                   Z; ...
+                   dd*(1-sigma)*RR_Si*(G*C2P_dd)];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
         
+        % rR rR
+        if (par.opt_rR)
+            kk = kk + 1;
+            tmp = [-(1-sigma)*RR_rR*(G*C2P); ...
+                   Z ; ...
+                   Z ; ...
+                   (1-sigma)*RR_rR*(G*C2P)];
+            
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
+        
+        % rR cc
+        if (par.opt_rR & par.opt_cc)
+            kk = kk + 1;
+            tmp = [-cc*(1-sigma)*RR_rR*(G*C2P_cc); ...
+                   Z ; ...
+                   Z ; ...
+                   cc*(1-sigma)*RR_rR*(G*C2P_cc)];
+            
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
+        
+        % rR dd
+        if (par.opt_rR & par.opt_dd)
+            kk = kk + 1;
+            tmp = [-dd*(1-sigma)*RR_rR*(G*C2P_dd); ...
+                   Z; ...
+                   Z; ...
+                   dd*(1-sigma)*RR_rR*(G*C2P_dd)];
+            
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
+        
+        %%%%%%%
         % cc cc
         if (par.opt_cc)
             kk = kk + 1;
-            tmp = cc*[-(1+RR)*G*(C2P_cc+cc*C2P_cc_cc); ...
+            tmp = cc*[-(I+(1-sigma)*RR)*(G*(C2P_cc+cc*C2P_cc_cc)); ...
                       (1-sigma)*G*(C2P_cc+cc*C2P_cc_cc); ...
                       sigma*G*(C2P_cc+cc*C2P_cc_cc); ...
-                      RR*G*(C2P_cc+cc*C2P_cc_cc)];
+                      (1-sigma)*RR*(G*(C2P_cc+cc*C2P_cc_cc))];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
@@ -1416,10 +1859,10 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
         % cc dd
         if (par.opt_cc & par.opt_dd)
             kk = kk + 1;
-            tmp = cc*dd*[-(1+RR)*G*C2P_cc_dd; ...
+            tmp = cc*dd*[-(I+(1-sigma)*RR)*(G*C2P_cc_dd); ...
                          (1-sigma)*G*C2P_cc_dd; ...
                          sigma*G*C2P_cc_dd; ...
-                         RR*G*C2P_cc_dd];
+                         (1-sigma)*RR*(G*C2P_cc_dd)];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
@@ -1427,13 +1870,14 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
         % dd dd
         if (par.opt_dd)
             kk = kk + 1;
-            tmp = dd*[-(1+RR)*G*(C2P_dd+dd*C2P_dd_dd); ...
+            tmp = dd*[-(I+(1-sigma)*RR)*(G*(C2P_dd+dd*C2P_dd_dd)); ...
                       (1-sigma)*G*(C2P_dd+dd*C2P_dd_dd); ...
                       sigma*G*(C2P_dd+dd*C2P_dd_dd); ...
-                      RR*G*(C2P_dd+dd*C2P_dd_dd)];
+                      (1-sigma)*RR*(G*(C2P_dd+dd*C2P_dd_dd))];
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
     end
 end
+
 

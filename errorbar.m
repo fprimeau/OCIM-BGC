@@ -73,7 +73,8 @@ par.opt_bC    = on ;
 par.opt_d     = on ;
 par.opt_kC_T  = on ;
 par.opt_kdC   = on ; 
-par.opt_RR    = on ; 
+par.opt_R_Si  = on ;
+par.opt_rR    = on ; 
 par.opt_cc    = on ;
 par.opt_dd    = on ;
 % O model parameters
@@ -133,8 +134,9 @@ end
 load(fname)
 load(fxhat) 
 % get rid of arctice o2 observations
-ARC  = MSKS.ARC;
-iarc = find(ARC(:));
+ARC  = MSKS.ARC ;
+iarc = find(ARC(:)) ;
+DOCobs(iarc)  = nan ;
 o2raw(iarc)   = nan ;
 dicraw(iarc)  = nan ;
 po4raw(iarc)  = nan ;
@@ -145,28 +147,30 @@ nwet = length(iwet) ;
 idip = find(po4raw(iwet)>0)  ;
 isil = find(sio4raw(iwet)>0) ;
 idic = find(dicraw(iwet)>0)  ;
+idoc = find(DOCobs(iwet)>0)  ;
 io2  = find(o2raw(iwet)>0)   ;
 
 ndip = length(idip) ;
 nsil = length(isil) ;
 ndic = length(idic) ;
+ndoc = length(idoc) ;
 no2  = length(io2)  ;
 
 if (Cmodel == off & Omodel == off & Simodel == off)
-    sig  = 2*xhat.f/ndip;
-    HH   = xhat.fxx/sig;
+    sig = 2*xhat.f/ndip ;
+    HH  = xhat.fxx/sig  ;
 elseif (Cmodel == on & Omodel == off & Simodel == off)
-    sig  = (2*xhat.f)/(ndip+ndic);
-    HH   = xhat.fxx/sig;
+    sig = (2*xhat.f)/(ndip+ndic);
+    HH  = xhat.fxx/sig  ;
 elseif (Cmodel == on & Omodel == on & Simodel == off)
-    sig  = (2*xhat.f)/(ndip+ndic+no2);
-    HH   = xhat.fxx/sig;
+    sig = (2*xhat.f)/(ndip+ndic+no2);
+    HH  = xhat.fxx/sig  ;
 elseif (Cmodel == off & Omodel == off & Simodel == on)
-    sig  = (2*xhat.f)/(ndip+nsil);
-    HH   = xhat.fxx/sig;
+    sig = (2*xhat.f)/(ndip+nsil);
+    HH  = xhat.fxx/sig  ; 
 elseif (Cmodel == on & Omodel == on & Simodel == on)
-    sig  = (2*xhat.f)/(ndip+ndic+no2+nsil);
-    HH   = xhat.fxx/sig;
+    sig = (2*xhat.f)/(ndip+ndic+no2+nsil) ;
+    HH  = xhat.fxx/sig  ;
 end
 
 par.Cmodel  = Cmodel  ;
@@ -316,15 +320,26 @@ if exist('xhat') & isfield(xhat,'kdC')
     R.lowbar(nx) = kdC_lo ;
 end 
 
-if exist('xhat') & isfield(xhat,'RR')
+if exist('xhat') & isfield(xhat,'R_Si')
     nx = nx + 1 ; 
-    RR = xhat.RR  ;
-    RR_up = exp(log(RR)+error(pindex.lRR)) - RR;
-    RR_lo = RR - exp(log(RR)-error(pindex.lRR));
-    name{nx}     = "RR"  ;
-    R.xhat(nx)   = RR    ;
-    R.upbar(nx)  = RR_up ;
-    R.lowbar(nx) = RR_lo ;
+    R_Si = xhat.R_Si  ;
+    R_Si_up = error(pindex.R_Si) ;
+    R_Si_lo = error(pindex.R_Si) ;
+    name{nx}     = "R_Si"  ;
+    R.xhat(nx)   = R_Si    ;
+    R.upbar(nx)  = R_Si_up ;
+    R.lowbar(nx) = R_Si_lo ;
+end
+
+if exist('xhat') & isfield(xhat,'rR')
+    nx = nx + 1 ; 
+    rR = xhat.rR  ;
+    rR_up = exp(log(rR)+error(pindex.lrR)) - rR;
+    rR_lo = rR - exp(log(rR)-error(pindex.lrR));
+    name{nx}     = "rR"  ;
+    R.xhat(nx)   = rR    ;
+    R.upbar(nx)  = rR_up ;
+    R.lowbar(nx) = rR_lo ;
 end
 
 if exist('xhat') & isfield(xhat,'cc')

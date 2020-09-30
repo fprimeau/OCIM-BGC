@@ -94,11 +94,11 @@ function  x = ResetPara(x, par);
         ibP  = pindx.lbP    ;
         xnew = exp(x(ibP))  ;
         xold = exp(x0(ibP)) ;
-        if (xnew < 0.3 | xnew < 4) ;
+        if (xnew < 0.3 | xnew > 4) ;
             x(ibP) = x0(ibP);
         end
     end
-
+    
     if (par.opt_alpha == on)
         ialpha = pindx.lalpha    ;
         xnew   = exp(x(ialpha))  ;
@@ -153,6 +153,15 @@ function  x = ResetPara(x, par);
                 x(ibC) = x0(ibC) ;
             end
         end
+
+        if (par.opt_kPIC == on)
+            ikPIC = pindx.lkPIC    ;
+            xnew  = exp(x(ikPIC))  ;
+            xold  = exp(x0(ikPIC)) ;
+            if (xnew > fb*xold | xnew < fs*xold) ;
+                x(ikPIC) = x0(ikPIC) ;
+            end
+        end
         
         if (par.opt_d == on)
             id   = pindx.ld    ;
@@ -205,12 +214,52 @@ function  x = ResetPara(x, par);
             end
         end
         
-        if (par.opt_RR == on)
-            iRR  = pindx.lRR    ;
-            xnew = exp(x(iRR))  ;
-            xold = exp(x0(iRR)) ;
+        if (par.opt_R_Si == on & par.opt_rR == on)
+            iR_Si = pindx.lR_Si ;
+            irR   = pindx.lrR   ;
+            
+            par.R_Si = exp(x(iR_Si)) ;
+            par.rR   = exp(x(irR))   ;
+            vout  = mkPIC2P(par)     ;
+            RR    = vout.RR          ;
+            nRR   = mean(diag(RR))   ;
+
+            par.R_Si = exp(x0(iR_Si)) ;
+            par.rR   = exp(x0(irR))   ;
+            vout  = mkPIC2P(par)      ;
+            RR    = vout.RR           ;
+            oRR   = mean(diag(RR))    ;
+            
+            if (nRR > fb*oRR | nRR < fs*oRR);
+                x(iR_Si) = x0(iR_Si) ;
+                x(irR)   = x0(irR)   ;
+            end
+        end
+        
+        if (par.opt_R_Si == on & par.opt_rR == off)
+            iR_Si = pindx.lR_Si    ;
+            
+            par.R_Si = exp(x(iR_Si)) ;
+            vout  = mkPIC2P(par)     ;
+            RR    = vout.RR          ;
+            nRR   = mean(diag(RR))   ;
+
+            par.R_Si = exp(x0(iR_Si)) ;
+            vout  = mkPIC2P(par)      ;
+            RR    = vout.RR           ;
+            oRR   = mean(diag(RR))    ;
+            
+            if (nRR > fb*oRR | nRR < fs*oRR);
+                x(iR_Si) = x0(iR_Si) ;
+            end
+        end
+
+        if (par.opt_rR == on & par.opt_R_Si == off)
+            irR  = pindx.lrR    ;
+            xnew = exp(x(irR))  ;
+            xold = exp(x0(irR)) ;
             if (xnew > fb*xold  | xnew < fs*xold);
-                x(iRR) = x0(iRR);
+                x(irR) = x0(irR);
             end
         end
         
