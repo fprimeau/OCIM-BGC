@@ -10,7 +10,6 @@ function vout = mkO2P(par)
     %
     iwet = par.iwet ;
     nwet = par.nwet ;
-    sal  = par.modS ;
     modT = par.modT ;
     
     smsk = par.M3d  ;

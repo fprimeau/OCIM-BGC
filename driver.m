@@ -1,4 +1,4 @@
-clc; clear all; close all
+clc; clear alul; close all
 global GC GO iter
 iter = 0       ;
 on   = true    ; off = false    ;
@@ -14,17 +14,17 @@ elseif isunix
     addpath('/DFS-L/DATA/primeau/weilewang/DATA/OCIM2')
 end
 format long
-%
-Gtest = off ;
-Htest = off ;
+% 
+Gtest = on ;
+Htest = on ;
 par.optim   = on ; 
 par.Cmodel  = on ; 
-par.Omodel  = on ; 
+par.Omodel  = off ; 
 par.Simodel = off ;
-par.LoadOpt = on  ; % if load optimial par. 
-par.fscale  = 0.0 ; % factor to weigh DOC in the objective function
+par.LoadOpt = off ; % if load optimial par. 
+par.fscale  = 0.2 ; % factor to weigh DOC in the objective function
 %
-GridVer   = 91    ;
+GridVer  = 91     ;
 operator = 'A'    ;
 if GridVer == 90
     TRdivVer = 'Tv4' ;
@@ -69,7 +69,7 @@ end
 fprintf('\n')
 
 % P model parameters
-par.opt_sigma = on ; 
+par.opt_sigma = off ; 
 par.opt_kP_T  = on ;
 par.opt_kdP   = on ;
 par.opt_bP_T  = on ; 
@@ -79,12 +79,11 @@ par.opt_alpha = on ;
 % C model parameters
 par.opt_bC_T  = on ;
 par.opt_bC    = on ; 
-par.opt_kPIC  = off ;
 par.opt_d     = on ;
 par.opt_kC_T  = on ;
 par.opt_kdC   = on ; 
 par.opt_R_Si  = off ; 
-par.opt_rR    = off ; 
+par.opt_rR    = on ; 
 par.opt_cc    = on ;
 par.opt_dd    = on ;
 % O model parameters
@@ -94,7 +93,7 @@ par.opt_O2P_T = on ;
 par.opt_rO2P  = on ; 
 % Si model parameters
 par.opt_dsi   = on  ;
-par.opt_at    = off ;
+par.opt_at    = on ;
 par.opt_bt    = on  ;
 par.opt_aa    = on  ;
 par.opt_bb    = on  ;
@@ -105,8 +104,10 @@ par.opt_bb    = on  ;
 if ismac
     output_dir = sprintf('~/Documents/CP-model/MSK%2d/',GridVer); 
 elseif isunix
-    output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/COP4WWF/' ...
+    output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
                         'MSK%2d/'],GridVer);
+    % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/COP4WWF/' ...
+                        % 'MSK%2d/'],GridVer);
 end
 VER = strcat(output_dir,TRdivVer);
 % Creat output file names based on which model(s) is(are) optimized
@@ -116,11 +117,11 @@ elseif Gtest == off
     if (par.Cmodel == off & par.Omodel == off & par.Simodel == off)
         fname = strcat(VER,'_P');
     elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off)
-        base_name = strcat(VER,'_PC');
+        base_name = strcat(VER,'_PCv1Zscore');
         catDOC = sprintf('_DOC%2.0e',par.fscale);
         fname = strcat(base_name,catDOC);
     elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off)
-        base_name = strcat(VER,'_PCOv3');
+        base_name = strcat(VER,'_PCOnpp');
         catDOC = sprintf('_DOC%2.0e',par.fscale);
         fname = strcat(base_name,catDOC);
     elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on)
@@ -146,7 +147,8 @@ if GridVer == 90
     load po4obs_90x180x24.mat       % WOA PO4 observation
     load Siobs_90x180x24.mat Siobs
     %
-    load PME_TS_90x180x24.mat modT modS
+    load GLODAPv2_talk.mat 
+    load PME_TS_90x180x24.mat modT modS pme  
     load DICant_90x180x24.mat
     load GLODAPv2_90x180x24raw.mat
     load splco2_mod_monthly.mat     % monthly CO2 data
@@ -176,7 +178,8 @@ elseif GridVer == 91
     load tempobs_91x180x24.mat
     load Siobs_91x180x24.mat Siobs
     %
-    load PME_TS_91x180x24.mat modT modS
+    load GLODAPv2_talk_91x180x24.mat
+    load PME_TS_91x180x24.mat modT modS pme 
     load DICant_91x180x24.mat
     load GLODAPv2_91x180x24raw.mat
     load splco2_mod_monthly % monthly CO2 data
@@ -185,8 +188,8 @@ elseif GridVer == 91
     load DOMobs_91x180x24.mat
     load kw660_91x180.mat
     if ismac
-        load MSK91/CTL_He_fixedPO_C.mat
-        load MSK91/CTL_He_fixedPO_O2.mat
+        load MSK91/CTL_He_PCO.mat
+        load MSK91/CTL_He_PCO.mat
     elseif isunix
         if isfile(fname)
             load(fname)
@@ -199,101 +202,147 @@ elseif GridVer == 91
     TR  = output.TR/spa;
 end
 
-% get rid of arctice o2 observations
-ARC  = MSKS.ARC;
-iarc = find(ARC(:));
-% DOCobs(iarc)  = nan ;
-% o2raw(iarc)   = nan ;
-% dicraw(iarc)  = nan ;
-% po4raw(iarc)  = nan ;
-% sio4raw(iarc) = nan ; 
-iwet = find(M3d(:)) ;
-nwet = length(iwet) ;
-dVt  = grd.DXT3d.*grd.DYT3d.*grd.DZT3d;
-%
+%---------------------- constants -------------------
 [par.kw,par.P] = kw(M3d,grd);
-par.Salt  = Sobs    ;
-par.Temp  = tempobs ;
-par.dVt   = dVt     ;
 par.Kw660 = Kw660   ;
 par.p4    = p4      ;
 par.c2p   = 110     ;
-par.M3d   = M3d     ;
-par.iwet  = iwet    ;
-par.nwet  = nwet    ;
-par.TRdiv = -TR     ;
-par.grd   = grd     ;
-par.I     = speye(nwet)  ;
 par.rho   = 1024.5       ; % seawater density;
 permil    = par.rho*1e-3 ; % from umol/kg to mmol/m3;
-
-par.SIL     = Siobs   ;
-par.po4obs  = po4obs  ;
-par.o2raw   = o2raw   ;
-par.po4raw  = po4raw  ;
-par.sio4raw = sio4raw ;
-par.docraw  = DOCobs - DOCref ;
-par.dicraw  = dicraw*permil; % GLODAP dic obs [mmol/m3];
-par.human_co2 = DICant*permil;
-
-DIC = DIC - par.human_co2 ;
-GO = real(O2(iwet)) + 1e-9*randn(par.nwet,1);
-GC = real([DIC(iwet); POC(iwet); DOC(iwet); CaC(iwet)]);
-GC = GC + 1e-6*randn(4*nwet,1) ;
+par.permil = permil ;
 % transiant CO2 concentraion;
 par.year      = splco2_mod(:,1) ;
 par.pco2_air  = splco2_mod(:,2) ;
 par.pco2atm   = splco2_mod(1,2) ;
 par.co2syspar = co2syspar       ;
 
-par.SILbar = nansum(Siobs(iwet).*dVt(iwet))/nansum(dVt(iwet))  ;
-par.DIPbar = nansum(po4obs(iwet).*dVt(iwet))/nansum(dVt(iwet)) ;
+%------------------- model grid info ----------------
+iwet = find(M3d(:)) ;
+nwet = length(iwet) ;
+dVt  = grd.DXT3d.*grd.DYT3d.*grd.DZT3d;
+ARC  = MSKS.ARC ;
+MED  = MSKS.MED ;
+PAC  = MSKS.PAC ;
+ATL  = MSKS.ATL ;
+IND  = MSKS.IND ;
+iarc = find(ARC(:)) ;
+imed = find(MED(:)) ;
+ipac = find(PAC(:)) ;
+iatl = find(ATL(:)) ;
+iind = find(IND(:)) ;
+%
+par.dVt   = dVt     ;
+par.M3d   = M3d     ;
+par.iwet  = iwet    ;
+par.nwet  = nwet    ;
+par.TRdiv = -TR     ;
+par.grd   = grd     ;
+par.MSKS  = MSKS    ;
+par.I = speye(nwet) ;
 
-% load optimal parameters from a file
-% or set them to default values 
+%------------------------  data  -----------------------
+% get rid of arctice o2 observations
+% DOCobs(iarc)  = nan ;
+% DOCobs(imed)  = nan ;
+alkraw(iarc)  = nan ;
+alkraw(imed)  = nan ; 
+dicraw(iarc)  = nan ;
+dicraw(imed)  = nan ;
+% po4raw(iarc)  = nan ;
+% po4raw(imed)  = nan ; 
+% sio4raw(iarc) = nan ;
+% sio4raw(imed) = nan ;
+% o2raw(iarc)   = nan ;
+% o2raw(imed)   = nan ;
+
+par.Salt    = Sobs    ;
+par.Temp    = tempobs ;
+par.DSi     = Siobs   ;
+par.po4obs  = po4obs  ;
+par.o2raw   = o2raw   ;
+par.po4raw  = po4raw  ;
+par.sio4raw = sio4raw ;
+par.DOCobs  = DOCobs  ;
+par.alkraw  = alkraw*permil ;
+par.dicraw  = dicraw*permil ; 
+par.dicant  = DICant*permil ;
+par.dopraw  = DOPobs - 0.03 ; % less refractory DOP 
+DOCclean   = RemoveRef(par) ;
+ibad = find( DOCclean(iarc) > 50 ) ;
+DOCclean(iarc(ibad)) = nan ;
+par.docraw = DOCclean ;
+%---------------- inital guesses on C and O ---------------
+DIC = data.DIC - par.dicant ;
+GO  = real(data.O2(iwet)) + 1e-9*randn(par.nwet,1);
+GC  = [data.DIC(iwet); data.POC(iwet); data.DOC(iwet); ...
+       data.PIC(iwet); data.ALK(iwet)];
+GC  = GC + 1e-6*randn(5*nwet,1) ;
+
+%--------------------- prepare parameters ------------------
+% load optimal parameters from a file or set them to default values 
 par = SetPara(par) ;
-%
-% pack adjustable parameters in an array and
-% assign them corresponding indices.
+% pack parameters into an array, assign them corresponding indices.
 [p0, par] = PackPar(par) ;
-%
+
+%-------------------- prepare virtual flux -------------------
 % PME part;
-% [modT,modS] = PME(par)   ; keyboard
-par.modS    = modS       ;
-par.modT    = modT       ;
-Tz   = (modT(iwet)-mean(modT(iwet)))/std(modT(iwet)) ;
+% [modT,modS,pme] = PME(par) ; 
+par.modS    = modS ;
+par.modT    = modT ;
+par.pme     = pme  ;   
+junk = M3d ;
+junk(:,:,2:end) = 0 ;
+isrf = find(junk(iwet)) ;
+idic = find(par.dicraw(iwet(isrf)) > 0);
+ialk = find(par.alkraw(iwet(isrf)) > 0);
+% surface mean concentraions
+par.sDICbar = sum(par.dicraw((iwet(isrf(idic)))).* ...
+                  par.dVt(iwet(isrf(idic))))./sum(par.dVt(iwet(isrf(idic))));
+par.sALKbar = sum(par.alkraw((iwet(isrf(ialk)))).* ...
+                  par.dVt(iwet(isrf(ialk))))./sum(par.dVt(iwet(isrf(ialk))));
+
+%-------------------- normalize temperature --------------------
+vT = par.modT(iwet) ;
+% Tz = (vT - min(vT))./(max(vT) - min(vT)) ;
+% Tz( Tz < 0.05) = 0.05 ;
+Tz   = (vT-mean(vT))./std(vT) ;
 Tz3d = M3d + nan ;
 Tz3d(iwet) = Tz  ;
 par.Tz     = Tz*1e-8 ;
 par.aveT   = nanmean(Tz3d(:,:,1:3),3) ;
 
-%%%%%%% prepare NPP for the model %%%%%%%%
+%------------------- prepare for restoring ---------------------
+% calculating global mean DIP, ALK, and DSi concentraions for
+% restoring 
+idip = find(par.po4raw(iwet)>0) ;
+ialk = find(par.alkraw(iwet)>0) ;
+isil = find(par.alkraw(iwet)>0) ;
+
+par.DIPbar = nansum(par.po4raw(iwet(idip)).*dVt(iwet(idip)))/ ...
+    nansum(dVt(iwet(idip))) ;
+par.ALKbar = nansum(par.alkraw(iwet(ialk)).*dVt(iwet(ialk)))/ ...
+    nansum(dVt(iwet(ialk))) ;
+par.DSibar = nansum(par.sio4raw(iwet(isil)).*dVt(iwet(isil)))/ ...
+    nansum(dVt(iwet(isil)))  ;
+
+%------------------ prepare NPP for the model --------------------
 par.nzo = 2 ;
 par.p2c = 0.006+0.0069*po4obs ;
 inan = find(isnan(npp(:)) | npp(:) < 0) ;
 npp(inan) = 0 ;
-keyboard    
-% tmp = squeeze(M3d(:,:,1)) ;
-% tmp(1:15,:) = nan         ; % SO
-% tmp(65:78,55:125) = nan   ; % NP
-% tmp(35:55,90:145) = nan   ; % EP
-% itarg = find(isnan(tmp(:)))  ;
-% npp(itarg) = npp(itarg)*0.5  ;
-%
+
 par.npp   = npp/(12*spd) ;
 par.npp1  = (0.5*par.npp./grd.dzt(1)).*par.p2c(:,:,1) ; 
 par.npp2  = (0.5*par.npp./grd.dzt(2)).*par.p2c(:,:,2) ; 
 par.Lambda = M3d*0 ;
 par.Lambda(:,:,1) = 1./(1e-6+po4obs(:,:,1)) ;
 par.Lambda(:,:,2) = 1./(1e-6+po4obs(:,:,2)) ;
-
 par.Lambda(:,:,3:end) = 0 ;
-%%%%%%%%%%%%%%%%%%%% end %%%%%%%%%%%%%%%%%
+
+%-------------------set up fminunc -------------------------------
 par.p0 = p0 ;
 x0     = p0 ;
-%
 myfun = @(x) neglogpost(x, par);
-%
 options = optimoptions(@fminunc                  , ...
                        'Algorithm','trust-region', ...
                        'GradObj','on'            , ...
@@ -310,7 +359,8 @@ options = optimoptions(@fminunc                  , ...
 nip = length(x0);
 if(Gtest);
     dx = sqrt(-1)*eps.^3*eye(nip);
-    for ii = 3 : nip
+    % for ii = nip : -1 : 1
+    for ii = 8 : nip
         x  = real(x0)+dx(:,ii);
         if Htest == on
             [f,fx,fxx] = neglogpost(x, par) ;

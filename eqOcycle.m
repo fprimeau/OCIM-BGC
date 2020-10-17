@@ -35,20 +35,19 @@ function [par, O2, Ox, Oxx] = eqOcycle(x, par)
     if (ierr ~= 0)
         fprintf('O2model did not converge.\n') ;
         F = O_eqn(O2, par) ;
-
-        if (norm(F) < 1e-6)  
-            options.atol   = 1e-7 ;
-            options.rtol   = 1e-7 ;
+        if par.Cfailure == on 
+            npx = par.npx ;
+            ncx = par.ncx ;
+            nox = par.nox ;
+            nx  = npx + ncx + nox  ;
+            Ox  = sparse(par.nwet, nx) ;
+            Oxx = sparse(par.nwet, nchoosek(nx,2)+nx) ;
+        else ( norm(F) < 1e-6 )  
+            options.atol = 1e-7 ;
+            options.rtol = 1e-7 ;
             % Compute the gradient of the solution wrt the parameters
             GO = real(O2) + 1e-7*randn(par.nwet,1) ;
             [F, FD, Ox, Oxx] = O_eqn(O2, par) ;
-        else 
-            npx  = par.npx ;
-            ncx  = par.ncx ;
-            nox  = par.nox ;
-            nx   = npx + ncx + nox  ;
-            Ox   = sparse(par.nwet, nx) ;
-            Oxx  = sparse(par.nwet, nchoosek(nx,2)+nx) ;
         end 
     else
         % reset the global variable for the next call eqOcycle

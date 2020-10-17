@@ -4,6 +4,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
 % output: F partial derivative of P model w.r.t. model parameters x
 % output: Fxx hessian matrix of P model w.r.t.  model parameters x
 % unpack some useful stuff
+    global bar 
     on = true; off = false;
     TRdiv = par.TRdiv ;
     M3d   = par.M3d   ;
@@ -90,13 +91,30 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
     LAM(:,:,2) = (npp2.^beta).*Lambda(:,:,2);
     L          = d0(LAM(iwet));  % PO4 assimilation rate [s^-1];
     par.L      = L;
-
+    PO4 = par.po4obs(iwet) ;
     % particle flux
     PFD = buildPFD(par,'POP');
+    pme = par.pme ;
+    junk = M3d ;
+    junk(:,:,2:end) = 0 ;
+    isrf = find(junk(iwet)) ;
+    
+    sDIPbar = sum(PO4(isrf).*par.dVt(iwet(isrf)))./ ...
+              sum(par.dVt(iwet(isrf)));
 
+    if exist('bar') & isfield(bar,'sDIPbar')
+        sDIPbar = bar.sDIPbar ;
+        sPOPbar = bar.sPOPbar ;
+        sDOPbar = bar.sDOPbar ;
+    else 
+        sDIPbar = sDIPbar ;
+        sPOPbar = 0 ;
+        sDOPbar = 0 ;
+    end 
+    
     % build Jacobian equations.
     % column 1 dF/dDIP
-    Fp{1,1} = TRdiv + alpha*L + kappa_g*I;
+    Fp{1,1} = TRdiv + alpha*L + kappa_g*I ;
     Fp{2,1} = -(1-sigma)*alpha*L;
     Fp{3,1} = -sigma*alpha*L;
 
@@ -111,16 +129,18 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
     Fp{3,3} = TRdiv + d0(kP) ;
 
     % right hand side of phosphate equations
-    RHS = [kappa_g*DIPbar;...
-           sparse(nwet,1);...
-           sparse(nwet,1)];
+    % RHS = [kappa_g*DIPbar; ... % - pme*sDIPbar ;...
+           % sparse(nwet,1);...
+           % sparse(nwet,1)];
+    RHS = [kappa_g*DIPbar - pme*sDIPbar ;...
+           -pme*sPOPbar ; ... 
+           -pme*sDOPbar ];
     fprintf('Solving P model ...\n') ;
     % dP/dt + Fp*P = RHS
     % factoring Jacobian matrix
     FFp = mfactor(cell2mat(Fp));
     % solve for P-cycle model state
     P = mfactor(FFp,RHS);
-
 
     if (par.optim == off)
         Px = [];

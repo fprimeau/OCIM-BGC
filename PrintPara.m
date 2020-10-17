@@ -5,37 +5,39 @@ function PrintPara(x, par);
     if iter == 0
         fprintf('All parameters \n')
         fprintf('-----------------------------------------------\n')
-        fprintf('current sigma   is  % 3.2e \n', par.sigma) ;
-        fprintf('current kP_T    is  % 3.2e \n', par.kP_T)  ;
-        fprintf('current kdP     is  % 3.2e \n', par.kdP)   ;
-        fprintf('current bP_T    is  % 3.2e \n', par.bP_T)  ;
-        fprintf('current bP      is  % 3.2e \n', par.bP)    ;
-        fprintf('current alpha   is  % 3.2e \n', par.alpha) ;
-        fprintf('current beta    is  % 3.2e \n', par.beta)  ;
+        fprintf('kappa_p is  % 3.2e \n', par.kappa_p)   ;
+        fprintf('kappa_g is  % 3.2e \n', par.kappa_g)   ;
+        fprintf('sigma   is  % 3.2e \n', par.sigma)     ;
+        fprintf('kP_T    is  % 3.2e \n', par.kP_T)      ;
+        fprintf('kdP     is  % 3.2e \n', par.kdP)       ;
+        fprintf('bP_T    is  % 3.2e \n', par.bP_T)      ;
+        fprintf('bP      is  % 3.2e \n', par.bP)        ;
+        fprintf('alpha   is  % 3.2e \n', par.alpha)     ;
+        fprintf('beta    is  % 3.2e \n', par.beta)      ;
         if (par.Cmodel == on)
-            fprintf('current bC_T    is  % 3.2e \n', par.bC_T) ;
-            fprintf('current bC      is  % 3.2e \n', par.bC)   ;
-            fprintf('current kPIC    is  % 3.2e \n', par.kPIC) ;
-            fprintf('current d       is  % 3.2e \n', par.d)    ;
-            fprintf('current kC_T    is  % 3.2e \n', par.kC_T) ;
-            fprintf('current kdC     is  % 3.2e \n', par.kdC)  ;
-            fprintf('current R_Si    is  % 3.2e \n', par.R_Si) ;
-            fprintf('current rR      is  % 3.2e \n', par.rR)   ;
-            fprintf('current cc      is  % 3.2e \n', par.cc)   ;
-            fprintf('current dd      is  % 3.2e \n', par.dd)   ;
+            fprintf('kPIC    is  % 3.2e \n', par.kPIC)  ;
+            fprintf('bC_T    is  % 3.2e \n', par.bC_T)  ;
+            fprintf('bC      is  % 3.2e \n', par.bC)    ;
+            fprintf('d       is  % 3.2e \n', par.d)     ;
+            fprintf('kC_T    is  % 3.2e \n', par.kC_T)  ;
+            fprintf('kdC     is  % 3.2e \n', par.kdC)   ;
+            fprintf('R_Si    is  % 3.2e \n', par.R_Si)  ;
+            fprintf('rR      is  % 3.2e \n', par.rR)    ;
+            fprintf('cc      is  % 3.2e \n', par.cc)    ;
+            fprintf('dd      is  % 3.2e \n', par.dd)    ;
         end 
         if (par.Omodel == on)
-            fprintf('current O2C_T   is  % 3.2e \n', par.O2C_T) ;
-            fprintf('current rO2C    is  % 3.2e \n', par.rO2C)  ;
-            fprintf('current O2P_T   is  % 3.2e \n', par.O2P_T) ;
-            fprintf('current rO2P    is  % 3.2e \n', par.rO2P)  ;
+            fprintf('O2C_T   is  % 3.2e \n', par.O2C_T) ;
+            fprintf('rO2C    is  % 3.2e \n', par.rO2C)  ;
+            fprintf('O2P_T   is  % 3.2e \n', par.O2P_T) ;
+            fprintf('rO2P    is  % 3.2e \n', par.rO2P)  ;
         end
         if (par.Simodel==on)
-            fprintf('current dsi     is  % 3.2e \n', par.dsi)  ;
-            fprintf('current at      is  % 3.2e \n', par.at)   ;
-            fprintf('current bt      is  % 3.2e \n', par.bt)   ;
-            fprintf('current aa      is  % 3.2e \n', par.iaa)  ;
-            fprintf('current bb      is  % 3.2e \n\n', par.bb) ;
+            fprintf('dsi     is  % 3.2e \n', par.dsi)   ;
+            fprintf('at      is  % 3.2e \n', par.at)    ;
+            fprintf('bt      is  % 3.2e \n', par.bt)    ;
+            fprintf('aa      is  % 3.2e \n', par.iaa)   ;
+            fprintf('bb      is  % 3.2e \n\n', par.bb)  ;
         end
         fprintf('-----------------------------------------------\n\n')
     end 
@@ -43,33 +45,33 @@ function PrintPara(x, par);
     fprintf('Tunable parameters \n')
     fprintf('-----------------------------------------------\n')
     if (par.opt_sigma == on)
-        isigma = par.pindx.lsigma;
+        isigma = par.pindx.lsigma   ;
         fprintf('current sigma   is  % 3.2e \n', exp(x(isigma)));
-        xhat.sigma = exp(x(isigma));
+        xhat.sigma = exp(x(isigma)) ;
     end
 
     if (par.opt_kP_T == on)
-        ikP_T = par.pindx.kP_T;
+        ikP_T = par.pindx.kP_T  ;
         fprintf('current kP_T    is  % 3.2e \n', x(ikP_T));
-        xhat.kP_T = x(ikP_T);
+        xhat.kP_T = x(ikP_T)    ;
     end
     
     if (par.opt_kdP == on)
-        ikdP = par.pindx.lkdP;
+        ikdP = par.pindx.lkdP   ;
         fprintf('current kdP     is  % 3.2e \n', exp(x(ikdP)));
-        xhat.kdP = exp(x(ikdP));
+        xhat.kdP = exp(x(ikdP)) ;
     end
 
     if (par.opt_bP_T == on)
-        ibP_T = par.pindx.bP_T;
+        ibP_T = par.pindx.bP_T  ;
         fprintf('current bP_T    is  % 3.2e \n', x(ibP_T));
-        xhat.bP_T = x(ibP_T);
+        xhat.bP_T = x(ibP_T)    ;
     end
 
     if (par.opt_bP == on)
-        ibP = par.pindx.lbP;
+        ibP = par.pindx.lbP     ;
         fprintf('current bP      is  % 3.2e \n', exp(x(ibP)));
-        xhat.bP = exp(x(ibP));
+        xhat.bP = exp(x(ibP))   ;
     end
 
     if (par.opt_alpha == on)
@@ -97,12 +99,6 @@ function PrintPara(x, par);
             xhat.bC = exp(x(ibC));
         end
         
-        if (par.opt_kPIC == on)
-            ikPIC = par.pindx.lkPIC;
-            fprintf('current kPIC    is  % 3.2e \n', exp(x(ikPIC)));
-            xhat.kPIC = exp(x(ikPIC));
-        end
-
         if (par.opt_d == on)
             id = par.pindx.ld;
             fprintf('current d       is  % 3.2e \n', exp(x(id)));
@@ -122,9 +118,9 @@ function PrintPara(x, par);
         end
         
         if (par.opt_R_Si == on)
-            iR_Si = par.pindx.lR_Si ;
-            fprintf('current R_Si    is  % 3.2e \n', exp(x(iR_Si)));
-            xhat.R_Si = exp(x(iR_Si)) ;
+            iR_Si = par.pindx.R_Si ;
+            fprintf('current R_Si    is  % 3.2e \n', x(iR_Si)) ;
+            xhat.R_Si = x(iR_Si)   ;
         end
 
         if (par.opt_rR == on)

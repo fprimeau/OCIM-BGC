@@ -14,9 +14,9 @@ end
 format long
 %
 Cmodel  = on ;
-Omodel  = on ;
+Omodel  = off ;
 Simodel = off ;
-fscale  = 0.0 ;
+fscale  = 1.0 ;
 %
 GridVer   = 91 ;
 operator = 'A' ;
@@ -54,18 +54,18 @@ end
 if ismac
     input_dir = sprintf('~/Documents/CP-model/MSK%2d/',GridVer); 
 elseif isunix 
-    input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/COP4WWF/' ...
+    input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
                         'MSK%2d/'],GridVer);
 end
 VER   = strcat(input_dir,TRdivVer);
 if (Cmodel == off & Omodel == off & Simodel == off)
     fname = strcat(VER,'_P');
 elseif (Cmodel == on & Omodel == off & Simodel == off)
-    base_name = strcat(VER,'_PC');
+    base_name = strcat(VER,'_PCv1Zscore');
     catDOC = sprintf('_DOC%2.0e',fscale);
     fname = strcat(base_name,catDOC);
 elseif (Cmodel == on & Omodel == on & Simodel == off)
-    base_name = strcat(VER,'_PCO');
+    base_name = strcat(VER,'_PCOv1');
     catDOC = sprintf('_DOC%2.0e',fscale);
     fname = strcat(base_name,catDOC);
 elseif (Cmodel == on & par.Omodel == off & Simodel == on)
@@ -86,14 +86,13 @@ if GridVer == 90
     load tempobs_90x180x24.mat
     load Siobs_90x180x24.mat Siobs
     load po4obs_90x180x24.mat
-    load PME_TS_90x180x24.mat modT modS
+    load PME_TS_90x180x24.mat modT modS 
     grd  = grid; 
 elseif GridVer == 91
     OperName = sprintf('OCIM2_%s',TRdivVer);
     load(OperName,'output') ;
     load Sobs_91x180x24.mat     % woa2013 salinity data.
     load tempobs_91x180x24.mat
-    load Siobs_91x180x24.mat Siobs
     load po4obs_91x180x24.mat
     load PME_TS_91x180x24.mat modT modS
     M3d = output.M3d    ;
@@ -122,16 +121,14 @@ par.TRdiv  = -TR     ;
 par.dVt    = dVt     ;
 par.Temp   = tempobs ;
 par.Salt   = Sobs    ;
-
-% PME part;
-% [modT,modS] = PME(par)  ;
-par.modT = modT         ;
-par.modS = modS         ;
-tmpT     = modT(iwet)   ;
-Tz       = zscore(tmpT) ;
-Tz3d     = M3d + nan    ;
-Tz3d(iwet) = Tz         ;
-aveT = nanmean(Tz3d(:,:,1:3),3) ;
+par.modT   = modT    ;
+vT = modT(iwet) ;
+% Tz = (vT - min(vT))./(max(vT) - min(vT)) ;
+% Tz( Tz < 0.05 ) = 0.05 ;
+Tz   = (vT-mean(vT))/std(vT) ;
+Tz3d = M3d + nan ;
+Tz3d(iwet) = Tz  ;
+aveT   = nanmean(Tz3d(:,:,1:3),3) ;
 
 nfig = 0;
 if isfield(xhat,'bP_T')

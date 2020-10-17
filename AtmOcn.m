@@ -208,9 +208,9 @@ par.grd   = grd     ;
 par.I     = speye(nwet)  ;
 par.rho   = 1024.5       ; % seawater density;
 permil    = par.rho*1e-3 ; % from umol/kg to mmol/m3;
-par.SIL   = Siobs   ;
+par.DSi   = Siobs   ;
 par.po4obs    = po4obs  ;
-par.human_co2 = DICant*permil;
+par.dicant = DICant*permil;
 
 % transiant CO2 concentraion;
 par.year      = splco2_mod(:,1) ;
@@ -289,7 +289,7 @@ I     = par.I     ;
 Tz    = par.Tz    ;
 
 Na  = 1.773e20    ; %  molar volume of atmosphere
-DIC = data.DIC(iwet) - par.human_co2(iwet) ;
+DIC = data.DIC(iwet) - par.dicant(iwet) ;
 POC = data.POC(iwet) ;
 DOC = data.DOC(iwet) ;
 PIC = data.CaC(iwet) ;

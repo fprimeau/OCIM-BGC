@@ -83,15 +83,6 @@ function [p0, par] = PackPar(par)
             p0   = [p0; lbC]      ;
             par.pindx.lbC = strt  : length(p0);
         end 
-        % kPIC
-        if (par.opt_kPIC == on)
-            ncx   = ncx + 1        ;
-            kPIC  = par.kPIC       ;
-            lkPIC = log(kPIC)      ;
-            strt  = length(p0) + 1 ;
-            p0    = [p0; lkPIC]    ;
-            par.pindx.lkPIC = strt : length(p0);
-        end 
         % d
         if (par.opt_d == on)
             ncx  = ncx + 1        ;
@@ -122,10 +113,9 @@ function [p0, par] = PackPar(par)
         if (par.opt_R_Si == on)
             ncx   = ncx + 1        ;
             R_Si  = par.R_Si       ;
-            lR_Si = log(R_Si)      ;
             strt  = length(p0) + 1 ;
-            p0    = [p0; lR_Si]    ;
-            par.pindx.lR_Si = strt : length(p0);
+            p0    = [p0; R_Si]    ;
+            par.pindx.R_Si = strt : length(p0);
         end
         % rR
         if (par.opt_rR == on)

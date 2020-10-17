@@ -21,6 +21,7 @@ function vout = Fsea2air(par, Gtype)
         
         pco2atm   = par.pco2atm      ;  % uatm
         vDICs     = par.DIC(isrf)    ;
+        vALKs     = par.ALK(isrf)    ;
         co2syspar = par.co2syspar    ;
         scco2 = 2073.1 - 125.62*vSST + 3.6276*vSST.^2 - 0.043219*vSST.^3;
         kw    = kw.*sqrt(660./scco2) ;
@@ -28,28 +29,35 @@ function vout = Fsea2air(par, Gtype)
         %
         % co2surf unit umol/kg;
         % k0 unit mol/kg/atm
-        [co2surf,k0] = eqco2(vDICs,co2syspar) ;
+        [co2surf,k0] = eqco2(vDICs,vALKs,co2syspar) ;
         co2sat = k0*pco2atm    ; %mol/kg/atm -> umol/kg
         tmp    = M3d*0         ;
-        tmp(iwet(isrf)) = KCO2.*(co2sat - co2surf) ;
-        JgDIC  = tmp(iwet)     ;
-        vout.JgDIC = JgDIC*1024.5/1000  ; % umole/kg/s to mmol/m^3/s
+        tmp(iwet(isrf)) = KCO2.*(co2sat - co2surf)*par.permil ;
+        vout.JgDIC = tmp(iwet) ; % umole/kg/s to mmol/m^3/s
         
         % Gradient
-        [co2surf,k0,g_k0,g_co2] = eqco2(vDICs,co2syspar) ;
+        [co2surf,k0,Gout] = eqco2(vDICs,vALKs,co2syspar) ;
+        g_k0  = Gout.g_k0  ;
+        g_co2 = Gout.g_co2 ;
         tmp             = M3d*0         ;
-        tmp(iwet(isrf)) = KCO2.*(g_k0.*pco2atm - g_co2)*1024.5/1000 ;
-        vout.KG         = d0(tmp(iwet)) ;
+        tmp(iwet(isrf)) = KCO2.*(g_k0.*pco2atm - g_co2)*par.permil ;
+        vout.G_dic      = d0(tmp(iwet)) ;
+
+        g_k0_alk  = Gout.g_k0_alk  ;
+        g_co2_alk = Gout.g_co2_alk ;
+        tmp             = M3d*0         ;
+        tmp(iwet(isrf)) = KCO2.*(g_k0_alk.*pco2atm - g_co2_alk)*par.permil ;
+        vout.G_alk      = d0(tmp(iwet)) ;
 
         tmp             = M3d*0         ;
-        tmp(iwet(isrf)) = KCO2.*k0*1024.5/1000 ;
-        vout.KA         = tmp(iwet)     ;
-        
+        tmp(iwet(isrf)) = KCO2.*k0*par.permil ;
+        vout.G_atm      = tmp(iwet)     ;
+
         % Hessian
-        [co2surf,k0,g_k0,g_co2,gg_co2] = eqco2(vDICs,co2syspar) ;
-        tmp             = M3d*0         ;
-        tmp(iwet(isrf)) = -KCO2.*gg_co2*1024.5/1000 ;
-        vout.KGG        = tmp(iwet)     ;    
+        % [co2surf,k0,Gout] = eqco2(vDICs,vALKs,co2syspar) ;
+        % tmp             = M3d*0         ;
+        % tmp(iwet(isrf)) = -KCO2.*gg_co2*par.permil ;
+        % vout.KGG        = tmp(iwet)     ;    
     end
     %
     if strcmp(Gtype, 'O2')
@@ -111,9 +119,9 @@ function o2sat = o2sato(T,S)
     o2sat = (o2sat/22391.6)*1000.0 ;
 end
 
-function [co2,k0,g_k0,g_co2,gg_co2] = eqco2(dic,arg1)
+function [co2,k0,Gout] = eqco2(dic,alk,arg1)
 % unpack parameters for co2 system chemistry
-    alk  = arg1.alk   ;
+    % alk  = arg1.alk   ;
     salt = arg1.salt  ;
     temp = arg1.temp  ;
     pres = arg1.pres  ;
@@ -121,18 +129,26 @@ function [co2,k0,g_k0,g_co2,gg_co2] = eqco2(dic,arg1)
     po4  = arg1.po4   ;
     
     % co2 system
-    a = CO2SYS(alk,abs(dic),1,2,salt,temp,temp,pres,pres,si,po4,1,4,1) ;
-    ax = CO2SYS(alk,abs(real(dic))+sqrt(-1)*eps^3,1,2,salt,temp,temp, ...
-                pres,pres,si,po4,1,4,1) ;
-    g_k0 = imag(ax(:,8)./ax(:,4))/eps^3 ;
-
+    a = CO2SYS(abs(alk),abs(dic),1,2,salt,temp,temp,pres,pres,si,po4,1,4,1) ;
     % concentration of co2 in umol/kg
     co2   = a(:,8)    ;
-    g_co2 = imag(ax(:,8))/eps^3 ;
     % co2 solubility k0 
     pco2  = a(:,4)    ; % uatm
     k0    = co2./pco2 ; % mol/kg/atm
-
+    
+    % gradient d_dic 
+    ax = CO2SYS(abs(real(alk)),abs(real(dic))+sqrt(-1)*eps^3,1,2,salt, ...
+                temp,temp,pres,pres,si,po4,1,4,1) ;
+    Gout.g_k0  = imag(ax(:,8)./ax(:,4))/eps^3 ;
+    Gout.g_co2 = imag(ax(:,8))/eps^3 ;
+    clear a ax 
+    
+    % d_alk
+    ax = CO2SYS(abs(real(alk))+sqrt(-1)*eps^3,abs(real(dic)),1,2,salt, ...
+                temp,temp,pres,pres,si,po4,1,4,1) ;
+    Gout.g_k0_alk  = imag(ax(:,8)./ax(:,4))/eps^3 ;
+    Gout.g_co2_alk = imag(ax(:,8))/eps^3 ;
+    
     if (nargout>3)
         a = CO2SYS(alk,abs(real(dic))+sqrt(-1)*eps^3,1,2,salt,temp, ...
                    temp,pres,pres,si,po4,1,4,1);

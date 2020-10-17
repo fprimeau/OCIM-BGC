@@ -15,7 +15,7 @@ end
 format long
 %
 Cmodel  = on ; 
-Omodel  = off ; 
+Omodel  = on ; 
 Simodel = off ;
 %
 GridVer   = 91 ;
@@ -65,7 +65,7 @@ par.optim     = off    ;
 par.Cmodel    = Cmodel ;
 par.Omodel    = Omodel ;
 par.Simodel   = Simodel;
-par.opt_sigma = off ; 
+par.opt_sigma = on ; 
 par.opt_kP_T  = on ;
 par.opt_kdP   = on ;
 par.opt_bP_T  = on ; 
@@ -190,7 +190,7 @@ par.rho   = 1024.5       ; % seawater density;
 permil    = par.rho*1e-3 ; % from umol/kg to mmol/m3;
 
 par.po4obs    = po4obs  ;
-par.human_co2 = DICant*permil;
+par.dicant = DICant*permil;
 
 % transiant CO2 concentraion;
 par.year      = splco2_mod(:,1) ;
@@ -349,7 +349,7 @@ if Cmodel == on
         par.DOC  = pDOC(iwet) ;
     end
 
-    dDIC = pDIC + par.human_co2 - data.DIC ;
+    dDIC = pDIC + par.dicant - data.DIC ;
     nfig = nfig + 1 ;
     figure(nfig)
     % make a zonal cross section of the age

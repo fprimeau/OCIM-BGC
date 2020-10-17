@@ -8,8 +8,8 @@ function vout = mkPIC2P(par)
     off  = false    ;
     iwet = par.iwet ;
     nwet = par.nwet ; 
-    SIL  = par.SIL  ;
-    Y = 0.5-0.5*tanh((SIL(iwet) - 30)/100) ;
+    DSi  = par.DSi  ;
+    Y = 0.5-0.5*tanh((DSi(iwet) - 30)/100) ;
     if par.opt_R_Si == on
         R_Si = par.R_Si ;
     else 
@@ -17,6 +17,6 @@ function vout = mkPIC2P(par)
     end 
     rR         = par.rR ;
     vout.RR    = d0(R_Si*Y + rR) ;
-    vout.RR_Si = d0(R_Si*Y)  ;
+    vout.RR_Si = d0(Y)  ;
     vout.RR_rR = d0(sparse(nwet,1) + rR) ;
 end 

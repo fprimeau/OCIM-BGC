@@ -1,4 +1,4 @@
-function  x = ResetPara(x, par);
+ function  x = ResetPara(x, par);
     global iter
     on = true; off = false;
     load(par.fxhat,'x0')
@@ -15,8 +15,9 @@ function  x = ResetPara(x, par);
         isigma = pindx.lsigma      ;
         xnew   = exp(x(isigma))    ;
         xold   = exp(x0(isigma))   ;
-        if (xnew > 1 | xnew < 0)
-            x(isigma) = x0(isigma) ;
+        if (xnew > 1 | xnew < 0.1)
+            % x(isigma) = x0(isigma) ;
+            x(isigma) = log(0.3+rand*0.2) ;
         end
     end
 
@@ -30,7 +31,7 @@ function  x = ResetPara(x, par);
         mkP1 = mean(kP1)  ;
         mkP0 = mean(kP0)  ; 
         if any(kP1 < 0) | mkP1 > fb*mkP0 | mkP1 < fs*mkP0
-            x(ikP_T) = x0(ikP_T) ;
+            x(ikP_T) = x0(ikP_T) + (0.1*rand + 0.95) ;
         end
     end
 
@@ -48,8 +49,8 @@ function  x = ResetPara(x, par);
         mkP1 = mean(kP1) ;
         mkP0 = mean(kP0) ; 
         if any(kP1 < 0) | mkP1 > fb*mkP0 | mkP1 < fs*mkP0
-            x(ikP_T) = x0(ikP_T) ;
-            x(ikdP)  = x0(ikdP)  ;
+            x(ikP_T) = x0(ikP_T) + (0.02*rand - 0.01);
+            x(ikdP)  = log( exp(x0(ikdP))*(0.1*rand + 0.95) );
         end
     end
     
@@ -58,7 +59,7 @@ function  x = ResetPara(x, par);
         xnew = exp(x(ikdP))   ;
         xold = exp(x0(ikdP))  ;
         if (xnew > fb*xold | xnew < fs*xold);
-            x(ikdP) = x0(ikdP) ;
+            x(ikdP) = log( exp(x0(ikdP))*(0.1*rand + 0.95) );
         end
     end
 
@@ -69,8 +70,8 @@ function  x = ResetPara(x, par);
         %
         bb1   = par.bP     ; 
         bP    = bm1*par.aveT + bb1 ;
-        if min(bP(:)) < 0.3 | max(bP(:)) > 4
-            x(ibP_T) = x0(ibP_T)   ;
+        if min(bP(:)) < 0.3 | max(bP(:)) > 3
+            x(ibP_T) = x0(ibP_T) + (0.02*rand - 0.01);
         end
     end
 
@@ -84,9 +85,9 @@ function  x = ResetPara(x, par);
         bb0  = exp(x0(ibP)) ;
         %
         bP   = bm1*par.aveT + bb1 ;
-        if min(bP(:)) < 0.3 | max(bP(:)) > 4
-            x(ibP_T) = x0(ibP_T) ;
-            x(ibP)   = x0(ibP);
+        if min(bP(:)) < 0.3 | max(bP(:)) > 3
+            x(ibP_T) = x0(ibP_T)  + (0.02*rand - 0.01);
+            x(ibP)   = log( exp(x0(ibP))*(0.1*rand + 0.95) );
         end
     end
 
@@ -94,8 +95,8 @@ function  x = ResetPara(x, par);
         ibP  = pindx.lbP    ;
         xnew = exp(x(ibP))  ;
         xold = exp(x0(ibP)) ;
-        if (xnew < 0.3 | xnew > 4) ;
-            x(ibP) = x0(ibP);
+        if (xnew < 0.3 | xnew > 3) ;
+            x(ibP) = log( exp(x0(ibP))*(0.1*rand + 0.95) );
         end
     end
     
@@ -104,7 +105,7 @@ function  x = ResetPara(x, par);
         xnew   = exp(x(ialpha))  ;
         xold   = exp(x0(ialpha)) ;
         if (xnew > fb*xold | xnew < fs*xold);
-            x(ialpha) = x0(ialpha) ;
+            x(ialpha) = log( exp(x0(ialpha))*(0.1*rand + 0.95) );
         end
     end
 
@@ -113,7 +114,7 @@ function  x = ResetPara(x, par);
         xnew  = exp(x(ibeta))  ;
         xold  = exp(x0(ibeta)) ;
         if (xnew > fb*xold | xnew < fs*xold);
-            x(ibeta) = x0(ibeta) ;
+            x(ibeta) = log( exp(x0(ibeta))*(0.1*rand + 0.95) );
         end
     end
 
@@ -124,8 +125,8 @@ function  x = ResetPara(x, par);
             bm0   = x0(ibC_T)   ;
             %
             bC   = bm1*par.aveT + par.bC ;
-            if min(bC(:)) < 0.3 | max(bC(:)) > 4
-                x(ibC_T) = x0(ibC_T) ;
+            if min(bC(:)) < 0.3 | max(bC(:)) > 3
+                x(ibC_T) = x0(ibC_T) + (0.02*rand - 0.01);
             end
         end
 
@@ -139,9 +140,9 @@ function  x = ResetPara(x, par);
             bb0  = exp(x0(ibC)) ;
             %
             bC   = bm1*par.aveT + bb1 ;
-            if min(bC(:)) < 0.3 | max(bC(:)) > 4
-                x(ibC_T) = x0(ibC_T) ;
-                x(ibC)   = x0(ibC) ;
+            if min(bC(:)) < 0.3 | max(bC(:)) > 3
+                x(ibC_T) = x0(ibC_T)  + (0.02*rand - 0.01);
+                x(ibC)   = log( exp(x0(ibC))*(0.1*rand + 0.95) );
             end
         end
         
@@ -149,26 +150,17 @@ function  x = ResetPara(x, par);
             ibC  = pindx.lbC    ;
             xnew = exp(x(ibC))  ;
             xold = exp(x0(ibC)) ;
-            if (xnew < 0.3 | xnew > 4) ;
-                x(ibC) = x0(ibC) ;
+            if (xnew < 0.3 | xnew > 3) ;
+                x(ibC) = log( exp(x0(ibC))*(0.1*rand + 0.95) );
             end
         end
 
-        if (par.opt_kPIC == on)
-            ikPIC = pindx.lkPIC    ;
-            xnew  = exp(x(ikPIC))  ;
-            xold  = exp(x0(ikPIC)) ;
-            if (xnew > fb*xold | xnew < fs*xold) ;
-                x(ikPIC) = x0(ikPIC) ;
-            end
-        end
-        
         if (par.opt_d == on)
             id   = pindx.ld    ;
             xnew = exp(x(id))  ;
             xold = exp(x0(id)) ;
             if (xnew > fb*xold | xnew < fs*xold) ;
-                x(id) = x0(id) ;
+                x(id) = log( exp(x0(id))*(0.1*rand + 0.95) );
             end
         end
 
@@ -182,7 +174,7 @@ function  x = ResetPara(x, par);
             mkC1 = mean(kC1) ;
             mkC0 = mean(kC0) ; 
             if any(kC1 < 0) | mkC1 > fb*mkC0 | mkC1 < fs*mkC0
-                x(ikC_T) = x0(ikC_T);
+                x(ikC_T) = x0(ikC_T) + (0.02*rand - 0.01);
             end
         end
 
@@ -200,8 +192,8 @@ function  x = ResetPara(x, par);
             mkC1 = mean(kC1) ;
             mkC0 = mean(kC0) ; 
             if any(kC1 < 0) | mkC1 > fb*mkC0 | mkC1 < fs*mkC0
-                x(ikC_T) = x0(ikC_T) ;
-                x(ikdC)  = x0(ikdC) ;
+                x(ikC_T) = x0(ikC_T) + (0.02*rand - 0.01);
+                x(ikdC)  = log( exp(x0(ikdC))*(0.1*rand + 0.95) );
             end
         end
 
@@ -210,47 +202,47 @@ function  x = ResetPara(x, par);
             xnew = exp(x(ikdC))  ;
             xold = exp(x0(ikdC)) ;
             if (xnew > fb*xold | xnew < fs*xold) ;
-                x(ikdC) = x0(ikdC) ;
+                x(ikdC) = log( exp(x0(ikdC))*(0.1*rand + 0.95) );
             end
         end
         
         if (par.opt_R_Si == on & par.opt_rR == on)
-            iR_Si = pindx.lR_Si ;
+            iR_Si = pindx.R_Si ;
             irR   = pindx.lrR   ;
             
-            par.R_Si = exp(x(iR_Si)) ;
+            par.R_Si = x(iR_Si)      ;
             par.rR   = exp(x(irR))   ;
             vout  = mkPIC2P(par)     ;
             RR    = vout.RR          ;
             nRR   = mean(diag(RR))   ;
 
-            par.R_Si = exp(x0(iR_Si)) ;
-            par.rR   = exp(x0(irR))   ;
-            vout  = mkPIC2P(par)      ;
-            RR    = vout.RR           ;
-            oRR   = mean(diag(RR))    ;
+            par.R_Si = x0(iR_Si)     ;
+            par.rR   = exp(x0(irR))  ;
+            vout  = mkPIC2P(par)     ;
+            RR    = vout.RR          ;
+            oRR   = mean(diag(RR))   ;
             
             if (nRR > fb*oRR | nRR < fs*oRR);
-                x(iR_Si) = x0(iR_Si) ;
-                x(irR)   = x0(irR)   ;
+                x(iR_Si) = x0(iR_Si)  + (0.02*rand - 0.01);
+                x(irR)   = log( exp(x0(irR))*(0.1*rand + 0.95) );
             end
         end
         
         if (par.opt_R_Si == on & par.opt_rR == off)
-            iR_Si = pindx.lR_Si    ;
+            iR_Si = pindx.R_Si     ;
             
-            par.R_Si = exp(x(iR_Si)) ;
-            vout  = mkPIC2P(par)     ;
-            RR    = vout.RR          ;
-            nRR   = mean(diag(RR))   ;
+            par.R_Si = x(iR_Si)    ;
+            vout  = mkPIC2P(par)   ;
+            RR    = vout.RR        ;
+            nRR   = mean(diag(RR)) ;
 
-            par.R_Si = exp(x0(iR_Si)) ;
-            vout  = mkPIC2P(par)      ;
-            RR    = vout.RR           ;
-            oRR   = mean(diag(RR))    ;
+            par.R_Si = x0(iR_Si)   ;
+            vout  = mkPIC2P(par)   ;
+            RR    = vout.RR        ;
+            oRR   = mean(diag(RR)) ;
             
             if (nRR > fb*oRR | nRR < fs*oRR);
-                x(iR_Si) = x0(iR_Si) ;
+                x(iR_Si) = x0(iR_Si) + (0.02*rand - 0.01);
             end
         end
 
@@ -259,7 +251,7 @@ function  x = ResetPara(x, par);
             xnew = exp(x(irR))  ;
             xold = exp(x0(irR)) ;
             if (xnew > fb*xold  | xnew < fs*xold);
-                x(irR) = x0(irR);
+                x(irR) = log( exp(x0(irR))*(0.1*rand + 0.95) );
             end
         end
         
@@ -268,7 +260,7 @@ function  x = ResetPara(x, par);
             xnew = exp(x(icc))  ;
             xold = exp(x0(icc)) ;
             if (xnew > fb*xold  | xnew < fs*xold);
-                x(icc) = x0(icc);
+                x(icc) = log( exp(x0(icc))*(0.1*rand + 0.95) );
             end
         end
         
@@ -277,7 +269,7 @@ function  x = ResetPara(x, par);
             xnew = exp(x(idd))  ;
             xold = exp(x0(idd)) ;
             if (xnew > fb*xold  | xnew < fs*xold);
-                x(idd) = x0(idd);
+                x(idd) = log( exp(x0(idd)) * (0.1*rand + 0.95) );
             end
         end
     end 
@@ -290,7 +282,7 @@ function  x = ResetPara(x, par);
             %
             O2C = O2C_T1*par.Tz + par.rO2C1 ;
             if (min(O2C) < 0)    ;
-                x(iO2C_T) = x0(iO2C_T) ;
+                x(iO2C_T) = x0(iO2C_T) + (0.02*rand - 0.01);
             end
         end
 
@@ -305,8 +297,8 @@ function  x = ResetPara(x, par);
             %
             O2C = O2C_T1*par.Tz*1e8 + rO2C1 ;
             if (min(O2C) < 0) 
-                x(irO2C)  = x0(irO2C)  ;
-                x(iO2C_T) = x0(iO2C_T) ;
+                x(irO2C)  = log( exp(x0(irO2C))*(0.1*rand + 0.95) );
+                x(iO2C_T) = x0(iO2C_T) + (0.02*rand - 0.01);
             end
         end
 
@@ -315,7 +307,7 @@ function  x = ResetPara(x, par);
             xnew  = exp(x(irO2C))  ;
             xold  = exp(x0(irO2C)) ;
             if (xnew > fb*xold | xnew < fs*xold);
-                x(irO2C) = x0(irO2C);
+                x(irO2C) = log( exp(x0(irO2C))*(0.1*rand + 0.95) );
             end
         end
 
@@ -324,7 +316,7 @@ function  x = ResetPara(x, par);
             xnew   = abs(x(iO2P_T))     ;
             xold   = abs(x0(iO2P_T))    ;
             if (xnew > 50 | xnew < -50) ;
-                x(iO2P_T) = x0(iO2P_T)  ;
+                x(iO2P_T) = x0(iO2P_T)  + (0.02*rand - 0.01) ;
             end
         end
         
@@ -333,7 +325,7 @@ function  x = ResetPara(x, par);
             xnew     = exp(x(irO2P))  ;
             xold     = exp(x0(irO2P)) ;
             if (xnew > fb*xold | xnew < fs*xold);
-                x(irO2P) = x0(irO2P)  ;
+                x(irO2P) = log( exp(x0(irO2P))*(0.1*rand + 0.95) );
             end
         end
     end

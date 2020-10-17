@@ -16,6 +16,8 @@ format long
 Cmodel  = on ; 
 Omodel  = off ; 
 Simodel = off ;
+fscale  = 0.0 ;
+par.LoadOpt = off ; % if load optimial par. 
 %
 GridVer   = 91 ;
 operator = 'A' ;
@@ -59,28 +61,29 @@ if Simodel == on
     fprintf('---- Si model is on ---- \n')
 end 
 fprintf('\n')
+
 % P model parameters
-par.opt_sigma = off ; 
-par.opt_kP_T  = on ;
+par.opt_sigma = on ; 
+par.opt_kP_T  = off ;
 par.opt_kdP   = on ;
-par.opt_bP_T  = on ; 
+par.opt_bP_T  = off ; 
 par.opt_bP    = on ;
 par.opt_beta  = on ;
 par.opt_alpha = on ;
 % C model parameters
-par.opt_bC_T  = on ;
+par.opt_bC_T  = off ;
 par.opt_bC    = on ; 
 par.opt_d     = on ;
-par.opt_kC_T  = on ;
+par.opt_kC_T  = off ;
 par.opt_kdC   = on ; 
-par.opt_R_Si  = on ;
+par.opt_R_Si  = off ; 
 par.opt_rR    = on ; 
 par.opt_cc    = on ;
 par.opt_dd    = on ;
 % O model parameters
-par.opt_O2C_T = on ;
+par.opt_O2C_T = off ;
 par.opt_rO2C  = on ;
-par.opt_O2P_T = on ; 
+par.opt_O2P_T = off ; 
 par.opt_rO2P  = on ; 
 % Si model parameters
 par.opt_dsi   = on  ;
@@ -103,29 +106,38 @@ VER = strcat(output_dir,TRdivVer);
 if (Cmodel == off & Omodel == off & Simodel == off)
     fname = strcat(VER,'_P');
 elseif (Cmodel == on & Omodel == off & Simodel == off)
-    fname = strcat(VER,'_PC');
+    base_name = strcat(VER,'_PCnpp');
+    catDOC = sprintf('_DOC%2.0e',fscale);
+    fname = strcat(base_name,catDOC);
 elseif (Cmodel == on & Omodel == on & Simodel == off)
-    fname = strcat(VER,'_PCO');
+    base_name = strcat(VER,'_PCOv1');
+    catDOC = sprintf( '_DOC%2.0e',fscale ) ;
+    fname = strcat( base_name,catDOC ) ;
 elseif (Cmodel == on & Omodel == off & Simodel == on)
-    fname = strcat(VER,'_PCSi');
+    base_name = strcat(VER,'_PCSi');
+    catDOC = sprintf( '_DOC%2.0e',fscale ) ;
+    fname = strcat( base_name,catDOC ) ;
 elseif (Cmodel == on & Omodel == on & Simodel == on)
-    fname = strcat(VER,'_PCOSi');
+    base_name = strcat(VER,'_PCOSi');
+    catDOC = sprintf( '_DOC%2.0e', fscale ) ;
+    fname = strcat(base_name,catDOC);
 end
-
 par.fname = fname ; 
 % load optimal parameters if they exist
 fxhat     = strcat(fname,'_xhat.mat');
 par.fxhat = fxhat ; 
-%
+
 if GridVer == 90
     load transport_v4.mat grid M3d TR
-    load M3d90x180x24v2.mat MSKS 
+    load M3d90x180x24v2.mat MSKS
+    load DOMobs_90x180x24.mat
     load GLODAPv2_90x180x24raw.mat
     grd = grid ;
 elseif GridVer == 91
     OperName = sprintf('OCIM2_%s',TRdivVer);
     load(OperName,'output') ;
-    load M3d91x180x24.mat MSKS 
+    load M3d91x180x24.mat MSKS
+    load DOMobs_91x180x24.mat
     load GLODAPv2_91x180x24raw.mat
     M3d = output.M3d;
     grd = output.grid;
@@ -134,20 +146,32 @@ end
 load(fname)
 load(fxhat) 
 % get rid of arctice o2 observations
+docraw  = DOCobs - DOCref ;
 ARC  = MSKS.ARC ;
+MED  = MSKS.MED ;
 iarc = find(ARC(:)) ;
-DOCobs(iarc)  = nan ;
-o2raw(iarc)   = nan ;
+imed = find(MED(:)) ;
+% get rid of arctice o2 observations
+% DOCobs(iarc)  = nan ;
+% DOCobs(imed)  = nan ;
+alkraw(iarc)  = nan ;
+alkraw(imed)  = nan ; 
 dicraw(iarc)  = nan ;
-po4raw(iarc)  = nan ;
-sio4raw(iarc) = nan ; 
+dicraw(imed)  = nan ;
+% po4raw(iarc)  = nan ;
+% po4raw(imed)  = nan ; 
+% sio4raw(iarc) = nan ;
+% sio4raw(imed) = nan ;
+% o2raw(iarc)   = nan ;
+% o2raw(imed)   = nan ;
+
 iwet = find(M3d(:)) ;
 nwet = length(iwet) ;
 
 idip = find(po4raw(iwet)>0)  ;
 isil = find(sio4raw(iwet)>0) ;
 idic = find(dicraw(iwet)>0)  ;
-idoc = find(DOCobs(iwet)>0)  ;
+idoc = find(docraw(iwet)>0)  ;
 io2  = find(o2raw(iwet)>0)   ;
 
 ndip = length(idip) ;
@@ -160,8 +184,13 @@ if (Cmodel == off & Omodel == off & Simodel == off)
     sig = 2*xhat.f/ndip ;
     HH  = xhat.fxx/sig  ;
 elseif (Cmodel == on & Omodel == off & Simodel == off)
-    sig = (2*xhat.f)/(ndip+ndic);
-    HH  = xhat.fxx/sig  ;
+    if fscale ~= 0
+        sig = (2*xhat.f)/(ndip+ndic+ndoc);
+        HH  = xhat.fxx/sig  ;
+    else
+        sig = (2*xhat.f)/(ndip+ndic);
+        HH  = xhat.fxx/sig  ;
+    end 
 elseif (Cmodel == on & Omodel == on & Simodel == off)
     sig = (2*xhat.f)/(ndip+ndic+no2);
     HH  = xhat.fxx/sig  ;

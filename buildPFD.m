@@ -43,7 +43,7 @@ function [PFdiv,Gout,Hout] = buildPFD(par,Ptype)
         % Oschelies 2008 in Biogeosciences)
         r =  par.kappa_p ; % dissolution rate
         a =  r./b ;
-        w = -a.*M ; keyboard
+        w = -a.*M ;
         % 'upwind' sinking flux operator
         % defined at the top of the grid cell
         FLUX = d0(w(iwet))*IU ;
