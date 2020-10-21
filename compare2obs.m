@@ -1,4 +1,5 @@
 clc; clear all; close all
+spd  = 24*60^2 ; spa  = 365*spd ;
 if ismac 
     addpath('~/Dropbox/myfunc'     )
     addpath('~/Documents/DATA/'    )
@@ -13,9 +14,12 @@ TR_ver = 91 ;
 %
 Pmodel  = on ;
 Cmodel  = on ;
-Omodel  = off ;
+Omodel  = on ;
 Simodel = off ;
-fscale  = 1.0 ; % factor to weigh DOC in the objective function
+% factor to weigh DOP in the objective function
+pscale  = 0.2 ;
+% factor to weigh DOC in the objective function
+cscale  = 0.2 ; 
                 %
 GridVer   = 91 ;
 operator = 'A' ;
@@ -51,27 +55,33 @@ end
 if ismac
     input_dir = sprintf('~/Documents/CP-model/MSK%2d/',GridVer); 
 elseif isunix
-    input_dir = sprintf('/DFS-L/DATA/primeau/weilewang/TempSensi/MSK%2d/',GridVer);
+    % input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
+                        % 'MSK%2d/'],GridVer);
+    input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
+                        'MSK%2d/PME4DICALK/'],GridVer);
+    % input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/COP4WWF/' ...
+                        % 'MSK%2d/'],GridVer);
 end
 VER = strcat(input_dir,TRdivVer);
 % Creat output file names based on which model(s) is(are) optimized
 if (Cmodel == off & Omodel == off & Simodel == off)
     fname = strcat(VER,'_P');
 elseif (Cmodel == on & Omodel == off & Simodel == off)
-    base_name = strcat(VER,'_PCv2Zscore'); %minmax_PME4All');
-    catDOC = sprintf('_DOC%2.0e',fscale);
+    base_name = strcat(VER,'_PCv2'); 
+    % catDOC = sprintf('_DOC%2.0e',cscale);
+    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',cscale,pscale);
     fname = strcat(base_name,catDOC);
 elseif (Cmodel == on & Omodel == on & Simodel == off)
-    base_name = strcat(VER,'_PCOv3');
-    catDOC = sprintf('_DOC%2.0e',fscale);
+    base_name = strcat(VER,'_PCOv1');
+    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',cscale,pscale);
     fname = strcat(base_name,catDOC);
 elseif (Cmodel == on & par.Omodel == off & Simodel == on)
     base_name = strcat(VER,'_PCSi');
-    catDOC = sprintf('_DOC%2.0e',fscale);
+    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',cscale,pscale);
     fname = strcat(base_name,catDOC);
 elseif (Cmodel == on & Omodel == on & Simodel == on)
     base_name = strcat(VER,'_PCOSi');
-    catDOC = sprintf('_DOC%2.0e',fscale);
+    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',cscale,pscale);
     fname = strcat(base_name,catDOC);
 end
 
@@ -82,6 +92,7 @@ if GridVer == 90
     load GLODAPv2_90x180x24raw.mat
     load PME_TS_90x180x24.mat modT modS
     load DICant_90x180x24.mat DICant
+    load Mouw_POC_90x180x24.mat  % sediment trap data MOUW
     grd  = grid;
 elseif GridVer == 91
     OperName = sprintf('OCIM2_%s',TRdivVer);
@@ -92,6 +103,7 @@ elseif GridVer == 91
     load GLODAPv2_91x180x24raw.mat
     load DICant_91x180x24.mat DICant
     load DOMobs_91x180x24.mat
+    load Mouw_POC_91x180x24.mat  % sediment trap data MOUW
     grd = output.grid;
     M3d = output.M3d;
 end
@@ -115,8 +127,9 @@ dicraw(imed)  = nan ;
 % po4raw(imed)  = nan ; 
 % sio4raw(iarc) = nan ;
 % sio4raw(imed) = nan ;
-
+fxhat = strcat(fname,'_xhat.mat');
 load(fname)
+load(fxhat)
 %
 rho = 1024.5     ; % seawater density;
 permil = rho*1e-3; % from umol/kg to mmol/m3;
@@ -146,7 +159,7 @@ if (Pmodel == on)
     end 
     
     dopraw = DOPobs - 0.03 ; % less refractory DOP 
-    idop   = find(dopraw(iwet) > 0.0) ;
+    idop   = find(dopraw(:) > 0 & DOP(:)>0) ;
     iDOP_ATL = find(dopraw(iwet)>0 & ATL(iwet)>0) ;
     iDOP_PAC = find(dopraw(iwet)>0 & PAC(iwet)>0) ;
     iDOP_IND = find(dopraw(iwet)>0 & IND(iwet)>0) ;
@@ -343,52 +356,81 @@ if (Cmodel == on)
     plot([0 60],[0 60],'r-','linewidth',3)
     xlim([0 60])
     ylim([0 60])
-    
-    nfig = nfig + 1;
-    figure(nfig)
 
     iDOC = find(DOCclean(iwet)>0 & DOC(iwet)>0) ;
     O = DOCclean(iwet(iDOC)) ;
     M = DOC(iwet(iDOC)) ; 
     fprintf('R^2 for DOC is %3.3f \n',rsquare(O,M))
-    OvsM = [O, M] ;
+    % OvsM = [O, M] ;
     
-    Woc  = dVt(iwet(iDOC))/sum(dVt(iwet(iDOC))) ;
-    % mu   = sum(Woc*DOCclean(iwet(iDOC)))/sum(diag(Woc)) ;
-    % var  = sum(Woc*(DOCclean(iwet(iDOC))-mu).^2)/sum(diag(Woc));
-    % Woc  = full(fscale*Woc/var) ;
+    %%%%%%%% compare to sediment trap %%%%%%%%%%%%
+    POC = data.POC ;
+    %-------------------- normalize temperature --------------------
+    % Zscore is tried but it generate inf values(span from neg to pos).
+    % Tz   = (vT-mean(vT))./std(vT) ; 
+    vT = modT(iwet) ;
+    Tz = (vT - min(vT))./(max(vT) - min(vT)) ;
+    Tz( Tz < 0.05) = 0.05 ;
 
-    [bandwidth,density,X,Y] = mykde2d(OvsM,500,[0 0],[50 50],Woc);
-    cr = 5:5:95 ;
-    dx = X(3,5)-X(3,4) ; 
-    dy = Y(4,2)-Y(3,2) ;
-    [q,ii] = sort(density(:)*dx*dy,'descend') ;
-    D  = density ;
-    D(ii) = cumsum(q) ;
-    subplot('position',[0.2 0.2 0.6 0.6])
-    contourf(X,Y,100*(1-D),cr) ; hold on
-    contour(X,Y,100*(1-D),cr)  ;
+    Tz3d = M3d + nan ;
+    Tz3d(iwet) = Tz  ;
+    par.Tz     = Tz*1e-8 ;
+    par.aveT   = nanmean(Tz3d(:,:,1:3),3) ;
+    par.kappa_p  = 1/(720*60^2) ;
+    if isfield(xhat,'bC_T')
+        par.bC   = xhat.bC   ;
+        par.bC_T = xhat.bC_T ;
+    else
+        par.bC   = xhat.bC ;
+        par.bC_T = 0 ;
+    end         
     
-    caxis([5 95])
-    set(gca,'FontSize',16);
-    grid on
-    axis square
-    xlabel('Observed DOC (mmol/m^3)') ;
-    ylabel('Model DOC (mmol/m^3)') ;
-    title('model V.S. observation')
-    plot([0 50],[0 50],'r--','linewidth',2) ;
+    [PFdiv,Gout] = buildPFD(par,'POC');
+    w = Gout.w(:,:,2:25) ;
+    fPOC = -w.*POC*spd*12 ;
+    fPOC(iarc) = nan ;
+    ifPOC_ATL = find(POC_flux(iwet)>0 & ATL(iwet)>0) ;
+    ifPOC_PAC = find(POC_flux(iwet)>0 & PAC(iwet)>0) ;
+    ifPOC_IND = find(POC_flux(iwet)>0 & IND(iwet)>0) ;
+    ifPOC_ARC = find(POC_flux(iwet)>0 & ARC(iwet)>0) ;
+    ifPOC_MED = find(POC_flux(iwet)>0 & MED(iwet)>0) ;
     
-    subplot('position',[0.82 0.2 0.05 0.6]) ;
-    contourf([1 2],cr,[cr(:),cr(:)],cr) ; hold on
-    contour([1 2],cr,[cr(:),cr(:)],cr)  ;
+    nfig = nfig + 1;
+    figure(nfig)
+    loglog(POC_flux(iwet(ifPOC_ATL)), fPOC(iwet(ifPOC_ATL)),'ro','MarkerFaceColor','red')
+    hold on
+    loglog(POC_flux(iwet(ifPOC_PAC)), fPOC(iwet(ifPOC_PAC)),'ks','MarkerFaceColor','black')
+    hold on
+    loglog(POC_flux(iwet(ifPOC_IND)), fPOC(iwet(ifPOC_IND)),'b^','MarkerFaceColor','blue')
+    hold on
+    loglog(POC_flux(iwet(ifPOC_ARC)), fPOC(iwet(ifPOC_ARC)),'g*','MarkerFaceColor','green')
+    hold on
+    loglog(POC_flux(iwet(ifPOC_MED)), fPOC(iwet(ifPOC_MED)),'c>','MarkerFaceColor','cyan')
+    hold on
+    
+    hold on
+    plot([0.1 1000],[0.1 1000],'r','linewidth',2)
     hold off
-    set(gca,'FontSize',14);
-    set(gca,'XTickLabel',[]);
-    set(gca,'YAxisLocation','right');
-    set(gca,'TickLength',[0 0])
-    ylabel('(percentile)')
-    % exportfig(gcf,'DOC_MvsO','fontmode','fixed','fontsize',12,...
-              % 'color','rgb','renderer','painters')
+    xlim([0.1 1000])
+    ylim([0.1 1000])
+    xlabel('POC flux from Mouw et al database (mg/m^2/day)')
+    ylabel('POC flux from the inverse model (mg/m^2/day)')
+    %
+    ikeep = find(POC_flux(:)>0 & fPOC(:)>0);
+    fprintf('R^2 for fPOC is %3.3f \n', ...
+            rsquare(log10(POC_flux(ikeep)),log10(fPOC(ikeep))))
+
+    PIC = data.PIC ;
+    if isfield(xhat,'d')
+        par.d   = xhat.d  ;
+    end         
+    par.tauPIC = 30*spd   ;
+    [~,Gout] = buildPFD(par,'PIC') ;
+    w = Gout.w(:,:,2:25)  ;
+    fPIC = -w.*PIC*spd*12 ;
+
+    rRatio = fPOC./fPIC ;
+    
 end
 
 % ---------------------------------------------------

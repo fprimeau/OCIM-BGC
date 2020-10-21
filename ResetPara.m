@@ -1,4 +1,4 @@
- function  x = ResetPara(x, par);
+function  x = ResetPara(x, par);
     global iter
     on = true; off = false;
     load(par.fxhat,'x0')

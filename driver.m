@@ -15,15 +15,16 @@ elseif isunix
 end
 format long
 % 
-Gtest = on ;
-Htest = on ;
+Gtest = off ;
+Htest = off ;
 par.optim   = on ; 
 par.Cmodel  = on ; 
-par.Omodel  = off ; 
+par.Omodel  = on ; 
 par.Simodel = off ;
 par.LoadOpt = off ; % if load optimial par. 
-par.fscale  = 0.2 ; % factor to weigh DOC in the objective function
-%
+par.pscale  = 0.0 ;
+par.cscale  = 1.0 ; % factor to weigh DOC in the objective function
+                    %
 GridVer  = 91     ;
 operator = 'A'    ;
 if GridVer == 90
@@ -58,7 +59,8 @@ end
 fprintf('Transport version: % s \n', TRdivVer)
 if par.Cmodel == on
     fprintf('---- C model is on ---- \n')
-    fprintf('DOC scaling factor is %2.2e \n', par.fscale)
+    fprintf('DOP scaling factor is %2.2e \n', par.pscale)
+    fprintf('DOC scaling factor is %2.2e \n', par.cscale)
 end
 if par.Omodel == on
     fprintf('---- O model is on ---- \n')
@@ -69,7 +71,7 @@ end
 fprintf('\n')
 
 % P model parameters
-par.opt_sigma = off ; 
+par.opt_sigma = on ; 
 par.opt_kP_T  = on ;
 par.opt_kdP   = on ;
 par.opt_bP_T  = on ; 
@@ -82,7 +84,7 @@ par.opt_bC    = on ;
 par.opt_d     = on ;
 par.opt_kC_T  = on ;
 par.opt_kdC   = on ; 
-par.opt_R_Si  = off ; 
+par.opt_R_Si  = on ; 
 par.opt_rR    = on ; 
 par.opt_cc    = on ;
 par.opt_dd    = on ;
@@ -104,8 +106,10 @@ par.opt_bb    = on  ;
 if ismac
     output_dir = sprintf('~/Documents/CP-model/MSK%2d/',GridVer); 
 elseif isunix
+    % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
+                        % 'MSK%2d/'],GridVer);
     output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
-                        'MSK%2d/'],GridVer);
+                        'MSK%2d/PME4DICALK/'],GridVer);
     % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/COP4WWF/' ...
                         % 'MSK%2d/'],GridVer);
 end
@@ -117,24 +121,24 @@ elseif Gtest == off
     if (par.Cmodel == off & par.Omodel == off & par.Simodel == off)
         fname = strcat(VER,'_P');
     elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off)
-        base_name = strcat(VER,'_PCv1Zscore');
-        catDOC = sprintf('_DOC%2.0e',par.fscale);
+        base_name = strcat(VER,'_PCv1');
+        catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
         fname = strcat(base_name,catDOC);
     elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off)
-        base_name = strcat(VER,'_PCOnpp');
-        catDOC = sprintf('_DOC%2.0e',par.fscale);
+        base_name = strcat(VER,'_PCOv1');
+        catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
         fname = strcat(base_name,catDOC);
     elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on)
         base_name = strcat(VER,'_PCSi');
-        catDOC = sprintf('_DOC%2.0e',par.fscale);
+        catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
         fname = strcat(base_name,catDOC);
     elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on)
         base_name = strcat(VER,'_PCOSi');
-        catDOC = sprintf('_DOC%2.0e',par.fscale);
+        catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
         fname = strcat(base_name,catDOC);
     end
 end
-par.fname = fname ; 
+par.fname = strcat(fname,'.mat') ; 
 % load optimal parameters if they exist
 fxhat     = strcat(fname,'_xhat.mat');
 par.fxhat = fxhat ; 
@@ -160,8 +164,8 @@ if GridVer == 90
         load MSK90/fixedPO_C.mat
         load MSK90/fixedPO_O2.mat
     elseif isunix
-        if isfile(fname)
-            load(fname)
+        if isfile(par.fname)
+            load(par.fname)
         else
             load initCO_90x180x24.mat
         end
@@ -191,8 +195,8 @@ elseif GridVer == 91
         load MSK91/CTL_He_PCO.mat
         load MSK91/CTL_He_PCO.mat
     elseif isunix
-        if isfile(fname)
-            load(fname)
+        if isfile(par.fname)
+            load(par.fname)
         else 
             load initCO_91x180x24.mat
         end 
@@ -220,11 +224,11 @@ par.co2syspar = co2syspar       ;
 iwet = find(M3d(:)) ;
 nwet = length(iwet) ;
 dVt  = grd.DXT3d.*grd.DYT3d.*grd.DZT3d;
-ARC  = MSKS.ARC ;
-MED  = MSKS.MED ;
-PAC  = MSKS.PAC ;
-ATL  = MSKS.ATL ;
-IND  = MSKS.IND ;
+ARC  = MSKS.ARC     ;
+MED  = MSKS.MED     ;
+PAC  = MSKS.PAC     ;
+ATL  = MSKS.ATL     ;
+IND  = MSKS.IND     ;
 iarc = find(ARC(:)) ;
 imed = find(MED(:)) ;
 ipac = find(PAC(:)) ;
@@ -271,10 +275,11 @@ DOCclean   = RemoveRef(par) ;
 ibad = find( DOCclean(iarc) > 50 ) ;
 DOCclean(iarc(ibad)) = nan ;
 par.docraw = DOCclean ;
+
 %---------------- inital guesses on C and O ---------------
 DIC = data.DIC - par.dicant ;
 GO  = real(data.O2(iwet)) + 1e-9*randn(par.nwet,1);
-GC  = [data.DIC(iwet); data.POC(iwet); data.DOC(iwet); ...
+GC  = [DIC(iwet); data.POC(iwet); data.DOC(iwet); ...
        data.PIC(iwet); data.ALK(iwet)];
 GC  = GC + 1e-6*randn(5*nwet,1) ;
 
@@ -293,19 +298,21 @@ par.pme     = pme  ;
 junk = M3d ;
 junk(:,:,2:end) = 0 ;
 isrf = find(junk(iwet)) ;
-idic = find(par.dicraw(iwet(isrf)) > 0);
-ialk = find(par.alkraw(iwet(isrf)) > 0);
+sdic = find(par.dicraw(iwet(isrf)) > 0);
+salk = find(par.alkraw(iwet(isrf)) > 0);
 % surface mean concentraions
-par.sDICbar = sum(par.dicraw((iwet(isrf(idic)))).* ...
-                  par.dVt(iwet(isrf(idic))))./sum(par.dVt(iwet(isrf(idic))));
-par.sALKbar = sum(par.alkraw((iwet(isrf(ialk)))).* ...
-                  par.dVt(iwet(isrf(ialk))))./sum(par.dVt(iwet(isrf(ialk))));
+par.sDICbar = sum(par.dicraw((iwet(isrf(sdic)))).* ...
+                  dVt(iwet(isrf(sdic))))./sum(dVt(iwet(isrf(sdic))));
+par.sALKbar = sum(par.alkraw((iwet(isrf(salk)))).* ...
+                  dVt(iwet(isrf(salk))))./sum(dVt(iwet(isrf(salk))));
 
 %-------------------- normalize temperature --------------------
+% Zscore is tried but it generate inf values(span from neg to pos).
+% Tz   = (vT-mean(vT))./std(vT) ; 
 vT = par.modT(iwet) ;
-% Tz = (vT - min(vT))./(max(vT) - min(vT)) ;
-% Tz( Tz < 0.05) = 0.05 ;
-Tz   = (vT-mean(vT))./std(vT) ;
+Tz = (vT - min(vT))./(max(vT) - min(vT)) ;
+Tz( Tz < 0.05) = 0.05 ;
+
 Tz3d = M3d + nan ;
 Tz3d(iwet) = Tz  ;
 par.Tz     = Tz*1e-8 ;
@@ -314,16 +321,13 @@ par.aveT   = nanmean(Tz3d(:,:,1:3),3) ;
 %------------------- prepare for restoring ---------------------
 % calculating global mean DIP, ALK, and DSi concentraions for
 % restoring 
-idip = find(par.po4raw(iwet)>0) ;
-ialk = find(par.alkraw(iwet)>0) ;
-isil = find(par.alkraw(iwet)>0) ;
+idip = find(par.po4raw(iwet)>0)  ;
+ialk = find(par.alkraw(iwet)>0)  ;
+isil = find(par.sio4raw(iwet)>0) ;
 
-par.DIPbar = nansum(par.po4raw(iwet(idip)).*dVt(iwet(idip)))/ ...
-    nansum(dVt(iwet(idip))) ;
-par.ALKbar = nansum(par.alkraw(iwet(ialk)).*dVt(iwet(ialk)))/ ...
-    nansum(dVt(iwet(ialk))) ;
-par.DSibar = nansum(par.sio4raw(iwet(isil)).*dVt(iwet(isil)))/ ...
-    nansum(dVt(iwet(isil)))  ;
+par.DIPbar = sum(par.po4raw(iwet(idip)).*dVt(iwet(idip)))/sum(dVt(iwet(idip))) ;
+par.ALKbar = sum(par.alkraw(iwet(ialk)).*dVt(iwet(ialk)))/sum(dVt(iwet(ialk))) ;
+par.DSibar = sum(par.sio4raw(iwet(isil)).*dVt(iwet(isil)))/sum(dVt(iwet(isil)));
 
 %------------------ prepare NPP for the model --------------------
 par.nzo = 2 ;
@@ -359,8 +363,8 @@ options = optimoptions(@fminunc                  , ...
 nip = length(x0);
 if(Gtest);
     dx = sqrt(-1)*eps.^3*eye(nip);
-    % for ii = nip : -1 : 1
-    for ii = 8 : nip
+    for ii = nip : -1 : 13
+    % for ii = 8 : nip
         x  = real(x0)+dx(:,ii);
         if Htest == on
             [f,fx,fxx] = neglogpost(x, par) ;

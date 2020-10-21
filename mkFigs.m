@@ -16,7 +16,8 @@ format long
 Cmodel  = on ;
 Omodel  = off ;
 Simodel = off ;
-fscale  = 1.0 ;
+pscale  = 0.0 ;
+cscale  = 0.6 ;
 %
 GridVer   = 91 ;
 operator = 'A' ;
@@ -54,27 +55,32 @@ end
 if ismac
     input_dir = sprintf('~/Documents/CP-model/MSK%2d/',GridVer); 
 elseif isunix 
+    % input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
+    % 'MSK%2d/'],GridVer);
     input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
-                        'MSK%2d/'],GridVer);
+                        'MSK%2d/PME4DICALK/'],GridVer);
+    % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/COP4WWF/' ...
+    % 'MSK%2d/'],GridVer);
 end
 VER   = strcat(input_dir,TRdivVer);
 if (Cmodel == off & Omodel == off & Simodel == off)
     fname = strcat(VER,'_P');
 elseif (Cmodel == on & Omodel == off & Simodel == off)
-    base_name = strcat(VER,'_PCv1Zscore');
-    catDOC = sprintf('_DOC%2.0e',fscale);
+    base_name = strcat(VER,'_PCv1');
+    % catDOC = sprintf('_DOC%2.0e',cscale);
+    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',cscale,pscale);
     fname = strcat(base_name,catDOC);
 elseif (Cmodel == on & Omodel == on & Simodel == off)
-    base_name = strcat(VER,'_PCOv1');
-    catDOC = sprintf('_DOC%2.0e',fscale);
+    base_name = strcat(VER,'_PCOv3');
+    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',cscale,pscale);
     fname = strcat(base_name,catDOC);
 elseif (Cmodel == on & par.Omodel == off & Simodel == on)
     base_name = strcat(VER,'_PCSi');
-    catDOC = sprintf('_DOC%2.0e',fscale);
+    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',cscale,pscale);
     fname = strcat(base_name,catDOC);
 elseif (Cmodel == on & Omodel == on & Simodel == on)
     base_name = strcat(VER,'_PCOSi');
-    catDOC = sprintf('_DOC%2.0e',fscale);
+    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',cscale,pscale);
     fname = strcat(base_name,catDOC);
 end
 
@@ -123,9 +129,9 @@ par.Temp   = tempobs ;
 par.Salt   = Sobs    ;
 par.modT   = modT    ;
 vT = modT(iwet) ;
-% Tz = (vT - min(vT))./(max(vT) - min(vT)) ;
-% Tz( Tz < 0.05 ) = 0.05 ;
-Tz   = (vT-mean(vT))/std(vT) ;
+Tz = (vT - min(vT))./(max(vT) - min(vT)) ;
+Tz( Tz < 0.05 ) = 0.05 ;
+% Tz   = (vT-mean(vT))/std(vT) ;
 Tz3d = M3d + nan ;
 Tz3d(iwet) = Tz  ;
 aveT   = nanmean(Tz3d(:,:,1:3),3) ;

@@ -44,6 +44,7 @@ function [PFdiv,Gout,Hout] = buildPFD(par,Ptype)
         r =  par.kappa_p ; % dissolution rate
         a =  r./b ;
         w = -a.*M ;
+        Gout.w = w ;
         % 'upwind' sinking flux operator
         % defined at the top of the grid cell
         FLUX = d0(w(iwet))*IU ;
@@ -53,7 +54,7 @@ function [PFdiv,Gout,Hout] = buildPFD(par,Ptype)
         d = par.d         ; 
         w = -r.*d.*MSK    ;
         FLUX = d0(w(iwet))*IU ;
-        
+        Gout.w = w ;
     elseif ( strcmp(Ptype,'bSi') )
         % Define a temperature dependent dissolution rate
         % Sarmiento and Gruber text book

@@ -1,4 +1,4 @@
-function [par, C, Cx, Cxx] = eqCcycle(x, par)
+function [par, C, Cx, Cxx] = eqCcycle(x, par);
 % ip is the mapping from x to parameter names (see switch below)
 % output: C is model prediction of DIP,POP,and DOP
 % output: F partial derivative of P model w.r.t. model parameters x
@@ -95,14 +95,14 @@ function [par, C, Cx, Cxx] = eqCcycle(x, par)
 end
 
 function [F,FD,Cx,Cxx,par] = C_eqn(X, par)    
-    global bar 
-    % unpack some useful stuff
+% unpack some useful stuff
     on = true; off = false;
     grd   = par.grd   ;
     M3d   = par.M3d   ;
     TRdiv = par.TRdiv ;
     iwet  = par.iwet  ;
     nwet  = par.nwet  ;
+    dVt   = par.dVt   ;
     I     = par.I     ;
     
     Tz  = par.Tz ;
@@ -111,43 +111,30 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
     DOC = X(2*nwet+1:3*nwet) ;
     PIC = X(3*nwet+1:4*nwet) ;
     ALK = X(4*nwet+1:5*nwet) ;
-    
-    if exist('bar') & isfield(bar,'sDICbar')
-        sDICbar = bar.sDICbar ;
-        sALKbar = bar.sALKbar ;
-        sPOCbar = bar.sPOCbar ;
-        sDOCbar = bar.sDOCbar ;
-        sPICbar = bar.sPICbar ;
-    else 
-        sDICbar = par.sDICbar ;
-        sALKbar = par.sALKbar ;
-        sPOCbar = 0 ;
-        sDOCbar = 0 ;
-        sPICbar = 0 ;
-    end 
+
     PO4 = par.po4obs(iwet) ;
     % fixed parameters
     kappa_p = par.kappa_p  ;
     kPIC    = par.kPIC     ;
     % parameters need to be optimized
-    alpha = par.alpha ;
-    beta  = par.beta  ;
-    sigma = par.sigma ;
-    bC_T  = par.bC_T  ;
-    bC    = par.bC    ;
-    d     = par.d     ;
-    kC_T  = par.kC_T  ;
-    kdC   = par.kdC   ;
-    R_Si  = par.R_Si  ;
-    rR    = par.rR    ;
-    cc    = par.cc    ;
-    dd    = par.dd    ;
-    pme   = par.pme   ;
+    alpha = par.alpha    ;
+    beta  = par.beta     ;
+    sigma = par.sigma    ;
+    bC_T  = par.bC_T     ;
+    bC    = par.bC       ;
+    d     = par.d        ;
+    kC_T  = par.kC_T     ;
+    kdC   = par.kdC      ;
+    R_Si  = par.R_Si     ;
+    rR    = par.rR       ;
+    cc    = par.cc       ;
+    dd    = par.dd       ;
+    pme   = par.pme      ;
     % PIC to POC rain ratio 
     vout  = mkPIC2P(par) ;
-    RR    = vout.RR    ;
-    RR_Si = vout.RR_Si ;
-    RR_rR = vout.RR_rR ;
+    RR    = vout.RR      ;
+    RR_Si = vout.RR_Si   ;
+    RR_rR = vout.RR_rR   ;
     clear vout 
     % kappa_dc ;
     kC    = d0(kC_T * Tz + kdC) ;
@@ -172,16 +159,19 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
     
     kappa_g = par.kappa_g ;
     ALKbar  = par.ALKbar  ;
+    sDICbar = par.sDICbar ;
+    sALKbar = par.sALKbar ;
+    
     eq1 = (I+(1-sigma)*RR)*(G*C2P) + TRdiv*DIC - kC*DOC - kPIC*PIC ...
           - JgDIC + pme*sDICbar ;
-    eq2 = -(1-sigma)*G*C2P + (PFDc+kappa_p*I)*POC + pme*sPOCbar    ;
-    eq3 = -sigma*G*C2P + (TRdiv+kC)*DOC - kappa_p*POC + pme*sDOCbar;
-    eq4 = -(1-sigma)*RR*(G*C2P) + (PFDa+kPIC*I)*PIC + pme*sPICbar; 
+    eq2 = -(1-sigma)*G*C2P + (PFDc+kappa_p*I)*POC     ; 
+    eq3 = -sigma*G*C2P + (TRdiv+kC)*DOC - kappa_p*POC ; 
+    eq4 = -(1-sigma)*RR*(G*C2P) + (PFDa+kPIC*I)*PIC   ; 
     eq5 = 2*(1-sigma)*RR*(G*C2P) + TRdiv*ALK - N2C*G*C2P + N2C*kC*DOC ...
           - 2*kPIC*PIC - kappa_g*(ALK - ALKbar) + pme*sALKbar ;
     
     F   = [eq1; eq2; eq3; eq4; eq5];
-
+    
     if nargout > 1
         % construct the LHS matrix for the offline model
         % disp('Preparing LHS and RHS matrix:')

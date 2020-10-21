@@ -26,7 +26,6 @@ function [f, fx, fxx, data] = neglogpost(x, par)
     %
     f    = 0 ;
     %%%%%%%%%%%%%%%%%%   Solve P    %%%%%%%%%%%%%%%%%%%%%%%%
-    global bar 
     idip = find(par.po4raw(iwet)>0.02) ;
     Wp   = d0(dVt(iwet(idip))/sum(dVt(iwet(idip)))) ;
     mu   = sum(Wp*par.po4raw(iwet(idip)))/sum(diag(Wp)) ;
@@ -37,25 +36,12 @@ function [f, fx, fxx, data] = neglogpost(x, par)
     Wp   = d0(dVt(iwet(idop))/sum(dVt(iwet(idop)))) ;
     mu   = sum(Wp*par.dopraw(iwet(idop)))/sum(diag(Wp)) ;
     var  = sum(Wp*(par.dopraw(iwet(idop))-mu).^2)/sum(diag(Wp)) ;
-    % Wop  = par.fscale*Wp/var ;
-    Wop  = 0*Wp/var ;
+    Wop  = par.pscale*Wp/var ;
     %
     [par, P, Px, Pxx] = eqPcycle(x, par) ;
     DIP = M3d+nan ;  DIP(iwet) = P(1+0*nwet:1*nwet) ;
     POP = M3d+nan ;  POP(iwet) = P(1+1*nwet:2*nwet) ;
     DOP = M3d+nan ;  DOP(iwet) = P(1+2*nwet:3*nwet) ;
-
-    junk = M3d ;
-    junk(:,:,2:end) = 0 ;
-    isrf = find(junk(iwet)) ;
-    % treat sDICbar and sALKbar not related to model DIC and ALK
-    % if not, the newton method is about 10 times slower.
-    bar.sDIPbar = real(sum(DIP(iwet(isrf)).*par.dVt(iwet(isrf)))./ ...
-                       sum(par.dVt(isrf))) ;
-    bar.sPOPbar = real(sum(POP(iwet(isrf)).*par.dVt(iwet(isrf)))./ ...
-                       sum(par.dVt(isrf))) ;
-    bar.sDOPbar = real(sum(DOP(iwet(isrf)).*par.dVt(iwet(isrf)))./ ...
-                       sum(par.dVt(isrf)));
     
     par.Px   = Px  ;
     par.Pxx  = Pxx ;
@@ -87,7 +73,6 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 
     %%%%%%%%%%%%%%%%%%     Solve C   %%%%%%%%%%%%%%%%%%%%%%%%
     if (par.Cmodel == on)
-        global bar
         idic = find(par.dicraw(iwet)>0) ;
         Wic  = d0(dVt(iwet(idic))/sum(dVt(iwet(idic)))) ;
         mu   = sum(Wic*par.dicraw(iwet(idic)))/sum(diag(Wic)) ;
@@ -104,8 +89,8 @@ function [f, fx, fxx, data] = neglogpost(x, par)
         Woc  = d0(dVt(iwet(idoc))/sum(dVt(iwet(idoc)))) ;
         mu   = sum(Woc*par.docraw(iwet(idoc)))/sum(diag(Woc)) ;
         var  = sum(Woc*(par.docraw(iwet(idoc))-mu).^2)/sum(diag(Woc));
-        Woc  = par.fscale*Woc/var ;
-
+        Woc  = par.cscale*Woc/var ;
+        
         [par, C, Cx, Cxx] = eqCcycle(x, par) ;
         DIC = M3d+nan ;  DIC(iwet) = C(0*nwet+1:1*nwet) ;
         POC = M3d+nan ;  POC(iwet) = C(1*nwet+1:2*nwet) ;
@@ -113,23 +98,6 @@ function [f, fx, fxx, data] = neglogpost(x, par)
         PIC = M3d+nan ;  PIC(iwet) = C(3*nwet+1:4*nwet) ;
         ALK = M3d+nan ;  ALK(iwet) = C(4*nwet+1:5*nwet) ;
 
-        junk = M3d ;
-        junk(:,:,2:end) = 0 ;
-        isrf = find(junk(iwet)) ;
-
-        % treat sDICbar and sALKbar not related to model DIC and ALK
-        % if not, the newton method is about 10 times slower.
-        bar.sDICbar = real(sum(DIC(iwet(isrf)).*par.dVt(iwet(isrf)))./ ...
-                           sum(par.dVt(isrf)));
-        bar.sPOCbar = real(sum(POC(iwet(isrf)).*par.dVt(iwet(isrf)))./ ...
-                           sum(par.dVt(isrf)));
-        bar.sDOCbar = real(sum(DOC(iwet(isrf)).*par.dVt(iwet(isrf)))./ ...
-                           sum(par.dVt(isrf)));
-        bar.sPICbar = real(sum(PIC(iwet(isrf)).*par.dVt(iwet(isrf)))./ ...
-                           sum(par.dVt(isrf)));
-        bar.sALKbar = real(sum(ALK(iwet(isrf)).*par.dVt(iwet(isrf)))./ ...
-                           sum(par.dVt(isrf)));
-        
         par.DIC = DIC(iwet) ;
         par.DOC = DOC(iwet) ;
         DIC = DIC + par.dicant  ;
