@@ -14,10 +14,10 @@ end
 format long
 %
 Cmodel  = on ;
-Omodel  = off ;
+Omodel  = on ;
 Simodel = off ;
 pscale  = 0.0 ;
-cscale  = 0.6 ;
+cscale  = 0.0 ;
 %
 GridVer   = 91 ;
 operator = 'A' ;
@@ -71,7 +71,7 @@ elseif (Cmodel == on & Omodel == off & Simodel == off)
     catDOC = sprintf('_DOC%2.0e_DOP%2.0e',cscale,pscale);
     fname = strcat(base_name,catDOC);
 elseif (Cmodel == on & Omodel == on & Simodel == off)
-    base_name = strcat(VER,'_PCOv3');
+    base_name = strcat(VER,'_PCOv1');
     catDOC = sprintf('_DOC%2.0e_DOP%2.0e',cscale,pscale);
     fname = strcat(base_name,catDOC);
 elseif (Cmodel == on & par.Omodel == off & Simodel == on)

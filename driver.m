@@ -22,8 +22,8 @@ par.Cmodel  = on ;
 par.Omodel  = on ; 
 par.Simodel = off ;
 par.LoadOpt = off ; % if load optimial par. 
-par.pscale  = 0.0 ;
-par.cscale  = 1.0 ; % factor to weigh DOC in the objective function
+par.pscale  = 0.4 ;
+par.cscale  = 0.4 ; % factor to weigh DOC in the objective function
                     %
 GridVer  = 91     ;
 operator = 'A'    ;
@@ -121,11 +121,11 @@ elseif Gtest == off
     if (par.Cmodel == off & par.Omodel == off & par.Simodel == off)
         fname = strcat(VER,'_P');
     elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off)
-        base_name = strcat(VER,'_PCv1');
+        base_name = strcat(VER,'_PCv2');
         catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
         fname = strcat(base_name,catDOC);
     elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off)
-        base_name = strcat(VER,'_PCOv1');
+        base_name = strcat(VER,'_PCOv2');
         catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
         fname = strcat(base_name,catDOC);
     elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on)

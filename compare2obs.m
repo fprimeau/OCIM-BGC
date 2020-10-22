@@ -14,7 +14,7 @@ TR_ver = 91 ;
 %
 Pmodel  = on ;
 Cmodel  = on ;
-Omodel  = on ;
+Omodel  = off ;
 Simodel = off ;
 % factor to weigh DOP in the objective function
 pscale  = 0.2 ;
