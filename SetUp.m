@@ -191,7 +191,7 @@ par.docraw = DOCclean ;
 
 %-------------------- prepare virtual flux -------------------
 % PME part;
-% [modT,modS,pme] = PME(par) ; 
+% [modT,modS,pme] = pme(par) ; 
 par.pme     = pme  ;   
 junk = M3d ;
 junk(:,:,2:end) = 0 ;

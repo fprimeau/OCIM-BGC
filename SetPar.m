@@ -24,7 +24,7 @@ function par = SetPar(par)
     if exist('xhat') & isfield(xhat,'kP_T')
         par.kP_T = xhat.kP_T ;
     else 
-        par.kP_T = 0.00 ;
+        par.kP_T = 1.18 ;
     end 
     if exist('xhat') & isfield(xhat,'kdP')
         par.kdP = xhat.kdP ;
