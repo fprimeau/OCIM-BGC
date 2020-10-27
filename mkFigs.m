@@ -17,7 +17,7 @@ Cmodel  = on ;
 Omodel  = on ;
 Simodel = off ;
 pscale  = 0.0 ;
-cscale  = 0.0 ;
+cscale  = 0.25 ;
 %
 GridVer   = 91 ;
 operator = 'A' ;
@@ -92,7 +92,6 @@ if GridVer == 90
     load tempobs_90x180x24.mat
     load Siobs_90x180x24.mat Siobs
     load po4obs_90x180x24.mat
-    load PME_TS_90x180x24.mat modT modS 
     grd  = grid; 
 elseif GridVer == 91
     OperName = sprintf('OCIM2_%s',TRdivVer);
@@ -100,7 +99,7 @@ elseif GridVer == 91
     load Sobs_91x180x24.mat     % woa2013 salinity data.
     load tempobs_91x180x24.mat
     load po4obs_91x180x24.mat
-    load PME_TS_91x180x24.mat modT modS
+    load Siobs_91x180x24.mat Siobs
     M3d = output.M3d    ;
     grd = output.grid   ;
     TR  = output.TR/spa ;
@@ -125,13 +124,12 @@ par.iwet   = iwet    ;
 par.nwet   = nwet    ;
 par.TRdiv  = -TR     ;
 par.dVt    = dVt     ;
+
+tempobs(tempobs(:)<-2.0) = -2.0 ;
 par.Temp   = tempobs ;
-par.Salt   = Sobs    ;
-par.modT   = modT    ;
-vT = modT(iwet) ;
+
+vT = par.Temp(iwet) ;
 Tz = (vT - min(vT))./(max(vT) - min(vT)) ;
-Tz( Tz < 0.05 ) = 0.05 ;
-% Tz   = (vT-mean(vT))/std(vT) ;
 Tz3d = M3d + nan ;
 Tz3d(iwet) = Tz  ;
 aveT   = nanmean(Tz3d(:,:,1:3),3) ;
@@ -175,6 +173,22 @@ if Cmodel == on
         title('b4C')
         % saveas(gcf,'Figs91/b4C.png')
     end 
+
+    if isfield(xhat,'R_Si') 
+        nfig = nfig + 1  ;
+        figure(nfig)
+        par.DSi  = Siobs     ;
+        par.R_Si = xhat.R_Si ;
+        par.rR   = xhat.rR   ;
+        par.opt_R_Si = on    ;
+        vout = mkPIC2P(par)  ;
+        RR3d = M3d + nan     ;
+        RR3d(iwet) = diag(vout.RR) ;
+        pcolor(RR3d(:,:,1));colorbar;shading flat
+        % caxis([100 600])
+        title('rain ratio')
+        % saveas(gcf,'Figs91/kappa4C.png')
+    end
 
     if isfield(xhat,'kC_T') 
         nfig = nfig + 1  ;

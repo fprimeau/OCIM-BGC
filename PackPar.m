@@ -1,4 +1,4 @@
-function [p0, par] = PackPar(par) 
+function par = PackPar(par) 
     on = true ; off = false ; 
     npx = 0; ncx = 0;
     nox = 0; nsx = 0;
@@ -229,6 +229,7 @@ function [p0, par] = PackPar(par)
             par.pindx.lbb = strt  : length(p0);
         end
     end
+    par.p0  = p0  ;
     par.npx = npx ; par.ncx = ncx ;
     par.nox = nox ; par.nsx = nsx ;
 end

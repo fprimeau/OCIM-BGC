@@ -10,7 +10,7 @@ function vout = mkO2P(par)
     %
     iwet = par.iwet ;
     nwet = par.nwet ;
-    modT = par.modT ;
+    Temp = par.Temp ;
     
     smsk = par.M3d  ;
     smsk(:,:,2:end) = 0 ;
@@ -19,7 +19,7 @@ function vout = mkO2P(par)
     surface_mean = @(x) sum(x(isrf).*dVs)/sum(dVs) ;
 
     % compute the mean of the regressor variable
-    Z  = modT(iwet)      ;
+    Z  = Temp(iwet)      ;
     mu = surface_mean(Z) ;
     Delta = sqrt(surface_mean((Z-mu).^2)) ;
 

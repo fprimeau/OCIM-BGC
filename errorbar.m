@@ -1,89 +1,45 @@
-clc; clear all; close all
-on   = true    ; off = false    ;
-spd  = 24*60^2 ; spa  = 365*spd ;
-% addpath according to opterating system
-if ismac 
-    addpath('~/Dropbox/myfunc'     )
-    addpath('~/Documents/DATA/'    )
-    addpath('~/Documents/DATA/OCIM')
-elseif isunix
-    addpath('/DFS-L/DATA/primeau/weilewang/my_func/'  )
-    addpath('/DFS-L/DATA/primeau/weilewang/DATA/'     )
-    addpath('/DFS-L/DATA/primeau/weilewang/DATA/OCIM2')
-end
+clc; clear alul; close all
+global iter
+iter = 0 ;
+on   = true  ;
+off  = false ;
 format long
-%
-Cmodel  = on ; 
-Omodel  = off ; 
-Simodel = off ;
-fscale  = 0.0 ;
-par.LoadOpt = off ; % if load optimial par. 
-%
-GridVer   = 91 ;
+% 
+GridVer  = 91  ;
 operator = 'A' ;
-if GridVer == 90
-    TRdivVer = 'Tv4' ;
-elseif GridVer == 91 
-    switch(operator)
-      case 'A'
-        TRdivVer = 'CTL_He'   ;
-      case 'B'
-        TRdivVer = 'CTL_noHe' ;
-      case 'C'
-        TRdivVer = 'KiHIGH_He'   ;
-      case 'D'
-        TRdivVer = 'KiHIGH_noHe' ;
-      case 'E'
-        TRdivVer = 'KvHIGH_KiLOW_He'  ;
-      case 'F'
-        TRdivVer = 'KvHIGH_KiLOW_noHe';
-      case 'G'
-        TRdivVer = 'KiLOW_He'   ;
-      case 'H'
-        TRdivVer = 'KiLOW_noHe' ;
-      case 'I'
-        TRdivVer = 'KvHIGH_He'  ;
-      case 'J'
-        TRdivVer = 'KvHIGH_noHe';
-      case 'K'
-        TRdivVer = 'KvHIGH_KiHIGH_noHe';
-    end 
-end 
 
-fprintf('Transport version: % s \n', TRdivVer)
-if Cmodel == on
-    fprintf('---- C model is on ---- \n')
-end
-if Omodel == on
-    fprintf('---- O model is on ---- \n')
-end 
-if Simodel == on
-    fprintf('---- Si model is on ---- \n')
-end 
-fprintf('\n')
+Gtest = off ;
+Htest = off ;
+par.optim   = on ; 
+par.Cmodel  = off ; 
+par.Omodel  = off ; 
+par.Simodel = off ;
+par.LoadOpt = on ; % if load optimial par. 
+par.pscale  = 0.0 ;
+par.cscale  = 0.25 ; % factor to weigh DOC in the objective function
 
 % P model parameters
 par.opt_sigma = on ; 
-par.opt_kP_T  = off ;
+par.opt_kP_T  = on ;
 par.opt_kdP   = on ;
-par.opt_bP_T  = off ; 
+par.opt_bP_T  = on ; 
 par.opt_bP    = on ;
 par.opt_beta  = on ;
 par.opt_alpha = on ;
 % C model parameters
-par.opt_bC_T  = off ;
+par.opt_bC_T  = on ;
 par.opt_bC    = on ; 
 par.opt_d     = on ;
-par.opt_kC_T  = off ;
+par.opt_kC_T  = on ;
 par.opt_kdC   = on ; 
-par.opt_R_Si  = off ; 
+par.opt_R_Si  = on ; 
 par.opt_rR    = on ; 
 par.opt_cc    = on ;
 par.opt_dd    = on ;
 % O model parameters
-par.opt_O2C_T = off ;
+par.opt_O2C_T = on ;
 par.opt_rO2C  = on ;
-par.opt_O2P_T = off ; 
+par.opt_O2P_T = on ; 
 par.opt_rO2P  = on ; 
 % Si model parameters
 par.opt_dsi   = on  ;
@@ -92,87 +48,63 @@ par.opt_bt    = on  ;
 par.opt_aa    = on  ;
 par.opt_bb    = on  ;
 %
+%-------------load data and set up parameters---------------------
+SetUp ;
+
 % save results 
-% ATTENTION: please change this direcrtory to where you wanna
+% ATTENTION: Change this direcrtory to where you wanna
 % save your output files
 if ismac
     output_dir = sprintf('~/Documents/CP-model/MSK%2d/',GridVer); 
 elseif isunix
-    output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/COP4WWF/' ...
-                        'MSK%2d/'],GridVer);
+    % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
+    % 'MSK%2d/'],GridVer);
+    output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
+    'MSK%2d/PME4DICALK/'],GridVer);
+    % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/COP4WWF/' ...
+                        % 'MSK%2d/'],GridVer);
 end
 VER = strcat(output_dir,TRdivVer);
 % Creat output file names based on which model(s) is(are) optimized
-if (Cmodel == off & Omodel == off & Simodel == off)
-    fname = strcat(VER,'_P');
-elseif (Cmodel == on & Omodel == off & Simodel == off)
-    base_name = strcat(VER,'_PCnpp');
-    catDOC = sprintf('_DOC%2.0e',fscale);
-    fname = strcat(base_name,catDOC);
-elseif (Cmodel == on & Omodel == on & Simodel == off)
-    base_name = strcat(VER,'_PCOv1');
-    catDOC = sprintf( '_DOC%2.0e',fscale ) ;
-    fname = strcat( base_name,catDOC ) ;
-elseif (Cmodel == on & Omodel == off & Simodel == on)
-    base_name = strcat(VER,'_PCSi');
-    catDOC = sprintf( '_DOC%2.0e',fscale ) ;
-    fname = strcat( base_name,catDOC ) ;
-elseif (Cmodel == on & Omodel == on & Simodel == on)
-    base_name = strcat(VER,'_PCOSi');
-    catDOC = sprintf( '_DOC%2.0e', fscale ) ;
-    fname = strcat(base_name,catDOC);
+if Gtest == on
+    fname = strcat(VER,'_GHtest');
+elseif Gtest == off
+    if (par.Cmodel == off & par.Omodel == off & par.Simodel == off)
+        fname = strcat(VER,'_P');
+    elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off)
+        base_name = strcat(VER,'_PCv2');
+        catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
+        fname = strcat(base_name,catDOC);
+    elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off)
+        base_name = strcat(VER,'_PCOv2');
+        catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
+        fname = strcat(base_name,catDOC);
+    elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on)
+        base_name = strcat(VER,'_PCSi');
+        catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
+        fname = strcat(base_name,catDOC);
+    elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on)
+        base_name = strcat(VER,'_PCOSi');
+        catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
+        fname = strcat(base_name,catDOC);
+    end
 end
-par.fname = fname ; 
+par.fname = strcat(fname,'.mat') ; 
 % load optimal parameters if they exist
-fxhat     = strcat(fname,'_xhat.mat');
-par.fxhat = fxhat ; 
+par.fxhat = strcat(fname,'_xhat.mat');
+load(par.fxhat) ;
+load(par.fname) ;
+%--------------------- prepare parameters ------------------
+% load optimal parameters from a file or set them to default values 
+par = SetPar(par) ;
+% pack parameters into an array, assign them corresponding indices.
+par = PackPar(par) ;
 
-if GridVer == 90
-    load transport_v4.mat grid M3d TR
-    load M3d90x180x24v2.mat MSKS
-    load DOMobs_90x180x24.mat
-    load GLODAPv2_90x180x24raw.mat
-    grd = grid ;
-elseif GridVer == 91
-    OperName = sprintf('OCIM2_%s',TRdivVer);
-    load(OperName,'output') ;
-    load M3d91x180x24.mat MSKS
-    load DOMobs_91x180x24.mat
-    load GLODAPv2_91x180x24raw.mat
-    M3d = output.M3d;
-    grd = output.grid;
-    TR  = output.TR/spa;
-end
-load(fname)
-load(fxhat) 
-% get rid of arctice o2 observations
-docraw  = DOCobs - DOCref ;
-ARC  = MSKS.ARC ;
-MED  = MSKS.MED ;
-iarc = find(ARC(:)) ;
-imed = find(MED(:)) ;
-% get rid of arctice o2 observations
-% DOCobs(iarc)  = nan ;
-% DOCobs(imed)  = nan ;
-alkraw(iarc)  = nan ;
-alkraw(imed)  = nan ; 
-dicraw(iarc)  = nan ;
-dicraw(imed)  = nan ;
-% po4raw(iarc)  = nan ;
-% po4raw(imed)  = nan ; 
-% sio4raw(iarc) = nan ;
-% sio4raw(imed) = nan ;
-% o2raw(iarc)   = nan ;
-% o2raw(imed)   = nan ;
-
-iwet = find(M3d(:)) ;
-nwet = length(iwet) ;
-
-idip = find(po4raw(iwet)>0)  ;
-isil = find(sio4raw(iwet)>0) ;
-idic = find(dicraw(iwet)>0)  ;
-idoc = find(docraw(iwet)>0)  ;
-io2  = find(o2raw(iwet)>0)   ;
+idip = find(par.po4raw(iwet)>0)  ;
+isil = find(par.sio4raw(iwet)>0) ;
+idic = find(par.dicraw(iwet)>0)  ;
+idoc = find(par.docraw(iwet)>0)  ;
+io2  = find(par.o2raw(iwet)>0)   ;
 
 ndip = length(idip) ;
 nsil = length(isil) ;
@@ -180,10 +112,10 @@ ndic = length(idic) ;
 ndoc = length(idoc) ;
 no2  = length(io2)  ;
 
-if (Cmodel == off & Omodel == off & Simodel == off)
+if (par.Cmodel == off & par.Omodel == off & par.Simodel == off)
     sig = 2*xhat.f/ndip ;
     HH  = xhat.fxx/sig  ;
-elseif (Cmodel == on & Omodel == off & Simodel == off)
+elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off)
     if fscale ~= 0
         sig = (2*xhat.f)/(ndip+ndic+ndoc);
         HH  = xhat.fxx/sig  ;
@@ -191,22 +123,16 @@ elseif (Cmodel == on & Omodel == off & Simodel == off)
         sig = (2*xhat.f)/(ndip+ndic);
         HH  = xhat.fxx/sig  ;
     end 
-elseif (Cmodel == on & Omodel == on & Simodel == off)
+elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off)
     sig = (2*xhat.f)/(ndip+ndic+no2);
     HH  = xhat.fxx/sig  ;
-elseif (Cmodel == off & Omodel == off & Simodel == on)
+elseif (par.Cmodel == off & par.Omodel == off & par.Simodel == on)
     sig = (2*xhat.f)/(ndip+nsil);
     HH  = xhat.fxx/sig  ; 
-elseif (Cmodel == on & Omodel == on & Simodel == on)
+elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on)
     sig = (2*xhat.f)/(ndip+ndic+no2+nsil) ;
     HH  = xhat.fxx/sig  ;
 end
-
-par.Cmodel  = Cmodel  ;
-par.Omodel  = Omodel  ;
-par.Simodel = Simodel ;
-par = SetPara(par)          ;
-[p0, par] = PackPar(par)    ;
 
 pindex = par.pindx ;
 error  = sqrt(diag(inv(HH))) ;

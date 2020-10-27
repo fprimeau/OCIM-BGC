@@ -6,11 +6,21 @@ function vout = mkPIC2P(par)
 % and 0.09-0.1 in low latitude oceans)
     on   = true     ;
     off  = false    ;
+    M3d  = par.M3d  ;
     iwet = par.iwet ;
     nwet = par.nwet ; 
     DSi  = par.DSi  ;
-    Y = 0.5-0.5*tanh((DSi(iwet) - 30)/100) ;
-    if par.opt_R_Si == on
+
+    smsk = par.M3d  ;
+    smsk(:,:,3:end) = 0 ;
+    isrf = find(smsk(iwet))    ;
+
+    Y = M3d(iwet)*0 ;
+    sDSi = DSi(iwet(isrf));
+    Y(isrf) =  (sDSi - min(sDSi))./(max(sDSi) - min(sDSi));
+
+    % Y = 0.5-0.5*tanh((DSi(iwet) - 30)/100) ;
+    if isfield(par,'opt_R_Si') & par.opt_R_Si == on
         R_Si = par.R_Si ;
     else 
         R_Si = 0 ;

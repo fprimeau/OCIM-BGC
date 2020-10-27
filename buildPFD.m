@@ -58,7 +58,7 @@ function [PFdiv,Gout,Hout] = buildPFD(par,Ptype)
     elseif ( strcmp(Ptype,'bSi') )
         % Define a temperature dependent dissolution rate
         % Sarmiento and Gruber text book
-        T  = par.modT + 273.15;
+        T  = par.Temp + 273.15;
         at = par.at  ; 
         bt = par.bt  ;
         d  = par.dsi ;

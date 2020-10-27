@@ -39,7 +39,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
     bb  = par.bb;
     dsi = par.dsi;
     kappa_g = par.kappa_g;
-    T   = par.modT(iwet) + 273.15;
+    T   = par.Temp(iwet) + 273.15;
     kappa_si = at * exp(-bt./T);
     par.kappa_si = kappa_si;
     % ++++++++++++++++++++++++++++++++++++++++++++++++++

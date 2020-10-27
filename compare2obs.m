@@ -1,159 +1,64 @@
 clc; clear all; close all
 spd  = 24*60^2 ; spa  = 365*spd ;
-if ismac 
-    addpath('~/Dropbox/myfunc'     )
-    addpath('~/Documents/DATA/'    )
-    addpath('~/Documents/DATA/OCIM')
-else 
-    addpath('/DFS-L/DATA/primeau/weilewang/DATA/');
-    addpath('/DFS-L/DATA/primeau/weilewang/my_func');
-    addpath('/DFS-L/DATA/primeau/weilewang/DATA/OCIM2')
-end 
 on = true; off = false;
-TR_ver = 91 ;
 %
-Pmodel  = on ;
-Cmodel  = on ;
-Omodel  = off ;
-Simodel = off ;
-% factor to weigh DOP in the objective function
-pscale  = 0.2 ;
-% factor to weigh DOC in the objective function
-cscale  = 0.2 ; 
-                %
-GridVer   = 91 ;
+GridVer  = 91  ;
 operator = 'A' ;
-if GridVer == 90
-    TRdivVer = 'Tv4' ;
-elseif GridVer == 91 
-    switch(operator)
-      case 'A'
-        TRdivVer = 'CTL_He'   ;
-      case 'B'
-        TRdivVer = 'CTL_noHe' ;
-      case 'C'
-        TRdivVer = 'KiHIGH_He'   ;
-      case 'D'
-        TRdivVer = 'KiHIGH_noHe' ;
-      case 'E'
-        TRdivVer = 'KvHIGH_KiLOW_He'  ;
-      case 'F'
-        TRdivVer = 'KvHIGH_KiLOW_noHe';
-      case 'G'
-        TRdivVer = 'KiLOW_He'   ;
-      case 'H'
-        TRdivVer = 'KiLOW_noHe' ;
-      case 'I'
-        TRdivVer = 'KvHIGH_He'  ;
-      case 'J'
-        TRdivVer = 'KvHIGH_noHe';
-      case 'K'
-        TRdivVer = 'KvHIGH_KiHIGH_noHe';
-    end 
-end 
+
+par.optim   = off ; % on: do optimization
+par.Pmodel  = on ; % on: run P model ;
+par.Cmodel  = on ; % on: run C model ;
+par.Omodel  = on ; % on: run O model; 
+par.Simodel = off ; % on: run Si model;
+par.LoadOpt = off ; % on: load optimial parameters;
+                    % factor to weigh DOP in the objective function
+par.pscale  = 0.0 ;
+% factor to weigh DOC in the objective function
+par.cscale  = 0.25 ; 
+
+%-------------load data and set up parameters---------------------
+SetUp ;
 
 if ismac
     input_dir = sprintf('~/Documents/CP-model/MSK%2d/',GridVer); 
 elseif isunix
+    input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/Cexp/']);
     % input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
-                        % 'MSK%2d/'],GridVer);
-    input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
-                        'MSK%2d/PME4DICALK/'],GridVer);
+                        % 'MSK%2d/PME4DICALK/'],GridVer);
     % input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/COP4WWF/' ...
                         % 'MSK%2d/'],GridVer);
 end
 VER = strcat(input_dir,TRdivVer);
 % Creat output file names based on which model(s) is(are) optimized
-if (Cmodel == off & Omodel == off & Simodel == off)
+if (par.Cmodel == off & par.Omodel == off & par.Simodel == off)
     fname = strcat(VER,'_P');
-elseif (Cmodel == on & Omodel == off & Simodel == off)
+elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off)
     base_name = strcat(VER,'_PCv2'); 
-    % catDOC = sprintf('_DOC%2.0e',cscale);
-    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',cscale,pscale);
+    % catDOC = sprintf('_DOC%2.0e',par.cscale);
+    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
     fname = strcat(base_name,catDOC);
-elseif (Cmodel == on & Omodel == on & Simodel == off)
+elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off)
     base_name = strcat(VER,'_PCOv1');
-    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',cscale,pscale);
+    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
     fname = strcat(base_name,catDOC);
-elseif (Cmodel == on & par.Omodel == off & Simodel == on)
+elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on)
     base_name = strcat(VER,'_PCSi');
-    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',cscale,pscale);
+    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
     fname = strcat(base_name,catDOC);
-elseif (Cmodel == on & Omodel == on & Simodel == on)
+elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on)
     base_name = strcat(VER,'_PCOSi');
-    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',cscale,pscale);
+    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
     fname = strcat(base_name,catDOC);
 end
-
-if GridVer == 90
-    load transport_v4.mat
-    load M3d90x180x24v2.mat MSKS
-    load Sobs_90x180x24.mat
-    load GLODAPv2_90x180x24raw.mat
-    load PME_TS_90x180x24.mat modT modS
-    load DICant_90x180x24.mat DICant
-    load Mouw_POC_90x180x24.mat  % sediment trap data MOUW
-    grd  = grid;
-elseif GridVer == 91
-    OperName = sprintf('OCIM2_%s',TRdivVer);
-    load(OperName,'output') ;
-    load M3d91x180x24.mat MSKS
-    load Sobs_91x180x24.mat
-    load PME_TS_91x180x24.mat modT modS
-    load GLODAPv2_91x180x24raw.mat
-    load DICant_91x180x24.mat DICant
-    load DOMobs_91x180x24.mat
-    load Mouw_POC_91x180x24.mat  % sediment trap data MOUW
-    grd = output.grid;
-    M3d = output.M3d;
-end
-ATL = MSKS.ATL ;
-PAC = MSKS.PAC ;
-IND = MSKS.IND ;
-ARC = MSKS.ARC ;
-MED = MSKS.MED ;
-
-iarc = find(ARC(:)) ;
-imed = find(MED(:)) ;
-% DOCobs(iarc)  = nan ;
-% DOCobs(imed)  = nan ;
-alkraw(iarc)  = nan ;
-alkraw(imed)  = nan ; 
-dicraw(iarc)  = nan ;
-dicraw(imed)  = nan ;
-% o2raw(iarc)   = nan ;
-% o2raw(imed)   = nan ;
-% po4raw(iarc)  = nan ;
-% po4raw(imed)  = nan ; 
-% sio4raw(iarc) = nan ;
-% sio4raw(imed) = nan ;
-fxhat = strcat(fname,'_xhat.mat');
-load(fname)
-load(fxhat)
-%
-rho = 1024.5     ; % seawater density;
-permil = rho*1e-3; % from umol/kg to mmol/m3;
-
-iwet = find(M3d(:));
-nwet = length(iwet);
-dVt  = grd.DXT3d.*grd.DYT3d.*grd.DZT3d;
-par.M3d  =  M3d ;
-par.grd  = grd  ;
-par.iwet = iwet ;
-par.modS = modS ;
-par.MSKS = MSKS ;
-par.Salt = Sobs ;
-par.o2raw = o2raw ;
-par.po4raw = po4raw  ;
-par.sio4raw = sio4raw;
-
-par.dicraw = dicraw*permil ;
-par.alkraw = alkraw*permil ;
-par.dicant = DICant*permil;
-
+par.fname = strcat(fname,'.mat') ; 
+% load optimal parameters if they exist
+fxhat     = strcat(fname,'_xhat.mat');
+par.fxhat = fxhat ; 
+load(par.fxhat) ;
+load(par.fname) ;
+%------------------ compare DIP ---------------------------------
 nfig = 0;
-%%%%%%%%%%%%%%%%% compare DIP  %%%%%%%%%%%%%%w
-if (Pmodel == on)
+if (par.Pmodel == on)
     if ~exist('DOP')
         DOP = data.DOP ;
     end 
@@ -187,7 +92,7 @@ if (Pmodel == on)
     end 
     nfig = nfig+1;
     figure(nfig)
-    ipo4 = find(DIP(iwet)>0 & po4raw(iwet)>0);
+    ipo4 = find(DIP(iwet)>0 & po4raw(iwet)>0.02);
     O = po4raw(iwet(ipo4));
     M = DIP(iwet(ipo4));
     fprintf('R^2 for DIP is %3.3f \n',rsquare(O,M))
@@ -227,21 +132,18 @@ if (Pmodel == on)
 end 
 
 % -----------------------------------------------------
-if (Cmodel == on)
-    if ~exist('DIC')
-        DIC = data.DIC ;
-    end 
+if (par.Cmodel == on)
     nfig = nfig + 1;
     figure(nfig)
-    
+    DIC = data.DIC - par.dicant ;
     DICobs = par.dicraw ;
     iDIC = find(DICobs(iwet)>0);
     %
     O = DICobs(iwet(iDIC));
     % already including anthropogenic CO2
-    M = DIC(iwet(iDIC)) ;
+    % M = DIC(iwet(iDIC)) ;
     % not include anthropogenic CO2
-    % M = DIC(iwet(iDIC))+par.dicant(iwet(iDIC)); 
+    M = DIC(iwet(iDIC))+par.dicant(iwet(iDIC)); 
     fprintf('R^2 for DIC is %3.3f \n',rsquare(O,M))
     %
     OvsM = [O, M];
@@ -267,8 +169,8 @@ if (Cmodel == on)
     plot([2000 2500],[2000 2500],'r--','linewidth',2);
     
     subplot('position',[0.82 0.2 0.05 0.6]);
-    contourf([1 2],cr,[cr(:),cr(:)],cr); hold on
-    contour([1 2],cr,[cr(:),cr(:)],cr);
+    contourf([1 1.5],cr,[cr(:),cr(:)],cr); hold on
+    contour([1 1.5],cr,[cr(:),cr(:)],cr);
     hold off
     %set(gca,'FontSize',14);
     set(gca,'XTickLabel',[]);
@@ -327,13 +229,6 @@ if (Cmodel == on)
     if isfield(data,'DOC') 
         DOC = data.DOC  ;
     end 
-    par.DOCobs = DOCobs ;
-    DOCclean = RemoveRef(par) ;
-    
-    DOCclean(DOCclean(:)>0);
-    
-    ibad = find( DOCclean(iarc) > 50 ) ;
-    DOCclean(iarc(ibad)) = nan ;
     
     iDOC_ATL = find(DOCclean(iwet)>0 & ATL(iwet)>0) ;
     iDOC_PAC = find(DOCclean(iwet)>0 & PAC(iwet)>0) ;
@@ -365,17 +260,6 @@ if (Cmodel == on)
     
     %%%%%%%% compare to sediment trap %%%%%%%%%%%%
     POC = data.POC ;
-    %-------------------- normalize temperature --------------------
-    % Zscore is tried but it generate inf values(span from neg to pos).
-    % Tz   = (vT-mean(vT))./std(vT) ; 
-    vT = modT(iwet) ;
-    Tz = (vT - min(vT))./(max(vT) - min(vT)) ;
-    Tz( Tz < 0.05) = 0.05 ;
-
-    Tz3d = M3d + nan ;
-    Tz3d(iwet) = Tz  ;
-    par.Tz     = Tz*1e-8 ;
-    par.aveT   = nanmean(Tz3d(:,:,1:3),3) ;
     par.kappa_p  = 1/(720*60^2) ;
     if isfield(xhat,'bC_T')
         par.bC   = xhat.bC   ;
@@ -434,7 +318,7 @@ if (Cmodel == on)
 end
 
 % ---------------------------------------------------
-if (Omodel == on)
+if (par.Omodel == on)
     if ~exist('O2')
         O2 = data.O2 ;
     end 
@@ -483,7 +367,7 @@ if (Omodel == on)
 end 
 
 % -----------------------------------------------------
-if (Simodel == on)
+if (par.Simodel == on)
     if ~exist(DSi)
         DSi = data.DSi ;
     end 
