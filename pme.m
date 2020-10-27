@@ -1,4 +1,4 @@
-function [modT,modS,pme] = PME(par)
+function [modT,modS,pme] = pme(par)
 % precipitation minus evaporation function that is used to
 % creat DIC and ALk virtual flux ;
     M3d   = par.M3d  ;

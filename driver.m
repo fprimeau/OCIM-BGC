@@ -24,7 +24,7 @@ par.Omodel  = on ;
 par.Simodel = off ;
 par.LoadOpt = off ; % if load optimial par. 
 par.pscale  = 0.0 ;
-par.cscale  = 0.75 ; % factor to weigh DOC in the objective function
+par.cscale  = 0.0 ; % factor to weigh DOC in the objective function
 
 % P model parameters
 par.opt_sigma = on ; 
@@ -32,8 +32,8 @@ par.opt_kP_T  = off ;
 par.opt_kdP   = on ;
 par.opt_bP_T  = off ; 
 par.opt_bP    = on ;
-par.opt_beta  = on ;
 par.opt_alpha = on ;
+par.opt_beta  = on ;
 % C model parameters
 par.opt_bC_T  = off ;
 par.opt_bC    = on ; 

@@ -16,7 +16,7 @@ par.Omodel  = on ;
 par.Simodel = off ;
 par.LoadOpt = on ; % if load optimial par. 
 par.pscale  = 0.0 ;
-par.cscale  = 0.75 ; % factor to weigh DOC in the objective function
+par.cscale  = 0.25 ; % factor to weigh DOC in the objective function
 
 % P model parameters
 par.opt_sigma = on ; 

@@ -14,7 +14,7 @@ par.LoadOpt = off ; % on: load optimial parameters;
                     % factor to weigh DOP in the objective function
 par.pscale  = 0.0 ;
 % factor to weigh DOC in the objective function
-par.cscale  = 0.25 ; 
+par.cscale  = 0.75 ; 
 
 %-------------load data and set up parameters---------------------
 SetUp ;
