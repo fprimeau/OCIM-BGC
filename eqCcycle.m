@@ -78,13 +78,13 @@ function [par, C, Cx, Cxx] = eqCcycle(x, par);
         Cx   = sparse(5*par.nwet, nx) ;
         Cxx  = sparse(5*par.nwet, nchoosek(nx,2)+nx) ;
         [par.G,par.Gx,par.Gxx] = uptake_C(par) ;
-    else
+    elseif (ierr == 0 & par.optim == on)
         % reset the global variable for the next call eqCcycle
         GC = real(C) + 1e-8*randn(5*nwet,1) ;
         X0 = GC;
         F = C_eqn(C, par) ;
         % test if norm of F small enough, if now rerun nsnew;
-        if norm(F) > 1e-12
+        if (norm(F) > 1e-12)
             [C,ierr] = nsnew(X0,@(X) C_eqn(X, par),options);
         end 
         %

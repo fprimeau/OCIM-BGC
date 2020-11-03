@@ -148,6 +148,7 @@ ipac = find(PAC(:)) ;
 iatl = find(ATL(:)) ;
 iind = find(IND(:)) ;
 %
+par.dAt   = dAt     ;
 par.dVt   = dVt     ;
 par.M3d   = M3d     ;
 par.iwet  = iwet    ;

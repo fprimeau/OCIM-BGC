@@ -73,7 +73,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
         beta  = par.beta;
     end
     par.beta  = beta; % pass parameter to C/Si/O models
-
+    
     % fixed parameters
     Tz      = par.Tz ;
     DIPbar  = M3d(iwet)*par.DIPbar;  % gobal arerage PO4 conc.[mmol m^-3];

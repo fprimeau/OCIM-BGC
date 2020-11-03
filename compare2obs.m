@@ -14,7 +14,7 @@ par.LoadOpt = off ; % on: load optimial parameters;
                     % factor to weigh DOP in the objective function
 par.pscale  = 0.0 ;
 % factor to weigh DOC in the objective function
-par.cscale  = 0.75 ; 
+par.cscale  = 0.25 ; 
 
 %-------------load data and set up parameters---------------------
 SetUp ;
@@ -22,9 +22,9 @@ SetUp ;
 if ismac
     input_dir = sprintf('~/Documents/CP-model/MSK%2d/',GridVer); 
 elseif isunix
-    input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/Cexp/']);
-    % input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
-                        % 'MSK%2d/PME4DICALK/'],GridVer);
+    % input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/Cexp/']);
+    input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
+                        'MSK%2d/PME4DICALK/'],GridVer);
     % input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/COP4WWF/' ...
                         % 'MSK%2d/'],GridVer);
 end
@@ -38,7 +38,7 @@ elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off)
     catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
     fname = strcat(base_name,catDOC);
 elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off)
-    base_name = strcat(VER,'_PCOv1');
+    base_name = strcat(VER,'_PCOv5');
     catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
     fname = strcat(base_name,catDOC);
 elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on)
@@ -71,28 +71,28 @@ if (par.Pmodel == on)
     iDOP_ARC = find(dopraw(iwet)>0 & ARC(iwet)>0) ;
     iDOP_MED = find(dopraw(iwet)>0 & MED(iwet)>0) ;
     fprintf('R^2 for DIP is %3.3f \n',rsquare(dopraw(idop),DOP(idop)))
-    nfig = nfig + 1;
-    figure(nfig)
-    plot(dopraw(iwet(iDOP_ATL)), DOP(iwet(iDOP_ATL)),'ro')
-    hold on
-    plot(dopraw(iwet(iDOP_PAC)), DOP(iwet(iDOP_PAC)),'ks')
-    hold on
-    plot(dopraw(iwet(iDOP_IND)), DOP(iwet(iDOP_IND)),'b^')
-    hold on
-    plot(dopraw(iwet(iDOP_ARC)), DOP(iwet(iDOP_ARC)),'g*')
-    hold on
-    plot(dopraw(iwet(iDOP_MED)), DOP(iwet(iDOP_MED)),'c>')
-    hold on
-    plot([0 0.75],[0 0.75],'r-','linewidth',3)
-    xlim([0 0.75])
-    ylim([0 0.75])
+    % nfig = nfig + 1;
+    % figure(nfig)
+    % plot(dopraw(iwet(iDOP_ATL)), DOP(iwet(iDOP_ATL)),'ro')
+    % hold on
+    % plot(dopraw(iwet(iDOP_PAC)), DOP(iwet(iDOP_PAC)),'ks')
+    % hold on
+    % plot(dopraw(iwet(iDOP_IND)), DOP(iwet(iDOP_IND)),'b^')
+    % hold on
+    % plot(dopraw(iwet(iDOP_ARC)), DOP(iwet(iDOP_ARC)),'g*')
+    % hold on
+    % plot(dopraw(iwet(iDOP_MED)), DOP(iwet(iDOP_MED)),'c>')
+    % hold on
+    % plot([0 0.75],[0 0.75],'r-','linewidth',3)
+    % xlim([0 0.75])
+    % ylim([0 0.75])
 
     if ~exist('DIP')
         DIP = data.DIP ;
     end 
     nfig = nfig+1;
     figure(nfig)
-    ipo4 = find(DIP(iwet)>0 & po4raw(iwet)>0.02);
+    ipo4 = find(DIP(iwet) > 0 & po4raw(iwet) > 0.02);
     O = po4raw(iwet(ipo4));
     M = DIP(iwet(ipo4));
     fprintf('R^2 for DIP is %3.3f \n',rsquare(O,M))
@@ -247,11 +247,15 @@ if (par.Cmodel == on)
     plot(DOCclean(iwet(iDOC_ARC)), DOC(iwet(iDOC_ARC)),'g*')
     hold on
     plot(DOCclean(iwet(iDOC_MED)), DOC(iwet(iDOC_MED)),'c>')
+    hold on 
+    legend('ATL','PAC','IND','ARC','Location','northwest')
     hold on
     plot([0 60],[0 60],'r-','linewidth',3)
     xlim([0 60])
     ylim([0 60])
-
+    hold off
+    xlabel('Observed DOC (mmol/m^3)')
+    ylabel('Model DOC (mmol/m^3)')
     iDOC = find(DOCclean(iwet)>0 & DOC(iwet)>0) ;
     O = DOCclean(iwet(iDOC)) ;
     M = DOC(iwet(iDOC)) ; 
@@ -273,6 +277,7 @@ if (par.Cmodel == on)
     w = Gout.w(:,:,2:25) ;
     fPOC = -w.*POC*spd*12 ;
     fPOC(iarc) = nan ;
+    fPOC([1:15,75:end],:,:) = nan;
     ifPOC_ATL = find(POC_flux(iwet)>0 & ATL(iwet)>0) ;
     ifPOC_PAC = find(POC_flux(iwet)>0 & PAC(iwet)>0) ;
     ifPOC_IND = find(POC_flux(iwet)>0 & IND(iwet)>0) ;
@@ -290,15 +295,14 @@ if (par.Cmodel == on)
     loglog(POC_flux(iwet(ifPOC_ARC)), fPOC(iwet(ifPOC_ARC)),'g*','MarkerFaceColor','green')
     hold on
     loglog(POC_flux(iwet(ifPOC_MED)), fPOC(iwet(ifPOC_MED)),'c>','MarkerFaceColor','cyan')
-    hold on
-    
+    legend('ATL','PAC','IND','ARC','MED','Location','northwest')
     hold on
     plot([0.1 1000],[0.1 1000],'r','linewidth',2)
     hold off
     xlim([0.1 1000])
     ylim([0.1 1000])
-    xlabel('POC flux from Mouw et al database (mg/m^2/day)')
-    ylabel('POC flux from the inverse model (mg/m^2/day)')
+    xlabel('Observed POC flux (mg/m^2/day)')
+    ylabel('Model POC flux (mg/m^2/day)')
     %
     ikeep = find(POC_flux(:)>0 & fPOC(:)>0);
     fprintf('R^2 for fPOC is %3.3f \n', ...
@@ -312,9 +316,39 @@ if (par.Cmodel == on)
     [~,Gout] = buildPFD(par,'PIC') ;
     w = Gout.w(:,:,2:25)  ;
     fPIC = -w.*PIC*spd*12 ;
-
+    % exportfig(gcf,'fPOC','fontmode','fixed','fontsize',12,'color','rgb','renderer','painters')
     rRatio = fPOC./fPIC ;
+    load RainRatio.mat rR
+    rR([1:15,75:end],:,:) = nan ;
+    irRatio_ATL = find(rR(iwet)>0 & rR(iwet)>0 & ATL(iwet)>0) ;
+    irRatio_PAC = find(rR(iwet)>0 & rR(iwet)>0 & PAC(iwet)>0) ;
+    irRatio_IND = find(rR(iwet)>0 & rR(iwet)>0 & IND(iwet)>0) ;
+    irRatio_ARC = find(rR(iwet)>0 & rR(iwet)>0 & ARC(iwet)>0) ;
+    irRatio_MED = find(rR(iwet)>0 & rR(iwet)>0 & MED(iwet)>0) ;
     
+    nfig = nfig + 1;
+    figure(nfig)
+    loglog(rR(iwet(irRatio_ATL)), rRatio(iwet(irRatio_ATL)),'ro','MarkerFaceColor','red')
+    hold on
+    loglog(rR(iwet(irRatio_PAC)), rRatio(iwet(irRatio_PAC)),'ks','MarkerFaceColor','black')
+    hold on
+    loglog(rR(iwet(irRatio_IND)), rRatio(iwet(irRatio_IND)),'b^','MarkerFaceColor','blue')
+    % hold on
+    % loglog(rR(iwet(irRatio_ARC)), rRatio(iwet(irRatio_ARC)),'g*','MarkerFaceColor','green')
+    % hold on
+    % loglog(rR(iwet(irRatio_MED)), rRatio(iwet(irRatio_MED)),'c>','MarkerFaceColor','cyan')
+    legend('ATL','PAC','IND','Location','northwest')
+    hold on
+    plot([0.1 100],[0.1 100],'r','linewidth',2)
+    hold off
+    xlim([0.1 100])
+    ylim([0.1 100])
+    xlabel('Observed rain ratio')
+    ylabel('Model rain ratio')
+    ikp= find(rR(iwet)>0 & rR(iwet)<100);
+    fprintf('R^2 for rain ratio is %3.3f \n', ...
+            rsquare(log10(rR(iwet(ikp))),log10(rRatio(iwet(ikp)))))
+    % exportfig(gcf,'rRatio','fontmode','fixed','fontsize',12,'color','rgb','renderer','painters')
 end
 
 % ---------------------------------------------------

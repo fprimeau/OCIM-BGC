@@ -24,8 +24,8 @@ par.opt_kP_T  = off ;
 par.opt_kdP   = on ;
 par.opt_bP_T  = off ; 
 par.opt_bP    = on ;
-par.opt_beta  = on ;
 par.opt_alpha = on ;
+par.opt_beta  = on ;
 % C model parameters
 par.opt_bC_T  = off ;
 par.opt_bC    = on ; 
@@ -199,9 +199,9 @@ fprintf('Model POC export is %3.3e \n\n',Sum_POCexp);
 
 %--------------- compare to ANCP -----------------------------
 DOCexp = TOCexp - POCexp; DOCexp(DOCexp(:)<0) = 0 ;
-TOCexp = smoothit(grd,M3d,TOCexp,3,1e5);
-POCexp = smoothit(grd,M3d,POCexp,3,1e5);
-DOCexp = smoothit(grd,M3d,DOCexp,3,1e5);
+% TOCexp = smoothit(grd,M3d,TOCexp,3,1e5);
+% POCexp = smoothit(grd,M3d,POCexp,3,1e5);
+% DOCexp = smoothit(grd,M3d,DOCexp,3,1e5);
 
 Lat_HOTS = 22+45/60; Lon_HOTS = mod(-158,360);
 Lat_BATS = 31+40/60; Lon_BATS = mod((-64-10/60),360);
@@ -255,7 +255,7 @@ mean_TOC_tropical = nanmean(TOCexp_tropical(:))/12/1000*365;
 mean_TOC_subtro = nanmean(TOCexp_subtro(:))/12/1000*365;
 mean_TOC_subtro_subpo = nanmean(TOCexp_subtro_subpo(:))/12/1000*365;
 mean_TOC_subpolar = nanmean(TOCexp_subpolar(:))/12/1000*365;
-fprintf('mean TOC export at tropical is %2.2f mol/m2/yr\n', mean_TOC_tropical)
+fprintf('TOC export at tropical is %2.2f mol/m2/yr\n', mean_TOC_tropical)
 fprintf('TOC export at subtropical is %2.2f mol/m2/yr \n',mean_TOC_subtro)
 fprintf('TOC export at subtropical-subpolar is %2.2f mol/m2/yr \n', mean_TOC_subtro_subpo)
 fprintf('TOC export at subpolar is %2.2f mol/m2/year \n\n', mean_TOC_subpolar)
