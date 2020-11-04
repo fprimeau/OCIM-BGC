@@ -19,12 +19,12 @@ function par = SetPar(par)
     if exist('xhat') & isfield(xhat,'sigma')
         par.sigma = xhat.sigma ;
     else 
-        par.sigma = 2.5e-01 ;
+        par.sigma = 1.0e-01 ;
     end
     if exist('xhat') & isfield(xhat,'kP_T')
         par.kP_T = xhat.kP_T ;
     else 
-        par.kP_T = 1.18 ;
+        par.kP_T = 0.00 ;
     end 
     if exist('xhat') & isfield(xhat,'kdP')
         par.kdP = xhat.kdP ;

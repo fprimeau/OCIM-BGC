@@ -16,22 +16,22 @@ operator = 'A' ;
 % E -> KvHIGH_KiLOW_He; F -> KvHIGH_KiLOW_noHe; G -> KiLOW_He;
 % H -> KiLOW_noHe; I -> KvHIGH_He; J -> KvHIGH_noHe; K -> KvHIGH_KiHIGH_noHe
 
-par.optim   = on ; 
+par.optim   = off ; 
 par.Cmodel  = on ; 
 par.Omodel  = on ; 
 par.Simodel = off ;
-par.LoadOpt = off ; % if load optimial par. 
+par.LoadOpt = on ; % if load optimial par. 
 par.pscale  = 0.0 ;
-par.cscale  = 0.75 ; % factor to weigh DOC in the objective function
+par.cscale  = 0.25 ; % factor to weigh DOC in the objective function
 
 % P model parameters
 par.opt_sigma = on ; 
-par.opt_kP_T  = on ;
+par.opt_kP_T  = off ;
 par.opt_kdP   = on ;
 par.opt_bP_T  = on ; 
 par.opt_bP    = on ;
-par.opt_beta  = on ;
 par.opt_alpha = on ;
+par.opt_beta  = on ;
 % C model parameters
 par.opt_bC_T  = on ;
 par.opt_bC    = on ; 
@@ -43,9 +43,9 @@ par.opt_rR    = on ;
 par.opt_cc    = on ;
 par.opt_dd    = on ;
 % O model parameters
-par.opt_O2C_T = on ;
+par.opt_O2C_T = off ;
 par.opt_rO2C  = on ;
-par.opt_O2P_T = on ; 
+par.opt_O2P_T = off ; 
 par.opt_rO2P  = on ; 
 % Si model parameters
 par.opt_dsi   = on  ;
@@ -72,28 +72,24 @@ elseif isunix
 end
 VER = strcat(output_dir,TRdivVer);
 % Creat output file names based on which model(s) is(are) optimized
-if Gtest == on
-    fname = strcat(VER,'_GHtest');
-elseif Gtest == off
-    if (par.Cmodel == off & par.Omodel == off & par.Simodel == off)
-        fname = strcat(VER,'_P');
-    elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off)
-        base_name = strcat(VER,'_PCv2');
-        catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
-        fname = strcat(base_name,catDOC);
-    elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off)
-        base_name = strcat(VER,'_PCOv2');
-        catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
-        fname = strcat(base_name,catDOC);
-    elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on)
-        base_name = strcat(VER,'_PCSi');
-        catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
-        fname = strcat(base_name,catDOC);
-    elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on)
-        base_name = strcat(VER,'_PCOSi');
-        catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
-        fname = strcat(base_name,catDOC);
-    end
+if (par.Cmodel == off & par.Omodel == off & par.Simodel == off)
+    fname = strcat(VER,'_P');
+elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off)
+    base_name = strcat(VER,'_PCv2');
+    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
+    fname = strcat(base_name,catDOC);
+elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off)
+    base_name = strcat(VER,'_PCOv4');
+    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
+    fname = strcat(base_name,catDOC);
+elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on)
+    base_name = strcat(VER,'_PCSi');
+    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
+    fname = strcat(base_name,catDOC);
+elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on)
+    base_name = strcat(VER,'_PCOSi');
+    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
+    fname = strcat(base_name,catDOC);
 end
 par.fname = strcat(fname,'.mat') ; 
 % load optimal parameters if they exist
@@ -116,13 +112,22 @@ if par.Omodel == on
 end 
 
 %--------------------- prepare parameters ------------------
-if par.optim == on 
-    % load optimal parameters from a file or set them to default values 
-    par = SetPar(par) ;
-    % pack parameters into an array, assign them corresponding indices.
-    par = PackPar(par) ;
-end 
+% load optimal parameters from a file or set them to default values 
+par = SetPar(par) ;
+% pack parameters into an array, assign them corresponding indices.
+par = PackPar(par) ;
+% print out parameters
+PrintPara(par.p0, par)
 
+%--------------------- perturb temperature ------------------
+vT = par.Temp(iwet) ;
+Tz = (vT + 2 - min(vT))./(max(vT) - min(vT)) ;
+keyboard
+Tz3d = M3d + nan ;
+Tz3d(iwet) = Tz  ;
+par.Tz     = Tz*1e-8 ;
+par.aveT   = nanmean(Tz3d(:,:,1:3),3) ;
+par.Temp   = par.Temp + 2;
 %----------------- solve the P model ----------------------
 p0 = par.p0 ;
 [par, P ] = eqPcycle(p0, par)  ;
@@ -292,35 +297,21 @@ end
 if par.Omodel == on 
     par.DIC = C(0*nwet+1:1*nwet) ; 
     par.DOC = C(2*nwet+1:3*nwet) ;
-    % O2C_T
-    if (par.opt_O2C_T == on)
-        par.O2C_T = x(par.pindx.O2C_T) ;
-    end
-    
-    % rO2C
-    if (par.opt_rO2C == on)
-        lrO2C    = x(par.pindx.lrO2C) ;
-        par.rO2C = exp(lrO2C)     ;
-    end
-    % O2P_T
-    if (par.opt_O2P_T == on)
-        par.O2P_T = x(par.pindx.O2P_T) ;
-    end
-    
-    % rO2P
-    if (par.opt_rO2P == on)
-        lrO2P    = x(par.pindx.lrO2P) ;
-        par.rO2P = exp(lrO2P)     ;
-    end
+
     options.iprint = 1   ; 
     options.atol = 1e-10 ;
     options.rtol = 1e-10 ;
-    fprintf('Solving C model ...\n') ;
     
     fprintf('Solving O model ...\n') ;
     X0  = GO ;
     [O,ierr] = nsnew(X0,@(X) O_eqn(X, par),options) ;
-end 
+end
+
+output_dir = sprintf('/DFS-L/DATA/primeau/weilewang/TempSensi/MSK91/PME4DICALK/');
+fname = strcat(output_dir,'v4FulTemp+2') ;
+save(fname,'hist','P','C','O','JgDIC')
+fprintf('-------------- end! ---------------\n');
+
 
 function [F, FD] = O_eqn(O2, par)
     on = true; off = false;
@@ -373,7 +364,3 @@ function [F, FD] = O_eqn(O2, par)
     end
 end
 
-output_dir = sprintf('/DFS-L/DATA/primeau/weilewang/COP4WWF/PerturbNPP/');
-fname = strcat(output_dir,file1) ;
-save(fname,'hist','P','C','JgDIC')
-fprintf('-------------- end! ---------------\n');

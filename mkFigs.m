@@ -17,7 +17,7 @@ Cmodel  = on ;
 Omodel  = on ;
 Simodel = off ;
 pscale  = 0.0 ;
-cscale  = 0.75 ;
+cscale  = 0.25 ;
 %
 GridVer   = 91 ;
 operator = 'A' ;
@@ -59,7 +59,9 @@ elseif isunix
     % 'MSK%2d/'],GridVer);
     input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
                         'MSK%2d/PME4DICALK/'],GridVer);
-    % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/COP4WWF/' ...
+    % input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/' ...
+                        % 'TempSensi/MSK91/Zscore/'], GridVer);
+    % input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/COP4WWF/' ...
     % 'MSK%2d/'],GridVer);
 end
 VER   = strcat(input_dir,TRdivVer);
@@ -71,7 +73,7 @@ elseif (Cmodel == on & Omodel == off & Simodel == off)
     catDOC = sprintf('_DOC%2.0e_DOP%2.0e',cscale,pscale);
     fname = strcat(base_name,catDOC);
 elseif (Cmodel == on & Omodel == on & Simodel == off)
-    base_name = strcat(VER,'_PCOv3');
+    base_name = strcat(VER,'_PCOv6');
     catDOC = sprintf('_DOC%2.0e_DOP%2.0e',cscale,pscale);
     fname = strcat(base_name,catDOC);
 elseif (Cmodel == on & par.Omodel == off & Simodel == on)
@@ -128,11 +130,17 @@ par.dVt    = dVt     ;
 tempobs(tempobs(:)<-2.0) = -2.0 ;
 par.Temp   = tempobs ;
 
+% ------------------- normalize temperature -------------
+for ji = 1:24
+    t2d = par.Temp(:,:,ji); 
+    par.Temp(:,:,ji) = smoothit(grd,M3d,t2d,3,1e5);
+end 
 vT = par.Temp(iwet) ;
 Tz = (vT - min(vT))./(max(vT) - min(vT)) ;
+% Tz = zscore(vT)  ;
 Tz3d = M3d + nan ;
 Tz3d(iwet) = Tz  ;
-aveT   = nanmean(Tz3d(:,:,1:3),3) ;
+aveT   = nanmean(Tz3d(:,:,1:2),3) ;
 
 nfig = 0;
 if isfield(xhat,'bP_T')

@@ -1,3 +1,6 @@
+temp+2
+temp-2
+FullTemp+2
 *.eps
 *.png
 *#
@@ -19,3 +22,4 @@ MSK90/
 MSK91/
 MINMAX/
 PME4DICALK/
+Zscore/

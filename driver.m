@@ -1,4 +1,4 @@
-clc; clear alul; close all
+clc; clear all; close all
 global iter
 iter = 0 ;
 on   = true  ;
@@ -22,25 +22,25 @@ par.optim   = on ;
 par.Cmodel  = on ; 
 par.Omodel  = on ; 
 par.Simodel = off ;
-par.LoadOpt = off ; % if load optimial par. 
+par.LoadOpt = on ; % if load optimial par. 
 par.pscale  = 0.0 ;
-par.cscale  = 0.0 ; % factor to weigh DOC in the objective function
+par.cscale  = 0.25 ; % factor to weigh DOC in the objective function
 
 % P model parameters
 par.opt_sigma = on ; 
 par.opt_kP_T  = off ;
 par.opt_kdP   = on ;
-par.opt_bP_T  = off ; 
+par.opt_bP_T  = on ; 
 par.opt_bP    = on ;
 par.opt_alpha = on ;
 par.opt_beta  = on ;
 % C model parameters
-par.opt_bC_T  = off ;
+par.opt_bC_T  = on ;
 par.opt_bC    = on ; 
 par.opt_d     = on ;
-par.opt_kC_T  = off ;
+par.opt_kC_T  = on ;
 par.opt_kdC   = on ; 
-par.opt_R_Si  = off ; 
+par.opt_R_Si  = on ; 
 par.opt_rR    = on ; 
 par.opt_cc    = on ;
 par.opt_dd    = on ;
@@ -65,9 +65,11 @@ SetUp ;
 if ismac
     output_dir = sprintf('~/Documents/CP-model/MSK%2d/',GridVer); 
 elseif isunix
-    output_dir = sprintf('/DFS-L/DATA/primeau/weilewang/Cexp/');
+    % output_dir = sprintf('/DFS-L/DATA/primeau/weilewang/Cexp/');
     % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
                         % 'MSK%2d/PME4DICALK/'],GridVer);
+    output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/' ...
+                        'TempSensi/MSK91/Zscore/'], GridVer);
     % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/COP4WWF/' ...
                         % 'MSK%2d/'],GridVer);
 end
@@ -83,7 +85,7 @@ elseif Gtest == off
         catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
         fname = strcat(base_name,catDOC);
     elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off)
-        base_name = strcat(VER,'_PCOv1');
+        base_name = strcat(VER,'_PCOv2');
         catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
         fname = strcat(base_name,catDOC);
     elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on)

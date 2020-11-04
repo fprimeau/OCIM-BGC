@@ -8,7 +8,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
     end
     % reset parameters if optimization routine
     % suggests strange parameter values ;
-    if iter < 5
+    if iter < 3
         x = ResetPara(x, par) ;
     end
     % print current parameters 
@@ -26,7 +26,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
     %
     f    = 0 ;
     %%%%%%%%%%%%%%%%%%   Solve P    %%%%%%%%%%%%%%%%%%%%%%%%
-    idip = find(par.po4raw(iwet)>0.02) ;
+    idip = find(par.po4raw(iwet) > 0.02) ;
     Wp   = d0(dVt(iwet(idip))/sum(dVt(iwet(idip)))) ;
     mu   = sum(Wp*par.po4raw(iwet(idip)))/sum(diag(Wp)) ;
     var  = sum(Wp*(par.po4raw(iwet(idip))-mu).^2)/sum(diag(Wp)) ;
@@ -39,9 +39,9 @@ function [f, fx, fxx, data] = neglogpost(x, par)
     Wop  = par.pscale*Wp/var ;
     %
     [par, P, Px, Pxx] = eqPcycle(x, par) ;
-    DIP = M3d+nan ;  DIP(iwet) = P(1+0*nwet:1*nwet) ;
-    POP = M3d+nan ;  POP(iwet) = P(1+1*nwet:2*nwet) ;
-    DOP = M3d+nan ;  DOP(iwet) = P(1+2*nwet:3*nwet) ;
+    DIP = M3d+nan  ;  DIP(iwet) = P(1+0*nwet:1*nwet) ;
+    POP = M3d+nan  ;  POP(iwet) = P(1+1*nwet:2*nwet) ;
+    DOP = M3d+nan  ;  DOP(iwet) = P(1+2*nwet:3*nwet) ;
     
     par.Px   = Px  ;
     par.Pxx  = Pxx ;
@@ -73,7 +73,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 
     %%%%%%%%%%%%%%%%%%     Solve C   %%%%%%%%%%%%%%%%%%%%%%%%
     if (par.Cmodel == on)
-        idic = find(par.dicraw(iwet)>0) ;
+        idic = find(par.dicraw(iwet) > 0) ;
         Wic  = d0(dVt(iwet(idic))/sum(dVt(iwet(idic)))) ;
         mu   = sum(Wic*par.dicraw(iwet(idic)))/sum(diag(Wic)) ;
         var  = sum(Wic*(par.dicraw(iwet(idic))-mu).^2)/sum(diag(Wic));
