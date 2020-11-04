@@ -24,10 +24,10 @@ par.Omodel  = on ;
 par.Simodel = off ;
 par.LoadOpt = on ; % if load optimial par. 
 par.pscale  = 0.0 ;
-par.cscale  = 1.0 ; % factor to weigh DOC in the objective function
+par.cscale  = 0.25 ; % factor to weigh DOC in the objective function
 
 % P model parameters
-par.opt_sigma = off ; 
+par.opt_sigma = on ; 
 par.opt_kP_T  = off ;
 par.opt_kdP   = on ;
 par.opt_bP_T  = on ; 
@@ -66,8 +66,10 @@ if ismac
     output_dir = sprintf('~/Documents/CP-model/MSK%2d/',GridVer); 
 elseif isunix
     % output_dir = sprintf('/DFS-L/DATA/primeau/weilewang/Cexp/');
-    output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
-                        'MSK%2d/PME4DICALK/'],GridVer);
+    % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
+                        % 'MSK%2d/PME4DICALK/'],GridVer);
+    output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/' ...
+                        'TempSensi/MSK91/Zscore/'], GridVer);
     % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/COP4WWF/' ...
                         % 'MSK%2d/'],GridVer);
 end
@@ -83,7 +85,7 @@ elseif Gtest == off
         catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
         fname = strcat(base_name,catDOC);
     elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off)
-        base_name = strcat(VER,'_PCOv5');
+        base_name = strcat(VER,'_PCOv2');
         catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
         fname = strcat(base_name,catDOC);
     elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on)

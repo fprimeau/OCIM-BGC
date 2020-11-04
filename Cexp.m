@@ -8,9 +8,7 @@ format long
 GridVer  = 91  ;
 operator = 'A' ;
 
-Gtest = off ;
-Htest = off ;
-par.optim   = on ; 
+par.optim   = off ; 
 par.Cmodel  = on ; 
 par.Omodel  = on ; 
 par.Simodel = off ;
@@ -19,20 +17,20 @@ par.pscale  = 0.0 ;
 par.cscale  = 0.25 ; % factor to weigh DOC in the objective function
 
 % P model parameters
-par.opt_sigma = on ; 
-par.opt_kP_T  = off ;
+par.opt_sigma = off ; 
+par.opt_kP_T  = on ;
 par.opt_kdP   = on ;
-par.opt_bP_T  = off ; 
+par.opt_bP_T  = on ; 
 par.opt_bP    = on ;
 par.opt_alpha = on ;
 par.opt_beta  = on ;
 % C model parameters
-par.opt_bC_T  = off ;
+par.opt_bC_T  = on ;
 par.opt_bC    = on ; 
 par.opt_d     = on ;
-par.opt_kC_T  = off ;
+par.opt_kC_T  = on ;
 par.opt_kdC   = on ; 
-par.opt_R_Si  = off ; 
+par.opt_R_Si  = on ; 
 par.opt_rR    = on ; 
 par.opt_cc    = on ;
 par.opt_dd    = on ;
@@ -56,36 +54,34 @@ SetUp ;
 if ismac
     output_dir = sprintf('~/Documents/CP-model/MSK%2d/',GridVer); 
 elseif isunix
-    output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/Cexp/']);
-    % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
-                        % 'MSK%2d/PME4DICALK/'],GridVer);
+    % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/Cexp/']);
+    output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
+                        'MSK%2d/PME4DICALK/'],GridVer);
+    % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/' ...
+                        % 'TempSensi/MSK91/Zscore/'], GridVer);
     % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/COP4WWF/' ...
                         % 'MSK%2d/'],GridVer);
 end
 VER = strcat(output_dir,TRdivVer);
 % Creat output file names based on which model(s) is(are) optimized
-if Gtest == on
-    fname = strcat(VER,'_GHtest');
-elseif Gtest == off
-    if (par.Cmodel == off & par.Omodel == off & par.Simodel == off)
-        fname = strcat(VER,'_P');
-    elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off)
-        base_name = strcat(VER,'_PCv1');
-        catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
-        fname = strcat(base_name,catDOC);
-    elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off)
-        base_name = strcat(VER,'_PCOv1');
-        catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
-        fname = strcat(base_name,catDOC);
-    elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on)
-        base_name = strcat(VER,'_PCSi');
-        catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
-        fname = strcat(base_name,catDOC);
-    elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on)
-        base_name = strcat(VER,'_PCOSi');
-        catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
-        fname = strcat(base_name,catDOC);
-    end
+if (par.Cmodel == off & par.Omodel == off & par.Simodel == off)
+    fname = strcat(VER,'_P');
+elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off)
+    base_name = strcat(VER,'_PCv1');
+    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
+    fname = strcat(base_name,catDOC);
+elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off)
+    base_name = strcat(VER,'_PCOv6');
+    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
+    fname = strcat(base_name,catDOC);
+elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on)
+    base_name = strcat(VER,'_PCSi');
+    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
+    fname = strcat(base_name,catDOC);
+elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on)
+    base_name = strcat(VER,'_PCOSi');
+    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
+    fname = strcat(base_name,catDOC);
 end
 par.fname = strcat(fname,'.mat') ; 
 % load optimal parameters if they exist
@@ -184,7 +180,6 @@ C3d(iwet) = Jex_C ;
 
 % convert export from mmol C/m^3/s to mg C/m^2/day;
 TOCexp = C3d(:,:,2).*grd.dzt(2)*12*spd;
-
 tem_Cexp = TOCexp.*dAt(:,:,2);
 Sum_Cexp = nansum(tem_Cexp(:))*365*1e-18;
 fprintf('Model TOC export is %3.3e \n\n',Sum_Cexp);

@@ -206,13 +206,17 @@ par.sALKbar = sum(par.alkraw((iwet(isrf(salk)))).* ...
                   dVt(iwet(isrf(salk))))./sum(dVt(iwet(isrf(salk))));
 
 %-------------------- normalize temperature --------------------
+for ji = 1:24
+    t2d = par.Temp(:,:,ji); 
+    par.Temp(:,:,ji) = smoothit(grd,M3d,t2d,3,1e5);
+end 
 vT = par.Temp(iwet) ;
 Tz = (vT - min(vT))./(max(vT) - min(vT)) ;
-
+% Tz = zscore(vT)  ;
 Tz3d = M3d + nan ;
 Tz3d(iwet) = Tz  ;
 par.Tz     = Tz*1e-8 ;
-par.aveT   = nanmean(Tz3d(:,:,1:3),3) ;
+par.aveT   = nanmean(Tz3d(:,:,1:2),3) ;
 
 %------------------- prepare for restoring ---------------------
 % calculating global mean DIP, ALK, and DSi concentraions for
