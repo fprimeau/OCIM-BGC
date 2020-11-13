@@ -5,17 +5,17 @@ addpath('/DFS-L/DATA/primeau/weilewang/DATA/')
 addpath('/DFS-L/DATA/primeau/weilewang/GREG/Couple_CP/')
 addpath('/DFS-L/DATA/primeau/weilewang/DATA/OCIM2')
 % Set some a read-write path:
-par.VER = "/DFS-L/DATA/primeau/fprimeau/OCIM_BGC_OUTPUT/MSK91";
+par.VER = "/DFS-L/DATA/primeau/fprimeau/OCIM_BGC_OUTPUT/MSK90";
 
 %
-%% -------------------------------------------------------------
+% -------------------------------------------------------------
 on = true; off = false;
 %
 %  choose which elements to include in the model
 %  par.Pmodel hard coded on. In other words the Pmodel is essential.
 %
-par.Cmodel = off; % C-cycle model 
-par.Omodel = off; % O2-cycle model
+par.Cmodel = on; % C-cycle model 
+par.Omodel = on; % O2-cycle model
 if (par.Omodel == on )
   par.Cmodel = on;
 end
@@ -28,9 +28,10 @@ par.Simodel = off;% Si-cycle model
 par.opt_beta = on;
 par.opt_alpha = on;
 par.opt_sigma = off; 
-par.opt_slopep = on; 
-par.opt_interpp = on;
-par.opt_kappa_dp = on;
+par.opt_slopep = off; 
+par.opt_interpp = off;
+par.opt_kappa_dp = off;
+
 % C model parameters
 par.opt_d = on;  
 par.opt_RR = on; 
@@ -83,7 +84,7 @@ if version == 90
 elseif version == 91
 
     % uncomment only one version of OCIM2 
-    load OCIM2_CTL_He.mat output 
+     load OCIM2_CTL_He.mat output 
     % load OCIM2_KiLOW_He.mat output 
     % load OCIM2_KiHIGH_He.mat output 
     % load OCIM2_KvHIGH_He.mat output 
@@ -386,6 +387,7 @@ par.Px  = Px;
 par.Pxx = Pxx;
 par.DIP = DIP(iwet);
 toc
+
 %
 %
 if (par.Cmodel == on)
@@ -401,16 +403,19 @@ if (par.Cmodel == on)
     par.DICxx = Cxx(1:nwet,:);  par.DOCxx = Cxx(2*nwet+1:3*nwet,:)
     toc
 end
+keyboard
 %
 %
 if (par.Omodel == on)
     fprintf('Computing the equilibrium O2-cycle solution...');
     tic
     [par, O, Ox, Oxx] = eqOcycle(par, x0);
+exit
     O2 = all_nan;
     O2(iwet) = O;
     toc
 end
+keyboard
 %
 %
 if (par.Simodel == on)
