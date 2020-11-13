@@ -141,6 +141,7 @@ function [PFdiv,Gout,Hout] = buildPFD(par,Ptype)
             FLUX_b_r = d0(w_b_r(iwet))*IU;
             FLUX_bm_bb = d0(w_bm_bb(iwet))*IU;
             FLUX_r_r = 0;
+
             Hout.PFD_b_b   = DIV*FLUX_b_b;
             Hout.PFD_r_r   = DIV*FLUX_r_r;
             Hout.PFD_b_r   = DIV*FLUX_b_r;
@@ -201,6 +202,11 @@ function [DIV,IU,M,MSK,iwet] = mkOperators(M3d,grd);
     M3D        = zeros(ny,nx,nz+1);
     M3D(:,:,1:end-1) = M3d;
 
+    % add the zw coordinate at the top of the extra layer
+    ZW3d = grd.ZW3d;
+    ZW3d = ZW3d(:,:,[1:end,end]);
+    ZW3d(:,:,end) = grd.ZW3d(:,:,end)+grd.dzt(end);
+
     % areas of the top of the grid box
     dAt = (grd.DXT3d.*grd.DYT3d).*M3d;
     % volume of the grid boxes
@@ -229,4 +235,3 @@ function [DIV,IU,M,MSK,iwet] = mkOperators(M3d,grd);
     MSK = M3D.*M3D(:,:,[nz+1,1:nz]);
     M   = MSK.*ZW3d;
 end
-
