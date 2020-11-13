@@ -1,4 +1,4 @@
-function [kw,p] = kwco2(M3d,grid);
+function [kw,p] = kw(M3d,grd);
     fname = 'gasx_ocmip2.nc';
     lon = ncread(fname,'LON')-180;
     lon = [lon(1)-1;lon(:);lon(end)+1];
@@ -35,10 +35,10 @@ function [kw,p] = kwco2(M3d,grid);
     p = [p(:,end),p,p(:,1)];
     kw = [kw(:,end),kw,kw(:,1)];
     kw = inpaint_nans(kw);
-    % interpolate onto the model grid
-    p = interp2(LON,LAT,p,grid.XT3d(:,:,1),grid.YT3d(:,:,1));
-    kw = interp2(LON,LAT,kw,grid.XT3d(:,:,1),grid.YT3d(:,:,1));
+    % interpolate onto the model grd
+    p = interp2(LON,LAT,p,grd.XT3d(:,:,1),grd.YT3d(:,:,1));
+    kw = interp2(LON,LAT,kw,grd.XT3d(:,:,1),grd.YT3d(:,:,1));
     msk = M3d(:,:,1);
     ilnd = find(msk(:)==0);
     kw(ilnd) = NaN;
-    
+end 
