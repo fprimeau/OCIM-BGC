@@ -1631,7 +1631,7 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
-        
+
         % kC_T cc
         if (par.opt_kC_T & par.opt_cc)
             kk = kk + 1;
@@ -1667,7 +1667,7 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
             
             Cxx(:,kk) = mfactor(FD, tmp);
         end
-        
+
         % kdC R_Si
         if (par.opt_kdC & par.opt_R_Si)
             kk = kk + 1;

@@ -3,6 +3,7 @@ function [par, O2, Ox, Oxx] = eqOcycle(x, par)
     global GO
     pindx = par.pindx ;
     % unpack the parameters to be optimized
+
     % O2C_T
     if (par.opt_O2C_T == on)
         par.O2C_T = x(pindx.O2C_T) ;
@@ -499,6 +500,5 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
             Oxx(:,kk) = mfactor(FD, -tmp) ;
         end
     end
-
 end
 

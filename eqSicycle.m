@@ -979,4 +979,3 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
         end
     end
 end
-
