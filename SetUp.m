@@ -1,3 +1,4 @@
+% testing github branch (remove this line)
 global GC GO iter
 iter = 0       ;
 spd  = 24*60^2 ;
@@ -5,7 +6,7 @@ spa  = 365*spd ;
 on   = true    ;
 off  = false   ;
 % addpath according to opterating system
-if ismac 
+if ismac
     addpath('~/Dropbox/myfunc'     )
     addpath('~/Documents/DATA/'    )
     addpath('~/Documents/DATA/OCIM')
@@ -17,7 +18,7 @@ end
 
 if GridVer == 90
     TRdivVer = 'Tv4' ;
-elseif GridVer == 91 
+elseif GridVer == 91
     switch(operator)
       case 'A'
         TRdivVer = 'CTL_He'             ;
@@ -41,8 +42,8 @@ elseif GridVer == 91
         TRdivVer = 'KvHIGH_noHe'        ;
       case 'K'
         TRdivVer = 'KvHIGH_KiHIGH_noHe' ;
-    end 
-end 
+    end
+end
 
 fprintf('Transport version: % s \n', TRdivVer)
 if par.Cmodel == on
@@ -52,24 +53,24 @@ if par.Cmodel == on
 end
 if par.Omodel == on
     fprintf('------ O model is on ------- \n')
-end 
+end
 if par.Simodel == on
     fprintf('------ Si model is on ------ \n')
-end 
+end
 fprintf('\n')
 
 %
 if GridVer == 90
     load transport_v4.mat grid M3d TR
-    load M3d90x180x24v2.mat MSKS 
+    load M3d90x180x24v2.mat MSKS
     load Sobs_90x180x24.mat
     load tempobs_90x180x24.mat
     load po4obs_90x180x24.mat       % WOA PO4 observation
     load Siobs_90x180x24.mat Siobs
     load Mouw_POC_90x180x24.mat  % sediment trap data MOUW
     %
-    load GLODAPv2_talk.mat 
-    load PME_TS_90x180x24.mat  pme  
+    load GLODAPv2_talk.mat
+    load PME_TS_90x180x24.mat  pme
     load DICant_90x180x24.mat
     load GLODAPv2_90x180x24raw.mat
     load splco2_mod_monthly.mat     % monthly CO2 data
@@ -82,14 +83,14 @@ if GridVer == 90
         load MSK90/fixedPO_O2.mat
     elseif isunix
         load initCO_90x180x24.mat
-    end 
+    end
     grd = grid ;
-    
+
 elseif GridVer == 91
     OperName = sprintf('OCIM2_%s',TRdivVer);
     load(OperName,'output') ;
     %
-    load M3d91x180x24.mat MSKS 
+    load M3d91x180x24.mat MSKS
     load Sobs_91x180x24.mat
     load po4obs_91x180x24.mat % WOA PO4 observation
     load tempobs_91x180x24.mat
@@ -97,7 +98,7 @@ elseif GridVer == 91
     load Mouw_POC_91x180x24.mat  % sediment trap data MOUW
     %
     load GLODAPv2_talk_91x180x24.mat
-    load PME_TS_91x180x24.mat  pme 
+    load PME_TS_91x180x24.mat  pme
     load DICant_91x180x24.mat
     load GLODAPv2_91x180x24raw.mat
     load splco2_mod_monthly % monthly CO2 data
@@ -163,11 +164,11 @@ par.I = speye(nwet) ;
 % DOCobs(iarc)  = nan ;
 % DOCobs(imed)  = nan ;
 alkraw(iarc)  = nan ;
-alkraw(imed)  = nan ; 
+alkraw(imed)  = nan ;
 dicraw(iarc)  = nan ;
 dicraw(imed)  = nan ;
 % po4raw(iarc)  = nan ;
-% po4raw(imed)  = nan ; 
+% po4raw(imed)  = nan ;
 % sio4raw(iarc) = nan ;
 % sio4raw(imed) = nan ;
 % o2raw(iarc)   = nan ;
@@ -182,9 +183,9 @@ par.po4raw  = po4raw  ;
 par.sio4raw = sio4raw ;
 par.DOCobs  = DOCobs  ;
 par.alkraw  = alkraw*permil ;
-par.dicraw  = dicraw*permil ; 
+par.dicraw  = dicraw*permil ;
 par.dicant  = DICant*permil ;
-par.dopraw  = DOPobs - 0.03 ; % less refractory DOP 
+par.dopraw  = DOPobs - 0.03 ; % less refractory DOP
 DOCclean   = RemoveRef(par) ;
 ibad = find( DOCclean(iarc) > 50 ) ;
 DOCclean(iarc(ibad)) = nan ;
@@ -192,8 +193,8 @@ par.docraw = DOCclean ;
 
 %-------------------- prepare virtual flux -------------------
 % PME part;
-% [modT,modS,pme] = pme(par) ; 
-par.pme     = pme  ;   
+% [modT,modS,pme] = pme(par) ;
+par.pme     = pme  ;
 junk = M3d ;
 junk(:,:,2:end) = 0 ;
 isrf = find(junk(iwet)) ;
@@ -207,9 +208,9 @@ par.sALKbar = sum(par.alkraw((iwet(isrf(salk)))).* ...
 
 %-------------------- normalize temperature --------------------
 for ji = 1:24
-    t2d = par.Temp(:,:,ji); 
+    t2d = par.Temp(:,:,ji);
     par.Temp(:,:,ji) = smoothit(grd,M3d,t2d,3,1e5);
-end 
+end
 vT = par.Temp(iwet) ;
 Tz = (vT - min(vT))./(max(vT) - min(vT)) ;
 % Tz = zscore(vT)  ;
@@ -220,7 +221,7 @@ par.aveT   = nanmean(Tz3d(:,:,1:2),3) ;
 
 %------------------- prepare for restoring ---------------------
 % calculating global mean DIP, ALK, and DSi concentraions for
-% restoring 
+% restoring
 idip = find(par.po4raw(iwet)>0)  ;
 ialk = find(par.alkraw(iwet)>0)  ;
 isil = find(par.sio4raw(iwet)>0) ;
@@ -236,11 +237,11 @@ inan = find(isnan(npp(:)) | npp(:) < 0) ;
 npp(inan) = 0 ;
 
 par.npp   = npp/(12*spd) ;
-par.npp1  = (0.5*par.npp./grd.dzt(1)).*par.p2c(:,:,1) ; 
-par.npp2  = (0.5*par.npp./grd.dzt(2)).*par.p2c(:,:,2) ; 
+par.npp1  = (0.5*par.npp./grd.dzt(1)).*par.p2c(:,:,1) ;
+par.npp2  = (0.5*par.npp./grd.dzt(2)).*par.p2c(:,:,2) ;
 par.Lambda = M3d*0 ;
 par.Lambda(:,:,1) = 1./(1e-6+po4obs(:,:,1)) ;
 par.Lambda(:,:,2) = 1./(1e-6+po4obs(:,:,2)) ;
 par.Lambda(:,:,3:end) = 0 ;
 
-%---------------------------- end ---------------------------------- 
+%---------------------------- end ----------------------------------
