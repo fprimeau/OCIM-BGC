@@ -1,4 +1,3 @@
-% testing github branch (remove this line)
 global GC GO iter
 iter = 0       ;
 spd  = 24*60^2 ;
