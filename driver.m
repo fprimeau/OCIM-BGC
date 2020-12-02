@@ -4,7 +4,7 @@ iter = 0 ;
 on   = true  ;
 off  = false ;
 format long
-% 
+%
 GridVer  = 91  ;
 operator = 'A' ;
 % GridVer: choose from 90 and 91; Ver 90 is for a Transport
@@ -18,52 +18,68 @@ operator = 'A' ;
 
 Gtest = off ;
 Htest = off ;
-par.optim   = on ; 
-par.Cmodel  = on ; 
-par.Omodel  = on ; 
+par.optim   = on ;
+par.Cmodel  = on ;
+par.Omodel  = on ;
 par.Simodel = off ;
-par.LoadOpt = on ; % if load optimial par. 
+par.Cellmodel = on; % cellular trait model for phyto uptake stoichiometry
+par.LoadOpt = on ; % if load optimial par.
 par.pscale  = 0.0 ;
 par.cscale  = 0.25 ; % factor to weigh DOC in the objective function
 
 % P model parameters
-par.opt_sigma = on ; 
+par.opt_sigma = on ;
 par.opt_kP_T  = off ;
 par.opt_kdP   = on ;
-par.opt_bP_T  = on ; 
+par.opt_bP_T  = on ;
 par.opt_bP    = on ;
 par.opt_alpha = on ;
 par.opt_beta  = on ;
 % C model parameters
 par.opt_bC_T  = on ;
-par.opt_bC    = on ; 
+par.opt_bC    = on ;
 par.opt_d     = on ;
 par.opt_kC_T  = on ;
-par.opt_kdC   = on ; 
-par.opt_R_Si  = on ; 
-par.opt_rR    = on ; 
+par.opt_kdC   = on ;
+par.opt_R_Si  = on ;
+par.opt_rR    = on ;
 par.opt_cc    = on ;
 par.opt_dd    = on ;
 % O model parameters
 par.opt_O2C_T = off ;
 par.opt_rO2C  = on ;
-par.opt_O2P_T = off ; 
-par.opt_rO2P  = on ; 
+par.opt_O2P_T = off ;
+par.opt_rO2P  = on ;
 % Si model parameters
 par.opt_dsi   = on  ;
 par.opt_at    = off ;
 par.opt_bt    = on  ;
 par.opt_aa    = on  ;
 par.opt_bb    = on  ;
-%
+%Trait Model parameters
+par.BIO.opt_Q10Photo = on ;
+par.BIO.opt_fRibE 	 = off;
+par.BIO.opt_fStorage = off;
+par.BIO.opt_kST0 	 = off;
+% par.BIO.opt_alphaS = off;
+% par.BIO.opt_gammaDNA = off;
+% par.BIO.opt_gammaLipid = off;
+% par.BIO.opt_lPCutoff = off;
+% par.BIO.opt_DNT0 = off;
+% par.BIO.opt_DPT0 = off;
+% par.BIO.opt_Q10Diffusivity = off;
+% par.BIO.opt_AMin = off;
+% par.BIO.opt_CStor = off;
+% par.BIO.opt_PhiS = off;
+
 %-------------load data and set up parameters---------------------
 SetUp ;
 
-% save results 
+% save results
 % ATTENTION: Change this direcrtory to where you wanna
 % save your output files
 if ismac
-    output_dir = sprintf('~/Documents/CP-model/MSK%2d/',GridVer); 
+    output_dir = sprintf('~/Documents/CP-model/MSK%2d/',GridVer);
 elseif isunix
     % output_dir = sprintf('/DFS-L/DATA/primeau/weilewang/Cexp/');
     % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
@@ -99,34 +115,34 @@ elseif Gtest == off
     end
 end
 % -------------------- Set up output files ---------------
-par.fname = strcat(fname,'.mat') ; 
+par.fname = strcat(fname,'.mat') ;
 fxhat     = strcat(fname,'_xhat.mat');
-par.fxhat = fxhat ; 
+par.fxhat = fxhat ;
 
 % -------------------update initial guesses --------------
 if isfile(par.fname)
     load(par.fname)
-end 
+end
 
 %---------------- inital guesses on C and O ---------------
-if par.Cmodel == on 
+if par.Cmodel == on
     DIC = data.DIC - par.dicant ;
-    
+
     GC  = [DIC(iwet); data.POC(iwet); data.DOC(iwet); ...
            data.PIC(iwet); data.ALK(iwet)];
     GC  = GC + 1e-6*randn(5*nwet,1) ;
-end 
-if par.Omodel == on 
+end
+if par.Omodel == on
     GO  = real(data.O2(iwet)) + 1e-9*randn(par.nwet,1);
-end 
+end
 
 %--------------------- prepare parameters ------------------
-if par.optim == on 
-    % load optimal parameters from a file or set them to default values 
+if par.optim == on
+    % load optimal parameters from a file or set them to default values
     par = SetPar(par) ;
     % pack parameters into an array, assign them corresponding indices.
     par = PackPar(par) ;
-end 
+end
 
 %-------------------set up fminunc -------------------------
 x0    = par.p0 ;
@@ -164,10 +180,10 @@ if(Gtest);
             diff = (real(fx(ii)) - imag(f)/eps.^3)/(imag(f)/eps.^3) ;
             fprintf('%i % .3e  \n',ii,diff);
             fprintf('\n');
-        end 
+        end
         fprintf('\n');
     end
-    keyboard 
+    keyboard
 else
     [xhat,fval,exitflag] = fminunc(myfun,x0,options);
     [f,fx,fxx,data] = neglogpost(xhat,par);
@@ -175,7 +191,7 @@ else
     xhat.f   = f   ;
     xhat.fx  = fx  ;
     xhat.fxx = fxx ;
-    % save results 
+    % save results
     save(fxhat, 'xhat')
     save(par.fname, 'data')
 end
