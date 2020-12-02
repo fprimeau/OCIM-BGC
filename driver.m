@@ -5,7 +5,7 @@ on   = true  ;
 off  = false ;
 format long
 %
-GridVer  = 91  ;
+GridVer  = 90  ;
 operator = 'A' ;
 % GridVer: choose from 90 and 91; Ver 90 is for a Transport
 % operator without diapycnal mixing but optimized using DIP ;
@@ -20,7 +20,7 @@ Gtest = off ;
 Htest = off ;
 par.optim   = on ;
 par.Cmodel  = on ;
-par.Omodel  = on ;
+par.Omodel  = off ;
 par.Simodel = off ;
 par.Cellmodel = on; % cellular trait model for phyto uptake stoichiometry
 par.LoadOpt = on ; % if load optimial par.
@@ -84,33 +84,42 @@ elseif isunix
     % output_dir = sprintf('/DFS-L/DATA/primeau/weilewang/Cexp/');
     % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
                         % 'MSK%2d/PME4DICALK/'],GridVer);
-    output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/' ...
-                        'TempSensi/MSK91/Zscore/'], GridVer);
+	output_dir = sprintf('/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/run%s/', datestr(now,'ddmmmyy'));
+
     % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/COP4WWF/' ...
                         % 'MSK%2d/'],GridVer);
 end
 VER = strcat(output_dir,TRdivVer);
+catDOC = sprintf('_DOC%0.2g_DOP%0.2g',par.cscale,par.pscale); % used to add scale factors to file names
 % Creat output file names based on which model(s) is(are) optimized
 if Gtest == on
     fname = strcat(VER,'_GHtest');
 elseif Gtest == off
-    if (par.Cmodel == off & par.Omodel == off & par.Simodel == off)
-        fname = strcat(VER,'_Pv1');
-    elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off)
-        base_name = strcat(VER,'_PCv2');
-        catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
+    if (par.Cmodel == off & par.Omodel == off & par.Simodel == off & par.Cellmodel == off)
+        fname = strcat(VER,'_P');
+    elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off & par.Cellmodel == off)
+        base_name = strcat(VER,'_PC');
         fname = strcat(base_name,catDOC);
-    elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off)
-        base_name = strcat(VER,'_PCOv2');
-        catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
+    elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off & par.Cellmodel == off)
+        base_name = strcat(VER,'_PCO');
         fname = strcat(base_name,catDOC);
-    elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on)
+    elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on & par.Cellmodel == off)
         base_name = strcat(VER,'_PCSi');
-        catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
         fname = strcat(base_name,catDOC);
-    elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on)
+    elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on & par.Cellmodel == off)
         base_name = strcat(VER,'_PCOSi');
-        catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
+        fname = strcat(base_name,catDOC);
+	elseif (par.Cmodel == off & par.Omodel == off & par.Simodel == off & par.Cellmodel == on) % cell model does nothing if C model is not on, so this case =Ponly
+        base_name = strcat(VER,'_PCell');
+        fname = strcat(base_name,catDOC);
+	elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off & par.Cellmodel == on)
+        base_name = strcat(VER,'_PCCell');
+        fname = strcat(base_name,catDOC);
+	elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off & par.Cellmodel == on)
+		base_name = strcat(VER,'_PCOCell');
+		fname = strcat(base_name,catDOC);
+	elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on & par.Cellmodel == on)
+        base_name = strcat(VER,'_PCOSiCell');
         fname = strcat(base_name,catDOC);
     end
 end
