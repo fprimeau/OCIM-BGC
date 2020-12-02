@@ -56,6 +56,9 @@ end
 if par.Simodel == on
     fprintf('------ Si model is on ------ \n')
 end
+if par.Cellmodel == on
+    fprintf('------ Cell stoichiometry model is on ------ \n')
+end
 fprintf('\n')
 
 %
@@ -65,6 +68,7 @@ if GridVer == 90
     load Sobs_90x180x24.mat
     load tempobs_90x180x24.mat
     load po4obs_90x180x24.mat       % WOA PO4 observation
+	load no3obs_90x180x24.mat		% WOA NO3 obs
     load Siobs_90x180x24.mat Siobs
     load Mouw_POC_90x180x24.mat  % sediment trap data MOUW
     %
@@ -93,6 +97,7 @@ elseif GridVer == 91
     load M3d91x180x24.mat MSKS
     load Sobs_91x180x24.mat
     load po4obs_91x180x24.mat % WOA PO4 observation
+	load no3obs_91x180x24.mat % WOA NO3 obs
     load tempobs_91x180x24.mat
     load Siobs_91x180x24.mat Siobs
     load Mouw_POC_91x180x24.mat  % sediment trap data MOUW
@@ -123,7 +128,7 @@ par.spa = spa ;
 [par.kw,par.P] = kw(M3d,grd);
 par.Kw660 = Kw660   ;
 par.p4    = p4      ;
-par.c2p   = 110     ;
+par.c2p   = 110     ;	   % constant C:P ratio
 par.rho   = 1024.5       ; % seawater density;
 permil    = par.rho*1e-3 ; % from umol/kg to mmol/m3;
 par.permil = permil ;
@@ -160,7 +165,7 @@ par.MSKS  = MSKS    ;
 par.I = speye(nwet) ;
 
 %------------------------  data  -----------------------
-% get rid of arctice o2 observations
+% get rid of arctic o2 observations
 % DOCobs(iarc)  = nan ;
 % DOCobs(imed)  = nan ;
 alkraw(iarc)  = nan ;
@@ -178,8 +183,10 @@ par.Temp    = tempobs ;
 par.Salt    = Sobs    ;
 par.DSi     = Siobs   ;
 par.po4obs  = po4obs  ;
+par.no3obs  = no3obs  ;
 par.o2raw   = o2raw   ;
 par.po4raw  = po4raw  ;
+%par.no3raw  = no3raw  ; %no3raw field not in GLODAPv2_90x180x24raw.mat
 par.sio4raw = sio4raw ;
 par.DOCobs  = DOCobs  ;
 par.alkraw  = alkraw*permil ;
