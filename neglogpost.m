@@ -11,9 +11,9 @@ function [f, fx, fxx, data] = neglogpost(x, par)
     if iter < 3
         x = ResetPara(x, par) ;
     end
-    % print current parameters 
+    % print current parameters
     if iter > 0
-        PrintPara(x, par) ;    
+        PrintPara(x, par) ;
     end
     fprintf('current iteration is %d \n',iter) ;
     iter = iter + 1  ;
@@ -42,7 +42,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
     DIP = M3d+nan  ;  DIP(iwet) = P(1+0*nwet:1*nwet) ;
     POP = M3d+nan  ;  POP(iwet) = P(1+1*nwet:2*nwet) ;
     DOP = M3d+nan  ;  DOP(iwet) = P(1+2*nwet:3*nwet) ;
-    
+
     par.Px   = Px  ;
     par.Pxx  = Pxx ;
     par.DIP  = DIP(iwet) ;
@@ -52,7 +52,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
     eop = DOP(iwet(idop)) - par.dopraw(iwet(idop)) ;
     f  = f + 0.5*(eip.'*Wip*eip) + 0.5*(eop.'*Wop*eop);
     %%%%%%%%%%%%%%%%%%   End Solve P    %%%%%%%%%%%%%%%%%%%%
-    
+
     %%%%%%%%%%%%%%%%%%   Solve Si       %%%%%%%%%%%%%%%%%%%%
     if (par.Simodel == on)
         isil = find(par.sio4raw(iwet)>0) ;
@@ -64,12 +64,71 @@ function [f, fx, fxx, data] = neglogpost(x, par)
         [par,Si,Six,Sixx] = eqSicycle(x, par)   ;
         DSi = M3d+nan ;  DSi(iwet) = Si(1:nwet) ;
         bSi = M3d+nan ;  bSi(iwet) = Si(nwet+1:end) ;
-        data.DSi = SI ;  data.bSi  = bSi ;  
+        data.DSi = SI ;  data.bSi  = bSi ;
         % SiO error
         es = DSi(iwet(isil)) - par.sio4raw(iwet(isil)) ;
         f  = f + 0.5*(es.'*Ws*es) ;
     end
     %%%%%%%%%%%%%%%%%%   End Solve Si    %%%%%%%%%%%%%%%%%%%%
+
+	%%%%%%%%%%%%%%     Solve for C2P with Cell model   %%%%%%%%%%%%%%%%%%%%%
+	if (par.Cellmodel == on)
+		iprod = find(M3d(:,:,1:2)); %production in top two layers
+		P0 = par.DIPgrd(iprod)./10^6; 			% convert ug/m^3 to g/m^3
+		N0 = par.no3obs(iprod)./10^6;   % convert ug/m^3 to g/m^3
+		T0 = par.Tobs(iprod);
+		Irr0 = par.PARobs(iprod);
+
+ 		[CellOut, parBIO] = CellCNP(par,x, P0,N0,T0,Irr0);
+		par.BIO = parBIO;
+		clear parBIO;
+		par.CellOut.C2P = M3d*0;
+		%par.CellOut.N2P = M3d*0;
+		%par.CellOut.C2N = M3d*0;
+		%par.CellOut.LimType = M3d*0;
+		%par.CellOut.r = M3d*0;
+
+		par.CellOut.C2P(iprod) = CellOut.CP;
+		%par.CellOut.N2P(iprod) = CellOut.NP;
+		%par.CellOut.C2N(iprod) = CellOut.CN;
+		%par.CellOut.LimType(iprod) = CellOut.LimType;
+		%par.CellOut.r(iprod) = CellOut.r;
+
+		par.CellOut.C2P(isnan(par.CellOut.C2P)) = 0; %remove NaNs
+
+		% Cell model derivatives
+		par.CellOut.dC2P_dQ10Photo = M3d*0;
+		par.CellOut.dC2P_dfStorage = M3d*0;
+
+        par.CellOut.dC2P_dQ10Photo(iprod) = CellOut.dC2P_dQ10Photo;
+		par.CellOut.dC2P_dfStorage(iprod) = CellOut.dC2P_dfStorage;
+
+		%second Derivatives w.r.t. Q10Photo
+		if (par.BIO.opt_Q10Photo)
+			xim = zeros(size(x0));
+			xim(par.pindx.lQ10Photo) = sqrt(-1)*eps^3;
+			[CellOut, ~] = CPDual(par,x0+xim, P0,N0,T0,Irr0);
+
+			par.CellOut.d2C2P_dQ10Photo2 = M3d*0;
+			par.CellOut.d2C2P_dfStorage_dQ10Photo = M3d*0;
+
+			par.CellOut.d2C2P_dQ10Photo2(iprod) = imag(CellOut.dC2P_dQ10Photo)./eps^3;
+			par.CellOut.d2C2P_dfStorage_dQ10Photo(iprod) = imag(CellOut.dC2P_dfStorage)./eps^3;
+		end
+
+		%second Derivatives w.r.t. fStorage
+		if (par.BIO.opt_fStorage)
+			xim = zeros(size(x0));
+			xim(par.pindx.lfStorage) = sqrt(-1)*eps^3;
+			[CellOut, ~] = CPDual(par,x0+xim, P0,N0,T0,Irr0);
+
+			par.CellOut.d2C2P_dQ10Photo_dfStorage = M3d*0;
+			par.CellOut.d2C2P_dfStorage2 = M3d*0;
+
+			par.CellOut.d2C2P_dQ10Photo_dfStorage(iprod) = imag(CellOut.dC2P_dQ10Photo)./eps^3;
+			par.CellOut.d2C2P_dfStorage2(iprod) = imag(CellOut.dC2P_dfStorage)./eps^3;
+		end
+end
 
     %%%%%%%%%%%%%%%%%%     Solve C   %%%%%%%%%%%%%%%%%%%%%%%%
     if (par.Cmodel == on)
@@ -78,7 +137,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
         mu   = sum(Wic*par.dicraw(iwet(idic)))/sum(diag(Wic)) ;
         var  = sum(Wic*(par.dicraw(iwet(idic))-mu).^2)/sum(diag(Wic));
         Wic  = Wic/var  ;
-        
+
         ialk = find(par.alkraw(iwet)>0) ;
         Wlk  = d0(dVt(iwet(ialk))/sum(dVt(iwet(ialk)))) ;
         mu   = sum(Wlk*par.alkraw(iwet(ialk)))/sum(diag(Wlk)) ;
@@ -90,7 +149,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
         mu   = sum(Woc*par.docraw(iwet(idoc)))/sum(diag(Woc)) ;
         var  = sum(Woc*(par.docraw(iwet(idoc))-mu).^2)/sum(diag(Woc));
         Woc  = par.cscale*Woc/var ;
-        
+
         [par, C, Cx, Cxx] = eqCcycle(x, par) ;
         DIC = M3d+nan ;  DIC(iwet) = C(0*nwet+1:1*nwet) ;
         POC = M3d+nan ;  POC(iwet) = C(1*nwet+1:2*nwet) ;
@@ -113,7 +172,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
               0.5*(elk.'*Wlk*elk);
     end
     %%%%%%%%%%%%%%%%%%   End Solve C    %%%%%%%%%%%%%%%%%%%%
-    
+
     %%%%%%%%%%%%%%%%%%   Solve O    %%%%%%%%%%%%%%%%%%%%%%%%
     if (par.Omodel == on)
         io2 = find(par.o2raw(iwet)>0) ;
@@ -129,10 +188,10 @@ function [f, fx, fxx, data] = neglogpost(x, par)
         f  = f + 0.5*(eo.'*Wo*eo)   ;
     end
     %%%%%%%%%%%%%%%%%%   End Solve O    %%%%%%%%%%%%%%%%%%%%
-    fprintf('current objective function value is %3.3e \n\n',f) 
+    fprintf('current objective function value is %3.3e \n\n',f)
     if mod(iter, 10) == 0
         save(par.fname, 'data')
-    end 
+    end
     %% +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     % calculate gradient
     if (nargout > 1)
@@ -152,7 +211,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
             for ji = 1 : npx+nsx
                 fx(ji) = fx(ji) + es.'*Ws*sx(isil, ji) ;
             end
-        end 
+        end
         % ----------------------------------
         % ----------------------------------
         if (par.Cmodel == on & par.Simodel == off)
@@ -167,7 +226,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
                          elk.'*Wlk*lkx(ialk, ji) + ...
                          fx(ji);
             end
-        end 
+        end
         % ----------------------------------
         % ----------------------------------
         if (par.Omodel == on & par.Simodel == off)
@@ -177,7 +236,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
             for ji = 1 : npx+ncx+nox
                 fx(ji) = fx(ji) + eo.'*Wo*ox(io2, ji) ;
             end
-        end 
+        end
         % ----------------------------------
         % ----------------------------------
         if (par.Cmodel == on & par.Simodel == on & par.Omodel == off)
@@ -199,13 +258,13 @@ function [f, fx, fxx, data] = neglogpost(x, par)
                 fx(ji) = eic.'*Wic*icx(idic, ji) + ...
                          eoc.'*Woc*ocx(idoc, ji) + ...
                          elk.'*Wlk*lkx(ialk, ji) + ...
-                         fx(ji); 
+                         fx(ji);
             end
             % --------------------------
             for ji = npx+ncx+1 : npx+ncx+nsx
                 fx(ji) = fx(ji) + es.'*Ws*sx(isil, ji) ;
             end
-        end 
+        end
         % ----------------------------------
         % ----------------------------------
         if (par.Cmodel == on & par.Simodel == on & par.Omodel == on)
@@ -240,9 +299,9 @@ function [f, fx, fxx, data] = neglogpost(x, par)
             for ji = npx+ncx+nox+1 : npx+ncx+nox+nsx
                 fx(ji) = fx(ji) + es.'*Ws*sx(isil, ji) ;
             end
-        end 
+        end
         % ----------------------------------
-    end 
+    end
     %
     if (nargout>2)
         fxx = sparse(npx, npx)  ;
@@ -258,15 +317,15 @@ function [f, fx, fxx, data] = neglogpost(x, par)
                     opx(idop,ju).'*Wop*opx(idop,jo) + eop.'*Wop*opxx(idop,kk);
                 % Simodel
                 if par.Simodel == on
-                    sxx = Sixx(1:nwet,:);            
+                    sxx = Sixx(1:nwet,:);
                     fxx(ju,jo) = fxx(ju, jo) + ...
                         sx(isil,ju).'*Ws*sx(isil,jo) + es.'*Ws*sxx(isil,kk);
-                end 
+                end
                 % Cmodel
                 if par.Cmodel == on
                     icxx = Cxx(0*nwet+1 : 1*nwet, :) ;
                     ocxx = Cxx(2*nwet+1 : 3*nwet, :) ;
-                    lkxx = Cxx(4*nwet+1 : 5*nwet, :) ; 
+                    lkxx = Cxx(4*nwet+1 : 5*nwet, :) ;
                     fxx(ju,jo) = fxx(ju, jo) + ...
                         icx(idic,ju).'*Wic*icx(idic,jo) + eic.'*Wic*icxx(idic,kk) + ...
                         ocx(idoc,ju).'*Woc*ocx(idoc,jo) + eoc.'*Woc*ocxx(idoc,kk) + ...
@@ -274,13 +333,13 @@ function [f, fx, fxx, data] = neglogpost(x, par)
                 end
                 % Omodel
                 if par.Omodel == on
-                    oxx = Oxx(1:nwet,:);            
+                    oxx = Oxx(1:nwet,:);
                     fxx(ju,jo) = fxx(ju, jo) + ...
                         ox(io2,ju).'*Wo*ox(io2,jo) + eo.'*Wo*oxx(io2,kk);
-                end 
+                end
                 % make Hessian symetric;
-                fxx(jo, ju) = fxx(ju, jo);  
-            end 
+                fxx(jo, ju) = fxx(ju, jo);
+            end
         end
         kpp = kk;
         % ----------------------------------------------------------------
@@ -301,7 +360,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
                         lkx(ialk,ju).'*Wlk*lkx(ialk,jo) + elk.'*Wlk*lkxx(ialk,kk) ;
 
                     fxx(jo,ju) = fxx(ju, jo);
-                end 
+                end
             end
             % -------------------------------
             % Only C parameters
@@ -314,7 +373,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
                         lkx(ialk,ju).'*Wlk*lkx(ialk,jo) + elk.'*Wlk*lkxx(ialk,kk) ;
 
                     fxx(jo, ju) = fxx(ju, jo);
-                end 
+                end
             end
         end
         % ----------------------------------------------------------------
@@ -337,7 +396,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
                         ox(io2,ju).'*Wo*ox(io2,jo) + eo.'*Wo*oxx(io2,kk);
 
                     fxx(jo, ju) = fxx(ju, jo);
-                end 
+                end
             end
             % -------------------------------
             % C model parameters
@@ -350,9 +409,9 @@ function [f, fx, fxx, data] = neglogpost(x, par)
                         ocx(idoc,ju).'*Woc*ocx(idoc,jo) + eoc.'*Woc*ocxx(idoc,kk) + ...
                         lkx(ialk,ju).'*Wlk*lkx(ialk,jo) + elk.'*Wlk*lkxx(ialk,kk) + ...
                         ox(io2,ju).'*Wo*ox(io2,jo) + eo.'*Wo*oxx(io2,kk);
-                    
+
                     fxx(jo, ju) = fxx(ju, jo);
-                end 
+                end
             end
             % -------------------------------
             % P and O model parameters
@@ -361,9 +420,9 @@ function [f, fx, fxx, data] = neglogpost(x, par)
                     kk = kk + 1;
                     fxx(ju, jo) = fxx(ju, jo) + ...
                         ox(io2,ju).'*Wo*ox(io2,jo) + eo.'*Wo*oxx(io2,kk);
-                    
+
                     fxx(jo, ju) = fxx(ju, jo);
-                end 
+                end
             end
             % -------------------------------
             % C and O model parameters
@@ -372,9 +431,9 @@ function [f, fx, fxx, data] = neglogpost(x, par)
                     kk = kk + 1;
                     fxx(ju, jo) = fxx(ju, jo) + ...
                         ox(io2,ju).'*Wo*ox(io2,jo) + eo.'*Wo*oxx(io2,kk);
-                    
+
                     fxx(jo, ju) = fxx(ju, jo);
-                end 
+                end
             end
             % -------------------------------
             % O model parameters
@@ -383,9 +442,9 @@ function [f, fx, fxx, data] = neglogpost(x, par)
                     kk = kk + 1;
                     fxx(ju, jo) = fxx(ju, jo) + ...
                         ox(io2, ju).'*Wo*ox(io2, jo) + eo.'*Wo*oxx(io2, kk);
-                    
+
                     fxx(jo, ju) = fxx(ju, jo);
-                end 
+                end
             end
         end
         % ----------------------------------------------------------------
@@ -402,9 +461,9 @@ function [f, fx, fxx, data] = neglogpost(x, par)
                     kk = kk + 1;
                     fxx(ju, jo) = fxx(ju, jo) + ...
                         sx(isil,ju).'*Ws*sx(isil,jo) + es.'*Ws*sxx(isil,kk);
-                    
+
                     fxx(jo, ju) = fxx(ju, jo);
-                end 
+                end
             end
             % -----------------------------
             % Only Si parameters
@@ -413,10 +472,10 @@ function [f, fx, fxx, data] = neglogpost(x, par)
                     kk = kk + 1;
                     fxx(ju, jo) = fxx(ju, jo) + ...
                         sx(isil,ju).'*Ws*sx(isil,jo) + es.'*Ws*sxx(isil,kk);
-                    
+
                     fxx(jo, ju) = fxx(ju, jo);
-                end 
-            end  
+                end
+            end
         end
         % ----------------------------------------------------------------
         % Cmodel on; O model off; and Simodel on;
@@ -436,7 +495,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
                         lkx(ialk,ju).'*Wlk*lkx(ialk,jo) + elk.'*Wlk*lkxx(ialk,kk) ;
 
                     fxx(jo, ju) = fxx(ju, jo);
-                end 
+                end
             end
             % -------------------------------
             % C model parameters
@@ -447,21 +506,21 @@ function [f, fx, fxx, data] = neglogpost(x, par)
                         icx(idic,ju).'*Wic*icx(idic,jo) + eic.'*Wic*icxx(idic,kk) + ...
                         ocx(idoc,ju).'*Woc*ocx(idoc,jo) + eoc.'*Woc*ocxx(idoc,kk) + ...
                         lkx(ialk,ju).'*Wlk*lkx(ialk,jo) + elk.'*Wlk*lkxx(ialk,kk);
-                    
+
                     fxx(jo, ju) = fxx(ju, jo);
-                end 
+                end
             end
             % -------------------------------
             % P model parameters and Si parameters
-            kk = kpp; % starting fro P-P parameters         
+            kk = kpp; % starting fro P-P parameters
             for ju = 1:npx
                 for jo = (npx+ncx+1):(npx+ncx+nsx)
-                    kk = kk + 1; 
+                    kk = kk + 1;
                     fxx(ju, jo) = fxx(ju, jo) + ...
                         sx(isil,ju).'*Ws*sx(isil,jo) + es.'*Ws*sxx(isil,kk);
-                    
+
                     fxx(jo, ju) = fxx(ju, jo);
-                end 
+                end
             end
             % -----------------------------
             % Only Si parameters
@@ -470,10 +529,10 @@ function [f, fx, fxx, data] = neglogpost(x, par)
                     kk = kk + 1;
                     fxx(ju, jo) = fxx(ju, jo) + ...
                         sx(isil,ju).'*Ws*sx(isil,jo) + es.'*Ws*sxx(isil,kk);
-                    
+
                     fxx(jo, ju) = fxx(ju, jo);
-                end 
-            end  
+                end
+            end
         end
         % ----------------------------------------------------------------
         % Cmodel on; O model on; and Simodel on;
@@ -490,12 +549,12 @@ function [f, fx, fxx, data] = neglogpost(x, par)
                     fxx(ju, jo) = ...
                         fxx(ju, jo) + ...
                         icx(idic,ju).'*Wic*icx(idic,jo) + eic.'*Wic*icxx(idic,kk) + ...
-                        ocx(idoc,ju).'*Woc*ocx(idoc,jo) + eoc.'*Woc*ocxx(idoc,kk) + ... 
+                        ocx(idoc,ju).'*Woc*ocx(idoc,jo) + eoc.'*Woc*ocxx(idoc,kk) + ...
                         lkx(ialk,ju).'*Wlk*lkx(ialk,jo) + elk.'*Wlk*lkxx(ialk,kk) + ...
                         ox(io2,ju).'*Wo*ox(io2,jo) + eo.'*Wo*oxx(io2,kk);
-                    
+
                     fxx(jo, ju) = fxx(ju, jo);
-                end 
+                end
             end
             % -------------------------------
             % C model parameters
@@ -505,12 +564,12 @@ function [f, fx, fxx, data] = neglogpost(x, par)
                     fxx(ju, jo) = ...
                         fxx(ju, jo) + ...
                         icx(idic,ju).'*Wic*icx(idic,jo) + eic.'*Wic*icxx(idic,kk) + ...
-                        ocx(idoc,ju).'*Woc*ocx(idoc,jo) + eoc.'*Woc*ocxx(idoc,kk) + ... 
+                        ocx(idoc,ju).'*Woc*ocx(idoc,jo) + eoc.'*Woc*ocxx(idoc,kk) + ...
                         lkx(ialk,ju).'*Wlk*lkx(ialk,jo) + elk.'*Wlk*lkxx(ialk,kk) + ...
                         ox(io2,ju).'*Wo*ox(io2,jo) + eo.'*Wo*oxx(io2,kk);
-                    
+
                     fxx(jo, ju) = fxx(ju, jo);
-                end 
+                end
             end
             % -------------------------------
             % P and O model parameters
@@ -519,9 +578,9 @@ function [f, fx, fxx, data] = neglogpost(x, par)
                     kk = kk + 1;
                     fxx(ju, jo) = fxx(ju, jo) + ...
                         ox(io2,ju).'*Wo*ox(io2,jo) + eo.'*Wo*oxx(io2,kk);
-                    
+
                     fxx(jo, ju) = fxx(ju, jo);
-                end 
+                end
             end
             % -------------------------------
             % C and O model parameters
@@ -530,9 +589,9 @@ function [f, fx, fxx, data] = neglogpost(x, par)
                     kk = kk + 1;
                     fxx(ju, jo) = fxx(ju, jo) + ...
                         ox(io2,ju).'*Wo*ox(io2,jo) + eo.'*Wo*oxx(io2,kk);
-                    
+
                     fxx(jo, ju) = fxx(ju, jo);
-                end 
+                end
             end
             % -------------------------------
             % O model parameters
@@ -541,21 +600,21 @@ function [f, fx, fxx, data] = neglogpost(x, par)
                     kk = kk + 1;
                     fxx(ju, jo) = fxx(ju, jo) + ...
                         ox(io2, ju).'*Wo*ox(io2, jo) + eo.'*Wo*oxx(io2, kk);
-                    
+
                     fxx(jo, ju) = fxx(ju, jo);
-                end 
+                end
             end
             % --------------------------
             % P model parameters and Si parameters
-            kk = kpp; % starting fro P-P parameters 
+            kk = kpp; % starting fro P-P parameters
             for ju = 1:npx
                 for jo = (npx+ncx+nox+1):(npx+ncx+nox+nsx)
-                    kk = kk + 1; 
+                    kk = kk + 1;
                     fxx(ju, jo) = fxx(ju, jo) + ...
                         sx(isil,ju).'*Ws*sx(isil,jo) + es.'*Ws*sxx(isil,kk);
-                    
+
                     fxx(jo, ju) = fxx(ju, jo);
-                end 
+                end
             end
             % -----------------------------
             % Only Si parameters
@@ -564,14 +623,13 @@ function [f, fx, fxx, data] = neglogpost(x, par)
                     kk = kk + 1;
                     fxx(ju, jo) = fxx(ju, jo) + ...
                         sx(isil,ju).'*Ws*sx(isil,jo) + es.'*Ws*sxx(isil,kk);
-                    
+
                     fxx(jo, ju) = fxx(ju, jo);
-                end 
-            end  
+                end
+            end
         end
     end
 end
 
 
 end
-

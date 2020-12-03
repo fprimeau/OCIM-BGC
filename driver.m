@@ -57,10 +57,10 @@ par.opt_bt    = on  ;
 par.opt_aa    = on  ;
 par.opt_bb    = on  ;
 %Trait Model parameters
-par.BIO.opt_Q10Photo = on ;
-par.BIO.opt_fRibE 	 = off;
-par.BIO.opt_fStorage = off;
-par.BIO.opt_kST0 	 = off;
+par.opt_Q10Photo = on ;
+par.opt_fRibE 	 = off;
+par.opt_fStorage = off;
+par.opt_kST0 	 = off;
 % par.BIO.opt_alphaS = off;
 % par.BIO.opt_gammaDNA = off;
 % par.BIO.opt_gammaLipid = off;

@@ -1,7 +1,8 @@
-function par = PackPar(par) 
-    on = true ; off = false ; 
+function par = PackPar(par)
+    on = true ; off = false ;
     npx = 0; ncx = 0;
     nox = 0; nsx = 0;
+	nbx = 0; %nbx for cell model (BIO)
     p0 = [];
     % sigma
     if (par.opt_sigma == on)
@@ -11,16 +12,16 @@ function par = PackPar(par)
         strt   = length(p0) + 1 ;
         p0     = [p0; lsigma]   ;
         par.pindx.lsigma = strt : length(p0);
-    end 
+    end
     % kP_T
     if (par.opt_kP_T == on)
         npx  = npx + 1        ;
-        kP_T = par.kP_T       ; 
+        kP_T = par.kP_T       ;
         strt = length(p0) + 1 ;
         p0   = [p0; kP_T]     ;
         par.pindx.kP_T = strt : length(p0);
     end
-    % kdP 
+    % kdP
     if (par.opt_kdP == on)
         npx  = npx + 1        ;
         kdP  = par.kdP        ;
@@ -36,7 +37,7 @@ function par = PackPar(par)
         strt = length(p0) + 1 ;
         p0   = [p0; bP_T]     ;
         par.pindx.bP_T = strt : length(p0);
-    end 
+    end
     % bP
     if (par.opt_bP == on)
         npx  = npx + 1        ;
@@ -45,8 +46,8 @@ function par = PackPar(par)
         strt = length(p0) + 1 ;
         p0   = [p0; lbP]      ;
         par.pindx.lbP = strt  : length(p0);
-    end 
-    % alpha 
+    end
+    % alpha
     if (par.opt_alpha == on)
         npx    = npx + 1        ;
         alpha  = par.alpha      ;
@@ -54,7 +55,7 @@ function par = PackPar(par)
         strt   = length(p0) + 1 ;
         p0     = [p0; lalpha]   ;
         par.pindx.lalpha = strt : length(p0);
-    end 
+    end
     % beta
     if (par.opt_beta == on)
         npx   = npx + 1        ;
@@ -73,7 +74,7 @@ function par = PackPar(par)
             strt = length(p0) + 1 ;
             p0   = [p0; bC_T]     ;
             par.pindx.bC_T = strt : length(p0);
-        end 
+        end
         % bC
         if (par.opt_bC == on)
             ncx  = ncx + 1        ;
@@ -82,7 +83,7 @@ function par = PackPar(par)
             strt = length(p0) + 1 ;
             p0   = [p0; lbC]      ;
             par.pindx.lbC = strt  : length(p0);
-        end 
+        end
         % d
         if (par.opt_d == on)
             ncx  = ncx + 1        ;
@@ -91,11 +92,11 @@ function par = PackPar(par)
             strt = length(p0) + 1 ;
             p0   = [p0; ld]       ;
             par.pindx.ld = strt   : length(p0);
-        end 
+        end
         % kC_T
         if (par.opt_kC_T == on)
             ncx  = ncx + 1        ;
-            kC_T = par.kC_T       ;  
+            kC_T = par.kC_T       ;
             strt = length(p0) + 1 ;
             p0   = [p0; kC_T]     ;
             par.pindx.kC_T = strt : length(p0);
@@ -151,11 +152,11 @@ function par = PackPar(par)
         % O2C_T
         if (par.opt_O2C_T == on)
             nox   = nox + 1        ;
-            O2C_T = par.O2C_T      ; 
+            O2C_T = par.O2C_T      ;
             strt  = length(p0)+1   ;
             p0    = [p0; O2C_T]    ;
             par.pindx.O2C_T = strt : length(p0);
-        end 
+        end
         % rO2C
         if (par.opt_rO2C == on)
             nox   = nox + 1        ;
@@ -164,15 +165,15 @@ function par = PackPar(par)
             strt  = length(p0) + 1 ;
             p0    = [p0; lrO2C]    ;
             par.pindx.lrO2C = strt : length(p0);
-        end 
+        end
         % O2P_T
         if (par.opt_O2P_T == on)
             nox   = nox + 1        ;
-            O2P_T = par.O2P_T      ; 
+            O2P_T = par.O2P_T      ;
             strt  = length(p0) + 1 ;
             p0    = [p0; O2P_T]    ;
             par.pindx.O2P_T = strt : length(p0);
-        end 
+        end
         % rO2P
         if (par.opt_rO2P == on)
             nox   = nox + 1        ;
@@ -182,7 +183,7 @@ function par = PackPar(par)
             p0    = [p0; lrO2P]    ;
             par.pindx.lrO2P = strt : length(p0);
         end
-    end 
+    end
     if par.Simodel == on
         % dsi
         if (par.opt_dsi == on)
@@ -193,7 +194,7 @@ function par = PackPar(par)
             p0   = [p0; ldsi]     ;
             par.pindx.ldsi = strt : length(p0);
         end
-        % at 
+        % at
         if (par.opt_at == on)
             nsx  = nsx + 1        ;
             at   = par.at         ;
@@ -229,8 +230,40 @@ function par = PackPar(par)
             par.pindx.lbb = strt  : length(p0);
         end
     end
+	if par.Cellmodel == on
+		% Q10Photo
+		if (par.opt_Q10Photo == on)
+			nbx  = nbx + 1        		;
+			Q10Photo = par.BIO.Q10Photo ;
+			lQ10Photo = log(par.BIO.Q10Photo);
+			strt = length(p0) + 1		;
+			p0 = [p0; lQ10Photo]		;
+			par.pindx.lQ10Photo = strt : length(p0);
+		end
+		if (par.opt_fRibE == on)
+			nbx  = nbx + 1        		;
+			lfRibE = log(par.BIO.fRibE) ;
+			strt = length(p0) + 1		;
+			p0 = [p0; lfRibE]			;
+			par.pindx.lfRibE = strt : length(p0);
+		end
+		if (par.opt_fStorage == on)
+			nbx  = nbx + 1        		;
+			lfStorage =log(par.BIO.fStorage);
+			strt = length(p0) + 1		;
+			p0 = [p0; lfStorage]		;
+			par.pindx.lfStorage = strt : length(p0);
+		end
+		if (par.BIO.opt_kST0 == on);
+			nbx  = nbx + 1        		;
+			lkST0 = log(par.BIO.kST0)	;
+			strt = length(p0) + 1		;
+			p0 = [p0; lkST0]			;
+			par.pindx.lkST0 = strt : length(p0);
+		end
+	end
     par.p0  = p0  ;
     par.npx = npx ; par.ncx = ncx ;
     par.nox = nox ; par.nsx = nsx ;
+	par.nbx = nbx ;
 end
-

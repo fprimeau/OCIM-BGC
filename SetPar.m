@@ -1,7 +1,7 @@
 function par = SetPar(par)
     on   = true    ;  off  = false   ;
     spd  = 24*60^2 ;  spa  = 365*spd ;
-    % fixed parameters 
+    % fixed parameters
     par.kappa_g  = 1/(1e6*spa)  ; % geological restoring time [1/s];
     par.taup     = 720*60^2     ; % (s) pic dissolution time-scale
     % par.tau_TA   = 1./par.taup  ;
@@ -9,55 +9,55 @@ function par = SetPar(par)
     % PIC dissolution constant 0.38 day^-1 based on first-order
     % reaction kinetics according to Sarmiento
     % and Gruber book (p.271);
-    par.tauPIC = 30*spd ; 
+    par.tauPIC = 30*spd ;
     par.kPIC   = 1/par.tauPIC ;
     % load optimal parameters if they exist
-    if isfile(par.fxhat) & par.LoadOpt == on 
+    if isfile(par.fxhat) & par.LoadOpt == on
         load(par.fxhat)
     end
-    
+    % P model parameters
     if exist('xhat') & isfield(xhat,'sigma')
         par.sigma = xhat.sigma ;
-    else 
+    else
         par.sigma = 1.0e-01 ;
     end
     if exist('xhat') & isfield(xhat,'kP_T')
         par.kP_T = xhat.kP_T ;
-    else 
+    else
         par.kP_T = 0.00 ;
-    end 
+    end
     if exist('xhat') & isfield(xhat,'kdP')
         par.kdP = xhat.kdP ;
-    else 
-        par.kdP = 2.42e-08 ; 
-    end 
+    else
+        par.kdP = 2.42e-08 ;
+    end
     if exist('xhat') & isfield(xhat,'bP_T')
         par.bP_T = xhat.bP_T ;
-    else 
+    else
         par.bP_T = 0.00e+00 ;
-    end 
+    end
     if exist('xhat') & isfield(xhat,'bP')
         par.bP  = xhat.bP ;
-    else 
+    else
         par.bP  = 9.60e-01 ;
-    end 
+    end
     if exist('xhat') & isfield(xhat,'alpha')
         par.alpha = xhat.alpha ;
-    else 
+    else
         par.alpha = 3.37e-08   ;
-    end 
+    end
     if exist('xhat') & isfield(xhat,'beta')
         par.beta = xhat.beta ;
     else
         par.beta = 1.65e-02  ;
-    end 
+    end
 
-    % C model parameters                                      
+    % C model parameters
     if exist('xhat') & isfield(xhat,'bC_T')
         par.bC_T = xhat.bC_T ;
     else
         par.bC_T =  0.00e+00 ;
-    end 
+    end
     if exist('xhat') & isfield(xhat,'bC')
         par.bC = xhat.bC ;
     else
@@ -67,15 +67,15 @@ function par = SetPar(par)
         par.d = xhat.d   ;
     else
         par.d = 4.54e+03 ;
-    end 
+    end
     if exist('xhat') & isfield(xhat,'kC_T')
         par.kC_T = xhat.kC_T ;
-    else 
+    else
         par.kC_T = 0.00e+00 ;
-    end 
+    end
     if exist('xhat') & isfield(xhat,'kdC')
         par.kdC = xhat.kdC ;
-    else 
+    else
         par.kdC = 7.35e-08 ;
     end
     if exist('xhat') & isfield(xhat,'R_Si')
@@ -92,60 +92,112 @@ function par = SetPar(par)
         par.cc = xhat.cc  ;
     else
         par.cc = 7.51e-4 ;
-    end 
+    end
     if exist('xhat') & isfield(xhat,'dd')
         par.dd = xhat.dd  ;
-    else 
+    else
         par.dd = 5.56e-03 ;
-    end 
+    end
 
     % O model parameters
     if exist('xhat') & isfield(xhat,'O2C_T')
         par.O2C_T = xhat.O2C_T ;
-    else 
+    else
         par.O2C_T = 0.00 ;
-    end 
+    end
     if exist('xhat') & isfield(xhat,'rO2C')
         par.rO2C = xhat.rO2C ;
-    else 
+    else
         par.rO2C = 1.10e+00 ;
-    end 
+    end
     if exist('xhat') & isfield(xhat,'O2P_T')
         par.O2P_T = xhat.O2P_T ;
-    else 
+    else
         par.O2P_T = 0.00 ;
-    end 
+    end
     if exist('xhat') & isfield(xhat,'rO2P')
         par.rO2P = xhat.rO2P ;
-    else 
+    else
         par.rO2P = 1.70e+02 ;
-    end 
+    end
     %
     % Si model parameters
     if exist('xhat') & isfield(xhat,'dsi')
         par.dsi = xhat.dsi ;
     else
         par.dsi = 3300     ;
-    end 
+    end
     if exist('xhat') & isfield(xhat,'at')
         par.at = xhat.at   ;
     else
         par.at = 1.32e16/spd;
-    end 
+    end
     if exist('xhat') & isfield(xhat,'bt')
         par.bt = xhat.bt   ;
-    else 
+    else
         par.bt = 11481     ;
-    end 
+    end
     if exist('xhat') & isfield(xhat,'aa')
         par.aa = xhat.aa   ;
     else
         par.aa = 1         ;
-    end 
+    end
     if exist('xhat') & isfield(xhat,'bb')
         par.bb = xhat.bb   ;
-    else 
+    else
         par.bb = 0.968     ;
-    end 
+    end
+	%
+	% Trait model parameters
+	if exist('xhat') & isfield(xhat.BIO,'Q10Photo') % Q10 of photosynthesis
+		par.BIO.Q10Photo = xhat.BIO.Q10Photo;
+	else
+		par.BIO.Q10Photo = 1.983;		% Q10 of photosynthesis
+	end
+	if exist('xhat') & isfield(xhat.BIO,'fRibE')
+		par.BIO.fRibE = xhat.BIO.fRibE;
+	else
+		par.BIO.fRibE = .618;           % ribosome fraction of biosynthetic apparatus
+	end
+	if exist('xhat') & isfield(xhat.BIO,'fStorage')
+		par.BIO.fStorage = xhat.BIO.fStorage;
+	else
+		par.BIO.fStorage = exp(-.358);  % strength of luxury P storage [L/molC]
+	end
+	if exist('xhat') & isfield(xhat.BIO,'kST0')
+		par.BIO.kST0 = xhat.BIO.kST0;
+	else
+		par.BIO.kST0 =0.185;            % specific synthesis rate of synthetic apparatus at 25degC [1/hr]
+	end
+% cell model parameters that don't change
+	if exist('xhat.BIO')
+		par.BIO.alphaS = .225;          % radius at which cell is all periplasm and membrane [um]
+		par.BIO.gammaDNA = .016;        % DNA fraction of cell
+		par.BIO.gammaLipid = .173       % structural Lipid (non-membrane or periplasm) fraction of cell
+		par.BIO.lPCutoff = -7.252;		% log of max [P] for which Plipids will be substituted with Slipids
+		par.BIO.r0Cutoff = 2.25;		% % NEED TO REDEFINE: r0Cutoff =  rFullA; ASK GEORGE
+		par.BIO.DNT0 = 1e-12*3.6e2*3600;    % Diffusivity of Nitrate at 25degC [m^2/hr]
+		par.BIO.DPT0 = 1e-12*3.6e2*3600;    % Diffusivity of Phosphate at 25degC [m^2/hr]
+		par.BIO.Q10Diffusivity = 1.5;
+		par.BIO.AMin =.05;              % minimal fraction of cell dry mass that is nutrient uptake proteins
+		par.BIO.CStor = 1.00;
+		par.BIO.PhiS = .67;             % specific carbon cost of synthesis [gC/gC]
+		%%% BIO parameters below should remain fixed
+		par.BIO.pDry = .47;             % Dry mass fraction of the cell
+		par.BIO.rho = 1e-12;            % cell density [g/um^3]
+		par.BIO.fProtM = 0.25;          % protein fraction of cell membranes
+		par.BIO.fProtL = .7;            % protein fraction of light harvesting apparatus
+		par.BIO.PDNA = .095;            % phosphorus mass fraction in DNA [gP/g]
+		par.BIO.PRib = 0.047;           % phosphorus mass fraction in ribosomes [gP/g]
+		par.BIO.PPhospholipid = 0.042;  % phosphorus mass fraction in phospholipids [gP/g]
+		par.BIO.NProt = .16;            % nitrogen mass fraction in proteins [gN/g]
+		par.BIO.NDNA = .16;             % nitrogen mass fraction in DNA [gN/g]
+		par.BIO.NRib = .16;             % nitrogen mass fraction in Ribosomes [gN/g]
+		par.BIO.CProt = .53;            % carbon mass fraction in proteins [gC/g]
+		par.BIO.CDNA = .36;             % carbon mass fraction in DNA [gC/g]
+		par.BIO.CPhospholipid = .65;    % carbon mass fraction in phospholipids [gC/g] - why seperate form lipids?
+		par.BIO.CLipid = .76;			% carbon mass fraction in other lipids (that are not phospholipids) [gC/g]
+		par.BIO.CRib = .419;     		% carbon mass fraction in ribosomes [gC/g] (technically, only correct for eukaryotes)
+		par.BIO.alphaPLip = 0.12;
+	end
 end
-
