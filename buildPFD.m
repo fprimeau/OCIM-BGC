@@ -22,7 +22,7 @@ function [PFdiv,Gout,Hout] = buildPFD(par,Ptype)
     M3d = par.M3d;
     grd = par.grd;
     [DIV,IU,M,MSK,iwet] = mkOperators(M3d,grd);
-    
+
     if ( strcmp(Ptype,'POP') | strcmp(Ptype,'POC') )
         % Define a temperature dependent powerlaw exponent
         T = par.aveT;
@@ -51,7 +51,7 @@ function [PFdiv,Gout,Hout] = buildPFD(par,Ptype)
     elseif ( strcmp(Ptype,'PIC') )
         r = 1./par.tauPIC ;
         % e-folding length scale for PIC flux attenuation
-        d = par.d         ; 
+        d = par.d         ;
         w = -r.*d.*MSK    ;
         FLUX = d0(w(iwet))*IU ;
         Gout.w = w ;
@@ -59,11 +59,11 @@ function [PFdiv,Gout,Hout] = buildPFD(par,Ptype)
         % Define a temperature dependent dissolution rate
         % Sarmiento and Gruber text book
         T  = par.Temp + 273.15;
-        at = par.at  ; 
+        at = par.at  ;
         bt = par.bt  ;
         d  = par.dsi ;
         r  = at*exp(-bt./T);
-        w  = MSK; 
+        w  = MSK;
         w(:,:,2:end-1)  = -r(:,:,2:end)*d;
         FLUX = d0(w(iwet))*IU;
     end
@@ -80,7 +80,7 @@ function [PFdiv,Gout,Hout] = buildPFD(par,Ptype)
             w_r  = -a_r.*M   ; % derivative of w w.r.t. r
             w_bm = w_b.*b_bm ; % derivative of w w.r.t. bm
             w_bb = w_b.*b_bb ; % derivative of w w.r.t. bb
-            
+
             FLUX_r  = d0(w_r(iwet))*IU  ;
             FLUX_b  = d0(w_b(iwet))*IU  ;
             FLUX_bm = d0(w_bm(iwet))*IU ;
@@ -90,7 +90,7 @@ function [PFdiv,Gout,Hout] = buildPFD(par,Ptype)
             Gout.PFD_r  = DIV*FLUX_r  ;
             Gout.PFD_bm = DIV*FLUX_bm ;
             Gout.PFD_bb = DIV*FLUX_bb ;
-            
+
         elseif( strcmp(Ptype,'PIC') )
             w_d    = -r.*MSK ;
             w_k    = -d.*MSK ;
@@ -103,23 +103,23 @@ function [PFdiv,Gout,Hout] = buildPFD(par,Ptype)
             w_d  = MSK ;
             w_at = MSK ;
             w_bt = MSK ;
-            
+
             w_at_tmp = -d*exp(-bt./T);
             w_bt_tmp = (d*r)./T;
             w_d(:,:,2:end-1)  = -r(:,:,2:end);
             w_at(:,:,2:end-1) = w_at_tmp(:,:,2:end);
             w_bt(:,:,2:end-1) = w_bt_tmp(:,:,2:end);
-            
+
             FLUX_d  = d0(w_d(iwet))*IU  ;
             FLUX_at = d0(w_at(iwet))*IU ;
             FLUX_bt = d0(w_bt(iwet))*IU ;
-            
+
             Gout.PFD_d  = DIV*FLUX_d  ;
             Gout.PFD_at = DIV*FLUX_at ;
             Gout.PFD_bt = DIV*FLUX_bt ;
         end
     end
-    
+
     if (nargout > 2) % compute the hessian w.r.t. the parameters
         if ( strcmp(Ptype,'POP') | strcmp(Ptype,'POC') )
             a_b_b = 2*r./(b.^3);           % derivative of a_b w.r.t. b
@@ -147,7 +147,7 @@ function [PFdiv,Gout,Hout] = buildPFD(par,Ptype)
             Hout.PFD_bm_bm = DIV*FLUX_bm_bm;
             Hout.PFD_bb_bb = DIV*FLUX_bb_bb;
             Hout.PFD_bm_bb = DIV*FLUX_bm_bb;
-            
+
         elseif ( strcmp(Ptype,'PIC') )
             w_d_d = 0 ;
             w_k_k = 0 ;
@@ -167,13 +167,13 @@ function [PFdiv,Gout,Hout] = buildPFD(par,Ptype)
             w_bt_bt = MSK;
             w_at_bt = MSK;
             w_at_d  = MSK;
-            w_bt_d  = MSK; 
+            w_bt_d  = MSK;
             w_bt_bt(:,:,2:end-1) = -d.*r_bt_bt(:,:,2:end) ;
             w_at_bt(:,:,2:end-1) = -d.*r_at_bt(:,:,2:end) ;
             w_at_d_tmp = -exp(-bt./T) ;
             w_at_d(:,:,2:end-1)  = w_at_d_tmp(:,:,2:end) ;
             w_bt_d_tmp = r./T ;
-            w_bt_d(:,:,2:end-1)  = w_bt_d_tmp(:,:,2:end) ; 
+            w_bt_d(:,:,2:end-1)  = w_bt_d_tmp(:,:,2:end) ;
 
             FLUX_d_d = d0(w_d_d)*IU;
             FLUX_at_at = d0(w_at_at)*IU;
@@ -187,7 +187,7 @@ function [PFdiv,Gout,Hout] = buildPFD(par,Ptype)
             Hout.PFD_bt_bt = DIV*FLUX_bt_bt;
             Hout.PFD_at_bt = DIV*FLUX_at_bt;
             Hout.PFD_at_d  = DIV*FLUX_at_d;
-            Hout.PFD_bt_d  = DIV*FLUX_bt_d; 
+            Hout.PFD_bt_d  = DIV*FLUX_bt_d;
         end
     end
 
@@ -229,4 +229,3 @@ function [DIV,IU,M,MSK,iwet] = mkOperators(M3d,grd);
     MSK = M3D.*M3D(:,:,[nz+1,1:nz]);
     M   = MSK.*ZW3d;
 end
-

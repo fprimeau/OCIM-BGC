@@ -8,7 +8,7 @@ function vout = Fsea2air(par, Gtype)
     isrf = find(tmp(iwet)) ;
     vSST = par.Temp(iwet(isrf)) ;
     vSSS = par.Salt(iwet(isrf)) ;
-    
+
     tmp = M3d*0           ;
     tmp(:,:,1) = par.kw   ;
     kw  = tmp(iwet(isrf)) ;
@@ -17,7 +17,7 @@ function vout = Fsea2air(par, Gtype)
     P   = tmp(iwet(isrf)) ;
 
     if strcmp(Gtype, 'CO2')
-        
+
         pco2atm   = par.pco2atm      ;  % uatm
         vDICs     = par.DIC(isrf)    ;
         vALKs     = par.ALK(isrf)    ;
@@ -33,7 +33,7 @@ function vout = Fsea2air(par, Gtype)
         tmp    = M3d*0         ;
         tmp(iwet(isrf)) = KCO2.*(co2sat - co2surf)*par.permil ;
         vout.JgDIC = tmp(iwet) ; % umole/kg/s to mmol/m^3/s
-        
+
         % Gradient
         [co2surf,k0,Gout] = eqco2(vDICs,vALKs,co2syspar) ;
         g_k0  = Gout.g_k0  ;
@@ -56,7 +56,7 @@ function vout = Fsea2air(par, Gtype)
         % [co2surf,k0,Gout] = eqco2(vDICs,vALKs,co2syspar) ;
         % tmp             = M3d*0         ;
         % tmp(iwet(isrf)) = -KCO2.*gg_co2*par.permil ;
-        % vout.KGG        = tmp(iwet)     ;    
+        % vout.KGG        = tmp(iwet)     ;
     end
     %
     if strcmp(Gtype, 'O2')
@@ -65,7 +65,7 @@ function vout = Fsea2air(par, Gtype)
         kw   = kw.*sqrt(660./sco2)      ;
         KO2(iwet(isrf)) = kw/grd.dzt(1) ;
         vout.KO2        = d0(KO2(iwet)) ;
-        
+
         o2sat             = 0*M3d       ;
         o2sat(iwet(isrf)) = 1000*o2sato(vSST,vSSS).*P ; % mmol/m^3
         vout.o2sat        = o2sat(iwet) ;
@@ -126,28 +126,28 @@ function [co2,k0,Gout] = eqco2(dic,alk,arg1)
     pres = arg1.pres  ;
     si   = arg1.si    ;
     po4  = arg1.po4   ;
-    
+
     % co2 system
     a = CO2SYS(abs(alk),abs(dic),1,2,salt,temp,temp,pres,pres,si,po4,1,4,1) ;
     % concentration of co2 in umol/kg
     co2   = a(:,8)    ;
-    % co2 solubility k0 
+    % co2 solubility k0
     pco2  = a(:,4)    ; % uatm
     k0    = co2./pco2 ; % mol/kg/atm
-    
-    % gradient d_dic 
+
+    % gradient d_dic
     ax = CO2SYS(abs(real(alk)),abs(real(dic))+sqrt(-1)*eps^3,1,2,salt, ...
                 temp,temp,pres,pres,si,po4,1,4,1) ;
     Gout.g_k0  = imag(ax(:,8)./ax(:,4))/eps^3 ;
     Gout.g_co2 = imag(ax(:,8))/eps^3 ;
-    clear a ax 
-    
+    clear a ax
+
     % d_alk
     ax = CO2SYS(abs(real(alk))+sqrt(-1)*eps^3,abs(real(dic)),1,2,salt, ...
                 temp,temp,pres,pres,si,po4,1,4,1) ;
     Gout.g_k0_alk  = imag(ax(:,8)./ax(:,4))/eps^3 ;
     Gout.g_co2_alk = imag(ax(:,8))/eps^3 ;
-    
+
     if (nargout>3)
         a = CO2SYS(alk,abs(real(dic))+sqrt(-1)*eps^3,1,2,salt,temp, ...
                    temp,pres,pres,si,po4,1,4,1);

@@ -8,11 +8,11 @@ function [kw,p] = kw(M3d,grd);
     msk = msk';
     msk = [msk(:,181:end),msk(:,1:180)];
     [nlat,nlon] = size(msk);
-    
+
     xkw = zeros(nlat,nlon,12);
     fice = zeros(nlat,nlon,12);
     p = zeros(nlat,nlon,12);
-    
+
     tmp1 = ncread(fname,'FICE');
     tmp2 = ncread(fname,'XKW');
     tmp3 = ncread(fname,'P');
@@ -27,11 +27,11 @@ function [kw,p] = kw(M3d,grd);
     xkw = [xkw(:,181:end),xkw(:,1:180)];
     p = mean(p,3);
     p = [p(:,181:end),p(:,1:180)];
-    
+
     kw = (1-fice).*xkw;
     ilnd = find(msk(:)==0);
     kw(ilnd) = NaN;
-    
+
     p = [p(:,end),p,p(:,1)];
     kw = [kw(:,end),kw,kw(:,1)];
     kw = inpaint_nans(kw);
@@ -41,4 +41,4 @@ function [kw,p] = kw(M3d,grd);
     msk = M3d(:,:,1);
     ilnd = find(msk(:)==0);
     kw(ilnd) = NaN;
-end 
+end

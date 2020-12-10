@@ -4,7 +4,7 @@ addpath('/DFS-L/DATA/primeau/weilewang/DATA/OCIM2')
 addpath('/DFS-L/DATA/primeau/weilewang/DATA/')
 
 load DICant.mat
-load transport_v4.mat M3d iocn grid 
+load transport_v4.mat M3d iocn grid
 load OCIM2_CTL_He.mat output
 
 grd90 = grid;

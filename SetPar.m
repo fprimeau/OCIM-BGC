@@ -148,29 +148,29 @@ function par = SetPar(par)
         par.bb = 0.968     ;
     end
 	%
-	% Trait model parameters
-	if exist('xhat') & isfield(xhat.BIO,'Q10Photo') % Q10 of photosynthesis
-		par.BIO.Q10Photo = xhat.BIO.Q10Photo;
+	% Cell model parameters
+	if exist('xhat') & isfield(xhat,'Q10Photo') % Q10 of photosynthesis
+		par.BIO.Q10Photo = xhat.Q10Photo;
 	else
 		par.BIO.Q10Photo = 1.983;		% Q10 of photosynthesis
 	end
-	if exist('xhat') & isfield(xhat.BIO,'fRibE')
-		par.BIO.fRibE = xhat.BIO.fRibE;
+	if exist('xhat') & isfield(xhat,'fRibE')
+		par.BIO.fRibE = xhat.fRibE;
 	else
 		par.BIO.fRibE = .618;           % ribosome fraction of biosynthetic apparatus
 	end
-	if exist('xhat') & isfield(xhat.BIO,'fStorage')
-		par.BIO.fStorage = xhat.BIO.fStorage;
+	if exist('xhat') & isfield(xhat,'fStorage')
+		par.BIO.fStorage = xhat.fStorage;
 	else
 		par.BIO.fStorage = exp(-.358);  % strength of luxury P storage [L/molC]
 	end
-	if exist('xhat') & isfield(xhat.BIO,'kST0')
-		par.BIO.kST0 = xhat.BIO.kST0;
+	if exist('xhat') & isfield(xhat,'kST0')
+		par.BIO.kST0 = xhat.kST0;
 	else
 		par.BIO.kST0 =0.185;            % specific synthesis rate of synthetic apparatus at 25degC [1/hr]
 	end
 % cell model parameters that don't change
-	if exist('xhat.BIO')
+	if (par.Cellmodel==on)
 		par.BIO.alphaS = .225;          % radius at which cell is all periplasm and membrane [um]
 		par.BIO.gammaDNA = .016;        % DNA fraction of cell
 		par.BIO.gammaLipid = .173       % structural Lipid (non-membrane or periplasm) fraction of cell

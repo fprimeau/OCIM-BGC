@@ -1,14 +1,14 @@
 function [DATA,HEADERS,NICEHEADERS]=CO2SYS(PAR1,PAR2,PAR1TYPE,PAR2TYPE,SAL,TEMPIN,TEMPOUT,PRESIN,PRESOUT,SI,PO4,pHSCALEIN,K1K2CONSTANTS,KSO4CONSTANTS)
-    
+
 %**************************************************************************
 % CO2SYS is a MATLAB-version of the original CO2SYS for DOS.
-% CO2SYS calculates and returns the state of the carbonate system of 
+% CO2SYS calculates and returns the state of the carbonate system of
 % oceanographic water samples, if supplied with enough input.
-% Also, it is useful for doing pH scale conversions. 
+% Also, it is useful for doing pH scale conversions.
 %
-% Please note that his software is intended to be exactly identical to the 
+% Please note that his software is intended to be exactly identical to the
 % DOS and Excel versions that have been released previously. Several coding
-% errors (typo's, etc.) were discovered in the initial versions of this 
+% errors (typo's, etc.) were discovered in the initial versions of this
 % matlab routine, which have all been corrected before version 1.00 was
 % released on CDIAC in June 2009. It is now considered to be fully conforming
 % to the version for Excel and DOS, meaning that results obtained should be
@@ -18,7 +18,7 @@ function [DATA,HEADERS,NICEHEADERS]=CO2SYS(PAR1,PAR2,PAR1TYPE,PAR2TYPE,SAL,TEMPI
 % Lewis, E., and D. W. R. Wallace. 1998. Program Developed for
 % CO2 System Calculations. ORNL/CDIAC-105. Carbon Dioxide Information
 % Analysis Center, Oak Ridge National Laboratory, U.S. Department of Energy,
-% Oak Ridge, Tennessee. 
+% Oak Ridge, Tennessee.
 % http://cdiac.ornl.gov/oceans/co2rprt.html
 %**************************************************************************
 %
@@ -39,9 +39,9 @@ function [DATA,HEADERS,NICEHEADERS]=CO2SYS(PAR1,PAR2,PAR1TYPE,PAR2TYPE,SAL,TEMPI
 %   PAR1TYPE       () : scalar or vector of size n (*)
 %   PAR2TYPE       () : scalar or vector of size n (*)
 %   SAL            () : scalar or vector of size n
-%   TEMPIN  (degr. C) : scalar or vector of size n 
-%   TEMPOUT (degr. C) : scalar or vector of size n 
-%   PRESIN     (dbar) : scalar or vector of size n 
+%   TEMPIN  (degr. C) : scalar or vector of size n
+%   TEMPOUT (degr. C) : scalar or vector of size n
+%   PRESIN     (dbar) : scalar or vector of size n
 %   PRESOUT    (dbar) : scalar or vector of size n
 %   SI    (umol/kgSW) : scalar or vector of size n
 %   PO4   (umol/kgSW) : scalar or vector of size n
@@ -49,22 +49,22 @@ function [DATA,HEADERS,NICEHEADERS]=CO2SYS(PAR1,PAR2,PAR1TYPE,PAR2TYPE,SAL,TEMPI
 %   K1K2CONSTANTS     : scalar or vector of size n (***)
 %   KSO4CONSTANTS     : scalar or vector of size n (****)
 %
-%  (*) Each element must be an integer, 
-%      indicating that PAR1 (or PAR2) is of type: 
+%  (*) Each element must be an integer,
+%      indicating that PAR1 (or PAR2) is of type:
 %  1 = Total Alkalinity
 %  2 = DIC
 %  3 = pH
 %  4 = pCO2
 %  5 = fCO2
-% 
-%  (**) Each element must be an integer, 
+%
+%  (**) Each element must be an integer,
 %       indicating that the pH-input (PAR1 or PAR2, if any) is at:
 %  1 = Total scale
 %  2 = Seawater scale
 %  3 = Free scale
 %  4 = NBS scale
-% 
-%  (***) Each element must be an integer, 
+%
+%  (***) Each element must be an integer,
 %        indicating the K1 K2 dissociation constants that are to be used:
 %  1 = Roy
 %  2 = Goyet & Poisson
@@ -75,10 +75,10 @@ function [DATA,HEADERS,NICEHEADERS]=CO2SYS(PAR1,PAR2,PAR1TYPE,PAR2TYPE,SAL,TEMPI
 %  7 = Peng, Pure Water
 %  8 = Millero, 1979 - DONT USE THIS - DOESN'T WORK
 %  9 = Millero, 2006
-% 10 = Lueker, 2000 
-%  
-% 
-%  (****) Each element must be an integer, 
+% 10 = Lueker, 2000
+%
+%
+%  (****) Each element must be an integer,
 %         indicating the KSO4 dissociation constants that are to be used:
 %  1 = Dickson's KSO4 (PREFERRED)
 %  2 = Khoo's KSO4
@@ -123,28 +123,28 @@ function [DATA,HEADERS,NICEHEADERS]=CO2SYS(PAR1,PAR2,PAR1TYPE,PAR2TYPE,SAL,TEMPI
 %    30 - OmegaCaout       ()
 %    31 - OmegaArout       ()
 %    32 - xCO2out          (ppm)
-%    33 - pHin (Total)     ()          
-%    34 - pHin (SWS)       ()          
-%    35 - pHin (Free)      ()          
-%    36 - pHin (NBS)       ()          
-%    37 - pHout(Total)     ()          
-%    38 - pHout(SWS)       ()          
-%    39 - pHout(Free)      ()          
-%    40 - pHout(NBS)       () 
-%    41 - TEMPIN           ***    
+%    33 - pHin (Total)     ()
+%    34 - pHin (SWS)       ()
+%    35 - pHin (Free)      ()
+%    36 - pHin (NBS)       ()
+%    37 - pHout(Total)     ()
+%    38 - pHout(SWS)       ()
+%    39 - pHout(Free)      ()
+%    40 - pHout(NBS)       ()
+%    41 - TEMPIN           ***
 %    42 - TEMPOUT          ***
 %    43 - PRESIN           ***
 %    44 - PRESOUT          ***
 %    45 - PAR1TYPE         ***
 %    46 - PAR2TYPE         ***
 %    47 - K1K2CONSTANTS    ***
-%    48 - KSO4CONSTANTS    *** 
+%    48 - KSO4CONSTANTS    ***
 %    49 - pHSCALEIN        ***
 %    50 - SAL              ***
 %    51 - PO4              ***
 %    52 - SI               ***
 %
-%    *** SIMPLY RESTATES THE INPUT BY USER 
+%    *** SIMPLY RESTATES THE INPUT BY USER
 %
 %**************************************************************************
 %
@@ -152,7 +152,7 @@ function [DATA,HEADERS,NICEHEADERS]=CO2SYS(PAR1,PAR2,PAR1TYPE,PAR2TYPE,SAL,TEMPI
 %
 % Converted to MATLAB by Denis Pierrot at
 % CIMAS, University of Miami, Miami, Florida
-% 
+%
 % Vectorization, internal refinements and speed improvements by
 % Steven van Heuven, University of Groningen, The Netherlands.
 %
@@ -258,11 +258,11 @@ F=(p2==5); FC(F)=PAR2(F)/1e6; % Convert from microatm. to atm.
 F=(WhichKs==8);
 Sal(F) = 0;
 % GEOSECS and Pure Water:
-F=(WhichKs==8 | WhichKs==6);  
+F=(WhichKs==8 | WhichKs==6);
 TP(F)  = 0;
 TSi(F) = 0;
 % All other cases
-F=~F;                         
+F=~F;
 TP(F)  = TP(F)./1e6;
 TSi(F) = TSi(F)./1e6;
 
@@ -339,7 +339,7 @@ Revelleinp              = RevelleFactor(TAc-PengCorrection, TCc);
 [OmegaCainp OmegaArinp] = CaSolubility(Sal, TempCi, Pdbari, TCc, PHic);
 xCO2dryinp              = PCic./VPFac; % ' this assumes pTot = 1 atm
 
-% Just for reference, convert pH at input conditions to the other scales, too. 
+% Just for reference, convert pH at input conditions to the other scales, too.
 [pHicT pHicS pHicF pHicN]=FindpHOnAllScales(PHic);
 
 % Calculate the constants for all samples at output conditions
@@ -361,7 +361,7 @@ Revelleout              = RevelleFactor(TAc, TCc);
 [OmegaCaout OmegaArout] = CaSolubility(Sal, TempCo, Pdbaro, TCc, PHoc);
 xCO2dryout              = PCoc./VPFac; % ' this assumes pTot = 1 atm
 
-% Just for reference, convert pH at output conditions to the other scales, too. 
+% Just for reference, convert pH at output conditions to the other scales, too.
 [pHocT pHocS pHocF pHocN]=FindpHOnAllScales(PHoc);
 
 % Saving data in array, 52 fields
@@ -415,7 +415,7 @@ NICEHEADERS={...
     '25 - OHout            (umol/kgSW) ';
     '26 - PAlkout          (umol/kgSW) ';
     '27 - SiAlkout         (umol/kgSW) ';
-    '28 - Hfreein          (umol/kgSW) ';    
+    '28 - Hfreein          (umol/kgSW) ';
     '29 - RevelleFactorout ()          ';
     '30 - OmegaCaout       ()          ';
     '31 - OmegaArout       ()          ';
@@ -428,7 +428,7 @@ NICEHEADERS={...
     '38 - pHout(SWS)       ()          ';
     '39 - pHout(Free)      ()          ';
     '40 - pHout(NBS )      ()          ';
-    '41 - TEMPIN           (Deg C)     ';    
+    '41 - TEMPIN           (Deg C)     ';
     '42 - TEMPOUT          (Deg C)     ';
     '43 - PRESIN           (dbar)      ';
     '44 - PRESOUT          (dbar)      ';
@@ -539,10 +539,10 @@ if any(F)
     %               It was given in mol/kg-H2O. I convert it to mol/kg-SW.
     %               TYPO on p. 121: the constant e9 should be e8.
     %               This is from eqs 22 and 23 on p. 123, and Table 4 on p 121:
-  lnKS(F) = -4276.1./TempK(F) + 141.328 - 23.093.*logTempK(F) +...             
-      (-13856./TempK(F) + 324.57 - 47.986.*logTempK(F)).*sqrt(IonS(F)) +...     
-      (35474./TempK(F) - 771.54 + 114.723.*logTempK(F)).*IonS(F) +...           
-      (-2698./TempK(F)).*sqrt(IonS(F)).*IonS(F) + (1776./TempK(F)).*IonS(F).^2; 
+  lnKS(F) = -4276.1./TempK(F) + 141.328 - 23.093.*logTempK(F) +...
+      (-13856./TempK(F) + 324.57 - 47.986.*logTempK(F)).*sqrt(IonS(F)) +...
+      (35474./TempK(F) - 771.54 + 114.723.*logTempK(F)).*IonS(F) +...
+      (-2698./TempK(F)).*sqrt(IonS(F)).*IonS(F) + (1776./TempK(F)).*IonS(F).^2;
 
 KS(F) = exp(lnKS(F))...            % this is on the free pH scale in mol/kg-H2O
         .* (1 - 0.001005 .* Sal(F));   % convert to mol/kg-SW
@@ -870,11 +870,11 @@ if any(F)
     %    sqrt(Sal(F)) + 0.12612.*Sal(F) - 0.0003405.*Sal(F).^2 - sqrt(Sal(F)).*(760.05./...
     %    TempK(F) + 3.31856.*log(TempK(F))) - 21.0566.*Sal(F)./TempK(F);
 
-    %From Millero 2006 work on pK1 and pK2 from titrations. Mar.Chem. 100 pp. 80-94 
+    %From Millero 2006 work on pK1 and pK2 from titrations. Mar.Chem. 100 pp. 80-94
     %S=0 to 50   t=0 to 50.   pK1 sigma = 0.005.   pK2 sigma = 0.01
 	% pK1(F) = -126.34048 + 6320.813./TempK(F) + 19.568224.*logTempK(F) + 13.4191.*sqrSal(F) + ...
-	%      0.0331.*Sal(F) - 0.0000533.*Sal(F).^2 - sqrSal(F).*(530.123./TempK(F) + 2.0695.*logTempK(F)) - ... 
-	%      6.103.*Sal(F)./TempK(F); %    Added SvH20090527, suggested by Denis Pierrot		
+	%      0.0331.*Sal(F) - 0.0000533.*Sal(F).^2 - sqrSal(F).*(530.123./TempK(F) + 2.0695.*logTempK(F)) - ...
+	%      6.103.*Sal(F)./TempK(F); %    Added SvH20090527, suggested by Denis Pierrot
 
      pK1(F) =  -126.34048 + 6320.813./TempK(F) + 19.568224.*log(TempK(F)) ...
 	 			+    13.4191.*sqrt(Sal(F)) + 0.0331.*Sal(F) - 0.0000533.*Sal(F).^2 ...
@@ -882,7 +882,7 @@ if any(F)
 	 			+ (  -2.0695.*sqrt(Sal(F))) .* log(TempK(F)); %    Added SvH20090527, suggested by Denis Pierrot		this is better... but still doesn't work
 
     % pK2(F) =  -90.18333 + 5143.692./TempK(F) + 14.613358.*logTempK(F) + 21.0894.*sqrSal(F) + ...
-    %      0.1248.*Sal(F) - 0.0003687.*Sal(F).^2 - sqrSal(F).*(772.483./TempK(F) + 3.3336.*logTempK(F)) - ... 
+    %      0.1248.*Sal(F) - 0.0003687.*Sal(F).^2 - sqrSal(F).*(772.483./TempK(F) + 3.3336.*logTempK(F)) - ...
     %      20.051.*Sal(F)./TempK(F); %    Added SvH20090527, suggested by Denis Pierrot		IT IS NOT GOOD!
     pK2(F) =  -90.18333 + 5143.692./TempK(F) + 14.613358.*log(TempK(F)) ...
 	 			+    21.0894.*sqrt(Sal(F)) + 0.1248.*Sal(F) - 0.0003687.*Sal(F).^2 ...
@@ -1019,7 +1019,7 @@ if any(F)
     %                 'Kappa = Kappa  - .578.*(Sali - 34.8)/1000.; % Millero, 1979
  	  lnK1fac(F) = (-deltaV(F) + 0.5.*Kappa(F).*Pbar(F)).*Pbar(F)./RT(F);
     %               The fits given in Millero, 1983 are somewhat different.
-    
+
     %***PressureEffectsOnK2:
     %               These are from Millero, 1995.
     %               They are the same as Millero, 1979 and Millero, 1992.
@@ -1031,7 +1031,7 @@ if any(F)
 	  lnK2fac(F) = (-deltaV(F) + 0.5.*Kappa(F).*Pbar(F)).*Pbar(F)./RT(F);
     %               The fit given in Millero, 1983 is different.
     %               Not by a lot for deltaV, but by much for Kappa. %
-    
+
     %***PressureEffectsOnKB:
     %               This is from Millero, 1979.
     %               It is from data of Culberson and Pytkowicz, 1968.

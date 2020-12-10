@@ -73,16 +73,16 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
         beta  = par.beta;
     end
     par.beta  = beta; % pass parameter to C/Si/O models
-    
+
     % fixed parameters
     Tz      = par.Tz ;
     DIPbar  = M3d(iwet)*par.DIPbar;  % gobal arerage PO4 conc.[mmol m^-3];
     kappa_g = par.kappa_g; % PO4 geological restore const.[s^-1];
     kappa_p = par.kappa_p; % POP solubilization rate constant
     npp     = par.npp;     % net primary production
-    npp1    = par.npp1 ; 
-    npp2    = par.npp2 ; 
-    kP      = kP_T*Tz + kdP ; 
+    npp1    = par.npp1 ;
+    npp2    = par.npp2 ;
+    kP      = kP_T*Tz + kdP ;
     % build part of the biological DIP uptake operator
     Lambda     = par.Lambda;
     LAM        = 0*M3d;
@@ -96,7 +96,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
     junk = M3d ;
     junk(:,:,2:end) = 0 ;
     isrf = find(junk(iwet)) ;
-    
+
     % build Jacobian equations.
     % column 1 dF/dDIP
     Fp{1,1} = TRdiv + alpha*L + kappa_g*I ;
@@ -114,10 +114,10 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
     Fp{3,3} = TRdiv + d0(kP) ;
 
     % right hand side of phosphate equations
-    RHS = [kappa_g*DIPbar; ... 
+    RHS = [kappa_g*DIPbar; ...
            sparse(nwet,1);...
            sparse(nwet,1)];
-    
+
     fprintf('Solving P model ...\n') ;
     % dP/dt + Fp*P = RHS
     % factoring Jacobian matrix
@@ -150,7 +150,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                    d0(kP_kP_T)*DOP];
             Px(:,pindx.kP_T) = mfactor(FFp,-tmp);
         end
-        
+
         % kdP
         if (par.opt_kdP == on)
             kP_kdP = kdP ;
@@ -173,7 +173,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
             tmp = bP*[Z; PFD_bb*POP;  Z];
             Px(:,pindx.lbP) = mfactor(FFp,-tmp);
         end
-        
+
         % alpha
         if (par.opt_alpha == on)
             tmp = alpha*[L*DIP;...
@@ -181,7 +181,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                          -sigma*L*DIP];
             Px(:,pindx.lalpha) = mfactor(FFp,-tmp);
         end
-        
+
         %beta
         if (par.opt_beta == on)
             dLambdadbeta = 0*Lambda;
@@ -205,7 +205,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
     %% ---------------------------------------------------------
     if (par.optim == off)
         Pxx = [];
-    elseif (par.optim & nargout > 3) 
+    elseif (par.optim & nargout > 3)
         % Compute the hessian of the solution wrt the parameters
         DIPx = Px(0*nwet+1:1*nwet,:);
         POPx = Px(1*nwet+1:2*nwet,:);
@@ -213,7 +213,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
         % sigma sigma
         kk = 1;
         if (par.opt_sigma == on)
-            tmp = [Z; ... % d2Jdsigma2 * DIP 
+            tmp = [Z; ... % d2Jdsigma2 * DIP
                    sigma*alpha*L*DIP; ...
                    -sigma*alpha*L*DIP] + ...
                   2*[Z; ... % 2 * dJdigmadPdsigma
@@ -261,7 +261,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                   [Z;...  % dJdbP_TdPdsigma
                    PFD_bm*POPx(:,pindx.lsigma); ...
                    Z];
-            
+
             Pxx(:,kk) = mfactor(FFp,-tmp);
             kk = kk + 1;
         end
@@ -274,8 +274,8 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                    -sigma*alpha*L*DIPx(:,pindx.lbP)] + ...
                   [Z; ... % dJdbPdPdsigma
                    bP*PFD_bb*POPx(:,pindx.lsigma); ...
-                   Z]; 
-            
+                   Z];
+
             Pxx(:,kk) = mfactor(FFp,-tmp);
             kk = kk + 1;
         end
@@ -291,7 +291,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                   [alpha*L*DIPx(:,pindx.lsigma);... % dJdalphadsigma
                    -(1-sigma)*alpha*L*DIPx(:,pindx.lsigma)
                    -sigma*alpha*L*DIPx(:,pindx.lsigma)];
-            
+
             Pxx(:,kk) = mfactor(FFp,-tmp);
             kk = kk + 1;
         end
@@ -307,17 +307,17 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                   [beta*alpha*dLdbeta*DIPx(:,pindx.lsigma);...  % dJdbetadPdsigma
                    -(1-sigma)*alpha*beta*dLdbeta*DIPx(:,pindx.lsigma);...
                    -sigma*alpha*beta*dLdbeta*DIPx(:,pindx.lsigma)];;
-            
+
             Pxx(:,kk) = mfactor(FFp,-tmp);
             kk = kk + 1;
         end
-        
-        % kP_T kP_T 
+
+        % kP_T kP_T
         if (par.opt_kP_T == on)
             tmp = 2*[-d0(kP_kP_T)*DOPx(:,pindx.kP_T); ... % dJdkappadPdkappa
                      Z;...
                      d0(kP_kP_T)*DOPx(:,pindx.kP_T)];
-            
+
             Pxx(:,kk) = mfactor(FFp,-tmp);
             kk = kk + 1;
         end
@@ -329,13 +329,13 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                    Z;...
                    d0(kP_kP_T)*DOPx(:,pindx.lkdP)] + ...
                   [-kP_kdP*DOPx(:,pindx.kP_T); ...  % dJdkappadPdkP_T
-                   Z; ... 
-                   kP_kdP*DOPx(:,pindx.kP_T)]; 
-            
+                   Z; ...
+                   kP_kdP*DOPx(:,pindx.kP_T)];
+
             Pxx(:,kk) = mfactor(FFp,-tmp);
             kk = kk + 1;
         end
-        
+
         % kP_T bP_T
         if (par.opt_kP_T == on & par.opt_bP_T == on)
             tmp = [Z; Z; Z] + ... % d2JdkP_Tdslope
@@ -344,8 +344,8 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                    d0(kP_kP_T)*DOPx(:,pindx.bP_T)] + ...
                   [Z; ...  % dJdslopedPdkP_T
                    PFD_bm*POPx(:,pindx.kP_T); ...
-                   Z]; 
-            
+                   Z];
+
             Pxx(:,kk) = mfactor(FFp,-tmp);
             kk = kk + 1;
         end
@@ -358,8 +358,8 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                    d0(kP_kP_T)*DOPx(:,pindx.lbP)] + ...
                   [Z; ...  % dJdinterpdPdkP_T
                    bP*PFD_bb*POPx(:,pindx.kP_T); ...
-                   Z]; 
-            
+                   Z];
+
             Pxx(:,kk) = mfactor(FFp,-tmp);
             kk = kk + 1;
         end
@@ -373,7 +373,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                   alpha*[L*DIPx(:,pindx.kP_T);...  % dJdalphadPdkP_T
                          -(1-sigma)*L*DIPx(:,pindx.kP_T);...
                          -sigma*L*DIPx(:,pindx.kP_T)];
-            
+
             Pxx(:,kk) = mfactor(FFp,-tmp);
             kk = kk + 1;
         end
@@ -387,11 +387,11 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                   beta*[alpha*dLdbeta*DIPx(:,pindx.kP_T);... % dJdbetadPdkP_T
                         -(1-sigma)*alpha*dLdbeta*DIPx(:,pindx.kP_T);...
                         -sigma*alpha*dLdbeta*DIPx(:,pindx.kP_T)];
-            
+
             Pxx(:,kk) = mfactor(FFp,-tmp);
             kk = kk + 1;
         end
-        
+
         % kdP kdP
         if (par.opt_kdP == on)
             tmp = [-kP_kdP*DOP; ... % d2Jdkappa2 * P
@@ -400,7 +400,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                   2*[-kP_kdP*DOPx(:,pindx.lkdP); ... % dJdkappadPdkappa
                      Z;...
                      kP_kdP*DOPx(:,pindx.lkdP)];
-            
+
             Pxx(:,kk) = mfactor(FFp,-tmp);
             kk = kk + 1;
         end
@@ -413,8 +413,8 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                    kP_kdP*DOPx(:,pindx.bP_T)] + ...
                   [Z; ...  % dJdslopedPdkappa
                    PFD_bm*POPx(:,pindx.lkdP); ...
-                   Z]; 
-            
+                   Z];
+
             Pxx(:,kk) = mfactor(FFp,-tmp);
             kk = kk + 1;
         end
@@ -427,8 +427,8 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                    kP_kdP*DOPx(:,pindx.lbP)] + ...
                   [Z; ...  % dJdinterpdPdkappa
                    bP*PFD_bb*POPx(:,pindx.lkdP); ...
-                   Z]; 
-            
+                   Z];
+
             Pxx(:,kk) = mfactor(FFp,-tmp);
             kk = kk + 1;
         end
@@ -442,7 +442,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                   alpha*[L*DIPx(:,pindx.lkdP);...  % dJdalphadPdkappa
                          -(1-sigma)*L*DIPx(:,pindx.lkdP);...
                          -sigma*L*DIPx(:,pindx.lkdP)];
-            
+
             Pxx(:,kk) = mfactor(FFp,-tmp);
             kk = kk + 1;
         end
@@ -456,7 +456,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                   beta*[alpha*dLdbeta*DIPx(:,pindx.lkdP);... % dJdbetadPdkappa
                         -(1-sigma)*alpha*dLdbeta*DIPx(:,pindx.lkdP);...
                         -sigma*alpha*dLdbeta*DIPx(:,pindx.lkdP)];
-            
+
             Pxx(:,kk) = mfactor(FFp,-tmp);
             kk = kk + 1;
         end
@@ -471,11 +471,11 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                   2*[Z; ... % dJdslopedPslope
                      PFD_bm*POPx(:,pindx.bP_T);...
                      Z];
-            
+
             Pxx(:,kk) = mfactor(FFp,-tmp);
             kk = kk + 1;
         end
-        
+
         % bP_T bP
         if (par.opt_bP_T == on & par.opt_bP == on)
             [~,~,Hout] = buildPFD(par,'POP');
@@ -488,8 +488,8 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                    Z] + ...
                   bP*[Z; ...  % dJdinterpdPdslope
                       PFD_bb*POPx(:,pindx.bP_T); ...
-                      Z]; 
-            
+                      Z];
+
             Pxx(:,kk) = mfactor(FFp,-tmp);
             kk = kk + 1;
         end
@@ -503,7 +503,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                   [alpha*L*DIPx(:,pindx.bP_T); ...  % dJdalphadPdslope
                    -(1-sigma)*alpha*L*DIPx(:,pindx.bP_T); ...
                    -sigma*alpha*L*DIPx(:,pindx.bP_T)];
-            
+
             Pxx(:,kk) = mfactor(FFp,-tmp);
             kk = kk + 1;
         end
@@ -517,11 +517,11 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                   [alpha*beta*dLdbeta*DIPx(:,pindx.bP_T);...  % dJdbetadPdkappa
                    -(1-sigma)*alpha*beta*dLdbeta*DIPx(:,pindx.bP_T);...
                    -sigma*alpha*beta*dLdbeta*DIPx(:,pindx.bP_T)];
-            
+
             Pxx(:,kk) = mfactor(FFp,-tmp);
             kk = kk + 1;
         end
-        
+
         % bP bP
         if (par.opt_bP == on)
             [~,~,Hout] = buildPFD(par,'POP');
@@ -535,10 +535,10 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                   2*[Z; ... % dJdinterpdPinterp
                      bP*PFD_bb*POPx(:,pindx.lbP);...
                      Z];
-            
+
             Pxx(:,kk) = mfactor(FFp,-tmp);
             kk = kk + 1;
-        end    
+        end
 
         % bP alpha
         if (par.opt_bP == on & par.opt_alpha == on)
@@ -548,8 +548,8 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                    Z] + ...
                   [alpha*L*DIPx(:,pindx.lbP); ... % dJdalphadPdinterp
                    -(1-sigma)*alpha*L*DIPx(:,pindx.lbP); ...
-                   -sigma*alpha*L*DIPx(:,pindx.lbP)];  
-            
+                   -sigma*alpha*L*DIPx(:,pindx.lbP)];
+
             Pxx(:,kk) = mfactor(FFp,-tmp);
             kk = kk + 1;
         end
@@ -565,11 +565,11 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                   beta*[alpha*dLdbeta*DIPx(:,pindx.lbP); ... % dJdbetadPdinterp
                         -(1-sigma)*alpha*dLdbeta*DIPx(:,pindx.lbP); ...
                         -sigma*alpha*dLdbeta*DIPx(:,pindx.lbP)];
-            
+
             Pxx(:,kk) = mfactor(FFp,-tmp);
             kk = kk + 1;
         end
-        
+
         % alpha alpha
         if (par.opt_alpha == on)
             tmp = [alpha*L*DIP;... % d2Jdalpha2*P
@@ -598,7 +598,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
             Pxx(:,kk) = mfactor(FFp,-tmp);
             kk = kk + 1;
         end
-        
+
         % beta beta
         if (par.opt_beta == on)
             d2Lambdadbetadbeta = 0*Lambda;
@@ -619,10 +619,9 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                   2*[ alpha*beta*dLdbeta*DIPx(:,pindx.lbeta);...
                       -(1-sigma)*alpha*beta*dLdbeta*DIPx(:,pindx.lbeta);...
                       -sigma*alpha*beta*dLdbeta*DIPx(:,pindx.lbeta)];
-            
+
             Pxx(:,kk) = mfactor(FFp,-tmp);
             kk = kk + 1;
         end
     end
 end
-

@@ -11,7 +11,7 @@ function [modT,modS,pme] = pme(par)
 
     tmp   = M3d ;
     tmp(:,:,2:end) = 0 ;
-    isrf = find(tmp(iwet)) ; 
+    isrf = find(tmp(iwet)) ;
     Isrf = d0(tmp(iwet))   ;
 
     B  = TRdiv+Isrf./par.taup;
@@ -31,7 +31,7 @@ function [modT,modS,pme] = pme(par)
     toc
     fprintf('\n')
     clear memory
-    clear B 
+    clear B
     %
     msk = M3d;
     msk(:,:,2:end) = 0;
@@ -42,4 +42,3 @@ function [modT,modS,pme] = pme(par)
         pme = pme-msk(iwet).*sum(dVt(iwet).*pme)/sum(msk(iwet).*dVt(iwet));
     end
 end
-

@@ -74,7 +74,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 	%%%%%%%%%%%%%%     Solve for C2P with Cell model   %%%%%%%%%%%%%%%%%%%%%
 	if (par.Cellmodel == on)
 		iprod = find(M3d(:,:,1:2)); %production in top two layers
-		P0 = par.DIPgrd(iprod)./10^6; 			% convert ug/m^3 to g/m^3
+		P0 = data.DIP(iprod)./10^6; 			% convert ug/m^3 to g/m^3
 		N0 = par.no3obs(iprod)./10^6;   % convert ug/m^3 to g/m^3
 		T0 = par.Tobs(iprod);
 		Irr0 = par.PARobs(iprod);
@@ -83,8 +83,8 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 		par.BIO = parBIO;
 		clear parBIO;
 		par.CellOut.C2P = M3d*0;
-		%par.CellOut.N2P = M3d*0;
-		%par.CellOut.C2N = M3d*0;
+		par.CellOut.N2P = M3d*0;
+		par.CellOut.C2N = M3d*0;
 		%par.CellOut.LimType = M3d*0;
 		%par.CellOut.r = M3d*0;
 
@@ -104,7 +104,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 		par.CellOut.dC2P_dfStorage(iprod) = CellOut.dC2P_dfStorage;
 
 		%second Derivatives w.r.t. Q10Photo
-		if (par.BIO.opt_Q10Photo)
+		if (par.opt_Q10Photo)
 			xim = zeros(size(x0));
 			xim(par.pindx.lQ10Photo) = sqrt(-1)*eps^3;
 			[CellOut, ~] = CPDual(par,x0+xim, P0,N0,T0,Irr0);
@@ -117,7 +117,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 		end
 
 		%second Derivatives w.r.t. fStorage
-		if (par.BIO.opt_fStorage)
+		if (par.opt_fStorage)
 			xim = zeros(size(x0));
 			xim(par.pindx.lfStorage) = sqrt(-1)*eps^3;
 			[CellOut, ~] = CPDual(par,x0+xim, P0,N0,T0,Irr0);

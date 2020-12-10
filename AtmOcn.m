@@ -4,7 +4,7 @@ iter = 0 ;
 on   = true  ;
 off  = false ;
 format long
-% 
+%
 GridVer  = 91  ;
 operator = 'A' ;
 % GridVer: choose from 90 and 91; Ver 90 is for a Transport
@@ -16,37 +16,37 @@ operator = 'A' ;
 % E -> KvHIGH_KiLOW_He; F -> KvHIGH_KiLOW_noHe; G -> KiLOW_He;
 % H -> KiLOW_noHe; I -> KvHIGH_He; J -> KvHIGH_noHe; K -> KvHIGH_KiHIGH_noHe
 
-par.optim   = off ; 
-par.Cmodel  = on ; 
-par.Omodel  = on ; 
+par.optim   = off ;
+par.Cmodel  = on ;
+par.Omodel  = on ;
 par.Simodel = off ;
-par.LoadOpt = on ; % if load optimial par. 
+par.LoadOpt = on ; % if load optimial par.
 par.pscale  = 0.0 ;
 par.cscale  = 0.25 ; % factor to weigh DOC in the objective function
 
 % P model parameters
-par.opt_sigma = on ; 
+par.opt_sigma = on ;
 par.opt_kP_T  = off ;
 par.opt_kdP   = on ;
-par.opt_bP_T  = on ; 
+par.opt_bP_T  = on ;
 par.opt_bP    = on ;
 par.opt_alpha = on ;
 par.opt_beta  = on ;
 % C model parameters
 par.opt_bC_T  = on ;
-par.opt_bC    = on ; 
+par.opt_bC    = on ;
 par.opt_d     = on ;
 par.opt_kC_T  = on ;
-par.opt_kdC   = on ; 
-par.opt_R_Si  = on ; 
-par.opt_rR    = on ; 
+par.opt_kdC   = on ;
+par.opt_R_Si  = on ;
+par.opt_rR    = on ;
 par.opt_cc    = on ;
 par.opt_dd    = on ;
 % O model parameters
 par.opt_O2C_T = off ;
 par.opt_rO2C  = on ;
-par.opt_O2P_T = off ; 
-par.opt_rO2P  = on ; 
+par.opt_O2P_T = off ;
+par.opt_rO2P  = on ;
 % Si model parameters
 par.opt_dsi   = on  ;
 par.opt_at    = off ;
@@ -57,11 +57,11 @@ par.opt_bb    = on  ;
 %-------------load data and set up parameters---------------------
 SetUp ;
 
-% save results 
+% save results
 % ATTENTION: Change this direcrtory to where you wanna
 % save your output files
 if ismac
-    output_dir = sprintf('~/Documents/CP-model/MSK%2d/',GridVer); 
+    output_dir = sprintf('~/Documents/CP-model/MSK%2d/',GridVer);
 elseif isunix
     % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
     % 'MSK%2d/'],GridVer);
@@ -91,15 +91,15 @@ elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on)
     catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
     fname = strcat(base_name,catDOC);
 end
-par.fname = strcat(fname,'.mat') ; 
+par.fname = strcat(fname,'.mat') ;
 % load optimal parameters if they exist
 fxhat     = strcat(fname,'_xhat.mat');
-par.fxhat = fxhat ; 
+par.fxhat = fxhat ;
 
 % -------------------update initial guesses --------------
 if isfile(par.fname)
     load(par.fname)
-end 
+end
 
 %---------------- inital guesses on C and O ---------------
 DIC = data.DIC - par.dicant ;
@@ -107,12 +107,12 @@ DIC = data.DIC - par.dicant ;
 GC  = [DIC(iwet); data.POC(iwet); data.DOC(iwet); ...
        data.PIC(iwet); data.ALK(iwet)];
 % GC  = GC + 1e-6*randn(5*nwet,1) ;
-if par.Omodel == on 
+if par.Omodel == on
     GO  = real(data.O2(iwet)) + 1e-9*randn(par.nwet,1);
-end 
+end
 
 %--------------------- prepare parameters ------------------
-% load optimal parameters from a file or set them to default values 
+% load optimal parameters from a file or set them to default values
 par = SetPar(par) ;
 % pack parameters into an array, assign them corresponding indices.
 par = PackPar(par) ;
@@ -172,7 +172,7 @@ PFDc = buildPFD(par,'POC') ;
 par.PFDa = PFDa ;
 par.PFDc = PFDc ;
 % biological DIC uptake operator
-G = uptake_C(par); 
+G = uptake_C(par);
 % rain ratio of PIC to POC
 vout = mkPIC2P(par) ;
 RR   = vout.RR   ;
@@ -226,82 +226,82 @@ kk = 1 ; % indices for saving data vector;
 sDICbar = par.sDICbar ;
 sALKbar = par.sALKbar ;
 for t  = 1 : l
-    dDICdt = (I+(1-sigma)*RR)*(G*C2P) - kC*DOC - kPIC*PIC - JgDIC + pme*sDICbar; 
-    dPOCdt = -(1-sigma)*G*C2P + kappa_p*POC      ; 
-    dDOCdt = -sigma*G*C2P + kC*DOC - kappa_p*POC ; 
-    dPICdt = -(1-sigma)*RR*(G*C2P) + kPIC*PIC    ; 
+    dDICdt = (I+(1-sigma)*RR)*(G*C2P) - kC*DOC - kPIC*PIC - JgDIC + pme*sDICbar;
+    dPOCdt = -(1-sigma)*G*C2P + kappa_p*POC      ;
+    dDOCdt = -sigma*G*C2P + kC*DOC - kappa_p*POC ;
+    dPICdt = -(1-sigma)*RR*(G*C2P) + kPIC*PIC    ;
     dALKdt = 2*(1-sigma)*RR*(G*C2P) - N2C*G*C2P + N2C*kC*DOC ...
              - 2*kPIC*PIC - kappa_g*(ALK - par.ALKbar) + pme*sALKbar ;
     dATMdt = JgDIC'*vw*1000 ;
-    
+
     dCdt = [dDICdt; dPOCdt; dDOCdt; dPICdt; dALKdt; dATMdt] ;
     C    = mfactor(FA, (B*C - dCdt*dt)) ;
-    
+
     DIC = C(0*nwet+1:1*nwet) ;
     POC = C(1*nwet+1:2*nwet) ;
     DOC = C(2*nwet+1:3*nwet) ;
     PIC = C(3*nwet+1:4*nwet) ;
     ALK = C(4*nwet+1:5*nwet) ;
     pco2atm = C(end) ;
-    
+
     sDICbar = sum(DIC(iwet(isrf)).*dVt(iwet(isrf)))./sum(dVt(iwet(isrf))) ;
     sALKbar = sum(ALK(iwet(isrf)).*dVt(iwet(isrf)))./sum(dVt(iwet(isrf))) ;
-    
+
     par.DIC = DIC ;
     par.ALK = ALK ;
     par.pco2atm = pco2atm ;
     % Air-Sea gas exchange
     vout  = Fsea2air(par, 'CO2');
-    G_dic = vout.G_dic ; % flux_dic 
+    G_dic = vout.G_dic ; % flux_dic
     G_atm = vout.G_atm ; % flux_co2atm
-    JgDIC = vout.JgDIC ; % flux mmol/m3/s 
-    
+    JgDIC = vout.JgDIC ; % flux mmol/m3/s
+
     eq1 = (I+(1-sigma)*RR)*(G*C2P) + TRdiv*DIC - kC*DOC - kPIC*PIC ...
           - JgDIC + pme*sDICbar ;
-    eq2 = -(1-sigma)*G*C2P + (PFDc+kappa_p*I)*POC        ; 
-    eq3 = -sigma*G*C2P + (TRdiv+kC)*DOC - kappa_p*POC    ; 
-    eq4 = -(1-sigma)*RR*(G*C2P) + (PFDa+kPIC*I)*PIC      ; 
+    eq2 = -(1-sigma)*G*C2P + (PFDc+kappa_p*I)*POC        ;
+    eq3 = -sigma*G*C2P + (TRdiv+kC)*DOC - kappa_p*POC    ;
+    eq4 = -(1-sigma)*RR*(G*C2P) + (PFDa+kPIC*I)*PIC      ;
     eq5 = 2*(1-sigma)*RR*(G*C2P) + TRdiv*ALK - N2C*G*C2P + N2C*kC*DOC ...
           - 2*kPIC*PIC - kappa_g*(ALK - par.ALKbar) + pme*sALKbar ;
-    eqa = JgDIC'*vw*1000 ; % umol/mol/s 
-    
+    eqa = JgDIC'*vw*1000 ; % umol/mol/s
+
     F   = [eq1; eq2; eq3; eq4; eq5; eqa] ;
-    
+
     fprintf('.')
     if mod(t,100) == 0
         fprintf('\n')
     end
-    
+
     if mod(t, 500) == 0
         kk = kk + 1 ;
         hist{kk} = [ftime*t; pco2atm] ;
-        
+
         fprintf('current iteration % 3d \n', t)
         fprintf('current error %3.3e \n', norm(F))
         fprintf('Atm CO2 concentration %3.2f \n', pco2atm)
         % yyaxis left
-        % plot(t*ftime, norm(F), 'co'); hold on; drawnow 
+        % plot(t*ftime, norm(F), 'co'); hold on; drawnow
         % ylabel('Error')
-        
+
         % yyaxis right
         % pco2atm = C(end) ;
-        % plot(t*ftime, pco2atm, 'r*'); hold on; drawnow 
+        % plot(t*ftime, pco2atm, 'r*'); hold on; drawnow
         % ylabel('Atm CO_2 (ppm)')
         % xlabel('Elapsed time (yr)')
-    end 
+    end
     if(norm(F) < 1.0e-9)
         break
     end
 end
 
-if par.Omodel == on 
-    par.DIC = C(0*nwet+1:1*nwet) ; 
+if par.Omodel == on
+    par.DIC = C(0*nwet+1:1*nwet) ;
     par.DOC = C(2*nwet+1:3*nwet) ;
 
-    options.iprint = 1   ; 
+    options.iprint = 1   ;
     options.atol = 1e-10 ;
     options.rtol = 1e-10 ;
-    
+
     fprintf('Solving O model ...\n') ;
     X0  = GO ;
     [O,ierr] = nsnew(X0,@(X) O_eqn(X, par),options) ;
@@ -328,13 +328,13 @@ function [F, FD] = O_eqn(O2, par)
     TZ    = par.Tz*1e8 ;
     %
     % tunable parameters;
-    O2C_T = par.O2C_T   ; 
+    O2C_T = par.O2C_T   ;
     rO2C  = par.rO2C    ;
     kC_T  = par.kC_T    ;
     kdC   = par.kdC     ;
     O2P_T = par.O2P_T   ;
     rO2P  = par.rO2P    ;
-    kC    = d0(kC_T * Tz + kdC) ; 
+    kC    = d0(kC_T * Tz + kdC) ;
     %
     vout  = mkO2P(par) ;
     O2P   = vout.O2P   ;
@@ -346,16 +346,16 @@ function [F, FD] = O_eqn(O2, par)
     % rate of o2 production
     G   = uptake_C(par) ;
     PO2 = G*O2P        ;
-    
+
     % parobolic function for o2 consumption
     R    = 0.5 + 0.5*tanh(O2-10)    ;
     dRdO = 0.5 - 0.5*tanh(O2-10).^2 ;
-    
-    O2C  = O2C_T*TZ + rO2C ; 
+
+    O2C  = O2C_T*TZ + rO2C ;
     % rate of o2 utilization
     LO2  = kC*DOC.*O2C.*R  ;
     dLdO = d0(kC*DOC.*O2C.*dRdO) ;
-    
+
     % O2 function
     F = TRdiv*O2 - PO2 + LO2 - KO2*(o2sat-O2) ;
     %
@@ -363,4 +363,3 @@ function [F, FD] = O_eqn(O2, par)
         FD = mfactor(TRdiv + dLdO + KO2) ;
     end
 end
-

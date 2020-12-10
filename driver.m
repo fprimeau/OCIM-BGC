@@ -28,23 +28,23 @@ par.pscale  = 0.0 ;
 par.cscale  = 0.25 ; % factor to weigh DOC in the objective function
 
 % P model parameters
-par.opt_sigma = on ;
+par.opt_sigma = off ;
 par.opt_kP_T  = off ;
-par.opt_kdP   = on ;
-par.opt_bP_T  = on ;
-par.opt_bP    = on ;
-par.opt_alpha = on ;
-par.opt_beta  = on ;
+par.opt_kdP   = off ;
+par.opt_bP_T  = off ;
+par.opt_bP    = off ;
+par.opt_alpha = off ;
+par.opt_beta  = off ;
 % C model parameters
-par.opt_bC_T  = on ;
-par.opt_bC    = on ;
+par.opt_bC_T  = off ;
+par.opt_bC    = off ;
 par.opt_d     = on ;
-par.opt_kC_T  = on ;
-par.opt_kdC   = on ;
-par.opt_R_Si  = on ;
-par.opt_rR    = on ;
-par.opt_cc    = on ;
-par.opt_dd    = on ;
+par.opt_kC_T  = off ;
+par.opt_kdC   = off ;
+par.opt_R_Si  = off ;
+par.opt_rR    = off ;
+par.opt_cc    = off ;
+par.opt_dd    = off ;
 % O model parameters
 par.opt_O2C_T = off ;
 par.opt_rO2C  = on ;
@@ -85,7 +85,7 @@ elseif isunix
     % output_dir = sprintf('/DFS-L/DATA/primeau/weilewang/Cexp/');
     % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
                         % 'MSK%2d/PME4DICALK/'],GridVer);
-	output_dir = sprintf('/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/run%s/', datestr(now,'ddmmmyy'));
+	output_dir = sprintf('/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/test%s/', datestr(now,'ddmmmyy'));
 
     % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/COP4WWF/' ...
                         % 'MSK%2d/'],GridVer);
