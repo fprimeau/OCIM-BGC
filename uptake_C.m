@@ -11,11 +11,11 @@ function [G, Gx, Gxx] = uptake_C(par)
     % of uptake operator
     po4obs = par.po4obs(iwet);
     % P uptake operator
-    L = par.L;  
+    L = par.L;
 
     DIP = par.DIP ;
-    G   = d0(alpha*L*DIP) ; 
-    Gp  = alpha*L ;   
+    G   = d0(alpha*L*DIP) ;
+    Gp  = alpha*L ;
 
     % Gradient
     % grad DIP
@@ -26,14 +26,14 @@ function [G, Gx, Gxx] = uptake_C(par)
         npx  = par.npx;
         Gpx  = zeros(nwet,npx);
         DIPx = par.Px(1:nwet,:);
-        
+
         if (par.opt_alpha)
             ialpha = pindx.lalpha;
             Gpx(:,ialpha) = diag(alpha*L); % dGdlog_alpha
         end
 
         if (par.opt_beta)
-            dLdbeta = par.dLdbeta;    
+            dLdbeta = par.dLdbeta;
             ibeta = pindx.lbeta;
             Gpx(:,ibeta) = diag(beta*alpha*dLdbeta); % dGdlog_beta
         end
@@ -47,7 +47,7 @@ function [G, Gx, Gxx] = uptake_C(par)
     elseif (par.optim & nargout > 2)
         kk = 0;
         DIPxx = par.Pxx(1:nwet,:);
-        
+
         % sigma sigma
         if (par.opt_sigma)
             kk = kk + 1;
@@ -129,7 +129,7 @@ function [G, Gx, Gxx] = uptake_C(par)
             Gxx(:,kk) = Gp*DIPxx(:,kk) + ...
                 d0(Gpx(:,pindx.lbeta))*DIPx(:,pindx.kP_T);
         end
-        
+
         % kdP kdP
         if (par.opt_kdP)
             kk = kk + 1;
@@ -210,7 +210,7 @@ function [G, Gx, Gxx] = uptake_C(par)
 
         % alpha alpha
         if (par.opt_alpha)
-            kk = kk + 1;        
+            kk = kk + 1;
             d2Gpdlog_alpha2 = alpha*L;
             Gxx(:,kk) = Gp*DIPxx(:,kk) + d2Gpdlog_alpha2*DIP + ...
                 2*d0(Gpx(:,pindx.lalpha))*DIPx(:,pindx.lalpha);
@@ -237,4 +237,3 @@ function [G, Gx, Gxx] = uptake_C(par)
         end
     end
 end
-

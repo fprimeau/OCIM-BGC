@@ -593,7 +593,7 @@ CN = QC./QN;
         % solve for the zeros of rhsFuncColim
         rhsFuncColim = @(E) (c3*E^3 + c2*E^2 + c1*E +c0);
         E0 = (EMin+EMax)/2; %starting point for solver
-        
+
         sol = fsolve_cmplx(rhsFuncColim,E0);
 		EColim = sol;
 

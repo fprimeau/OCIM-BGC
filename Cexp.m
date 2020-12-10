@@ -4,41 +4,41 @@ iter = 0 ;
 on   = true  ;
 off  = false ;
 format long
-% 
+%
 GridVer  = 91  ;
 operator = 'A' ;
 
-par.optim   = off ; 
-par.Cmodel  = on ; 
-par.Omodel  = on ; 
+par.optim   = off ;
+par.Cmodel  = on ;
+par.Omodel  = on ;
 par.Simodel = off ;
-par.LoadOpt = on ; % if load optimial par. 
+par.LoadOpt = on ; % if load optimial par.
 par.pscale  = 0.0 ;
 par.cscale  = 0.25 ; % factor to weigh DOC in the objective function
 
 % P model parameters
-par.opt_sigma = off ; 
+par.opt_sigma = off ;
 par.opt_kP_T  = on ;
 par.opt_kdP   = on ;
-par.opt_bP_T  = on ; 
+par.opt_bP_T  = on ;
 par.opt_bP    = on ;
 par.opt_alpha = on ;
 par.opt_beta  = on ;
 % C model parameters
 par.opt_bC_T  = on ;
-par.opt_bC    = on ; 
+par.opt_bC    = on ;
 par.opt_d     = on ;
 par.opt_kC_T  = on ;
-par.opt_kdC   = on ; 
-par.opt_R_Si  = on ; 
-par.opt_rR    = on ; 
+par.opt_kdC   = on ;
+par.opt_R_Si  = on ;
+par.opt_rR    = on ;
 par.opt_cc    = on ;
 par.opt_dd    = on ;
 % O model parameters
 par.opt_O2C_T = off ;
 par.opt_rO2C  = on ;
-par.opt_O2P_T = off ; 
-par.opt_rO2P  = on ; 
+par.opt_O2P_T = off ;
+par.opt_rO2P  = on ;
 % Si model parameters
 par.opt_dsi   = on  ;
 par.opt_at    = off ;
@@ -49,10 +49,10 @@ par.opt_bb    = on  ;
 %-------------load data and set up parameters---------------------
 SetUp ;
 
-% save results 
+% save results
 % ATTENTION: Change this direcrtory to where you wanna save your output files
 if ismac
-    output_dir = sprintf('~/Documents/CP-model/MSK%2d/',GridVer); 
+    output_dir = sprintf('~/Documents/CP-model/MSK%2d/',GridVer);
 elseif isunix
     % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/Cexp/']);
     output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
@@ -83,26 +83,26 @@ elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on)
     catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
     fname = strcat(base_name,catDOC);
 end
-par.fname = strcat(fname,'.mat') ; 
+par.fname = strcat(fname,'.mat') ;
 % load optimal parameters if they exist
 fxhat     = strcat(fname,'_xhat.mat');
-par.fxhat = fxhat ; 
+par.fxhat = fxhat ;
 load(par.fname) ;
 load(par.fxhat) ;
 
 %--------------------- prepare parameters ------------------
-% load optimal parameters from a file or set them to default values 
+% load optimal parameters from a file or set them to default values
 par = SetPar(par) ;
 % pack parameters into an array, assign them corresponding indices.
 par = PackPar(par) ;
 
 %------------------ extract parameters ---------------------------
 % POP disolution constant [s^-1];
-sigma = par.sigma ; 
-% linear parameter of npp to DIP assimilation function. 
-alpha = par.alpha ; 
+sigma = par.sigma ;
+% linear parameter of npp to DIP assimilation function.
+alpha = par.alpha ;
 % exponential parameter of npp to DIN assimilation function.
-beta  = par.beta ; 
+beta  = par.beta ;
 
 %------------------ prepare NPP for the model --------------------
 % DIP assimilation
@@ -116,13 +116,17 @@ DIP  = data.DIP(iwet) ;
 DIC  = data.DIC(iwet) ;
 POC  = data.POC(iwet) ;
 DOC  = data.DOC(iwet) ;
-PO4  = po4obs(iwet)   ;  
+PO4  = po4obs(iwet)   ;
 TRdiv= par.TRdiv      ;
 I    = par.I          ;
 % -------------- C:P uptake ratio --------------------------------
 W = d0(dVt(iwet)) ;
 C2P3D = M3d + nan ;
-C2P3D(iwet) = 1./(par.cc*PO4 + par.dd) ;
+if Cellmodel==on
+	C2P3D(iwet) = par.CellOut.C2P(iwet);
+else
+	C2P3D(iwet) = 1./(par.cc*PO4 + par.dd) ;
+end
 nn = 2 ;
 
 %--------------- calculate primary production --------------------
@@ -132,7 +136,7 @@ Int_CNPP = 0*M3d(:,:,1) ;
 Int_PNPP = 0*M3d(:,:,1) ;
 
 for ij = 1 : nn
-    Int_PNPP = Int_PNPP + G(:,:,ij).*grd.dzt(ij); 
+    Int_PNPP = Int_PNPP + G(:,:,ij).*grd.dzt(ij);
     Int_CNPP = Int_CNPP + G(:,:,ij).*grd.dzt(ij).*C2P3D(:,:,ij)*12;
 end
 PNPP = Int_PNPP*spa*1e-3 ;
@@ -143,7 +147,7 @@ Sum_CNPP = nansum(tem_CNPP(:))    ;
 fprintf('Model NPP is %3.3e \n',Sum_CNPP) ;
 
 %---------------- calculate phosphorus export --------------------
-PFD = buildPFD(par, 'POP') ; 
+PFD = buildPFD(par, 'POP') ;
 
 F_diag_p = inv(W)*PFD'*W   ;
 T_diag   = inv(W)*TRdiv'*W ;
@@ -155,13 +159,13 @@ Prod  = G(iwet)    ;
 % adjoint method.
 kP    = d0(par.kP_T * par.Tz + par.kdP) ;
 Jex_P = d0(kP*Prod)*(sigma*I+par.kappa_p*(1-sigma) * ...
-                     inv(F_diag_p+par.kappa_p*I))*((T_diag+kP)\Omega); 
+                     inv(F_diag_p+par.kappa_p*I))*((T_diag+kP)\Omega);
 
 P3d = M3d+nan;
 P3d(iwet) = Jex_P;
 
 %---------------- calculate carbon export -------------------------
-PFD = buildPFD(par, 'POC') ; 
+PFD = buildPFD(par, 'POC') ;
 
 F_diag_p = inv(W)*PFD'*W   ;
 T_diag   = inv(W)*TRdiv'*W ;
@@ -173,7 +177,7 @@ Prod  = G(iwet).*C2P3D(iwet) ;
 % adjoint method.
 kC    = d0(par.kC_T * par.Tz + par.kdC) ;
 Jex_C = d0(kC*Prod)*(sigma*I+par.kappa_p*(1-sigma) * ...
-                     inv(F_diag_p+par.kappa_p*I))*((T_diag+kC)\Omega); 
+                     inv(F_diag_p+par.kappa_p*I))*((T_diag+kC)\Omega);
 
 C3d = M3d+nan ;
 C3d(iwet) = Jex_C ;
@@ -280,4 +284,3 @@ fprintf('subtropical subpolar zonal mean DOC to TOC export ratio is %2.2f percen
         mean_D2T_subtro_subpo*100)
 fprintf('subpolar zonal mean DOC to TOC export ratio is %2.2f percent\n\n', ...
         mean_D2T_subpolar*100)
-
