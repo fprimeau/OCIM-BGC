@@ -76,6 +76,7 @@ if GridVer == 90
     load PME_TS_90x180x24.mat  pme
     load DICant_90x180x24.mat
     load GLODAPv2_90x180x24raw.mat
+	load raw_no3obs_90x180x24.mat   % GLODAP NO3
     load splco2_mod_monthly.mat     % monthly CO2 data
     load co2syspar90.mat co2syspar
     load cbpm_npp_annual_90x180.mat
@@ -106,6 +107,7 @@ elseif GridVer == 91
     load PME_TS_91x180x24.mat  pme
     load DICant_91x180x24.mat
     load GLODAPv2_91x180x24raw.mat
+	load raw_no3obs_91x180x24.mat  %GLODAP NO3
     load splco2_mod_monthly % monthly CO2 data
     load co2syspar91.mat co2syspar
     load cbpm_npp_annual_91x180.mat
@@ -186,7 +188,7 @@ par.po4obs  = po4obs  ;
 par.no3obs  = no3obs  ;
 par.o2raw   = o2raw   ;
 par.po4raw  = po4raw  ;
-%par.no3raw  = no3raw  ; %no3raw field not in GLODAPv2_90x180x24raw.mat
+par.no3raw  = no3raw  ; %no3raw field not in GLODAPv2_90x180x24raw.mat
 par.sio4raw = sio4raw ;
 par.DOCobs  = DOCobs  ;
 par.alkraw  = alkraw*permil ;
