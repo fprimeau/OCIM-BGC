@@ -4,7 +4,7 @@ M3d  = par.M3d    ;
 MSKS = par.MSKS   ;
 DOC  = par.DOCobs ;
 
-% Arctic Ocean 
+% Arctic Ocean
 junk = M3d ;
 junk(1:77,:,:) = 0 ;
 iARC = find(junk(:)) ;
@@ -26,7 +26,7 @@ ENATL = junk - WNATL ;
 
 iWNAtl = find(WNATL(:)) ;
 iENAtl = find(ENATL(:)) ;
-DOC(iWNAtl) = DOC(iWNAtl) - 43.6 ; 
+DOC(iWNAtl) = DOC(iWNAtl) - 43.6 ;
 DOC(iENAtl) = DOC(iENAtl) - 42.9 ;
 
 % South Atlantic

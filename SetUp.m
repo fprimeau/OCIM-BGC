@@ -82,7 +82,7 @@ if GridVer == 90
     load cbpm_npp_annual_90x180.mat
     load DOMobs_90x180x24.mat
     load kw660_90x180.mat
-	PARobs = load('annual_PAR_90x180.mat'); %PAR data in units of [W/m^2] (units converted for cell model later in SetUp)
+	PARobs = load('annual_PAR_90x180.mat'); %PAR data in units of [Einstein m-2 d-1] (units converted for cell model later in SetUp)
     if ismac
         load MSK90/fixedPO_C.mat
         load MSK90/fixedPO_O2.mat
@@ -113,6 +113,7 @@ elseif GridVer == 91
     load cbpm_npp_annual_91x180.mat
     load DOMobs_91x180x24.mat
     load kw660_91x180.mat
+	PARobs = load('annual_PAR_91x180.mat'); %PAR data in units of [Einstein m-2 d-1] (units converted for cell model later in SetUp)
     if ismac
         load MSK91/CTL_He_PCO.mat
         load MSK91/CTL_He_PCO.mat
@@ -240,25 +241,23 @@ par.ALKbar = sum(par.alkraw(iwet(ialk)).*dVt(iwet(ialk)))/sum(dVt(iwet(ialk))) ;
 par.DSibar = sum(par.sio4raw(iwet(isil)).*dVt(iwet(isil)))/sum(dVt(iwet(isil)));
 
 %------------------ Prepare Light field the model --------------------
-% PAR [W/m^2] is converted into units of photosynthetic photon flux density (PPFD) [umol photon m^-2 s^-1] using the quanta-to-energy ratio of 4.56 μmol/J (Dye 2004)
-QEratio = 4.56; % umol/J
-PAR_PPFD = PARobs.par*QEratio;
+par.nzo = 2;
+% PAR [Einstein m-2 d-1] is converted into units of [umol photon m^-2 s^-1] for cell model
+PARobs_PPFD = PARobs.par*10^6/spd; % PAR at surface
 clear PARobs
 
-% Surface PAR values extrapolated for first 3 layers
-% (NEED TO make general to Euphotic Zone for any grid)
 par.kI = 0.04;   % Light attenuation coefficient in seawater [m^-1]
 	PAR        = 0*M3d;
-	PAR(:,:,1) = PARobs_PPFD; % PAR at surface
-	PAR(:,:,2) = PARobs_PPFD.*exp(-par.kI*grd.dzt(1)); %PAR at top of grid box 2
-	PAR(:,:,3) = PARobs_PPFD.*exp(-par.kI*(grd.dzt(1)+grd.dzt(2))); %PAR at top of grid box 3
-	htmp = grd.dzt(1)+grd.dzt(2)+grd.dzt(3);
-	PAR(:,:,4) = PARobs_PPFD.*exp(-par.kI*htmp); %PAR at top of grid box 4
+	for ii=1:par.nzo % only needed in euphotic zone for cell growth
+		PAR(:,:,ii) = PARobs_PPFD.*exp(-par.kI*grd.zt(ii)); %PAR at mid depth of grid box [ii]
+	end
+	%PAR(:,:,1) = PARobs_PPFD.*exp(-par.kI*grd.zt(1)); %PAR at mid depth of grid box 1
+	%PAR(:,:,2) = PARobs_PPFD.*exp(-par.kI*grd.zt(2)); %PAR at mid depth of grid box 2
+	%PAR(:,:,3) = PARobs_PPFD.*exp(-par.kI*grd.zt(3)); %PAR at mid depth of grid box 3
 par.PARobs = PAR;
-		clear PAR htmp
+		clear PAR
 	% average PAR from surface to bottom of grid box 1
-	%htmp = grd.dzt(1);
-	%PAR(:,:,1)=PARobs_PPFD./(par.kI*htmp).*(1-exp(-par.kI*htmp));
+	%PAR(:,:,1)=PARobs_PPFD./(par.kI*grd.dzt(1)).*(1-exp(-par.kI*grd.dzt(1)));
 
 %------------------ prepare NPP for the model --------------------
 par.nzo = 2 ;
