@@ -19,40 +19,29 @@ function [out,M] = CellCNP(par,x,P,N,T,Irr)
 	nbx = 0; % count number of C model tunable parameters;
 
 	%Q10Photo
-	if (M.opt_Q10Photo == on)
-	    nbx = nbx + 1;
+	if (par.opt_Q10Photo == on)
 	    lQ10Photo  = x(par.pindx.lQ10Photo);
 		M.Q10Photo  = exp(lQ10Photo);
-	else
-	    M.Q10Photo = M.Q10Photo;
-	end
-	%fRibE
-	if (par.BIO.opt_fRibE == on)
-		nbx = nbx + 1;
-		lfRibE = x(par.pindx.lfRibE);
-		M.fRibE = exp(lfRibE);
-	else
-		M.fRibE = M.fRibE;
-	end
-	%fStorage
-	if (M.opt_fStorage == on)
-		nbx = nbx + 1;
-		lfStorage = x(par.pindx.lfStorage);
-		M.fStorage = exp(lfStorage);
-	else
-		M.fStorage =M.fStorage;
-	end
-	%kST0
-	if (par.BIO.opt_kST0 == on);
-		nbx = nbx + 1;
-		lkST0 = x(par.pindx.lkST0);
-		M.kST0 = exp(lkST0);
-	else
-		M.kST0 =M.kST0;
 	end
 
-	% return number count back to neglogpost
-	par.nbx = nbx;
+	%fRibE
+	if (par.opt_fRibE == on)
+		lfRibE = x(par.pindx.lfRibE);
+		M.fRibE = exp(lfRibE);
+	end
+
+	%fStorage
+	if (par.opt_fStorage == on)
+		lfStorage = x(par.pindx.lfStorage);
+		M.fStorage = exp(lfStorage);
+	end
+
+	%kST0
+	if (par.opt_kST0 == on);
+		lkST0 = x(par.pindx.lkST0);
+		M.kST0 = exp(lkST0);
+	end
+
 
   % Read in parameter values from par
 		 %%% optimize these first %%%
@@ -368,7 +357,7 @@ dE_dCI = all_nan;
 %% loop through points to calculate cell quotas
 for i =1:length(P)
 if ~isnan(Irr(i)) & ~isnan(T(i)) & ~isnan(P(i)) & ~isnan(N(i)) & (P(i)>0)
-	disp(i)
+	%disp(i)
     if muNLim(i)<muPLim(i)
         if muNLim(i)<muNLim_P(i) % N Limitation
             LimState = 0;

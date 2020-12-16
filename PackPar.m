@@ -254,7 +254,7 @@ function par = PackPar(par)
 			p0 = [p0; lfStorage]		;
 			par.pindx.lfStorage = strt : length(p0);
 		end
-		if (par.BIO.opt_kST0 == on);
+		if (par.opt_kST0 == on);
 			nbx  = nbx + 1        		;
 			lkST0 = log(par.BIO.kST0)	;
 			strt = length(p0) + 1		;

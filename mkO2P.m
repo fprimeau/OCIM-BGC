@@ -1,17 +1,17 @@
 function vout = mkO2P(par)
 % parameters
     on   = true    ; off = false    ;
-    if par.opt_O2P_T == on 
+    if par.opt_O2P_T == on
         O2P_T = par.O2P_T ;
     else
         O2P_T = 0 ;
-    end 
+    end
     rO2P  = par.rO2P  ;
     %
     iwet = par.iwet ;
     nwet = par.nwet ;
     Temp = par.Temp ;
-    
+
     smsk = par.M3d  ;
     smsk(:,:,2:end) = 0 ;
     isrf = find(smsk(iwet))    ;

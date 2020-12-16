@@ -4,43 +4,43 @@ iter = 0 ;
 on   = true  ;
 off  = false ;
 format long
-% 
+%
 GridVer  = 91  ;
 operator = 'A' ;
 
 Gtest = off ;
 Htest = off ;
-par.optim   = on ; 
-par.Cmodel  = on ; 
-par.Omodel  = on ; 
+par.optim   = on ;
+par.Cmodel  = on ;
+par.Omodel  = on ;
 par.Simodel = off ;
-par.LoadOpt = on ; % if load optimial par. 
+par.LoadOpt = on ; % if load optimial par.
 par.pscale  = 0.0 ;
 par.cscale  = 0.25 ; % factor to weigh DOC in the objective function
 
 % P model parameters
-par.opt_sigma = on ; 
+par.opt_sigma = on ;
 par.opt_kP_T  = off ;
 par.opt_kdP   = on ;
-par.opt_bP_T  = off ; 
+par.opt_bP_T  = off ;
 par.opt_bP    = on ;
 par.opt_beta  = on ;
 par.opt_alpha = on ;
 % C model parameters
 par.opt_bC_T  = off ;
-par.opt_bC    = on ; 
+par.opt_bC    = on ;
 par.opt_d     = on ;
 par.opt_kC_T  = off ;
-par.opt_kdC   = on ; 
-par.opt_R_Si  = off ; 
-par.opt_rR    = on ; 
+par.opt_kdC   = on ;
+par.opt_R_Si  = off ;
+par.opt_rR    = on ;
 par.opt_cc    = on ;
 par.opt_dd    = on ;
 % O model parameters
 par.opt_O2C_T = off ;
 par.opt_rO2C  = on ;
-par.opt_O2P_T = off ; 
-par.opt_rO2P  = on ; 
+par.opt_O2P_T = off ;
+par.opt_rO2P  = on ;
 % Si model parameters
 par.opt_dsi   = on  ;
 par.opt_at    = off ;
@@ -51,11 +51,11 @@ par.opt_bb    = on  ;
 %-------------load data and set up parameters---------------------
 SetUp ;
 
-% save results 
+% save results
 % ATTENTION: Change this direcrtory to where you wanna
 % save your output files
 if ismac
-    output_dir = sprintf('~/Documents/CP-model/MSK%2d/',GridVer); 
+    output_dir = sprintf('~/Documents/CP-model/MSK%2d/',GridVer);
 elseif isunix
     output_dir = sprintf('/DFS-L/DATA/primeau/weilewang/Cexp/');
     % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
@@ -88,13 +88,13 @@ elseif Gtest == off
         fname = strcat(base_name,catDOC);
     end
 end
-par.fname = strcat(fname,'.mat') ; 
+par.fname = strcat(fname,'.mat') ;
 % load optimal parameters if they exist
 par.fxhat = strcat(fname,'_xhat.mat');
 load(par.fxhat) ;
 load(par.fname) ;
 %--------------------- prepare parameters ------------------
-% load optimal parameters from a file or set them to default values 
+% load optimal parameters from a file or set them to default values
 par = SetPar(par) ;
 % pack parameters into an array, assign them corresponding indices.
 par = PackPar(par) ;
@@ -121,13 +121,13 @@ elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off)
     else
         sig = (2*xhat.f)/(ndip+ndic);
         HH  = xhat.fxx/sig  ;
-    end 
+    end
 elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off)
     sig = (2*xhat.f)/(ndip+ndic+no2);
     HH  = xhat.fxx/sig  ;
 elseif (par.Cmodel == off & par.Omodel == off & par.Simodel == on)
     sig = (2*xhat.f)/(ndip+nsil);
-    HH  = xhat.fxx/sig  ; 
+    HH  = xhat.fxx/sig  ;
 elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on)
     sig = (2*xhat.f)/(ndip+ndic+no2+nsil) ;
     HH  = xhat.fxx/sig  ;
@@ -142,7 +142,7 @@ R.upbar  = zeros(n, 1) ;
 R.lowbar = zeros(n, 1) ;
 name = cell(n, 1) ;
 if exist('xhat') & isfield(xhat,'sigma')
-    nx = nx + 1 ; 
+    nx = nx + 1 ;
     sigma = xhat.sigma ;
     sigma_up = exp(log(sigma)+error(pindex.lsigma)) - sigma;
     sigma_lo = sigma - exp(log(sigma)-error(pindex.lsigma));
@@ -153,7 +153,7 @@ if exist('xhat') & isfield(xhat,'sigma')
 end
 
 if exist('xhat') & isfield(xhat,'kP_T')
-    nx = nx + 1 ; 
+    nx = nx + 1 ;
     kP_T = xhat.kP_T ;
     kP_T_up  = (kP_T+error(pindex.kP_T)) - kP_T;
     kP_T_lo  = kP_T - (kP_T-error(pindex.kP_T));
@@ -161,10 +161,10 @@ if exist('xhat') & isfield(xhat,'kP_T')
     R.xhat(nx)   = kP_T    ;
     R.upbar(nx)  = kP_T_up ;
     R.lowbar(nx) = kP_T_lo ;
-end 
+end
 
 if exist('xhat') & isfield(xhat,'kdP')
-    nx = nx + 1 ; 
+    nx = nx + 1 ;
     kdP = xhat.kdP ;
     kdP_up = exp(log(kdP)+error(pindex.lkdP)) - kdP ;
     kdP_lo = kdP - exp(log(kdP)-error(pindex.lkdP)) ;
@@ -172,10 +172,10 @@ if exist('xhat') & isfield(xhat,'kdP')
     R.xhat(nx)   = kdP    ;
     R.upbar(nx)  = kdP_up ;
     R.lowbar(nx) = kdP_lo ;
-end 
+end
 
 if exist('xhat') & isfield(xhat,'bP_T')
-    nx = nx + 1 ; 
+    nx = nx + 1 ;
     bP_T = xhat.bP_T ;
     bP_T_up = (bP_T+error(pindex.bP_T)) - bP_T;
     bP_T_lo = bP_T - (bP_T-error(pindex.bP_T));
@@ -183,10 +183,10 @@ if exist('xhat') & isfield(xhat,'bP_T')
     R.xhat(nx)   = bP_T    ;
     R.upbar(nx)  = bP_T_up ;
     R.lowbar(nx) = bP_T_lo ;
-end 
+end
 
 if exist('xhat') & isfield(xhat,'bP')
-    nx = nx + 1 ; 
+    nx = nx + 1 ;
     bP  = xhat.bP ;
     bP_up = exp(log(bP)+error(pindex.lbP)) - bP;
     bP_lo = bP - exp(log(bP)-error(pindex.lbP));
@@ -194,10 +194,10 @@ if exist('xhat') & isfield(xhat,'bP')
     R.xhat(nx)   = bP    ;
     R.upbar(nx)  = bP_up ;
     R.lowbar(nx) = bP_lo ;
-end 
+end
 
 if exist('xhat') & isfield(xhat,'alpha')
-    nx = nx + 1 ; 
+    nx = nx + 1 ;
     alpha = xhat.alpha ;
     alpha_up = exp(log(alpha)+error(pindex.lalpha)) - alpha;
     alpha_lo = alpha - exp(log(alpha)-error(pindex.lalpha));
@@ -205,10 +205,10 @@ if exist('xhat') & isfield(xhat,'alpha')
     R.xhat(nx)   = alpha    ;
     R.upbar(nx)  = alpha_up ;
     R.lowbar(nx) = alpha_lo ;
-end 
+end
 
 if exist('xhat') & isfield(xhat,'beta')
-    nx = nx + 1 ; 
+    nx = nx + 1 ;
     beta = xhat.beta ;
     beta_up = exp(log(beta)+error(pindex.lbeta)) - beta;
     beta_lo = beta - exp(log(beta)-error(pindex.lbeta));
@@ -216,11 +216,11 @@ if exist('xhat') & isfield(xhat,'beta')
     R.xhat(nx)   = beta    ;
     R.upbar(nx)  = beta_up ;
     R.lowbar(nx) = beta_lo ;
-end 
+end
 
-% C model parameters                                      
+% C model parameters
 if exist('xhat') & isfield(xhat,'bC_T')
-    nx = nx + 1 ; 
+    nx = nx + 1 ;
     bC_T = xhat.bC_T ;
     bC_T_up = (bC_T+error(pindex.bC_T)) - bC_T;
     bC_T_lo = bC_T - (bC_T-error(pindex.bC_T));
@@ -228,10 +228,10 @@ if exist('xhat') & isfield(xhat,'bC_T')
     R.xhat(nx)   = bC_T    ;
     R.upbar(nx)  = bC_T_up ;
     R.lowbar(nx) = bC_T_lo ;
-end 
+end
 
 if exist('xhat') & isfield(xhat,'bC')
-    nx = nx + 1 ; 
+    nx = nx + 1 ;
     bC = xhat.bC ;
     bC_up = exp(log(bC)+error(pindex.lbC)) - bC;
     bC_lo = bC - exp(log(bC)-error(pindex.lbC));
@@ -239,10 +239,10 @@ if exist('xhat') & isfield(xhat,'bC')
     R.xhat(nx)   = bC    ;
     R.upbar(nx)  = bC_up ;
     R.lowbar(nx) = bC_lo ;
-end 
+end
 
 if exist('xhat') & isfield(xhat,'d')
-    nx = nx + 1 ; 
+    nx = nx + 1 ;
     d = xhat.d   ;
     d_up = exp(log(d)+error(pindex.ld)) - d;
     d_lo = d - exp(log(d)-error(pindex.ld));
@@ -250,10 +250,10 @@ if exist('xhat') & isfield(xhat,'d')
     R.xhat(nx)   = d    ;
     R.upbar(nx)  = d_up ;
     R.lowbar(nx) = d_lo ;
-end 
+end
 
 if exist('xhat') & isfield(xhat,'kC_T')
-    nx = nx + 1 ; 
+    nx = nx + 1 ;
     kC_T = xhat.kC_T;
     kC_T_up = (kC_T+error(pindex.kC_T)) - kC_T;
     kC_T_lo = kC_T - (kC_T-error(pindex.kC_T));
@@ -261,10 +261,10 @@ if exist('xhat') & isfield(xhat,'kC_T')
     R.xhat(nx)   = kC_T    ;
     R.upbar(nx)  = kC_T_up ;
     R.lowbar(nx) = kC_T_lo ;
-end 
+end
 
 if exist('xhat') & isfield(xhat,'kdC')
-    nx  = nx + 1 ; 
+    nx  = nx + 1 ;
     kdC = xhat.kdC ;
     kdC_up = exp(log(kdC)+error(pindex.lkdC)) - kdC;
     kdC_lo = kdC - exp(log(kdC)-error(pindex.lkdC));
@@ -272,10 +272,10 @@ if exist('xhat') & isfield(xhat,'kdC')
     R.xhat(nx)   = kdC    ;
     R.upbar(nx)  = kdC_up ;
     R.lowbar(nx) = kdC_lo ;
-end 
+end
 
 if exist('xhat') & isfield(xhat,'R_Si')
-    nx = nx + 1 ; 
+    nx = nx + 1 ;
     R_Si = xhat.R_Si  ;
     R_Si_up = error(pindex.R_Si) ;
     R_Si_lo = error(pindex.R_Si) ;
@@ -286,7 +286,7 @@ if exist('xhat') & isfield(xhat,'R_Si')
 end
 
 if exist('xhat') & isfield(xhat,'rR')
-    nx = nx + 1 ; 
+    nx = nx + 1 ;
     rR = xhat.rR  ;
     rR_up = exp(log(rR)+error(pindex.lrR)) - rR;
     rR_lo = rR - exp(log(rR)-error(pindex.lrR));
@@ -297,7 +297,7 @@ if exist('xhat') & isfield(xhat,'rR')
 end
 
 if exist('xhat') & isfield(xhat,'cc')
-    nx = nx + 1 ; 
+    nx = nx + 1 ;
     cc = xhat.cc  ;
     cc_up = exp(log(cc)+error(pindex.lcc)) - cc;
     cc_lo = cc - exp(log(cc)-error(pindex.lcc));
@@ -305,9 +305,9 @@ if exist('xhat') & isfield(xhat,'cc')
     R.xhat(nx)   = cc    ;
     R.upbar(nx)  = cc_up ;
     R.lowbar(nx) = cc_lo ;
-end 
+end
 if exist('xhat') & isfield(xhat,'dd')
-    nx = nx + 1 ; 
+    nx = nx + 1 ;
     dd = xhat.dd  ;
     dd_up = exp(log(dd)+error(pindex.ldd)) - dd;
     dd_lo = dd - exp(log(dd)-error(pindex.ldd));
@@ -315,11 +315,11 @@ if exist('xhat') & isfield(xhat,'dd')
     R.xhat(nx)   = dd    ;
     R.upbar(nx)  = dd_up ;
     R.lowbar(nx) = dd_lo ;
-end 
+end
 %
 % O model parameters
 if exist('xhat') & isfield(xhat,'O2C_T')
-    nx = nx + 1 ; 
+    nx = nx + 1 ;
     O2C_T = xhat.O2C_T ;
     O2C_T_up = (O2C_T+error(pindex.O2C_T)) - O2C_T;
     O2C_T_lo = O2C_T - (O2C_T-error(pindex.O2C_T));
@@ -330,7 +330,7 @@ if exist('xhat') & isfield(xhat,'O2C_T')
 end
 
 if exist('xhat') & isfield(xhat,'rO2C')
-    nx = nx + 1 ; 
+    nx = nx + 1 ;
     rO2C = xhat.rO2C ;
     rO2C_up = exp(log(rO2C)+error(pindex.lrO2C)) - rO2C;
     rO2C_lo = rO2C - exp(log(rO2C)-error(pindex.lrO2C));
@@ -338,10 +338,10 @@ if exist('xhat') & isfield(xhat,'rO2C')
     R.xhat(nx)   = rO2C    ;
     R.upbar(nx)  = rO2C_up ;
     R.lowbar(nx) = rO2C_lo ;
-end 
+end
 
 if exist('xhat') & isfield(xhat,'O2P_T')
-    nx = nx + 1 ; 
+    nx = nx + 1 ;
     O2P_T = xhat.O2P_T ;
     O2P_T_up = (O2P_T+error(pindex.O2P_T)) - O2P_T;
     O2P_T_lo = O2P_T - (O2P_T-error(pindex.O2P_T));
@@ -352,7 +352,7 @@ if exist('xhat') & isfield(xhat,'O2P_T')
 end
 
 if exist('xhat') & isfield(xhat,'rO2P')
-    nx = nx + 1 ; 
+    nx = nx + 1 ;
     rO2P = xhat.rO2P ;
     rO2P_up = exp(log(rO2P)+error(pindex.lrO2P)) - rO2P;
     rO2P_lo = rO2P - exp(log(rO2P)-error(pindex.lrO2P));
@@ -360,11 +360,11 @@ if exist('xhat') & isfield(xhat,'rO2P')
     R.xhat(nx)   = rO2P    ;
     R.upbar(nx)  = rO2P_up ;
     R.lowbar(nx) = rO2P_lo ;
-end 
+end
 %
 % Si model parameters
 if exist('xhat') & isfield(xhat,'dsi')
-    nx = nx + 1 ; 
+    nx = nx + 1 ;
     dsi = xhat.dsi ;
     dsi_up = exp(log(dsi)+error(pindex.ldsi)) - dsi;
     dsi_lo = dsi - exp(log(dsi)-error(pindex.ldsi));
@@ -375,7 +375,7 @@ if exist('xhat') & isfield(xhat,'dsi')
 end
 
 if exist('xhat') & isfield(xhat,'at')
-    nx = nx + 1 ; 
+    nx = nx + 1 ;
     at = xhat.at   ;
     at_up = exp(log(at)+error(pindex.lat)) - at;
     at_lo = at - exp(log(at)-error(pindex.lat));
@@ -383,10 +383,10 @@ if exist('xhat') & isfield(xhat,'at')
     R.xhat(nx)   = at    ;
     R.upbar(nx)  = at_up ;
     R.lowbar(nx) = at_lo ;
-end 
+end
 
 if exist('xhat') & isfield(xhat,'bt')
-    nx = nx + 1 ; 
+    nx = nx + 1 ;
     bt = xhat.bt   ;
     bt_up = exp(log(bt)+error(pindex.lbt)) - bt;
     bt_lo = bt - exp(log(bt)-error(pindex.lbt));
@@ -397,7 +397,7 @@ if exist('xhat') & isfield(xhat,'bt')
 end
 
 if exist('xhat') & isfield(xhat,'aa')
-    nx = nx + 1 ; 
+    nx = nx + 1 ;
     aa = xhat.aa   ;
     aa_up = exp(log(aa)+error(pindex.laa)) - aa;
     aa_lo = aa - exp(log(aa)-error(pindex.laa));
@@ -408,7 +408,7 @@ if exist('xhat') & isfield(xhat,'aa')
 end
 
 if exist('xhat') & isfield(xhat,'bb')
-    nx = nx + 1 ; 
+    nx = nx + 1 ;
     bb = xhat.bb   ;
     bb_up = exp(log(bb)+error(pindex.lbb)) - bb;
     bb_lo = bb - exp(log(bb)-error(pindex.lbb));
@@ -416,7 +416,7 @@ if exist('xhat') & isfield(xhat,'bb')
     R.xhat(nx)   = bb    ;
     R.upbar(nx)  = bb_up ;
     R.lowbar(nx) = bb_lo ;
-end 
+end
 
 xhat   = R.xhat       ;
 upbar  = R.upbar      ;

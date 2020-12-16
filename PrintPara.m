@@ -238,7 +238,7 @@ function PrintPara(x, par);
     if (par.Cellmodel==on)
         if (par.opt_Q10Photo == on)
             iQ10Photo = par.pindx.lQ10Photo;
-            fprintf('current Q10Photo     is  % 3.2e \n', exp(x(iQ10Phooto)));
+            fprintf('current Q10Photo     is  % 3.2e \n', exp(x(iQ10Photo)));
             xhat.Q10Photo = exp(x(iQ10Photo));
         end
 		if (par.opt_fStorage == on)

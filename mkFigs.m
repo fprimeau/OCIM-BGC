@@ -2,15 +2,15 @@ clc; clear all; close all
 on = true;      off = false;
 spd  = 24*60^2; spa  = 365*spd;
 % addpath according to opterating system
-if ismac 
+if ismac
     addpath('~/Dropbox/myfunc'     )
     addpath('~/Documents/DATA/'    )
     addpath('~/Documents/DATA/OCIM')
-else 
+else
     addpath('/DFS-L/DATA/primeau/weilewang/DATA')
     addpath('/DFS-L/DATA/primeau/weilewang/my_func')
     addpath('/DFS-L/DATA/primeau/weilewang/DATA/OCIM2')
-end 
+end
 format long
 %
 Cmodel  = on ;
@@ -23,7 +23,7 @@ GridVer   = 91 ;
 operator = 'A' ;
 if GridVer == 90
     TRdivVer = 'Tv4' ;
-elseif GridVer == 91 
+elseif GridVer == 91
     switch(operator)
       case 'A'
         TRdivVer = 'CTL_He'   ;
@@ -47,14 +47,14 @@ elseif GridVer == 91
         TRdivVer = 'KvHIGH_noHe';
       case 'K'
         TRdivVer = 'KvHIGH_KiHIGH_noHe';
-    end 
-end 
+    end
+end
 
 % save results
 % ATTENTION: please change this directory to where you wanna
 if ismac
-    input_dir = sprintf('~/Documents/CP-model/MSK%2d/',GridVer); 
-elseif isunix 
+    input_dir = sprintf('~/Documents/CP-model/MSK%2d/',GridVer);
+elseif isunix
     % input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
     % 'MSK%2d/'],GridVer);
     input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
@@ -94,7 +94,7 @@ if GridVer == 90
     load tempobs_90x180x24.mat
     load Siobs_90x180x24.mat Siobs
     load po4obs_90x180x24.mat
-    grd  = grid; 
+    grd  = grid;
 elseif GridVer == 91
     OperName = sprintf('OCIM2_%s',TRdivVer);
     load(OperName,'output') ;
@@ -110,13 +110,13 @@ end
 load(fxhat)
 iwet = find(M3d(:))   ;
 nwet = length(iwet)   ;
-I    = speye(nwet)    ;  
-PO4  = po4obs(iwet)   ;  
+I    = speye(nwet)    ;
+PO4  = po4obs(iwet)   ;
 dAt  = grd.DXT3d.*grd.DYT3d ;
 dVt  = dAt.*grd.DZT3d ;
 dzt  = grd.dzt;
 
-kappa_p    = 1/(720*60^2)   ;   
+kappa_p    = 1/(720*60^2)   ;
 par.taup   = 720*60^2    ; % (s) pic dissolution time-scale
 par.tau_TA = 1./par.taup ;
 par.tauPIC = (1/0.38)*spd;
@@ -132,9 +132,9 @@ par.Temp   = tempobs ;
 
 % ------------------- normalize temperature -------------
 for ji = 1:24
-    t2d = par.Temp(:,:,ji); 
+    t2d = par.Temp(:,:,ji);
     par.Temp(:,:,ji) = smoothit(grd,M3d,t2d,3,1e5);
-end 
+end
 vT = par.Temp(iwet) ;
 Tz = (vT - min(vT))./(max(vT) - min(vT)) ;
 % Tz = zscore(vT)  ;
@@ -146,22 +146,22 @@ nfig = 0;
 if isfield(xhat,'bP_T')
     nfig = nfig + 1;
     figure(nfig)
-    bP   = xhat.bP   ;    
+    bP   = xhat.bP   ;
     bP_T = xhat.bP_T ;
     bP2D = bP_T*aveT + bP   ;
-    pcolor(bP2D) ; colorbar ; shading flat 
+    pcolor(bP2D) ; colorbar ; shading flat
     title('b4P')
     % saveas(gcf,'Figs91/b4P.png')
 end
-    
+
 if isfield(xhat,'kP_T')
     nfig = nfig + 1  ;
-    figure(nfig) 
+    figure(nfig)
     kP_T  = xhat.kP_T ;
     kdP   = xhat.kdP  ;
-    
+
     kP3d = M3d + nan ;
-    kP3d(iwet) = (1./(kP_T * Tz * 1e-8 + kdP))/spd ; 
+    kP3d(iwet) = (1./(kP_T * Tz * 1e-8 + kdP))/spd ;
     pcolor(kP3d(:,:,2));colorbar;shading flat
     % caxis([80 140])
     title('ka4P')
@@ -169,20 +169,20 @@ if isfield(xhat,'kP_T')
 end
 
 if Cmodel == on
-    % DOP remineralization rate constant. 
+    % DOP remineralization rate constant.
     if isfield(xhat,'bC_T')
         nfig = nfig + 1        ;
         figure(nfig)
         bC   = xhat.bC   ;
         bC_T = xhat.bC_T ;
-        
-        bC2D = bC_T*aveT + bC  ; 
+
+        bC2D = bC_T*aveT + bC  ;
         pcolor(bC2D); colorbar ; shading flat
         title('b4C')
         % saveas(gcf,'Figs91/b4C.png')
-    end 
+    end
 
-    if isfield(xhat,'R_Si') 
+    if isfield(xhat,'R_Si')
         nfig = nfig + 1  ;
         figure(nfig)
         par.DSi  = Siobs     ;
@@ -198,13 +198,13 @@ if Cmodel == on
         % saveas(gcf,'Figs91/kappa4C.png')
     end
 
-    if isfield(xhat,'kC_T') 
+    if isfield(xhat,'kC_T')
         nfig = nfig + 1  ;
         figure(nfig)
         kC_T = xhat.kC_T ;
         kdC  = xhat.kdC  ;
         kC3d = M3d + nan ;
-        kC3d(iwet) = (1./(kC_T * Tz * 1e-8 + kdC))/spd; 
+        kC3d(iwet) = (1./(kC_T * Tz * 1e-8 + kdC))/spd;
         pcolor(kC3d(:,:,2));colorbar;shading flat
         % caxis([100 600])
         title('kd4C')
@@ -216,13 +216,13 @@ if Cmodel == on
         figure(nfig)
         cc   = xhat.cc   ;
         dd   = xhat.dd   ;
-        
+
         C2P = M3d + nan  ;
         C2P(iwet)  = 1./(cc*PO4 + dd) ;
         pcolor(C2P(:,:,1)); colorbar;shading flat
         title('C:P uptake ratio')
         % saveas(gcf,'Figs91/CP ratio.png')
-    end 
+    end
 end
 
 if Omodel == on
@@ -232,10 +232,10 @@ if Omodel == on
         O2C_T = xhat.O2C_T ;
         rO2C  = xhat.rO2C  ;
         O2C   = M3d + nan  ;
-        O2C(iwet) = (O2C_T * Tz + rO2C) ; 
+        O2C(iwet) = (O2C_T * Tz + rO2C) ;
         pcolor(O2C(:,:,10)); colorbar; shading flat
         title('O2C consumption ratio')
-    end 
+    end
 
     if isfield(xhat,'O2P_T')
         par.opt_O2P_T = on      ;
@@ -248,7 +248,7 @@ if Omodel == on
         O2P(iwet) = vout.O2P    ;
         pcolor(nanmean(O2P(:,:,1:2),3)); colorbar; shading flat
         title('O2 production to P ratio')
-    end 
+    end
 end
 
 if Simodel == on
@@ -258,11 +258,11 @@ if Simodel == on
     Z     = Siobs(iwet)     ;
     mu    = surface_mean(Z) ;
     Delta = sqrt(surface_mean((Z-mu).^2)) ;
-    
+
     % standardize the regressor variables
     ZR = 0.5+0.5*tanh((Z-mu)/Delta) ;
     %
     Si2C = (aa*ZR + bb)./Z ;
     figure(nfig)
     pcolor(Si2C);colorbar; shading flat;
-end 
+end

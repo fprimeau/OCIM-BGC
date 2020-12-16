@@ -54,12 +54,12 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
     isrf = find(smsk(iwet));
     dVs = par.dVt(iwet(isrf));
     surface_mean = @(x) sum(x(isrf).*dVs)/sum(dVs);
-    
+
     % % commentmpute the mean of the regressor variable
     Z = SI4;
     mu = surface_mean(Z);
     Delta = sqrt(surface_mean((Z-mu).^2));
-    
+
     % standardize the regressor variables
     ZR = 0.5+0.5*tanh((Z-mu)/Delta);
     % ZR = (Z-min(Z(isrf)))./(max(Z(isrf))-min(Z(isrf)));
@@ -77,13 +77,13 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
     % +++++++++++++++++++++++++++++++++++++++++
     % F = ([TRdiv*DSi + G*Si2C*DSi - kappa_si*bSi + kappa_g*(DSi-DSibar);...
     % PFdiv*bSi - G*Si2C*DSi + kappa_si*bSi]);
-    tic 
+    tic
     Jac = [[TRdiv+kappa_g*I+d0(G*Si2C), -d0(kappa_si)];...
            [                -d0(G*Si2C),  PFdiv+d0(kappa_si)]];
-    
+
     RHS = [[DSibar*kappa_g]; ...
            [sparse(nwet,1)]];
-    
+
     FD = mfactor(Jac);
     Si = mfactor(FD,RHS);
     DSi = Si(1:nwet);
@@ -99,60 +99,60 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
         if (par.opt_sigma == on)
             tmp =  [-d0(Gx(:,pindx.lsigma))*DSi.*Si2C;...
                     d0(Gx(:,pindx.lsigma))*DSi.*Si2C]   ;
-            
+
             Six(:,pindx.lsigma) = mfactor(FD, tmp);
         end
-        
+
         % bP
         if (par.opt_bP == on)
             tmp = [-d0(Gx(:,pindx.lbP))*DSi.*Si2C ;...
                    d0(Gx(:,pindx.lbP))*DSi.*Si2C]   ;
-            
+
             Six(:,pindx.lbP) = mfactor(FD, tmp);
         end
-        
+
         % bP_T
         if (par.opt_bP_T == on)
             tmp = [-d0(Gx(:,pindx.bP_T))*DSi.*Si2C ;...
                    d0(Gx(:,pindx.bP_T))*DSi.*Si2C];
-            
+
             Six(:,pindx.bP_T) = mfactor(FD, tmp);
         end
-        
+
         % kdP
         if (par.opt_kdP == on)
             tmp = [-d0(Gx(:,pindx.lkdP))*DSi.*Si2C;...
                    d0(Gx(:,pindx.lkdP))*DSi.*Si2C];
-            
+
             Six(:,pindx.lkdP) = mfactor(FD, tmp);
         end
-        
+
         % alpha
         if (par.opt_alpha == on)
             tmp = [-d0(Gx(:,pindx.lalpha))*DSi.*Si2C; ...
                    d0(Gx(:,pindx.lalpha))*DSi.*Si2C];
-            
+
             Six(:,pindx.lalpha) = mfactor(FD, tmp);
         end
-        
+
         % beta
         if (par.opt_beta == on)
             tmp = [-d0(Gx(:,pindx.lbeta))*DSi.*Si2C; ...
                    d0(Gx(:,pindx.lbeta))*DSi.*Si2C];
-            
+
             Six(:,pindx.lbeta) = mfactor(FD, tmp);
         end
-        
+
         % dsi
         if (par.opt_dsi == on)
             [~,Gout] = buildPFD(par,'bSi');
             PFD_dsi = Gout.PFD_d;
             par.PFD_dsi = PFD_dsi;
             tmp = dsi*[bSi*0;  -PFD_dsi*bSi];
-            
+
             Six(:,pindx.ldsi) = mfactor(FD, tmp);
         end
-        
+
         % at
         if (par.opt_at == on)
             [~,Gout] = buildPFD(par,'bSi');
@@ -162,10 +162,10 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
             par.k_at = k_at;
             tmp = at*[k_at*bSi; ...
                       -(k_at+PFD_at)*bSi];
-            
+
             Six(:,pindx.lat) = mfactor(FD, tmp);
         end
-        
+
         % bt
         if (par.opt_bt == on)
             [~,Gout] = buildPFD(par,'bSi');
@@ -175,23 +175,23 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
             par.k_bt   = k_bt;
             tmp = bt*[k_bt*bSi; ...
                       -(k_bt+PFD_bt)*bSi];
-            
+
             Six(:,pindx.lbt) = mfactor(FD, tmp);
         end
-        
+
         % aa
         if (par.opt_aa == on)
             tmp = [-d0(G*DSi)*dSi2Cdaa; ...
                    d0(G*DSi)*dSi2Cdaa];
-            
+
             Six(:,pindx.aa) = mfactor(FD, tmp);
         end
-        
+
         % bb
         if (par.opt_bb == on)
             tmp = bb*[-d0(G*DSi)*dSi2Cdbb; ...
                       d0(G*DSi)*dSi2Cdbb];
-            
+
             Six(:,pindx.lbb) = mfactor(FD, tmp);
         end
     end
@@ -200,7 +200,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
     %% ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     if (par.optim == off)
         Sixx = [];
-    else 
+    else
         nx = par.npx + par.nsx;
         ncs = nchoosek(nx,2)+nx;
         Sixx = sparse(2*nwet,ncs);
@@ -218,7 +218,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
                    d0(Gxx(:,kk))*DSi.*Si2C] + ...
                   2*[-d0(Gx(:,pindx.lsigma))*DSix(:,pindx.lsigma).*Si2C;...
                      d0(Gx(:,pindx.lsigma))*DSix(:,pindx.lsigma).*Si2C];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
@@ -230,7 +230,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
                    d0(Gx(:,pindx.lsigma))*DSix(:,pindx.lkdP).*Si2C] + ...
                   [-d0(Gx(:,pindx.lkdP))*DSix(:,pindx.lsigma).*Si2C;...
                    d0(Gx(:,pindx.lkdP))*DSix(:,pindx.lsigma).*Si2C];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
@@ -242,7 +242,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
                    d0(Gx(:,pindx.lsigma))*DSix(:,pindx.bP_T).*Si2C] + ...
                   [-d0(Gx(:,pindx.bP_T))*DSix(:,pindx.lsigma).*Si2C;...
                    d0(Gx(:,pindx.bP_T))*DSix(:,pindx.lsigma).*Si2C];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
@@ -254,7 +254,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
                    d0(Gx(:,pindx.lsigma))*DSix(:,pindx.lbP).*Si2C]+...
                   [-d0(Gx(:,pindx.lbP))*DSix(:,pindx.lsigma).*Si2C;...
                    d0(Gx(:,pindx.lbP))*DSix(:,pindx.lsigma).*Si2C];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
@@ -266,7 +266,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
                    d0(Gx(:,pindx.lsigma))*DSix(:,pindx.lalpha).*Si2C]+...
                   [-d0(Gx(:,pindx.lalpha))*DSix(:,pindx.lsigma).*Si2C;...
                    d0(Gx(:,pindx.lalpha))*DSix(:,pindx.lsigma).*Si2C];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
@@ -278,7 +278,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
                    d0(Gx(:,pindx.lsigma))*DSix(:,pindx.lbeta).*Si2C]+...
                   [-d0(Gx(:,pindx.lbeta))*DSix(:,pindx.lsigma).*Si2C;...
                    d0(Gx(:,pindx.lbeta))*DSix(:,pindx.lsigma).*Si2C];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
@@ -288,7 +288,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
                    d0(Gxx(:,kk))*DSi.*Si2C] + ...
                   2*[-d0(Gx(:,pindx.lkdP))*DSix(:,pindx.lkdP).*Si2C;...
                      d0(Gx(:,pindx.lkdP))*DSix(:,pindx.lkdP).*Si2C];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
@@ -300,7 +300,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
                    d0(Gx(:,pindx.lkdP))*DSix(:,pindx.bP_T).*Si2C]+...
                   [-d0(Gx(:,pindx.bP_T))*DSix(:,pindx.lkdP).*Si2C;...
                    d0(Gx(:,pindx.bP_T))*DSix(:,pindx.lkdP).*Si2C];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
@@ -312,7 +312,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
                    d0(Gx(:,pindx.lkdP))*DSix(:,pindx.lbP).*Si2C]+...
                   [-d0(Gx(:,pindx.lbP))*DSix(:,pindx.lkdP).*Si2C;...
                    d0(Gx(:,pindx.lbP))*DSix(:,pindx.lkdP).*Si2C];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
@@ -324,7 +324,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
                    d0(Gx(:,pindx.lkdP))*DSix(:,pindx.lalpha).*Si2C]+...
                   [-d0(Gx(:,pindx.lalpha))*DSix(:,pindx.lkdP).*Si2C;...
                    d0(Gx(:,pindx.lalpha))*DSix(:,pindx.lkdP).*Si2C];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
@@ -336,7 +336,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
                    d0(Gx(:,pindx.lkdP))*DSix(:,pindx.lbeta).*Si2C]+...
                   [-d0(Gx(:,pindx.lbeta))*DSix(:,pindx.lkdP).*Si2C;...
                    d0(Gx(:,pindx.lbeta))*DSix(:,pindx.lkdP).*Si2C];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
@@ -346,7 +346,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
                    d0(Gxx(:,kk))*DSi.*Si2C] + ...
                   2*[-d0(Gx(:,pindx.bP_T))*DSix(:,pindx.bP_T).*Si2C;...
                      d0(Gx(:,pindx.bP_T))*DSix(:,pindx.bP_T).*Si2C];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
@@ -358,7 +358,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
                    d0(Gx(:,pindx.bP_T))*DSix(:,pindx.lbP).*Si2C]+...
                   [-d0(Gx(:,pindx.lbP))*DSix(:,pindx.bP_T).*Si2C;...
                    d0(Gx(:,pindx.lbP))*DSix(:,pindx.bP_T).*Si2C];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
@@ -370,7 +370,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
                    d0(Gx(:,pindx.bP_T))*DSix(:,pindx.lalpha).*Si2C]+...
                   [-d0(Gx(:,pindx.lalpha))*DSix(:,pindx.bP_T).*Si2C;...
                    d0(Gx(:,pindx.lalpha))*DSix(:,pindx.bP_T).*Si2C];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
@@ -382,7 +382,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
                    d0(Gx(:,pindx.bP_T))*DSix(:,pindx.lbeta).*Si2C]+...
                   [-d0(Gx(:,pindx.lbeta))*DSix(:,pindx.bP_T).*Si2C;...
                    d0(Gx(:,pindx.lbeta))*DSix(:,pindx.bP_T).*Si2C];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
@@ -392,7 +392,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
                    d0(Gxx(:,kk))*DSi.*Si2C] + ...
                   2*[-d0(Gx(:,pindx.lbP))*DSix(:,pindx.lbP).*Si2C;...
                      d0(Gx(:,pindx.lbP))*DSix(:,pindx.lbP).*Si2C];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
@@ -404,7 +404,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
                    d0(Gx(:,pindx.lbP))*DSix(:,pindx.lalpha).*Si2C]+ ...
                   [-d0(Gx(:,pindx.lalpha))*DSix(:,pindx.lbP).*Si2C; ...
                    d0(Gx(:,pindx.lalpha))*DSix(:,pindx.lbP).*Si2C];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
@@ -416,7 +416,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
                    d0(Gx(:,pindx.lbP))*DSix(:,pindx.lbeta).*Si2C]+ ...
                   [-d0(Gx(:,pindx.lbeta))*DSix(:,pindx.lbP).*Si2C; ...
                    d0(Gx(:,pindx.lbeta))*DSix(:,pindx.lbP).*Si2C];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
@@ -426,7 +426,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
                    d0(Gxx(:,kk))*DSi.*Si2C] + ...
                   2*[-d0(Gx(:,pindx.lalpha))*DSix(:,pindx.lalpha).*Si2C; ...
                      d0(Gx(:,pindx.lalpha))*DSix(:,pindx.lalpha).*Si2C];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
@@ -438,7 +438,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
                    d0(Gx(:,pindx.lalpha))*DSix(:,pindx.lbeta).*Si2C]+ ...
                   [-d0(Gx(:,pindx.lbeta))*DSix(:,pindx.lalpha).*Si2C; ...
                    d0(Gx(:,pindx.lbeta))*DSix(:,pindx.lalpha).*Si2C];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
@@ -448,7 +448,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
                    d0(Gxx(:,kk))*DSi.*Si2C] + ...
                   2*[-d0(Gx(:,pindx.lbeta))*DSix(:,pindx.lbeta).*Si2C; ...
                      d0(Gx(:,pindx.lbeta))*DSix(:,pindx.lbeta).*Si2C];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
@@ -460,7 +460,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
                        -PFD_dsi*bSix(:,pindx.lsigma)] + ...
                   [-d0(Gx(:,pindx.lsigma))*DSix(:,pindx.ldsi).*Si2C; ...
                    d0(Gx(:,pindx.lsigma))*DSix(:,pindx.ldsi).*Si2C];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
@@ -470,7 +470,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
                       -(k_at + PFD_at)*bSix(:,pindx.lsigma)]+ ...
                   [-d0(Gx(:,pindx.lsigma))*DSix(:,pindx.lat).*Si2C; ...
                    d0(Gx(:,pindx.lsigma))*DSix(:,pindx.lat).*Si2C];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
@@ -480,7 +480,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
                       -(k_bt+PFD_bt)*bSix(:,pindx.lsigma)]+ ...
                   [-d0(Gx(:,pindx.lsigma))*DSix(:,pindx.lbt).*Si2C; ...
                    d0(Gx(:,pindx.lsigma))*DSix(:,pindx.lbt).*Si2C];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
@@ -492,7 +492,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
                    d0(G*DSix(:,pindx.lsigma))*dSi2Cdaa]+ ...
                   [-d0(Gx(:,pindx.lsigma))*DSix(:,pindx.aa).*Si2C; ...
                    d0(Gx(:,pindx.lsigma))*DSix(:,pindx.aa).*Si2C];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
@@ -504,7 +504,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
                       d0(G*DSix(:,pindx.lsigma))*dSi2Cdbb]+ ...
                   [-d0(Gx(:,pindx.lsigma))*DSix(:,pindx.lbb).*Si2C; ...
                    d0(Gx(:,pindx.lsigma))*DSix(:,pindx.lbb).*Si2C];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
@@ -535,7 +535,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
                   [-d0(Gx(:,pindx.lkdP))*DSix(:,pindx.lbt).*Si2C; ...
                    d0(Gx(:,pindx.lkdP))*DSix(:,pindx.lbt).*Si2C];
 
-            Sixx(:,kk) = mfactor(FD, tmp); 
+            Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
         % kdP aa
@@ -803,7 +803,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
                        -PFD_dsi*bSix(:,pindx.lat)] + ...
                   at*[k_at*bSix(:,pindx.ldsi); ...
                       -(k_at+PFD_at)*bSix(:,pindx.ldsi)];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
@@ -818,7 +818,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
                        -PFD_dsi*bSix(:,pindx.lbt)] + ...
                   bt*[k_bt*bSix(:,pindx.ldsi); ...
                       -(k_bt+PFD_bt)*bSix(:,pindx.ldsi)];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
@@ -830,7 +830,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
                    d0(G*DSix(:,pindx.ldsi))*dSi2Cdaa] + ...
                   [-d0(Gx(:,pindx.ldsi))*DSix(:,pindx.aa).*Si2C; ...
                    d0(Gx(:,pindx.ldsi))*DSix(:,pindx.aa).*Si2C];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
@@ -876,7 +876,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
                       -(k_at+PFD_at)*bSix(:,pindx.lbt)]+ ...
                   bt*[k_bt*bSix(:,pindx.lat); ...
                       -(k_bt+PFD_bt)*bSix(:,pindx.lat)];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
@@ -884,11 +884,11 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
         if (par.opt_at == on & par.opt_aa == on)
             tmp = at*[k_at*bSix(:,pindx.aa); ...
                       -(k_at+PFD_at)*bSix(:,pindx.aa)] + ...
-                  [-d0(G*DSix(:,pindx.lat))*dSi2Cdaa; ... 
+                  [-d0(G*DSix(:,pindx.lat))*dSi2Cdaa; ...
                    d0(G*DSix(:,pindx.lat))*dSi2Cdaa] + ...
                   [-d0(Gx(:,pindx.lat))*DSix(:,pindx.aa).*Si2C; ...
                    d0(Gx(:,pindx.lat))*DSix(:,pindx.aa).*Si2C];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
@@ -896,7 +896,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
         if (par.opt_at == on & par.opt_bb == on)
             tmp = at*[k_at*bSix(:,pindx.lbb); ...
                       -(k_at+PFD_at)*bSix(:,pindx.lbb)] + ...
-                  bb*[-d0(G*DSix(:,pindx.lat))*dSi2Cdbb; ... 
+                  bb*[-d0(G*DSix(:,pindx.lat))*dSi2Cdbb; ...
                       d0(G*DSix(:,pindx.lat))*dSi2Cdbb] + ...
                   [-d0(Gx(:,pindx.lat))*DSix(:,pindx.lbb).*Si2C; ...
                    d0(Gx(:,pindx.lat))*DSix(:,pindx.lbb).*Si2C];
@@ -917,7 +917,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
                          -(k_bt_bt+PFD_bt_bt)*bSi] + ...
                   2*bt*[k_bt*bSix(:,pindx.lbt); ...
                         -(k_bt+PFD_bt)*bSix(:,pindx.lbt)];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
@@ -925,11 +925,11 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
         if (par.opt_bt == on & par.opt_aa == on)
             tmp = bt*[k_bt*bSix(:,pindx.aa); ...
                       -(k_bt + PFD_bt)*bSix(:,pindx.aa)] + ...
-                  [-d0(G*DSix(:,pindx.lbt))*dSi2Cdaa; ... 
+                  [-d0(G*DSix(:,pindx.lbt))*dSi2Cdaa; ...
                    d0(G*DSix(:,pindx.lbt))*dSi2Cdaa] + ...
                   [-d0(Gx(:,pindx.lbt))*DSix(:,pindx.aa).*Si2C; ...
                    d0(Gx(:,pindx.lbt))*DSix(:,pindx.aa).*Si2C];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
@@ -937,7 +937,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
         if (par.opt_bt == on & par.opt_bb == on)
             tmp = bt*[k_bt*bSix(:,pindx.lbb); ...
                       -(k_bt+PFD_bt)*bSix(:,pindx.lbb)] + ...
-                  bb*[-d0(G*DSix(:,pindx.lbt))*dSi2Cdbb; ... 
+                  bb*[-d0(G*DSix(:,pindx.lbt))*dSi2Cdbb; ...
                       d0(G*DSix(:,pindx.lbt))*dSi2Cdbb] + ...
                   [-d0(Gx(:,pindx.lbt))*DSix(:,pindx.lbb).*Si2C; ...
                    d0(Gx(:,pindx.lbt))*DSix(:,pindx.lbb).*Si2C];
@@ -951,7 +951,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
                    d0(Gxx(:,kk))*DSi] + ...
                   2*[-d0(G*DSix(:,pindx.aa))*dSi2Cdaa; ...
                      d0(G*DSix(:,pindx.aa))*dSi2Cdaa];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
@@ -959,11 +959,11 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
         if (par.opt_aa == on & par.opt_bb == on)
             tmp = [-d0(Gxx(:,kk))*DSi; ...
                    d0(Gxx(:,kk))*DSi] + ...
-                  bb*[-d0(G*DSix(:,pindx.aa))*dSi2Cdbb; ... 
+                  bb*[-d0(G*DSix(:,pindx.aa))*dSi2Cdbb; ...
                       d0(G*DSix(:,pindx.aa))*dSi2Cdbb] + ...
-                  [-d0(G*DSix(:,pindx.lbb))*dSi2Cdaa; ... 
+                  [-d0(G*DSix(:,pindx.lbb))*dSi2Cdaa; ...
                    d0(G*DSix(:,pindx.lbb))*dSi2Cdaa];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end
@@ -973,7 +973,7 @@ function [par,Si,Six,Sixx] = eqSicycle(x, par)
                    d0(Gxx(:,kk))*DSi] + ...
                   2*bb*[-d0(G*DSix(:,pindx.lbb))*dSi2Cdbb; ...
                         d0(G*DSix(:,pindx.lbb))*dSi2Cdbb];
-            
+
             Sixx(:,kk) = mfactor(FD, tmp);
             kk = kk + 1;
         end

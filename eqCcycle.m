@@ -73,7 +73,8 @@ function [par, C, Cx, Cxx] = eqCcycle(x, par);
         par.Cfailure = on;
         npx  = par.npx   ;
         ncx  = par.ncx   ;
-        nx   = npx + ncx ;
+		nbx  = par.nbx   ;
+        nx   = npx + ncx + nbx;
         C    = GC ;
         Cx   = sparse(5*par.nwet, nx) ;
         Cxx  = sparse(5*par.nwet, nchoosek(nx,2)+nx) ;
@@ -142,7 +143,8 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
 	% Stoichiometric ratios
 	if isfield(par,'CellOut')
 		C2P = par.CellOut.C2P(iwet);
-		N2C = 1./par.CellOut.C2N(iwet);
+		%N2C = 1./par.CellOut.C2N(iwet);
+		N2C   = 16/117 ;
 		%fprintf('Using Cell Model Output for C2P \n')
 	else
 		C2P = 1./(cc*PO4 + dd);
@@ -177,7 +179,7 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
     eq2 = -(1-sigma)*G*C2P + (PFDc+kappa_p*I)*POC     ;
     eq3 = -sigma*G*C2P + (TRdiv+kC)*DOC - kappa_p*POC ;
     eq4 = -(1-sigma)*RR*(G*C2P) + (PFDa+kPIC*I)*PIC   ;
-    eq5 = 2*(1-sigma)*RR*(G*C2P) + TRdiv*ALK - N2C*G*C2P + N2C*kC*DOC ...
+    eq5 = 2*(1-sigma)*RR*(G*C2P) + TRdiv*ALK - N2C.*(G*C2P) + N2C.*(kC*DOC) ...
           - 2*kPIC*PIC - kappa_g*(ALK - ALKbar) + pme*sALKbar ;
 
     F   = [eq1; eq2; eq3; eq4; eq5];
@@ -451,8 +453,12 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
         C2P_dd_dd = 2./p2c.^3;
         C2P_cc_cc = (2*PO4.^2)./p2c.^3;
         C2P_cc_dd = (2*PO4)./p2c.^3;
-		C2P_Q10 = par.CellOut.dC2P_dQ10Photo(iwet);
-		C2P_fStor = par.CellOut.dC2P_dfStorage(iwet);
+		if (par.Cellmodel & par.opt_Q10Photo)
+			C2P_Q10 = par.CellOut.dC2P_dQ10Photo(iwet);
+		end
+		if (par.Cellmodel & par.opt_fStorage)
+			C2P_fStor = par.CellOut.dC2P_dfStorage(iwet);
+		end
         [~,~,Gxx] = uptake_C(par);
         par.Gxx   = Gxx;
         DICx = Cx(0*nwet+1:1*nwet,:);
@@ -2259,7 +2265,7 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
         end
 
 		% fStorage fStorage
-        if (par.opt_Q10Photo)
+        if (par.opt_fStorage)
 			C2P_fStor_fStor = par.CellOut.d2C2P_dfStorage2(iwet);
             kk = kk + 1;
             tmp = par.BIO.fStorage*[-(I+(1-sigma)*RR)*(G*(C2P_fStor+par.BIO.fStorage*C2P_fStor_fStor)); ...

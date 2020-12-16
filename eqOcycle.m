@@ -8,7 +8,7 @@ function [par, O2, Ox, Oxx] = eqOcycle(x, par)
     if (par.opt_O2C_T == on)
         par.O2C_T = x(pindx.O2C_T) ;
     end
-    
+
     % rO2C
     if (par.opt_rO2C == on)
         lrO2C    = x(pindx.lrO2C) ;
@@ -18,7 +18,7 @@ function [par, O2, Ox, Oxx] = eqOcycle(x, par)
     if (par.opt_O2P_T == on)
         par.O2P_T = x(pindx.O2P_T) ;
     end
-    
+
     % rO2P
     if (par.opt_rO2P == on)
         lrO2P    = x(pindx.lrO2P) ;
@@ -36,20 +36,20 @@ function [par, O2, Ox, Oxx] = eqOcycle(x, par)
     if (ierr ~= 0)
         fprintf('O2model did not converge.\n') ;
         F = O_eqn(O2, par) ;
-        if par.Cfailure == on 
+        if par.Cfailure == on
             npx = par.npx ;
             ncx = par.ncx ;
             nox = par.nox ;
             nx  = npx + ncx + nox  ;
             Ox  = sparse(par.nwet, nx) ;
             Oxx = sparse(par.nwet, nchoosek(nx,2)+nx) ;
-        else ( norm(F) < 1e-6 )  
+        else ( norm(F) < 1e-6 )
             options.atol = 1e-7 ;
             options.rtol = 1e-7 ;
             % Compute the gradient of the solution wrt the parameters
             GO = real(O2) + 1e-7*randn(par.nwet,1) ;
             [F, FD, Ox, Oxx] = O_eqn(O2, par) ;
-        end 
+        end
     else
         % reset the global variable for the next call eqOcycle
         GO = real(O2) + 1e-7*randn(par.nwet,1) ;
@@ -73,13 +73,13 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
     TZ   = par.Tz*1e8 ;
     %
     % tunable parameters;
-    O2C_T = par.O2C_T   ; 
+    O2C_T = par.O2C_T   ;
     rO2C  = par.rO2C    ;
     kC_T  = par.kC_T    ;
     kdC   = par.kdC     ;
     O2P_T = par.O2P_T  ;
     rO2P  = par.rO2P ;
-    kC    = d0(kC_T * Tz + kdC) ; 
+    kC    = d0(kC_T * Tz + kdC) ;
     %
     vout = mkO2P(par) ;
     O2P  = vout.O2P   ;
@@ -98,8 +98,8 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
     R      = 0.5 + 0.5*tanh(O2-10)    ;
     dRdO   = 0.5 - 0.5*tanh(O2-10).^2 ;
     d2RdO2 = -2*d0(dRdO)*tanh(O2-10)  ;
-     
-    O2C    = O2C_T*TZ + rO2C ; 
+
+    O2C    = O2C_T*TZ + rO2C ;
     % rate of o2 utilization
     LO2    = kC*DOC.*O2C.*R  ;
     dLdO   = d0(kC*DOC.*O2C.*dRdO) ;
@@ -127,12 +127,12 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
         for jj = 1:npx
             tmp = -d0(Gx(:,jj))*O2P + kC*DOCx(:,jj).*O2C.*R ;
             Ox(:,jj) = mfactor(FD, -tmp) ;
-        end 
+        end
 
         % C model only parameters
         for jj = (npx+1) : (npx+ncx)
             if (par.opt_kC_T & jj == pindx.kC_T)
-                kC_kC_T = par.kC_kC_T ; 
+                kC_kC_T = par.kC_kC_T ;
                 tmp = kC_kC_T*DOC.*O2C.*R + ...
                       kC*DOCx(:,jj).*O2C.*R  ;
                 Ox(:,jj) = mfactor(FD, -tmp) ;
@@ -146,29 +146,29 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
             else
                 tmp = kC*DOCx(:,jj).*O2C.*R  ;
                 Ox(:,jj) = mfactor(FD, -tmp) ;
-            end 
+            end
         end
 
         % O model only parameters
         if (par.opt_O2C_T == on)
-            O2C_O2C_T = d0(TZ) ; 
-            tmp = kC*DOC.*(O2C_O2C_T*R) ; 
+            O2C_O2C_T = d0(TZ) ;
+            tmp = kC*DOC.*(O2C_O2C_T*R) ;
             Ox(:,pindx.O2C_T) = mfactor(FD, -tmp) ;
         end
 
         if (par.opt_rO2C == on)
-            O2C_rO2C = rO2C ; 
-            tmp = kC*DOC.*(O2C_rO2C*R) ; 
+            O2C_rO2C = rO2C ;
+            tmp = kC*DOC.*(O2C_rO2C*R) ;
             Ox(:,pindx.lrO2C) = mfactor(FD, -tmp) ;
-        end 
-        
-        if (par.opt_O2P_T == on) 
-            tmp = -G*dO2PdO2P_T ;  
+        end
+
+        if (par.opt_O2P_T == on)
+            tmp = -G*dO2PdO2P_T ;
             Ox(:,pindx.O2P_T) = mfactor(FD, -tmp) ;
         end
 
-        if (par.opt_rO2P == on) 
-            tmp = -rO2P*diag(G) ; 
+        if (par.opt_rO2P == on)
+            tmp = -rO2P*diag(G) ;
             Ox(:,pindx.lrO2P) = mfactor(FD, -tmp) ;
         end
     end
@@ -193,8 +193,8 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
                       kC*DOCx(:,jo).*dRdO.*Ox(:,ju).*O2C + ...
                       Ox(:,ju).*d2LdO2.*Ox(:,jo) ;
 
-                Oxx(:,kk) = mfactor(FD, -tmp) ;                 
-            end 
+                Oxx(:,kk) = mfactor(FD, -tmp) ;
+            end
         end
         %
         % P C model parameters
@@ -209,27 +209,27 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
                           kC*R.*DOCxx(:,kk).*O2C + ...
                           kC*DOCx(:,jo).*dRdO.*Ox(:,ju).*O2C + ...
                           kC*DOCx(:,ju).*dRdO.*Ox(:,jo).*O2C + ...
-                          Ox(:,ju).*d2LdO2.*Ox(:,jo) ; 
-                    
+                          Ox(:,ju).*d2LdO2.*Ox(:,jo) ;
+
                 elseif (par.opt_kdC & jo == pindx.lkdC)
                     tmp = kC_kdC*R.*DOCx(:,ju).*O2C + ...
                           kC_kdC*DOC.*dRdO.*Ox(:,ju).*O2C + ...
                           kC*R.*DOCxx(:,kk).*O2C + ...
                           kC*DOCx(:,jo).*dRdO.*Ox(:,ju).*O2C + ...
                           kC*DOCx(:,ju).*dRdO.*Ox(:,jo).*O2C + ...
-                          Ox(:,ju).*d2LdO2.*Ox(:,jo) ; 
-                    
+                          Ox(:,ju).*d2LdO2.*Ox(:,jo) ;
+
                 else
                     tmp = kC*R.*DOCxx(:,kk).*O2C + ...
                           kC*DOCx(:,ju).*dRdO.*Ox(:,jo).*O2C + ...
                           kC*DOCx(:,jo).*dRdO.*Ox(:,ju).*O2C + ...
-                          Ox(:,ju).*d2LdO2.*Ox(:,jo) ; 
+                          Ox(:,ju).*d2LdO2.*Ox(:,jo) ;
 
                 end
                 Oxx(:,kk) = mfactor(FD, -tmp)    ;
             end
         end
-        
+
         % C model only parameters
         for ju = (npx+1) : (npx+ncx)
             for jo = ju : (npx+ncx)
@@ -237,39 +237,39 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
                 if (par.opt_kC_T & ju == pindx.kC_T & jo == pindx.kC_T)
                     % kC_T kC_T
                     tmp = kC_kC_T*DOCx(:,ju).*R.*O2C*2 + ...
-                          kC_kC_T*DOC.*dRdO.*Ox(:,ju).*O2C*2 + ... 
-                          kC*DOCxx(:,kk).*R.*O2C + ... 
-                          kC*DOCx(:,jo).*dRdO.*Ox(:,ju).*O2C + ... 
+                          kC_kC_T*DOC.*dRdO.*Ox(:,ju).*O2C*2 + ...
+                          kC*DOCxx(:,kk).*R.*O2C + ...
+                          kC*DOCx(:,jo).*dRdO.*Ox(:,ju).*O2C + ...
                           kC*DOCx(:,ju).*dRdO.*Ox(:,jo).*O2C + ...
-                          Ox(:,ju).*d2LdO2.*Ox(:,jo) ; 
-                    
+                          Ox(:,ju).*d2LdO2.*Ox(:,jo) ;
+
                 elseif (par.opt_kdC & ju == pindx.lkdC & jo == pindx.lkdC)
                     % kdC kdC
                     % kC_kdC_kdC = kC_kdC
                     tmp = kC_kdC*DOC.*R.*O2C + ...
                           kC_kdC*DOCx(:,ju).*R.*O2C*2 + ...
-                          kC_kdC*DOC.*dRdO.*Ox(:,ju).*O2C*2 + ... 
-                          kC*DOCxx(:,kk).*R.*O2C + ... 
-                          kC*DOCx(:,jo).*dRdO.*Ox(:,ju).*O2C + ... 
+                          kC_kdC*DOC.*dRdO.*Ox(:,ju).*O2C*2 + ...
+                          kC*DOCxx(:,kk).*R.*O2C + ...
+                          kC*DOCx(:,jo).*dRdO.*Ox(:,ju).*O2C + ...
                           kC*DOCx(:,ju).*dRdO.*Ox(:,jo).*O2C + ...
-                          Ox(:,ju).*d2LdO2.*Ox(:,jo) ; 
-                    
-                    % kC_T kdC 
+                          Ox(:,ju).*d2LdO2.*Ox(:,jo) ;
+
+                    % kC_T kdC
                 elseif (par.opt_kC_T & par.opt_kdC & ju == pindx.kC_T ...
                         & jo == pindx.lkdC)
                     tmp = kC_kC_T*DOCx(:,jo).*R.*O2C + ...
                           kC_kC_T*DOC.*dRdO.*Ox(:,jo).*O2C + ...
                           kC_kdC*DOCx(:,ju).*R.*O2C + ...
-                          kC_kdC*DOC.*dRdO.*Ox(:,ju).*O2C + ... 
-                          kC*DOCxx(:,kk).*R.*O2C + ... 
-                          kC*DOCx(:,jo).*dRdO.*Ox(:,ju).*O2C + ... 
+                          kC_kdC*DOC.*dRdO.*Ox(:,ju).*O2C + ...
+                          kC*DOCxx(:,kk).*R.*O2C + ...
+                          kC*DOCx(:,jo).*dRdO.*Ox(:,ju).*O2C + ...
                           kC*DOCx(:,ju).*dRdO.*Ox(:,jo).*O2C + ...
-                          Ox(:,ju).*d2LdO2.*Ox(:,jo) ; 
+                          Ox(:,ju).*d2LdO2.*Ox(:,jo) ;
 
                     %parameter pairs with only one kC_T
                 elseif (par.opt_kC_T & (ju == pindx.kC_T | jo == ...
                                         pindx.kC_T) & ju ~= jo)
-                    
+
                     if (ju < pindx.kC_T)
                         jk = ju ;
                     else
@@ -277,16 +277,16 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
                     end
                     %
                     tmp = kC_kC_T*DOCx(:,jk).*R.*O2C + ...
-                          kC_kC_T*DOC.*dRdO.*Ox(:,jk).*O2C + ... 
-                          kC*DOCxx(:,kk).*R.*O2C + ... 
-                          kC*DOCx(:,jo).*dRdO.*Ox(:,ju).*O2C + ... 
+                          kC_kC_T*DOC.*dRdO.*Ox(:,jk).*O2C + ...
+                          kC*DOCxx(:,kk).*R.*O2C + ...
+                          kC*DOCx(:,jo).*dRdO.*Ox(:,ju).*O2C + ...
                           kC*DOCx(:,ju).*dRdO.*Ox(:,jo).*O2C + ...
-                          Ox(:,ju).*d2LdO2.*Ox(:,jo) ; 
+                          Ox(:,ju).*d2LdO2.*Ox(:,jo) ;
 
                     %parameter pairs with only one kdC
                 elseif (par.opt_kdC & (ju == pindx.lkdC | jo == ...
                                        pindx.lkdC) & ju ~= jo)
-                    
+
                     if (ju < pindx.lkdC)
                         jk = ju ;
                     else
@@ -294,24 +294,24 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
                     end
                     %
                     tmp = kC_kdC*DOCx(:,jk).*R.*O2C + ...
-                          kC_kdC*DOC.*dRdO.*Ox(:,jk).*O2C + ... 
-                          kC*DOCxx(:,kk).*R.*O2C + ... 
-                          kC*DOCx(:,jo).*dRdO.*Ox(:,ju).*O2C + ... 
+                          kC_kdC*DOC.*dRdO.*Ox(:,jk).*O2C + ...
+                          kC*DOCxx(:,kk).*R.*O2C + ...
+                          kC*DOCx(:,jo).*dRdO.*Ox(:,ju).*O2C + ...
                           kC*DOCx(:,ju).*dRdO.*Ox(:,jo).*O2C + ...
                           Ox(:,ju).*d2LdO2.*Ox(:,jo) ;
-                    
-                    % parameter pairs without kC_T and kdC    
-                else 
+
+                    % parameter pairs without kC_T and kdC
+                else
                     tmp = kC*DOCxx(:,kk).*R.*O2C + ...
                           kC*DOCx(:,jo).*dRdO.*Ox(:,ju).*O2C + ...
                           kC*DOCx(:,ju).*dRdO.*Ox(:,jo).*O2C + ...
                           Ox(:,ju).*d2LdO2.*Ox(:,jo) ;
-                    
-                end 
+
+                end
                 Oxx(:,kk) = mfactor(FD, -tmp)    ;
-            end 
-        end 
-        
+            end
+        end
+
         % P and O model only parameters
         dO2Pdp{1} = dO2PdO2P_T ;
         dO2Pdp{2} = rO2P*dO2PdrO2P ;
@@ -339,12 +339,12 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
                     tmp = -d0(Gx(:,ju))*dO2Pdp{2} + ...
                           kC*DOCx(:,ju).*dRdO.*Ox(:,jo).*O2C + ...
                           Ox(:,ju).*d2LdO2.*Ox(:,jo) ;
-                    
+
                 end
                 Oxx(:,kk) = mfactor(FD, -tmp)    ;
-            end 
+            end
         end
-        
+
         % C and O model only parameters
         for ju = (npx+1) : (npx+ncx)
             for jo = (npx+ncx+1) : (npx+ncx+nox)
@@ -366,7 +366,7 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
                               kC*DOC.*(O2C_rO2C*dRdO.*Ox(:,ju)) + ...
                               Ox(:,ju).*d2LdO2.*Ox(:,jo) ;
                         %
-                    else 
+                    else
                         tmp = kC_kC_T*DOC.*dRdO.*Ox(:,jo).*O2C + ...
                               kC*DOCx(:,ju).*dRdO.*Ox(:,jo).*O2C + ...
                               Ox(:,ju).*d2LdO2.*Ox(:,jo) ;
@@ -389,7 +389,7 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
                               kC*DOC.*(O2C_rO2C*dRdO.*Ox(:,ju)) + ...
                               Ox(:,ju).*d2LdO2.*Ox(:,jo) ;
                         %
-                    else 
+                    else
                         tmp = kC_kdC*DOC.*dRdO.*Ox(:,jo).*O2C + ...
                               kC*DOCx(:,ju).*dRdO.*Ox(:,jo).*O2C + ...
                               Ox(:,ju).*d2LdO2.*Ox(:,jo) ;
@@ -401,41 +401,41 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
                               kC*DOCx(:,ju).*(O2C_O2C_T*R) + ...
                               kC*DOC.*(O2C_O2C_T*dRdO.*Ox(:,ju)) + ...
                               Ox(:,ju).*d2LdO2.*Ox(:,jo) ;
-                        
+
                     elseif (par.opt_rO2C & jo == pindx.lrO2C)
                         tmp = kC*DOCx(:,ju).*dRdO.*Ox(:,jo).*O2C + ...
                               kC*DOCx(:,ju).*(O2C_rO2C*R) + ...
                               kC*DOC.*(O2C_rO2C*dRdO.*Ox(:,ju)) + ...
                               Ox(:,ju).*d2LdO2.*Ox(:,jo) ;
 
-                    else 
+                    else
                         tmp = kC*DOCx(:,ju).*dRdO.*Ox(:,jo).*O2C + ...
                               Ox(:,ju).*d2LdO2.*Ox(:,jo) ;
-                        
-                    end 
+
+                    end
                 end
                 Oxx(:,kk) = mfactor(FD, -tmp) ;
-            end 
-        end 
-        
+            end
+        end
+
         % O model only parameters
         % O2C_T O2C_T
         if (par.opt_O2C_T == on)
             kk = kk + 1 ;
-            tmp = kC*DOC.*(O2C_O2C_T*(dRdO.*Ox(:,pindx.O2C_T)))*2 + ... 
+            tmp = kC*DOC.*(O2C_O2C_T*(dRdO.*Ox(:,pindx.O2C_T)))*2 + ...
                   Ox(:,pindx.O2C_T).*d2LdO2.*Ox(:,pindx.O2C_T) ;
 
             Oxx(:,kk) = mfactor(FD, -tmp) ;
-        end             
+        end
         % O2C_T rO2C
         if (par.opt_O2C_T == on & par.opt_rO2C == on)
             kk = kk + 1 ;
             tmp = kC*DOC.*(O2C_O2C_T*dRdO.*Ox(:,pindx.lrO2C)) + ...
-                  kC*DOC.*(O2C_rO2C*dRdO.*Ox(:,pindx.O2C_T)) + ... 
+                  kC*DOC.*(O2C_rO2C*dRdO.*Ox(:,pindx.O2C_T)) + ...
                   Ox(:,pindx.O2C_T).*d2LdO2.*Ox(:,pindx.lrO2C) ;
 
             Oxx(:,kk) = mfactor(FD, -tmp) ;
-        end             
+        end
         % O2C_T O2P_T
         if (par.opt_O2C_T == on & par.opt_O2P_T == on)
             kk = kk + 1 ;
@@ -443,7 +443,7 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
                   Ox(:,pindx.O2C_T).*d2LdO2.*Ox(:,pindx.O2P_T) ;
 
             Oxx(:,kk) = mfactor(FD, -tmp) ;
-        end             
+        end
         % O2C_T rO2P
         if (par.opt_O2C_T == on & par.opt_rO2P == on)
             kk = kk + 1 ;
@@ -451,7 +451,7 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
                   Ox(:,pindx.O2C_T).*d2LdO2.*Ox(:,pindx.lrO2P) ;
 
             Oxx(:,kk) = mfactor(FD, -tmp) ;
-        end             
+        end
         % rO2C rO2C
         if (par.opt_rO2C == on & par.opt_rO2C == on)
             kk = kk + 1 ;
@@ -460,7 +460,7 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
                   Ox(:,pindx.lrO2C).*d2LdO2.*Ox(:,pindx.lrO2C) ;
 
             Oxx(:,kk) = mfactor(FD, -tmp) ;
-        end 
+        end
         %rO2C O2P_T
         if (par.opt_rO2C == on & par.opt_O2P_T == on)
             kk = kk + 1 ;
@@ -468,7 +468,7 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
                   Ox(:,pindx.lrO2C).*d2LdO2.*Ox(:,pindx.O2P_T) ;
 
             Oxx(:,kk) = mfactor(FD, -tmp) ;
-        end 
+        end
         % rO2C rO2P
         if (par.opt_rO2C == on & par.opt_rO2P == on)
             kk = kk + 1 ;
@@ -492,13 +492,12 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
             Oxx(:,kk) = mfactor(FD, -tmp) ;
         end
         % rO2P rO2P
-        if (par.opt_rO2P == on) 
+        if (par.opt_rO2P == on)
             kk = kk + 1 ;
             tmp = -rO2P*diag(G) + ...
                   Ox(:,pindx.lrO2P).*d2LdO2.*Ox(:,pindx.lrO2P) ;
-            
+
             Oxx(:,kk) = mfactor(FD, -tmp) ;
         end
     end
 end
-
