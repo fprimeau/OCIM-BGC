@@ -246,14 +246,17 @@ par.nzo = 2;
 PARobs_PPFD = PARobs.par*10^6/spd; % PAR at surface
 clear PARobs
 
+% remove NaNs along coastlines in Light field (maybe move this into a seperate function)
+PARsurf = cleanPARobs(PARobs_PPFD); %local function at end of file
+clear PARobs_PPFD
+
+% extrapolate light to bottom of euphotic zone
 par.kI = 0.04;   % Light attenuation coefficient in seawater [m^-1]
 	PAR        = 0*M3d;
 	for ii=1:par.nzo % only needed in euphotic zone for cell growth
-		PAR(:,:,ii) = PARobs_PPFD.*exp(-par.kI*grd.zt(ii)); %PAR at mid depth of grid box [ii]
+		PAR(:,:,ii) = PARsurf.*exp(-par.kI*grd.zt(ii)); %PAR at mid depth of grid box [ii]
 	end
-	%PAR(:,:,1) = PARobs_PPFD.*exp(-par.kI*grd.zt(1)); %PAR at mid depth of grid box 1
-	%PAR(:,:,2) = PARobs_PPFD.*exp(-par.kI*grd.zt(2)); %PAR at mid depth of grid box 2
-	%PAR(:,:,3) = PARobs_PPFD.*exp(-par.kI*grd.zt(3)); %PAR at mid depth of grid box 3
+
 par.PARobs = PAR;
 		clear PAR
 	% average PAR from surface to bottom of grid box 1
@@ -274,3 +277,42 @@ par.Lambda(:,:,2) = 1./(1e-6+po4obs(:,:,2)) ;
 par.Lambda(:,:,3:end) = 0 ;
 
 %---------------------------- end ----------------------------------
+
+
+function PARsurf = cleanPARobs(PARobs_PPFD)
+    iwet1 = find(M3d(:,:,1));
+    %ibad = find(isnan(PARobs_PPFD(iwet1)));
+
+    PARsurf        = 0*M3d(:,:,1);
+    PARsurf(iwet1)=PARobs_PPFD(iwet1);
+
+    [ibady,ibadx] =find(isnan(PARsurf));
+
+    for ii=1:length(ibadx)
+        ilat = ibady(ii);
+        ilon = ibadx(ii);
+        if ilon>1 & ilon <180
+            nearby=PARsurf(ilat-1:ilat+1,ilon-1:ilon+1); % would be better to weight values on same latitude more
+
+            if length(nearby(nearby>0)) > 0
+                PARsurf(ilat,ilon) = nanmean(nearby(nearby>0));
+            else
+                nearby=PARsurf(ilat-2:ilat+2,ilon-2:ilon+2);
+                if length(nearby(nearby>0)) > 0
+                    PARsurf(ilat,ilon) = nanmean(nearby(nearby>0));
+                else
+                    keyboard
+                end
+            end
+
+        else % if ilon==180
+            nearby=PARsurf(ilat-1:ilat+1,ilon-2:ilon);
+            if length(nearby(nearby>0)) > 0
+                PARsurf(ilat,ilon) = nanmean(nearby(nearby>0));
+            else
+                keyboard
+            end
+
+        end
+    end
+end
