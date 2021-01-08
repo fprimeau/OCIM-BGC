@@ -1,23 +1,24 @@
-clc; clear alul; close all
+clc; clear all; close all
 global iter
 iter = 0 ;
 on   = true  ;
 off  = false ;
 format long
 %
-GridVer  = 91  ;
+GridVer  = 90  ;
 operator = 'A' ;
 
 par.optim   = off ;
 par.Cmodel  = on ;
-par.Omodel  = on ;
+par.Omodel  = off ;
 par.Simodel = off ;
+par.Cellmodel = on;
 par.LoadOpt = on ; % if load optimial par.
 par.pscale  = 0.0 ;
 par.cscale  = 0.25 ; % factor to weigh DOC in the objective function
 
 % P model parameters
-par.opt_sigma = off ;
+par.opt_sigma = on ;
 par.opt_kP_T  = on ;
 par.opt_kdP   = on ;
 par.opt_bP_T  = on ;
@@ -32,8 +33,8 @@ par.opt_kC_T  = on ;
 par.opt_kdC   = on ;
 par.opt_R_Si  = on ;
 par.opt_rR    = on ;
-par.opt_cc    = on ;
-par.opt_dd    = on ;
+par.opt_cc    = off ;
+par.opt_dd    = off ;
 % O model parameters
 par.opt_O2C_T = off ;
 par.opt_rO2C  = on ;
@@ -45,6 +46,11 @@ par.opt_at    = off ;
 par.opt_bt    = on  ;
 par.opt_aa    = on  ;
 par.opt_bb    = on  ;
+%Trait Model parameters
+par.opt_Q10Photo = on ;
+par.opt_fRibE 	 = off;
+par.opt_fStorage = off;
+par.opt_kST0 	 = off;
 %
 %-------------load data and set up parameters---------------------
 SetUp ;
@@ -54,35 +60,65 @@ SetUp ;
 if ismac
     output_dir = sprintf('~/Documents/CP-model/MSK%2d/',GridVer);
 elseif isunix
+	output_dir = sprintf('/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK%2d/', GridVer);
     % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/Cexp/']);
-    output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
-                        'MSK%2d/PME4DICALK/'],GridVer);
+    % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
+    %                    'MSK%2d/PME4DICALK/'],GridVer);
     % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/' ...
                         % 'TempSensi/MSK91/Zscore/'], GridVer);
     % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/COP4WWF/' ...
                         % 'MSK%2d/'],GridVer);
 end
 VER = strcat(output_dir,TRdivVer);
+catDOC = sprintf('_DOC%0.2g_DOP%0.2g',par.cscale,par.pscale); % used to add scale factors to file names
 % Creat output file names based on which model(s) is(are) optimized
-if (par.Cmodel == off & par.Omodel == off & par.Simodel == off)
-    fname = strcat(VER,'_P');
-elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off)
-    base_name = strcat(VER,'_PCv1');
-    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
-    fname = strcat(base_name,catDOC);
-elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off)
-    base_name = strcat(VER,'_PCOv6');
-    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
-    fname = strcat(base_name,catDOC);
-elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on)
-    base_name = strcat(VER,'_PCSi');
-    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
-    fname = strcat(base_name,catDOC);
-elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on)
-    base_name = strcat(VER,'_PCOSi');
-    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
-    fname = strcat(base_name,catDOC);
+if (par.Cmodel == off & par.Omodel == off & par.Simodel == off & par.Cellmodel == off)
+	fname = strcat(VER,'_P');
+elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off & par.Cellmodel == off)
+	base_name = strcat(VER,'_PC');
+	fname = strcat(base_name,catDOC);
+elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off & par.Cellmodel == off)
+	base_name = strcat(VER,'_PCO');
+	fname = strcat(base_name,catDOC);
+elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on & par.Cellmodel == off)
+	base_name = strcat(VER,'_PCSi');
+	fname = strcat(base_name,catDOC);
+elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on & par.Cellmodel == off)
+	base_name = strcat(VER,'_PCOSi');
+	fname = strcat(base_name,catDOC);
+elseif (par.Cmodel == off & par.Omodel == off & par.Simodel == off & par.Cellmodel == on) % cell model does nothing if C model is not on, so this case =Ponly
+	base_name = strcat(VER,'_PCell');
+	fname = strcat(base_name,catDOC);
+elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off & par.Cellmodel == on)
+	base_name = strcat(VER,'_PCCell');
+	fname = strcat(base_name,catDOC);
+elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off & par.Cellmodel == on)
+	base_name = strcat(VER,'_PCOCell');
+	fname = strcat(base_name,catDOC);
+elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on & par.Cellmodel == on)
+	base_name = strcat(VER,'_PCOSiCell');
+	fname = strcat(base_name,catDOC);
 end
+
+% if (par.Cmodel == off & par.Omodel == off & par.Simodel == off)
+%     fname = strcat(VER,'_P');
+% elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off)
+%     base_name = strcat(VER,'_PCv1');
+%     catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
+%     fname = strcat(base_name,catDOC);
+% elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off)
+%     base_name = strcat(VER,'_PCOv6');
+%     catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
+%     fname = strcat(base_name,catDOC);
+% elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on)
+%     base_name = strcat(VER,'_PCSi');
+%     catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
+%     fname = strcat(base_name,catDOC);
+% elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on)
+%     base_name = strcat(VER,'_PCOSi');
+%     catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
+%     fname = strcat(base_name,catDOC);
+% end
 par.fname = strcat(fname,'.mat') ;
 % load optimal parameters if they exist
 fxhat     = strcat(fname,'_xhat.mat');
@@ -122,12 +158,13 @@ I    = par.I          ;
 % -------------- C:P uptake ratio --------------------------------
 W = d0(dVt(iwet)) ;
 C2P3D = M3d + nan ;
-if Cellmodel==on
-	C2P3D(iwet) = par.CellOut.C2P(iwet);
+if par.Cellmodel==on
+	C2P3D(iwet) = data.CellOut.C2P(iwet);
 else
 	C2P3D(iwet) = 1./(par.cc*PO4 + par.dd) ;
 end
-nn = 2 ;
+% ----------------------------------------------
+nn = 2 ; %number fo verticle boxes in euphotic zone / export depth
 
 %--------------- calculate primary production --------------------
 G        = M3d*0        ;
@@ -164,6 +201,20 @@ Jex_P = d0(kP*Prod)*(sigma*I+par.kappa_p*(1-sigma) * ...
 P3d = M3d+nan;
 P3d(iwet) = Jex_P;
 
+% convert export from mmol P/m^3/s to mg P/m^2/day;
+TOPexp = P3d(:,:,2).*grd.dzt(2)*31*spd;
+tem_Pexp = TOPexp.*dAt(:,:,2);
+Sum_Pexp = nansum(tem_Pexp(:))*365*1e-18;
+fprintf('Model TOP export is %3.3e Pg P /yr \n\n',Sum_Pexp);
+
+% POP export
+[~,Gout] = buildPFD(par,'POP') ;
+w = -Gout.w ;
+POPexp   = data.POP(:,:,2).*w(:,:,2)*31*spd ;
+tem_POPexp = POPexp.*dAt(:,:,2);
+Sum_POPexp = nansum(tem_POPexp(:))*365*1e-18;
+fprintf('Model POP export is %3.3e Pg P /yr \n\n',Sum_POPexp);
+
 %---------------- calculate carbon export -------------------------
 PFD = buildPFD(par, 'POC') ;
 
@@ -186,7 +237,7 @@ C3d(iwet) = Jex_C ;
 TOCexp = C3d(:,:,2).*grd.dzt(2)*12*spd;
 tem_Cexp = TOCexp.*dAt(:,:,2);
 Sum_Cexp = nansum(tem_Cexp(:))*365*1e-18;
-fprintf('Model TOC export is %3.3e \n\n',Sum_Cexp);
+fprintf('Model TOC export is %3.3e Pg C /yr \n\n',Sum_Cexp);
 
 % POC export
 [~,Gout] = buildPFD(par,'POC') ;
@@ -194,7 +245,28 @@ w = -Gout.w ;
 POCexp   = data.POC(:,:,2).*w(:,:,2)*12*spd ;
 tem_POCexp = POCexp.*dAt(:,:,2);
 Sum_POCexp = nansum(tem_POCexp(:))*365*1e-18;
-fprintf('Model POC export is %3.3e \n\n',Sum_POCexp);
+fprintf('Model POC export is %3.3e Pg C /yr \n\n',Sum_POCexp);
+
+
+
+
+%----------- C:P export ratio -------------------------
+
+C2Pexp = POCexp./POPexp;
+
+keyboard;
+%%% plot export
+figure;
+contourf(grd.xt,grd.yt,C2Pexp); colorbar
+title('Model C:P export','Fontsize',18);
+xlabel('Longitude');
+ylabel('Latitude');
+ylabel(c,'C:P [gC/gP]');
+grid off
+
+figTitle = 'C2Pexport';
+print(gcf,[fname '_FIG_' figTitle '.png'],'-dpng')
+
 
 %--------------- compare to ANCP -----------------------------
 DOCexp = TOCexp - POCexp; DOCexp(DOCexp(:)<0) = 0 ;

@@ -90,14 +90,14 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 		par.CellOut.C2P = M3d*0;
 		par.CellOut.N2P = M3d*0;
 		par.CellOut.C2N = M3d*0;
-		%par.CellOut.LimType = M3d*0;
-		%par.CellOut.r = M3d*0;
+		par.CellOut.LimType = NaN(size(M3d));
+		par.CellOut.r = M3d*0;
 
 		par.CellOut.C2P(iprod) = CellOut.CP;
 		par.CellOut.N2P(iprod) = CellOut.NP;
 		par.CellOut.C2N(iprod) = CellOut.CN;
-		%par.CellOut.LimType(iprod) = CellOut.LimType;
-		%par.CellOut.r(iprod) = CellOut.r;
+		par.CellOut.LimType(iprod) = CellOut.LimType;
+		par.CellOut.r(iprod) = CellOut.r;
 
 		par.CellOut.C2P(isnan(par.CellOut.C2P)) = 0; %remove NaNs
 
@@ -133,6 +133,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 			par.CellOut.d2C2P_dQ10Photo_dfStorage(iprod) = imag(CellOut.dC2P_dQ10Photo)./eps^3;
 			par.CellOut.d2C2P_dfStorage2(iprod) = imag(CellOut.dC2P_dfStorage)./eps^3;
 		end
+		data.CellOut = par.CellOut;
 	end
 
     %%%%%%%%%%%%%%%%%%     Solve C   %%%%%%%%%%%%%%%%%%%%%%%%
@@ -309,7 +310,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
             end
         end
         % ----------------------------------
-    end
+	end
     %
     if (nargout>2)
         fxx = sparse(npx, npx)  ;

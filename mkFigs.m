@@ -16,10 +16,11 @@ format long
 Cmodel  = on ;
 Omodel  = on ;
 Simodel = off ;
+Cellmodel = on;
 pscale  = 0.0 ;
 cscale  = 0.25 ;
 %
-GridVer   = 91 ;
+GridVer   = 90 ;
 operator = 'A' ;
 if GridVer == 90
     TRdivVer = 'Tv4' ;
@@ -57,33 +58,59 @@ if ismac
 elseif isunix
     % input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
     % 'MSK%2d/'],GridVer);
-    input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
-                        'MSK%2d/PME4DICALK/'],GridVer);
+    %input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
+    %                    'MSK%2d/PME4DICALK/'],GridVer);
+	input_dir = sprintf('/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK%2d/', GridVer);
     % input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/' ...
                         % 'TempSensi/MSK91/Zscore/'], GridVer);
     % input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/COP4WWF/' ...
     % 'MSK%2d/'],GridVer);
 end
 VER   = strcat(input_dir,TRdivVer);
-if (Cmodel == off & Omodel == off & Simodel == off)
-    fname = strcat(VER,'_P');
-elseif (Cmodel == on & Omodel == off & Simodel == off)
-    base_name = strcat(VER,'_PCv1');
-    % catDOC = sprintf('_DOC%2.0e',cscale);
-    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',cscale,pscale);
-    fname = strcat(base_name,catDOC);
-elseif (Cmodel == on & Omodel == on & Simodel == off)
-    base_name = strcat(VER,'_PCOv6');
-    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',cscale,pscale);
-    fname = strcat(base_name,catDOC);
-elseif (Cmodel == on & par.Omodel == off & Simodel == on)
-    base_name = strcat(VER,'_PCSi');
-    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',cscale,pscale);
-    fname = strcat(base_name,catDOC);
-elseif (Cmodel == on & Omodel == on & Simodel == on)
-    base_name = strcat(VER,'_PCOSi');
-    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',cscale,pscale);
-    fname = strcat(base_name,catDOC);
+catDOC = sprintf('_DOC%0.2g_DOP%0.2g',cscale,pscale); % used to add scale factors to file names
+if (Cmodel == off & Omodel == off & Simodel == off & Cellmodel == off)
+	fname = strcat(VER,'_P');
+elseif (Cmodel == on & Omodel == off & Simodel == off & Cellmodel == off)
+	base_name = strcat(VER,'_PC');
+	fname = strcat(base_name,catDOC);
+elseif (Cmodel == on & Omodel == on & Simodel == off & Cellmodel == off)
+	base_name = strcat(VER,'_PCO');
+	fname = strcat(base_name,catDOC);
+elseif (Cmodel == on & Omodel == off & Simodel == on & Cellmodel == off)
+	base_name = strcat(VER,'_PCSi');
+	fname = strcat(base_name,catDOC);
+elseif (Cmodel == on & Omodel == on & Simodel == on & Cellmodel == off)
+	base_name = strcat(VER,'_PCOSi');
+	fname = strcat(base_name,catDOC);
+elseif (Cmodel == off & Omodel == off & Simodel == off & Cellmodel == on) % cell model does nothing if C model is not on, so this case =Ponly
+	base_name = strcat(VER,'_PCell');
+	fname = strcat(base_name,catDOC);
+elseif (Cmodel == on & Omodel == off & Simodel == off & Cellmodel == on)
+	base_name = strcat(VER,'_PCCell');
+	fname = strcat(base_name,catDOC);
+elseif (Cmodel == on & Omodel == on & Simodel == off & Cellmodel == on)
+	base_name = strcat(VER,'_PCOCell');
+	fname = strcat(base_name,catDOC);
+elseif (Cmodel == on & Omodel == on & Simodel == on & Cellmodel == on)
+	base_name = strcat(VER,'_PCOSiCell');
+	fname = strcat(base_name,catDOC);
+% elseif (Cmodel == on & Omodel == off & Simodel == off)
+%     base_name = strcat(VER,'_PCv1');
+%     % catDOC = sprintf('_DOC%2.0e',cscale);
+%     catDOC = sprintf('_DOC%2.0e_DOP%2.0e',cscale,pscale);
+%     fname = strcat(base_name,catDOC);
+% elseif (Cmodel == on & Omodel == on & Simodel == off)
+%     base_name = strcat(VER,'_PCOv6');
+%     catDOC = sprintf('_DOC%2.0e_DOP%2.0e',cscale,pscale);
+%     fname = strcat(base_name,catDOC);
+% elseif (Cmodel == on & par.Omodel == off & Simodel == on)
+%     base_name = strcat(VER,'_PCSi');
+%     catDOC = sprintf('_DOC%2.0e_DOP%2.0e',cscale,pscale);
+%     fname = strcat(base_name,catDOC);
+% elseif (Cmodel == on & Omodel == on & Simodel == on)
+%     base_name = strcat(VER,'_PCOSi');
+%     catDOC = sprintf('_DOC%2.0e_DOP%2.0e',cscale,pscale);
+%     fname = strcat(base_name,catDOC);
 end
 
 % load optimal parameters if they exist
@@ -94,6 +121,7 @@ if GridVer == 90
     load tempobs_90x180x24.mat
     load Siobs_90x180x24.mat Siobs
     load po4obs_90x180x24.mat
+	load no3obs_90x180x24.mat		% WOA NO3 obs
     grd  = grid;
 elseif GridVer == 91
     OperName = sprintf('OCIM2_%s',TRdivVer);
@@ -265,4 +293,19 @@ if Simodel == on
     Si2C = (aa*ZR + bb)./Z ;
     figure(nfig)
     pcolor(Si2C);colorbar; shading flat;
+end
+
+if Cellmodel ==on
+	% CellOut.C2P=data.CellOut.C2P(:,:,1:2);
+	% CellOut.N2P=data.CellOut.N2P(:,:,1:2);
+	% CellOut.C2N=data.CellOut.C2N(:,:,1:2);
+	% CellOut.LimType=data.CellOut.LimType(:,:,1:2);
+	% CellOut.r=data.CellOut.r(:,:,1:2);
+	% FIGdir = strcat(fname,'_FIGS/');
+	% if ~exists(FIGdir)
+	% 	mkdir FIGdir
+	% end
+	% fnamecell =strcat(FIGdir,'PCCell_CellOut_surf.mat');
+	% save('fnamecell','CellOut')
+
 end

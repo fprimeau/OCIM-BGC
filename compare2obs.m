@@ -2,58 +2,68 @@ clc; clear all; close all
 spd  = 24*60^2 ; spa  = 365*spd ;
 on = true; off = false;
 %
-GridVer  = 91  ;
+GridVer  = 90  ;
 operator = 'A' ;
 
-par.optim   = off ; % on: do optimization
-par.Pmodel  = on ; % on: run P model ;
-par.Cmodel  = on ; % on: run C model ;
-par.Omodel  = on ; % on: run O model; 
-par.Simodel = off ; % on: run Si model;
-par.LoadOpt = off ; % on: load optimial parameters;
+par.optim     = off ; % on: do optimization
+par.Pmodel    = on ; % on: run P model ;
+par.Cmodel    = on ; % on: run C model ;
+par.Omodel    = off ; % on: run O model;
+par.Simodel   = off ; % on: run Si model;
+par.Cellmodel = on;
+par.LoadOpt   = off ; % on: load optimial parameters;
                     % factor to weigh DOP in the objective function
 par.pscale  = 0.0 ;
 % factor to weigh DOC in the objective function
-par.cscale  = 0.25 ; 
+par.cscale  = 0.25 ;
 
 %-------------load data and set up parameters---------------------
 SetUp ;
 
 if ismac
-    input_dir = sprintf('~/Documents/CP-model/MSK%2d/',GridVer); 
+    input_dir = sprintf('~/Documents/CP-model/MSK%2d/',GridVer);
 elseif isunix
-    % input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/Cexp/']);
-    input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
-                        'MSK%2d/PME4DICALK/'],GridVer);
+    input_dir = sprintf('/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK%2d/', GridVer);
+    % input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
+    %                    'MSK%2d/PME4DICALK/'],GridVer);
     % input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/COP4WWF/' ...
                         % 'MSK%2d/'],GridVer);
 end
 VER = strcat(input_dir,TRdivVer);
+catDOC = sprintf('_DOC%0.2g_DOP%0.2g',cscale,pscale); % used to add scale factors to file names
 % Creat output file names based on which model(s) is(are) optimized
-if (par.Cmodel == off & par.Omodel == off & par.Simodel == off)
-    fname = strcat(VER,'_P');
-elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off)
-    base_name = strcat(VER,'_PCv2'); 
-    % catDOC = sprintf('_DOC%2.0e',par.cscale);
-    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
-    fname = strcat(base_name,catDOC);
-elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off)
-    base_name = strcat(VER,'_PCOv5');
-    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
-    fname = strcat(base_name,catDOC);
-elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on)
-    base_name = strcat(VER,'_PCSi');
-    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
-    fname = strcat(base_name,catDOC);
-elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on)
-    base_name = strcat(VER,'_PCOSi');
-    catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
-    fname = strcat(base_name,catDOC);
+if (par.Cmodel == off & par.Omodel == off & par.Simodel == off & par.Cellmodel == off)
+	fname = strcat(VER,'_P');
+elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off & par.Cellmodel == off)
+	base_name = strcat(VER,'_PC');
+	fname = strcat(base_name,catDOC);
+elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off & par.Cellmodel == off)
+	base_name = strcat(VER,'_PCO');
+	fname = strcat(base_name,catDOC);
+elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on & par.Cellmodel == off)
+	base_name = strcat(VER,'_PCSi');
+	fname = strcat(base_name,catDOC);
+elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on & par.Cellmodel == off)
+	base_name = strcat(VER,'_PCOSi');
+	fname = strcat(base_name,catDOC);
+elseif (par.Cmodel == off & par.Omodel == off & par.Simodel == off & par.Cellmodel == on) % cell model does nothing if C model is not on, so this case =Ponly
+	base_name = strcat(VER,'_PCell');
+	fname = strcat(base_name,catDOC);
+elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off & par.Cellmodel == on)
+	base_name = strcat(VER,'_PCCell');
+	fname = strcat(base_name,catDOC);
+elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off & par.Cellmodel == on)
+	base_name = strcat(VER,'_PCOCell');
+	fname = strcat(base_name,catDOC);
+elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on & par.Cellmodel == on)
+	base_name = strcat(VER,'_PCOSiCell');
+	fname = strcat(base_name,catDOC);
 end
-par.fname = strcat(fname,'.mat') ; 
+
+par.fname = strcat(fname,'.mat') ;
 % load optimal parameters if they exist
 fxhat     = strcat(fname,'_xhat.mat');
-par.fxhat = fxhat ; 
+par.fxhat = fxhat ;
 load(par.fxhat) ;
 load(par.fname) ;
 %------------------ compare DIP ---------------------------------
@@ -61,9 +71,9 @@ nfig = 0;
 if (par.Pmodel == on)
     if ~exist('DOP')
         DOP = data.DOP ;
-    end 
-    
-    dopraw = DOPobs - 0.03 ; % less refractory DOP 
+    end
+
+    dopraw = DOPobs - 0.03 ; % less refractory DOP
     idop   = find(dopraw(:) > 0 & DOP(:)>0) ;
     iDOP_ATL = find(dopraw(iwet)>0 & ATL(iwet)>0) ;
     iDOP_PAC = find(dopraw(iwet)>0 & PAC(iwet)>0) ;
@@ -89,7 +99,7 @@ if (par.Pmodel == on)
 
     if ~exist('DIP')
         DIP = data.DIP ;
-    end 
+    end
     nfig = nfig+1;
     figure(nfig)
     ipo4 = find(DIP(iwet) > 0 & po4raw(iwet) > 0.02);
@@ -100,7 +110,7 @@ if (par.Pmodel == on)
     W = (dVt(iwet(ipo4))./sum(dVt(iwet(ipo4))));
     [bandwidth,density,X,Y] = mykde2d(OvsM,100,[0 0],[4 4],W);
     cr = 5:5:95;
-    dx = X(3,5)-X(3,4); 
+    dx = X(3,5)-X(3,4);
     dy = Y(4,2)-Y(3,2);
     [q,ii] = sort(density(:)*dx*dy,'descend');
     D = density;
@@ -108,7 +118,7 @@ if (par.Pmodel == on)
     subplot('position',[0.2 0.2 0.6 0.6])
     contourf(X,Y,100*(1-D),cr); hold on
     contour(X,Y,100*(1-D),cr);
-    
+
     caxis([5 95])
     %set(gca,'FontSize',16);
     grid on
@@ -117,7 +127,7 @@ if (par.Pmodel == on)
     ylabel('Model DIP (mmol/m^3)');
     % title('model V.S. observation')
     plot([0 4],[0 4],'r--','linewidth',2);
-    
+
     subplot('position',[0.82 0.2 0.05 0.6]);
     contourf([1 2],cr,[cr(:),cr(:)],cr); hold on
     contour([1 2],cr,[cr(:),cr(:)],cr);
@@ -127,9 +137,9 @@ if (par.Pmodel == on)
     set(gca,'YAxisLocation','right');
     set(gca,'TickLength',[0 0])
     ylabel('(percentile)')
-    % exportfig(gcf,'DIP_MvsO','fontmode','fixed','fontsize',12, ... 
+    % exportfig(gcf,'DIP_MvsO','fontmode','fixed','fontsize',12, ...
               % 'color','rgb','renderer','painters')
-end 
+end
 
 % -----------------------------------------------------
 if (par.Cmodel == on)
@@ -143,14 +153,14 @@ if (par.Cmodel == on)
     % already including anthropogenic CO2
     % M = DIC(iwet(iDIC)) ;
     % not include anthropogenic CO2
-    M = DIC(iwet(iDIC))+par.dicant(iwet(iDIC)); 
+    M = DIC(iwet(iDIC))+par.dicant(iwet(iDIC));
     fprintf('R^2 for DIC is %3.3f \n',rsquare(O,M))
     %
     OvsM = [O, M];
     W = (dVt(iwet(iDIC))./sum(dVt(iwet(iDIC))));
     [bandwidth,density,X,Y] = mykde2d(OvsM,100,[2000 2000],[2500 2500],W);
     cr = 5:5:95;
-    dx = X(3,5)-X(3,4); 
+    dx = X(3,5)-X(3,4);
     dy = Y(4,2)-Y(3,2);
     [q,ii] = sort(density(:)*dx*dy,'descend');
     D  = density;
@@ -158,7 +168,7 @@ if (par.Cmodel == on)
     subplot('position',[0.2 0.2 0.6 0.6])
     contourf(X,Y,100*(1-D),cr); hold on
     contour(X,Y,100*(1-D),cr);
-    
+
     caxis([5 95])
     %set(gca,'FontSize',16);
     grid on
@@ -167,7 +177,7 @@ if (par.Cmodel == on)
     ylabel('Model DIC (mmol/m^3)');
     % title('model V.S. observation')
     plot([2000 2500],[2000 2500],'r--','linewidth',2);
-    
+
     subplot('position',[0.82 0.2 0.05 0.6]);
     contourf([1 1.5],cr,[cr(:),cr(:)],cr); hold on
     contour([1 1.5],cr,[cr(:),cr(:)],cr);
@@ -189,14 +199,14 @@ if (par.Cmodel == on)
     iALK = find(par.alkraw(iwet)>0);
     %
     O = par.alkraw(iwet(iALK));
-    M = ALK(iwet(iALK)); % already including anthropogenic CO2 
+    M = ALK(iwet(iALK)); % already including anthropogenic CO2
     fprintf('R^2 for ALK is %3.3f \n',rsquare(O,M))
     %
     OvsM = [O, M];
     W = (dVt(iwet(iALK))./sum(dVt(iwet(iALK))));
     [bandwidth,density,X,Y] = mykde2d(OvsM,100,[2300 2300],[2550 2550],W);
     cr = 5:5:95;
-    dx = X(3,5)-X(3,4); 
+    dx = X(3,5)-X(3,4);
     dy = Y(4,2)-Y(3,2);
     [q,ii] = sort(density(:)*dx*dy,'descend');
     D  = density;
@@ -204,7 +214,7 @@ if (par.Cmodel == on)
     subplot('position',[0.2 0.2 0.6 0.6])
     contourf(X,Y,100*(1-D),cr); hold on
     contour(X,Y,100*(1-D),cr);
-    
+
     caxis([5 95])
     %set(gca,'FontSize',16);
     grid on
@@ -213,7 +223,7 @@ if (par.Cmodel == on)
     ylabel('Model ALK (mmol/m^3)');
     % title('model V.S. observation')
     plot([2300 2550],[2300 2550],'r--','linewidth',2);
-    
+
     subplot('position',[0.82 0.2 0.05 0.6]);
     contourf([1 2],cr,[cr(:),cr(:)],cr); hold on
     contour([1 2],cr,[cr(:),cr(:)],cr);
@@ -226,16 +236,16 @@ if (par.Cmodel == on)
     % exportfig(gcf,'ALK_MvsO','fontmode','fixed','fontsize',12,...
     % 'color','rgb','renderer','painters')
 
-    if isfield(data,'DOC') 
+    if isfield(data,'DOC')
         DOC = data.DOC  ;
-    end 
-    
+    end
+
     iDOC_ATL = find(DOCclean(iwet)>0 & ATL(iwet)>0) ;
     iDOC_PAC = find(DOCclean(iwet)>0 & PAC(iwet)>0) ;
     iDOC_IND = find(DOCclean(iwet)>0 & IND(iwet)>0) ;
     iDOC_ARC = find(DOCclean(iwet)>0 & ARC(iwet)>0) ;
     iDOC_MED = find(DOCclean(iwet)>0 & MED(iwet)>0) ;
-    
+
     nfig = nfig + 1;
     figure(nfig)
     plot(DOCclean(iwet(iDOC_ATL)), DOC(iwet(iDOC_ATL)),'ro')
@@ -247,7 +257,7 @@ if (par.Cmodel == on)
     plot(DOCclean(iwet(iDOC_ARC)), DOC(iwet(iDOC_ARC)),'g*')
     hold on
     plot(DOCclean(iwet(iDOC_MED)), DOC(iwet(iDOC_MED)),'c>')
-    hold on 
+    hold on
     legend('ATL','PAC','IND','ARC','Location','northwest')
     hold on
     plot([0 60],[0 60],'r-','linewidth',3)
@@ -258,10 +268,10 @@ if (par.Cmodel == on)
     ylabel('Model DOC (mmol/m^3)')
     iDOC = find(DOCclean(iwet)>0 & DOC(iwet)>0) ;
     O = DOCclean(iwet(iDOC)) ;
-    M = DOC(iwet(iDOC)) ; 
+    M = DOC(iwet(iDOC)) ;
     fprintf('R^2 for DOC is %3.3f \n',rsquare(O,M))
     % OvsM = [O, M] ;
-    
+
     %%%%%%%% compare to sediment trap %%%%%%%%%%%%
     POC = data.POC ;
     par.kappa_p  = 1/(720*60^2) ;
@@ -271,8 +281,8 @@ if (par.Cmodel == on)
     else
         par.bC   = xhat.bC ;
         par.bC_T = 0 ;
-    end         
-    
+    end
+
     [PFdiv,Gout] = buildPFD(par,'POC');
     w = Gout.w(:,:,2:25) ;
     fPOC = -w.*POC*spd*12 ;
@@ -283,7 +293,7 @@ if (par.Cmodel == on)
     ifPOC_IND = find(POC_flux(iwet)>0 & IND(iwet)>0) ;
     ifPOC_ARC = find(POC_flux(iwet)>0 & ARC(iwet)>0) ;
     ifPOC_MED = find(POC_flux(iwet)>0 & MED(iwet)>0) ;
-    
+
     nfig = nfig + 1;
     figure(nfig)
     loglog(POC_flux(iwet(ifPOC_ATL)), fPOC(iwet(ifPOC_ATL)),'ro','MarkerFaceColor','red')
@@ -311,7 +321,7 @@ if (par.Cmodel == on)
     PIC = data.PIC ;
     if isfield(xhat,'d')
         par.d   = xhat.d  ;
-    end         
+    end
     par.tauPIC = 30*spd   ;
     [~,Gout] = buildPFD(par,'PIC') ;
     w = Gout.w(:,:,2:25)  ;
@@ -325,7 +335,7 @@ if (par.Cmodel == on)
     irRatio_IND = find(rR(iwet)>0 & rR(iwet)>0 & IND(iwet)>0) ;
     irRatio_ARC = find(rR(iwet)>0 & rR(iwet)>0 & ARC(iwet)>0) ;
     irRatio_MED = find(rR(iwet)>0 & rR(iwet)>0 & MED(iwet)>0) ;
-    
+
     nfig = nfig + 1;
     figure(nfig)
     loglog(rR(iwet(irRatio_ATL)), rRatio(iwet(irRatio_ATL)),'ro','MarkerFaceColor','red')
@@ -355,22 +365,22 @@ end
 if (par.Omodel == on)
     if ~exist('O2')
         O2 = data.O2 ;
-    end 
+    end
     nfig = nfig + 1;
     figure(nfig)
     o2obs = o2raw ;
-    
+
     io2 = find(O2(iwet)>0 & o2obs(iwet)>0);
     %
     M = O2(iwet(io2));
     O = o2obs(iwet(io2));
-    fprintf('R^2 for O2 is %3.3f \n',rsquare(O,M)) 
+    fprintf('R^2 for O2 is %3.3f \n',rsquare(O,M))
     OvsM = [O, M];
     %
     W = (dVt(iwet(io2))./sum(dVt(iwet(io2))));
     [bandwidth,density,X,Y] = mykde2d(OvsM,100,[0 0],[300 300],W);
     cr = 5:5:95;
-    dx = X(3,5)-X(3,4); 
+    dx = X(3,5)-X(3,4);
     dy = Y(4,2)-Y(3,2);
     [q,ii] = sort(density(:)*dx*dy,'descend');
     D  = density;
@@ -378,7 +388,7 @@ if (par.Omodel == on)
     subplot('position',[0.2 0.2 0.6 0.6])
     contourf(X,Y,100*(1-D),cr); hold on
     contour(X,Y,100*(1-D),cr);
-    
+
     caxis([5 95])
     %set(gca,'FontSize',16);
     grid on
@@ -387,7 +397,7 @@ if (par.Omodel == on)
     ylabel('Model O2 (mmol/m^3)');
     % title('model V.S. observation')
     plot([0 300],[0 300],'r--','linewidth',2);
-    
+
     subplot('position',[0.82 0.2 0.05 0.6]);
     contourf([1 2],cr,[cr(:),cr(:)],cr); hold on
     contour([1 2],cr,[cr(:),cr(:)],cr);
@@ -398,27 +408,27 @@ if (par.Omodel == on)
     set(gca,'TickLength',[0 0])
     ylabel('(percentile)')
     % exportfig(gcf,'O2_MvsO','fontmode','fixed','fontsize',12,'color','rgb','renderer','painters')
-end 
+end
 
 % -----------------------------------------------------
 if (par.Simodel == on)
     if ~exist(DSi)
         DSi = data.DSi ;
-    end 
-    
+    end
+
     nfig = nfig + 1;
     figure(nfig)
     iDSi = find(DSi(iwet)>0 & sio4raw(iwet)>0);
-    
+
     cr = 5:5:95;
     M = DSi(iwet(iDSi));
     O = sio4raw(iwet(iDSi));
     OvsM = [O, M];
-    fprintf('R^2 for DSi is %3.3f \n',rsquare(O,M)) 
+    fprintf('R^2 for DSi is %3.3f \n',rsquare(O,M))
     W = (dVt(iwet(iDSi))./sum(dVt(iwet(iDSi))));
     [bandwidth,density,X,Y] = mykde2d(OvsM,500,[0 0],[200 200],W);
-    
-    dx = X(3,5)-X(3,4); 
+
+    dx = X(3,5)-X(3,4);
     dy = Y(4,2)-Y(3,2);
     [q,ii] = sort(density(:)*dx*dy,'descend');
     D = density;
@@ -426,7 +436,7 @@ if (par.Simodel == on)
     subplot('position',[0.2 0.2 0.6 0.6])
     contourf(X,Y,100*(1-D),cr); hold on
     contour(X,Y,100*(1-D),cr);
-    
+
     caxis([5 95])
     %set(gca,'FontSize',16);
     grid on
@@ -435,7 +445,7 @@ if (par.Simodel == on)
     ylabel('Model DSi (mmol/m^3)');
     % title('model V.S. observation')
     plot([0 200],[0 200],'r--','linewidth',2);
-    
+
     subplot('position',[0.82 0.2 0.05 0.6]);
     contourf([1 2],cr,[cr(:),cr(:)],cr); hold on
     contour([1 2],cr,[cr(:),cr(:)],cr);
@@ -446,4 +456,4 @@ if (par.Simodel == on)
     set(gca,'TickLength',[0 0])
     ylabel('(percentile)')
     % exportfig(gcf,'DSi_MvsO','fontmode','fixed','fontsize',12,'color','rgb','renderer','painters')
-end 
+end

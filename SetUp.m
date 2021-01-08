@@ -247,7 +247,7 @@ PARobs_PPFD = PARobs.par*10^6/spd; % PAR at surface
 clear PARobs
 
 % remove NaNs along coastlines in Light field (maybe move this into a seperate function)
-PARsurf = cleanPARobs(PARobs_PPFD); %local function at end of file
+PARsurf = cleanPARobs(PARobs_PPFD,M3d); %local function at end of file
 clear PARobs_PPFD
 
 % extrapolate light to bottom of euphotic zone
@@ -279,7 +279,7 @@ par.Lambda(:,:,3:end) = 0 ;
 %---------------------------- end ----------------------------------
 
 
-function PARsurf = cleanPARobs(PARobs_PPFD)
+function PARsurf = cleanPARobs(PARobs_PPFD,M3d)
     iwet1 = find(M3d(:,:,1));
     %ibad = find(isnan(PARobs_PPFD(iwet1)));
 
