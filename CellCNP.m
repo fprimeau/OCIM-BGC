@@ -87,7 +87,13 @@ function [out,M] = CellCNP(par,x,P,N,T,Irr)
 	nanindx = find(isnan(Irr) | isnan(T) | isnan(N) |isnan(P));
 	if ~isempty(nanindx)
 		fprintf('Warning: [ %i ] NaNs found in Cell Model input fields. \n',length(nanindx))
-	end
+    end
+
+    %set negative phosphate values to smallest positive concentration.
+    %(negative values mess up the code)
+    fprintf('replacing %d negative Phosphate concentrations with the minimum positive concentration \n',length(P(P<0)))
+    P(P<0)= min(P(P>=0));
+
 
 %% Define constants
 	    molarC = 12.0;              % molar mass of carbon [g/mol]
@@ -356,7 +362,7 @@ dE_dCI = all_nan;
 
 %% loop through points to calculate cell quotas
 for i =1:length(P)
-if ~isnan(Irr(i)) & ~isnan(T(i)) & ~isnan(P(i)) & ~isnan(N(i)) & (P(i)>0)
+if ~isnan(Irr(i)) & ~isnan(T(i)) & ~isnan(P(i)) & ~isnan(N(i))
 	%disp(i)
     if muNLim(i)<muPLim(i)
         if muNLim(i)<muNLim_P(i) % N Limitation
@@ -453,6 +459,8 @@ if ~isnan(Irr(i)) & ~isnan(T(i)) & ~isnan(P(i)) & ~isnan(N(i)) & (P(i)>0)
 		rOpt(i) = rOpt_i;
         LimType(i) = LimState;
 
+else
+    sprintf('NaN value in cell model i = %d : Irr(i) = %0.5g , T(i) = %0.5g, P(i) = %0.5g, N(i) = %0.5g', i,Irr(i),T(i),P(i),N(i))
 
 end % if ~isnan(...)
 end % end for loop
