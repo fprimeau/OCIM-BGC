@@ -79,9 +79,11 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 		T0 = par.Temp(iprod);
 		Irr0 = par.PARobs(iprod);
 
+%keyboard;
 		%parBIO=par.BIO;
         %M3dsurf=par.M3d(:,:,1:2);
 		%pindx=par.pindx;
+		%x0=x;
 		%save('inputs_surf_CellCNP.mat','P0','N0','T0','Irr0','M3dsurf','x0','parBIO','iprod','pindx');
 
  		[CellOut, parBIO] = CellCNP(par,x, P0,N0,T0,Irr0);
@@ -104,9 +106,13 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 		% Cell model derivatives
 		par.CellOut.dC2P_dQ10Photo = M3d*0;
 		par.CellOut.dC2P_dfStorage = M3d*0;
+		par.CellOut.dC2P_dPCutoff  = M3d*0;
+		par.CellOut.dC2P_drCutoff  = M3d*0;
 
         par.CellOut.dC2P_dQ10Photo(iprod) = CellOut.dC2P_dQ10Photo;
 		par.CellOut.dC2P_dfStorage(iprod) = CellOut.dC2P_dfStorage;
+		par.CellOut.dC2P_dPCutoff(iprod)  = Cellout.dC2P_dPCutoff;
+		par.CellOut.dC2P_drCutoff(iprod)  = CellOut.dC2P_drCutoff;
 
 		%second Derivatives w.r.t. Q10Photo
 		if (par.opt_Q10Photo)
@@ -115,10 +121,20 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 			[CellOut, ~] = CellCNP(par,x+xim, P0,N0,T0,Irr0);
 
 			par.CellOut.d2C2P_dQ10Photo2 = M3d*0;
-			par.CellOut.d2C2P_dfStorage_dQ10Photo = M3d*0;
-
 			par.CellOut.d2C2P_dQ10Photo2(iprod) = imag(CellOut.dC2P_dQ10Photo)./eps^3;
-			par.CellOut.d2C2P_dfStorage_dQ10Photo(iprod) = imag(CellOut.dC2P_dfStorage)./eps^3;
+
+			if (par.opt_fStorage)
+				par.CellOut.d2C2P_dfStorage_dQ10Photo = M3d*0;
+				par.CellOut.d2C2P_dfStorage_dQ10Photo(iprod) = imag(CellOut.dC2P_dfStorage)./eps^3;
+			end
+			if (par.opt_PLip_PCutoff)
+				par.CellOut.d2C2P_dPCutoff_dQ10Photo = M3d*0;
+				par.CellOut.d2C2P_dPCutoff_dQ10Photo(iprod) = imag(CellOut.dC2P_dPCutoff)./eps^3;
+			end
+			if (par.opt_PStor_rCutoff)
+				par.CellOut.d2C2P_drCutoff_dQ10Photo = M3d*0;
+				par.CellOut.d2C2P_drCutoff_dQ10Photo(iprod) = imag(CellOut.dC2P_drCutoff)./eps^3;
+			end
 		end
 
 		%second Derivatives w.r.t. fStorage
@@ -127,12 +143,49 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 			xim(par.pindx.lfStorage) = sqrt(-1)*eps^3;
 			[CellOut, ~] = CellCNP(par,x+xim, P0,N0,T0,Irr0);
 
-			par.CellOut.d2C2P_dQ10Photo_dfStorage = M3d*0;
 			par.CellOut.d2C2P_dfStorage2 = M3d*0;
-
-			par.CellOut.d2C2P_dQ10Photo_dfStorage(iprod) = imag(CellOut.dC2P_dQ10Photo)./eps^3;
 			par.CellOut.d2C2P_dfStorage2(iprod) = imag(CellOut.dC2P_dfStorage)./eps^3;
+
+			if (par.opt_Q10Photo)
+				par.CellOut.d2C2P_dQ10Photo_dfStorage = M3d*0;
+				par.CellOut.d2C2P_dQ10Photo_dfStorage(iprod) = imag(CellOut.dC2P_dQ10Photo)./eps^3;
+			end
+			if (par.opt_PLip_PCutoff)
+				par.CellOut.d2C2P_dPCutoff_dfStorage = M3d*0;
+				par.CellOut.d2C2P_dPCutoff_dfStorage(iprod) = imag(CellOut.dC2P_dPCutoff)./eps^3;
+			end
+			if (par.opt_PStor_rCutoff)
+				par.CellOut.d2C2P_drCutoff_dfStorage = M3d*0;
+				par.CellOut.d2C2P_drCutoff_dfStorage(iprod) = imag(CellOut.dC2P_drCutoff)./eps^3;
+			end
 		end
+
+		%second Derivatives w.r.t. PLip_PCutoff
+		if (par.opt_PLip_PCutoff)
+			xim = zeros(size(x));
+			xim(par.pindx.lPLip_PCutoff) = sqrt(-1)*eps^3;
+			[CellOut, ~] = CellCNP(par,x+xim, P0,N0,T0,Irr0);
+
+			par.CellOut.d2C2P_dPCutoff2 = M3d*0;
+			par.CellOut.d2C2P_dPCutoff2 = imag(CellOut.dC2P_dPCutoff)./eps^3;
+
+			if (par.opt_PStor_rCutoff)
+				par.CellOut.d2C2P_drCutoff_dPCutoff = M3d*0;
+				par.CellOut.d2C2P_drCutoff_dPCutoff(iprod) = imag(CellOut.dC2P_drCutoff)./eps^3;
+			end
+		end
+
+		%second Derivatives w.r.t. PStor_rCutoff
+		if (par.opt_PStor_rCutoff)
+			xim = zeros(size(x));
+			xim(par.pindx.lPStor_rCutoff) = sqrt(-1)*eps^3;
+			[CellOut, ~] = CellCNP(par,x+xim, P0,N0,T0,Irr0);
+
+			par.CellOut.d2C2P_drCutoff2 = M3d*0;
+			par.CellOut.d2C2P_drCutoff2 = imag(CellOut.dC2P_drCutoff)./eps^3;
+		end
+
+
 		data.CellOut = par.CellOut;
 	end
 

@@ -169,18 +169,39 @@ function par = SetPar(par)
 	else
 		par.BIO.kST0 =0.185;            % specific synthesis rate of synthetic apparatus at 25degC [1/hr]
 	end
+	if exist('xhat') & isfield(xhat,'PLip_PCutoff')
+		par.BIO.PLip_PCutoff = xhat.PLip_PCutoff;
+	else
+		par.BIO.PLip_PCutoff = exp(-14.408);  % log of [P] below which more PLipids are substituted with Slipids
+	end
+	if exist('xhat') & isfield(xhat,'PLip_scale')
+		par.BIO.PLip_scale = xhat.PLip_scale;
+	else
+		par.BIO.PLip_scale = 1.00;  % log of [P] below which more PLipids are substituted with Slipids
+	end
+	if exist('xhat') & isfield(xhat,'PStor_rCutoff')
+		par.BIO.PStor_rCutoff = xhat.PStor_rCutoff;
+	else
+		par.BIO.PStor_rCutoff = 2.25;  % log of [P] below which more PLipids are substituted with Slipids
+	end
+	if exist('xhat') & isfield(xhat,'PStor_scale')
+		par.BIO.PStor_scale = xhat.PStor_scale;
+	else
+		par.BIO.PStor_scale = 1.00;  % log of [P] below which more PLipids are substituted with Slipids
+	end
+
 % cell model parameters that don't change
 	if (par.Cellmodel==on)
 		par.BIO.alphaS = .225;          % radius at which cell is all periplasm and membrane [um]
 		par.BIO.gammaDNA = .016;        % DNA fraction of cell
 		par.BIO.gammaLipid = .173       % structural Lipid (non-membrane or periplasm) fraction of cell
-		par.BIO.lPCutoff = -7.252;		% log of max [P] for which Plipids will be substituted with Slipids
-		par.BIO.r0Cutoff = 2.25;		% % NEED TO REDEFINE: r0Cutoff =  rFullA; ASK GEORGE
+		%par.BIO.lPCutoff = -7.252;		% log of max [P] for which Plipids will be substituted with Slipids
+		%par.BIO.r0Cutoff = 2.25;		% % NEED TO REDEFINE: r0Cutoff =  rFullA; ASK GEORGE % now PStor_rCutoff
 		par.BIO.DNT0 = 1e-12*3.6e2*3600;    % Diffusivity of Nitrate at 25degC [m^2/hr]
 		par.BIO.DPT0 = 1e-12*3.6e2*3600;    % Diffusivity of Phosphate at 25degC [m^2/hr]
 		par.BIO.Q10Diffusivity = 1.5;
 		par.BIO.AMin =.05;              % minimal fraction of cell dry mass that is nutrient uptake proteins
-		par.BIO.CStor = 1.00;
+		%par.BIO.CStor = 1.00;           %replaced by PStor_scale
 		par.BIO.PhiS = .67;             % specific carbon cost of synthesis [gC/gC]
 		%%% BIO parameters below should remain fixed
 		par.BIO.pDry = .47;             % Dry mass fraction of the cell

@@ -261,6 +261,35 @@ function par = PackPar(par)
 			p0 = [p0; lkST0]			;
 			par.pindx.lkST0 = strt : length(p0);
 		end
+		if (par.opt_PLip_PCutoff == on);
+			nbx  = nbx + 1        		;
+			lPLip_PCutoff = log(par.BIO.PLip_PCutoff)	;
+			strt = length(p0) + 1		;
+			p0 = [p0; lPLip_PCutoff]			;
+			par.pindx.lPLip_PCutoff = strt : length(p0);
+		end
+		if (par.opt_PLip_scale == on);
+			nbx  = nbx + 1        		;
+			lPLip_scale = log(par.BIO.PLip_scale)	;
+			strt = length(p0) + 1		;
+			p0 = [p0; lPLip_scale]			;
+			par.pindx.lPLip_scale = strt : length(p0);
+		end
+		if (par.opt_PStor_rCutoff == on);
+			nbx  = nbx + 1        		;
+			lPStor_rCutoff = log(par.BIO.PStor_rCutoff)	;
+			strt = length(p0) + 1		;
+			p0 = [p0; lPStor_rCutoff]			;
+			par.pindx.lPStor_rCutoff = strt : length(p0);
+		end
+		if (par.opt_PStor_scale == on);
+			nbx  = nbx + 1        		;
+			lPStor_scale = log(par.BIO.PStor_scale)	;
+			strt = length(p0) + 1		;
+			p0 = [p0; lPStor_scale]			;
+			par.pindx.lPStor_scale = strt : length(p0);
+		end
+		%PStor_scale
 	end
     par.p0  = p0  ;
     par.npx = npx ; par.ncx = ncx ;
