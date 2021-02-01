@@ -289,7 +289,13 @@ function par = PackPar(par)
 			p0 = [p0; lPStor_scale]			;
 			par.pindx.lPStor_scale = strt : length(p0);
 		end
-		%PStor_scale
+		if (par.opt_alphaS == on)
+			nbx  = nbx + 1        		;
+			lalphaS = log(par.BIO.alphaS)	;
+			strt = length(p0) + 1		;
+			p0 = [p0; lalphaS]			;
+			par.pindx.lalphaS = strt : length(p0);
+		end
 	end
     par.p0  = p0  ;
     par.npx = npx ; par.ncx = ncx ;

@@ -40,33 +40,36 @@ function PrintPara(x, par);
             fprintf('bb      is  % 3.2e \n\n', par.bb)  ;
         end
 		if (par.Cellmodel==on)
-            fprintf('alphaS         is  % 3.2e \n', par.BIO.alphaS)   ;
-            fprintf('gammDNA        is  % 3.2e \n', par.BIO.gammaDNA)    ;
-            fprintf('gammaLipid     is  % 3.2e \n', par.BIO.gammaLipid)    ;
-            fprintf('PCutoff        is  % 3.2e \n', exp(par.BIO.lPCutoff))   ;
-            fprintf('r0Cutoff       is  % 3.2e \n', par.BIO.r0Cutoff)  ;
+            fprintf('Q10Photo       is  % 3.2e \n', par.BIO.Q10Photo)   ;
+			fprintf('fStorage       is  % 3.2e \n', par.BIO.fStorage)   ;
+			fprintf('PLip_PCutoff   is  % 3.2e \n', par.BIO.PLip_PCutoff) ;
+			fprintf('PLip_scale     is  % 3.2e \n', par.BIO.PLip_scale)   ;
+            fprintf('PStor_r0Cutoff is  % 3.2e \n', par.BIO.PStor_rCutoff);
+			fprintf('PStor_scale    is  % 3.2e \n', par.BIO.PStor_scale)  ;
+			fprintf('alphaS         is  % 3.2e \n', par.BIO.alphaS)     ;
+			fprintf('alphaPLip      is  % 3.2e \n', par.BIO.alphaPLip)  ;
+            fprintf('Q10Diffusivity is  % 3.2e \n', par.BIO.Q10Diffusivity) ;
 			fprintf('DNT0           is  % 3.2e \n', par.BIO.DNT0)  ;
 			fprintf('DPT0           is  % 3.2e \n', par.BIO.DPT0)  ;
-			fprintf('Q10Diffusivity is  % 3.2e \n', par.BIO.Q10Diffusivity)  ;
 			fprintf('AMin           is  % 3.2e \n', par.BIO.AMin)  ;
-			fprintf('CStor          is  % 3.2e \n', par.BIO.CStor)  ;
-			fprintf('alphaPLip      is  % 3.2e \n', par.BIO.alphaPLip)  ;
 			fprintf('PhiS           is  % 3.2e \n', par.BIO.PhiS)  ;
 			fprintf('pDry           is  % 3.2e \n', par.BIO.pDry)  ;
-			fprintf('rho      	    is  % 3.2e \n', par.BIO.rho)  ;
+			fprintf('rho            is  % 3.2e \n', par.BIO.rho)   ;
+			fprintf('gammDNA        is  % 3.2e \n', par.BIO.gammaDNA)   ;
+            fprintf('gammaLipid     is  % 3.2e \n', par.BIO.gammaLipid) ;
 			fprintf('fProtM         is  % 3.2e \n', par.BIO.fProtM)  ;
 			fprintf('fProtL         is  % 3.2e \n', par.BIO.fProtL)  ;
-			fprintf('PDNA      	    is  % 3.2e \n', par.BIO.PDNA)  ;
-			fprintf('PRib      	    is  % 3.2e \n', par.BIO.PRib)  ;
-			fprintf('PPhospholipid  is  % 3.2e \n', par.BIO.PPhospholipid)  ;
+			fprintf('PDNA           is  % 3.2e \n', par.BIO.PDNA)    ;
+			fprintf('PRib           is  % 3.2e \n', par.BIO.PRib)    ;
+			fprintf('PPhospholipid  is  % 3.2e \n', par.BIO.PPhospholipid) ;
 			fprintf('NProt          is  % 3.2e \n', par.BIO.NProt)  ;
-			fprintf('NDNA      	    is  % 3.2e \n', par.BIO.NDNA)  ;
-			fprintf('NRib      	    is  % 3.2e \n', par.BIO.NRib)  ;
+			fprintf('NDNA           is  % 3.2e \n', par.BIO.NDNA)  ;
+			fprintf('NRib           is  % 3.2e \n', par.BIO.NRib)  ;
 			fprintf('CProt          is  % 3.2e \n', par.BIO.CProt)  ;
-			fprintf('CDNA      	    is  % 3.2e \n', par.BIO.CDNA)  ;
+			fprintf('CDNA           is  % 3.2e \n', par.BIO.CDNA)  ;
 			fprintf('CPhospholipid  is  % 3.2e \n', par.BIO.CPhospholipid )  ;
 			fprintf('CLipid         is  % 3.2e \n', par.BIO.CLipid)  ;
-			fprintf('CRib      	    is  % 3.2e \n\n', par.BIO.CRib)  ;
+			fprintf('CRib           is  % 3.2e \n\n', par.BIO.CRib)  ;
         end
         fprintf('-----------------------------------------------\n\n')
     end
@@ -252,7 +255,7 @@ function PrintPara(x, par);
             xhat.PLip_PCutoff = exp(x(iPLip_PCutoff));
         end
 		if (par.opt_PLip_scale == on)
-            iPLip_Pscale = par.pindx.lPLip_scale;
+            iPLip_scale = par.pindx.lPLip_scale;
             fprintf('current PLip_scale     is  % 3.2e \n', exp(x(iPLip_scale)));
             xhat.PLip_scale = exp(x(iPLip_scale));
         end
@@ -265,6 +268,11 @@ function PrintPara(x, par);
             iPStor_scale = par.pindx.lPStor_scale;
             fprintf('current PStor_scale    is  % 3.2e \n', exp(x(iPStor_scale)));
             xhat.PStor_scale = exp(x(iPStor_scale));
+        end
+		if (par.opt_alphaS == on)
+            ialphaS = par.pindx.lalphaS;
+            fprintf('current alphaS         is  % 3.2e \n', exp(x(ialphaS)));
+            xhat.alphaS = exp(x(ialphaS));
         end
 
 	end

@@ -104,18 +104,12 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 		par.CellOut.C2P(isnan(par.CellOut.C2P)) = 0; %remove NaNs
 
 		% Cell model derivatives
-		par.CellOut.dC2P_dQ10Photo = M3d*0;
-		par.CellOut.dC2P_dfStorage = M3d*0;
-		par.CellOut.dC2P_dPCutoff  = M3d*0;
-		par.CellOut.dC2P_drCutoff  = M3d*0;
-
-        par.CellOut.dC2P_dQ10Photo(iprod) = CellOut.dC2P_dQ10Photo;
-		par.CellOut.dC2P_dfStorage(iprod) = CellOut.dC2P_dfStorage;
-		par.CellOut.dC2P_dPCutoff(iprod)  = Cellout.dC2P_dPCutoff;
-		par.CellOut.dC2P_drCutoff(iprod)  = CellOut.dC2P_drCutoff;
-
-		%second Derivatives w.r.t. Q10Photo
+		% Q10Photo Derivatives
 		if (par.opt_Q10Photo)
+			par.CellOut.dC2P_dQ10Photo = M3d*0;
+			par.CellOut.dC2P_dQ10Photo(iprod) = CellOut.dC2P_dQ10Photo;
+
+			%second Derivatives w.r.t. Q10Photo
 			xim = zeros(size(x));
 			xim(par.pindx.lQ10Photo) = sqrt(-1)*eps^3;
 			[CellOut, ~] = CellCNP(par,x+xim, P0,N0,T0,Irr0);
@@ -135,10 +129,26 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 				par.CellOut.d2C2P_drCutoff_dQ10Photo = M3d*0;
 				par.CellOut.d2C2P_drCutoff_dQ10Photo(iprod) = imag(CellOut.dC2P_drCutoff)./eps^3;
 			end
+			if (par.opt_PStor_scale)
+				par.CellOut.d2C2P_dPStorscale_dQ10Photo = M3d*0;
+				par.CellOut.d2C2P_dPStorscale_dQ10Photo(iprod) = imag(CellOut.dC2P_dPStorscale)./eps^3;
+			end
+			if (par.opt_PLip_scale)
+				par.CellOut.d2C2P_dPLipscale_dQ10Photo = M3d*0;
+				par.CellOut.d2C2P_dPLipscale_dQ10Photo(iprod) = imag(CellOut.dC2P_dPLipscale)./eps^3;
+			end
+			if (par.opt_alphaS)
+				par.CellOut.d2C2P_dPLipscale_dQ10Photo = M3d*0;
+				par.CellOut.d2C2P_dalphaS_dQ10Photo(iprod) = imag(CellOut.dC2P_dalphaS)./eps^3;
+			end
 		end
 
-		%second Derivatives w.r.t. fStorage
+		% fStorage Derivatives
 		if (par.opt_fStorage)
+			par.CellOut.dC2P_dfStorage = M3d*0;
+			par.CellOut.dC2P_dfStorage(iprod) = CellOut.dC2P_dfStorage;
+
+			%second Derivatives w.r.t. fStorage
 			xim = zeros(size(x));
 			xim(par.pindx.lfStorage) = sqrt(-1)*eps^3;
 			[CellOut, ~] = CellCNP(par,x+xim, P0,N0,T0,Irr0);
@@ -154,37 +164,153 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 				par.CellOut.d2C2P_dPCutoff_dfStorage = M3d*0;
 				par.CellOut.d2C2P_dPCutoff_dfStorage(iprod) = imag(CellOut.dC2P_dPCutoff)./eps^3;
 			end
+			if (par.opt_PLip_scale)
+				par.CellOut.d2C2P_dPLipscale_dfStorage = M3d*0;
+				par.CellOut.d2C2P_dPLipscale_dfStorage(iprod) = imag(CellOut.dC2P_dPLipscale)./eps^3;
+			end
 			if (par.opt_PStor_rCutoff)
 				par.CellOut.d2C2P_drCutoff_dfStorage = M3d*0;
 				par.CellOut.d2C2P_drCutoff_dfStorage(iprod) = imag(CellOut.dC2P_drCutoff)./eps^3;
 			end
+			if (par.opt_PStor_scale)
+				par.CellOut.d2C2P_dPStorscale_dfStorage = M3d*0;
+				par.CellOut.d2C2P_dPStorscale_dfStorage(iprod) = imag(CellOut.dC2P_dPStorscale)./eps^3;
+			end
+			if (par.opt_alphaS)
+				par.CellOut.d2C2P_dalphaS_dfStorage = M3d*0;
+				par.CellOut.d2C2P_dalphaS_dfStorage(iprod) = imag(CellOut.dC2P_dalphaS)./eps^3;
+			end
 		end
 
-		%second Derivatives w.r.t. PLip_PCutoff
+		% PLip_PCutoff derivatives
 		if (par.opt_PLip_PCutoff)
+			par.CellOut.dC2P_dPCutoff  = M3d*0;
+			par.CellOut.dC2P_dPCutoff(iprod)  = CellOut.dC2P_dPCutoff;
+
+			%second Derivatives w.r.t. PLip_PCutoff
 			xim = zeros(size(x));
 			xim(par.pindx.lPLip_PCutoff) = sqrt(-1)*eps^3;
 			[CellOut, ~] = CellCNP(par,x+xim, P0,N0,T0,Irr0);
 
 			par.CellOut.d2C2P_dPCutoff2 = M3d*0;
-			par.CellOut.d2C2P_dPCutoff2 = imag(CellOut.dC2P_dPCutoff)./eps^3;
+			par.CellOut.d2C2P_dPCutoff2(iprod) = imag(CellOut.dC2P_dPCutoff)./eps^3;
 
+			if (par.opt_PLip_scale)
+				par.CellOut.d2C2P_dPLipscale_dPCutoff = M3d*0;
+				par.CellOut.d2C2P_dPLipscale_dPCutoff(iprod) = imag(CellOut.dC2P_dPLipscale)./eps^3;
+			end
 			if (par.opt_PStor_rCutoff)
 				par.CellOut.d2C2P_drCutoff_dPCutoff = M3d*0;
 				par.CellOut.d2C2P_drCutoff_dPCutoff(iprod) = imag(CellOut.dC2P_drCutoff)./eps^3;
 			end
+			if (par.opt_PStor_scale)
+				par.CellOut.d2C2P_dPStorscale_dPCutoff = M3d*0;
+				par.CellOut.d2C2P_dPStorscale_dPCutoff(iprod) = imag(CellOut.dC2P_dPStorscale)./eps^3;
+			end
+			if (par.opt_alphaS)
+				par.CellOut.d2C2P_dalphaS_dPCutoff = M3d*0;
+				par.CellOut.d2C2P_dalphaS_dPCutoff(iprod) = imag(CellOut.dC2P_dalphaS)./eps^3;
+			end
 		end
 
-		%second Derivatives w.r.t. PStor_rCutoff
+		% PLip_scale Derivatives
+		if (par.opt_PLip_scale)
+			par.CellOut.dC2P_dPLip_scale = M3d*0;
+			par.CellOut.dC2P_dPLip_scale(iprod) = CellOut.dC2P_dPLipscale;
+
+			%second Derivatives w.r.t. PLip_scale
+			xim = zeros(size(x));
+			xim(par.pindx.lPLip_scale) = sqrt(-1)*eps^3;
+			[CellOut, ~] = CellCNP(par,x+xim, P0,N0,T0,Irr0);
+
+			par.CellOut.d2C2P_dPLipscale2 = M3d*0;
+			par.CellOut.d2C2P_dPLipscale2(iprod) = imag(CellOut.dC2P_dPLipscale)./eps^3;
+
+			if (par.opt_PStor_rCutoff)
+				par.CellOut.d2C2P_drCutoff_dPLipscale = M3d*0;
+				par.CellOut.d2C2P_drCutoff_dPLipscale(iprod) = imag(CellOut.dC2P_drCutoff)./eps^3;
+			end
+			if (par.opt_PStor_scale)
+				par.CellOut.d2C2P_dPStorscale_dPLipscale = M3d*0;
+				par.CellOut.d2C2P_dPStorscale_dPLipscale(iprod) = imag(CellOut.dC2P_dPStorscale)./eps^3;
+			end
+			if (par.opt_alphaS)
+				par.CellOut.d2C2P_dalphaS_dPLipscale = M3d*0;
+				par.CellOut.d2C2P_dalphaS_dPLipscale(iprod) = imag(CellOut.dC2P_dalphaS)./eps^3;
+			end
+		end
+
+		% PStor_rCutoff derivatives
 		if (par.opt_PStor_rCutoff)
+			par.CellOut.dC2P_drCutoff  = M3d*0;
+			par.CellOut.dC2P_drCutoff(iprod)  = CellOut.dC2P_drCutoff;
+
+			%second Derivatives w.r.t. PStor_rCutoff
 			xim = zeros(size(x));
 			xim(par.pindx.lPStor_rCutoff) = sqrt(-1)*eps^3;
 			[CellOut, ~] = CellCNP(par,x+xim, P0,N0,T0,Irr0);
 
 			par.CellOut.d2C2P_drCutoff2 = M3d*0;
-			par.CellOut.d2C2P_drCutoff2 = imag(CellOut.dC2P_drCutoff)./eps^3;
+			par.CellOut.d2C2P_drCutoff2(iprod) = imag(CellOut.dC2P_drCutoff)./eps^3;
+
+			if (par.opt_PStor_scale)
+				par.CellOut.d2C2P_dPStorscale_drCutoff = M3d*0;
+				par.CellOut.d2C2P_dPStorscale_drCutoff(iprod) = imag(CellOut.dC2P_dPStorscale)./eps^3;
+			end
+			if (par.opt_alphaS)
+				par.CellOut.d2C2P_dalphaS_drCutoff = M3d*0;
+				par.CellOut.d2C2P_dalphaS_drCutoff(iprod) = imag(CellOut.dC2P_dalphaS)./eps^3;
+			end
 		end
 
+		% PStor_scale derivatives
+		if (par.opt_PStor_scale)
+			par.CellOut.dC2P_dPStor_scale = M3d*0;
+			par.CellOut.dC2P_dPStor_scale(iprod) = CellOut.dC2P_dPStorscale;
+
+			%second Derivatives w.r.t. PStor_scale
+			xim = zeros(size(x));
+			xim(par.pindx.lPStor_scale) = sqrt(-1)*eps^3;
+			[CellOut, ~] = CellCNP(par,x+xim, P0,N0,T0,Irr0);
+
+			par.CellOut.d2C2P_dPStorscale2 = M3d*0;
+			par.CellOut.d2C2P_dPStorscale2(iprod) = imag(CellOut.dC2P_dPStorscale)./eps^3;
+
+			if (par.opt_alphaS)
+				par.CellOut.d2C2P_dalphaS_dPStorscale = M3d*0;
+				par.CellOut.d2C2P_dalphaS_dPStorscale(iprod) = imag(CellOut.dC2P_dalphaS)./eps^3;
+			end
+		end
+
+		% alphaS derivatives
+		if (par.opt_alphaS)
+			par.CellOut.dC2P_dalphaS = M3d*0;
+			par.CellOut.dC2P_dalphaS(iprod) = CellOut.dC2P_dalphaS;
+
+			%second Derivatives w.r.t. alphaS
+			xim = zeros(size(x));
+			xim(par.pindx.lalphaS) = sqrt(-1)*eps^3;
+			[CellOut, ~] = CellCNP(par,x+xim, P0,N0,T0,Irr0);
+
+			par.CellOut.d2C2P_dalphaS2 = M3d*0;
+			par.CellOut.d2C2P_dalphaS2(iprod) = imag(CellOut.dC2P_dalphaS)./eps^3;
+		end
+
+		% par.CellOut.dC2P_dQ10Photo = M3d*0;
+		% par.CellOut.dC2P_dfStorage = M3d*0;
+		% par.CellOut.dC2P_dPCutoff  = M3d*0;
+		% par.CellOut.dC2P_drCutoff  = M3d*0;
+		% par.CellOut.dC2P_dPStor_scale = M3d*0;
+		% par.CellOut.dC2P_dPLip_scale = M3d*0;
+		% %par.CellOut.dC2P_dalphaS = M3d*0;
+		%
+        % par.CellOut.dC2P_dQ10Photo(iprod) = CellOut.dC2P_dQ10Photo;
+		% par.CellOut.dC2P_dfStorage(iprod) = CellOut.dC2P_dfStorage;
+		% par.CellOut.dC2P_dPCutoff(iprod)  = Cellout.dC2P_dPCutoff;
+		% par.CellOut.dC2P_drCutoff(iprod)  = CellOut.dC2P_drCutoff;
+		% par.CellOut.dC2P_dPStor_scale(iprod) = CellOut.dC2P_dPStorscale;
+		% par.CellOut.dC2P_dPLip_scale(iprod) = CellOut.dC2P_dPLipscale;
+		% %par.CellOut.dC2P_dalphaS(iprod) = CellOut.dC2P_dalphaS;
 
 		data.CellOut = par.CellOut;
 	end

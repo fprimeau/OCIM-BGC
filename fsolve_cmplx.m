@@ -6,7 +6,8 @@ function z = fsolve_cmplx(f,z0)
 % inputs
 %      f:  function handle
 %      z0: initial guess at the root
-options = optimoptions('fsolve','Display','none');
+options = optimoptions('fsolve','Display','none','FunctionTolerance',1e-8,'OptimalityTolerance',1e-8);
+%options = optimoptions('fsolve','Display','iter','FunctionTolerance',1e-16,'OptimalityTolerance',1e-16);
     i = sqrt(-1);
     x = real(z0);
     y = imag(z0);

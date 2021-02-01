@@ -189,10 +189,14 @@ function par = SetPar(par)
 	else
 		par.BIO.PStor_scale = 1.00;  % log of [P] below which more PLipids are substituted with Slipids
 	end
+	if exist('xhat') & isfield(xhat,'alphaS')
+		par.BIO.alphaS = xhat.alphaS;
+	else
+		par.BIO.alphaS = 0.225;          % radius at which cell is all periplasm and membrane [um]
+	end
 
 % cell model parameters that don't change
 	if (par.Cellmodel==on)
-		par.BIO.alphaS = .225;          % radius at which cell is all periplasm and membrane [um]
 		par.BIO.gammaDNA = .016;        % DNA fraction of cell
 		par.BIO.gammaLipid = .173       % structural Lipid (non-membrane or periplasm) fraction of cell
 		%par.BIO.lPCutoff = -7.252;		% log of max [P] for which Plipids will be substituted with Slipids

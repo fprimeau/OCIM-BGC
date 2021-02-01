@@ -23,28 +23,28 @@ par.Cmodel  = on ;
 par.Omodel  = off ;
 par.Simodel = off ;
 par.Cellmodel = on; % cellular trait model for phyto uptake stoichiometry
-par.LoadOpt = on ; % if load optimial par.
+par.LoadOpt = off ; % if load optimial par.
 par.pscale  = 0.0 ;
 par.cscale  = 0.25 ; % factor to weigh DOC in the objective function
 
 % P model parameters
-par.opt_sigma = on ;
-par.opt_kP_T  = on ;
-par.opt_kdP   = on ;
-par.opt_bP_T  = on ;
-par.opt_bP    = on ;
+par.opt_sigma = off ;
+par.opt_kP_T  = off ;
+par.opt_kdP   = off ;
+par.opt_bP_T  = off ;
+par.opt_bP    = off ;
 par.opt_alpha = on ;
 par.opt_beta  = on ;
 % C model parameters
 par.opt_bC_T  = on ;
 par.opt_bC    = on ;
-par.opt_d     = on ;
-par.opt_kC_T  = on ;
-par.opt_kdC   = on ;
-par.opt_R_Si  = on ;
-par.opt_rR    = on ;
-par.opt_cc    = off ;
-par.opt_dd    = off ;
+par.opt_d     = off ;
+par.opt_kC_T  = off ;
+par.opt_kdC   = off ;
+par.opt_R_Si  = off ;
+par.opt_rR    = off ;
+par.opt_cc    = off ; %always off if cell model on
+par.opt_dd    = off ; %always off if cell model on
 % O model parameters
 par.opt_O2C_T = off ;
 par.opt_rO2C  = on ;
@@ -57,15 +57,15 @@ par.opt_bt    = off  ;
 par.opt_aa    = off  ;
 par.opt_bb    = off  ;
 %Trait Model parameters
-par.opt_Q10Photo = on ;
-par.opt_fRibE 	 = off;
-par.opt_fStorage = off;
-par.opt_kST0 	 = off;
-par.opt_PLip_PCutoff = on;
-par.opt_PLip_scale = off;
+par.opt_Q10Photo     = on ;
+par.opt_fStorage     = on;
+par.opt_PLip_PCutoff = off;
+par.opt_PLip_scale   = off;
 par.opt_PStor_rCutoff = off;
-par.opt_PStor_scale = off;
-% par.BIO.opt_alphaS = off;
+par.opt_PStor_scale  = off;
+par.opt_alphaS       = off;
+par.opt_fRibE 	     = off;
+par.opt_kST0 	     = off;
 % par.BIO.opt_gammaDNA = off;
 % par.BIO.opt_gammaLipid = off;
 % par.BIO.opt_lPCutoff = off;
@@ -119,7 +119,7 @@ elseif Gtest == off
         base_name = strcat(VER,'_PCell');
         fname = strcat(base_name,catDOC);
 	elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off & par.Cellmodel == on)
-        base_name = strcat(VER,'_PCCell');
+        base_name = strcat(VER,'_PCCellv2');
         fname = strcat(base_name,catDOC);
 	elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off & par.Cellmodel == on)
 		base_name = strcat(VER,'_PCOCell');
