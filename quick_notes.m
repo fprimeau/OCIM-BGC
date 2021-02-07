@@ -128,7 +128,17 @@ end
 
             Cxx(:,kk) = mfactor(FD, tmp);
         end
-        
+
+%% why are ther nans in the gradientof neglog post
+
+[ibadx,ibady] = find(isnan(Cx));
+ibadparam = unique(ibady)
+
+
+[ibadx,ibady] = find(Cx == real(Cx));
+%[ibadx,ibady] = ind2sub(size(par.Cx),ibad)
+
+
 %% why is fsolve  not working? 
   i=152
     c3 = [6.06597219280557e-05]

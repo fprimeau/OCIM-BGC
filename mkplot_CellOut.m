@@ -21,15 +21,24 @@ set(groot,'defaultTextFontName','Times',...
 close all;
 
 GridVer = 90;
-%ver = datestr(now,'mmdd-HH');
-outPath='/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK90/FIGS_PCCell_DOC0.25_DOP0/';
+RunVer = 'Tv4_PCCellv2_DOC0.25_DOP0';
+
+%ver = datestr(now,'mmmdd');
+%model output directory
+outputDir = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK90/';
+figDir = strcat(outputDir,'FIGS_PCCellv2_DOC0.25_DOP0/');
+
+%outPath='/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK90/FIGS_PCCell_DOC0.25_DOP0/';
+outPath = figDir;
 
 % load model output fields
-fname='/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK90/Tv4_PCCell_DOC0.25_DOP0.mat';
+%fname='/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK90/Tv4_PCCell_DOC0.25_DOP0.mat';
+fname = strcat(outputDir, RunVer, '.mat');
 load(fname);
 
 % load optimal parameter values
-fxhat = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK90/Tv4_PCCell_DOC0.25_DOP0_xhat.mat';
+%fxhat = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK90/Tv4_PCCell_DOC0.25_DOP0_xhat.mat';
+fxhat = strcat(outputDir, RunVer,'_xhat.mat');
 load(fxhat);
 
 
@@ -59,12 +68,33 @@ end
 
 %% annotation for parameter values
 dim = [0.0 0.6 0.1 0.2];
-parstr = 'Cell Model Parameters';
+dim = [0.1199 0.695 0.1 0.2]
+%parstr = 'Cell Model Parameters';
+parstr = {'Cell Model Parameters'}
+kk =1;
 if isfield(xhat,'Q10Photo')
-    parstr = {parstr, ['Q10Photo=' num2str(xhat.Q10Photo)]}
+	kk=kk+1;
+    parstr{kk,1} = ['Q10Photo=' num2str(xhat.Q10Photo)];
 end
 if isfield(xhat,'fStorage')
-    parstr = {parstr, ['fStorage=' num2str(xhat.fStorage)]}
+	kk=kk+1;
+    parstr{kk,1} = ['fStorage=' num2str(xhat.fStorage)] ;
+end
+if isfield(xhat,'PLip_PCutoff')
+	kk=kk+1;
+    parstr{kk,1} = ['PLip PCutoff=' num2str(xhat.PLip_PCutoff)] ;
+end
+if isfield(xhat,'PLip_scale')
+	kk=kk+1;
+    parstr{kk,1} = ['PLip scale=' num2str(xhat.PLip_scale)] ;
+end
+if isfield(xhat,'PStor_rCutoff')
+	kk=kk+1;
+    parstr{kk,1} = ['PStor rCutoff=' num2str(xhat.PStor_rCutoff)] ;
+end
+if isfield(xhat,'PStor_scale')
+	kk=kk+1;
+    parstr{kk,1} = ['PStor scale=' num2str(xhat.PStor_scale)]
 end
 
 
@@ -78,6 +108,13 @@ title('Cell Model C:P Uptake Ratio: Surface','Fontsize',18);
 xlabel('Longitude');
 ylabel('Latitude');
 ylabel(cb,'C:P [gC/gP]');
+
+%keyboard;
+%ax = gca;
+%ax.Position(1) = 0.2;
+%cb.Position(4) = 0.6;
+%dim = [0.8490 0.95 0.15 0.25]
+
 annotation('textbox',dim,'String',parstr,'FitBoxToText','on','EdgeColor','none');
 axis tight; grid off
 
@@ -86,8 +123,12 @@ print(gcf,[outPath 'FIG_' figTitle '.png'],'-dpng')
 
 %% C2P lower EZ
 %Zlevs =
-figure;
-contourf(lon,lat,C2P(:,:,2)); hold on
+figure; hold on;
+%contourf(lon,lat,C2P(:,:,2)); hold on
+imAlpha = ones(size(C2P(:,:,2)));
+imAlpha(isnan(C2P(:,:,2))) =0;
+imagesc(lon,lat,C2P(:,:,2),'AlphaData',imAlpha)
+
 c=colorbar;
 colormap(flipud(summer));
 title('Cell Model C:P Uptake Ratio: Lower EZ','Fontsize',18);
@@ -168,7 +209,12 @@ Lim_cmap = [1, 0, 0; ...
     0, 1, 1];
 figure; hold on
 Llevs= [0,1,2,3];
-pcolor(lon,lat,LimType(:,:,1));
+%plt=pcolor(lon,lat,LimType(:,:,1));
+%set(plt,'EdgeColor','none');
+
+imAlpha = ones(size(LimType(:,:,1)));
+imAlpha(isnan(LimType(:,:,1))) =0;
+imagesc(lon,lat,LimType(:,:,1),'AlphaData',imAlpha)
 cb=colorbar('Ticks',[0,1,2,3],'TickLabels',{'N-Lim','P-Lim','Co-Lim','Co-Lim-alt'});
 colormap(Lim_cmap);
 ylabel(cb,'Limitation Type');
@@ -185,7 +231,12 @@ figTitle = 'LimType_surf';
 print(gcf,[outPath 'FIG_' figTitle '.png'],'-dpng')
 
 %%%% LimType lower EZ
-pcolor(lon,lat,LimType(:,:,2));
+%plt = pcolor(lon,lat,LimType(:,:,2));
+%set(plt,'EdgeColor','none');
+
+imAlpha = ones(size(LimType(:,:,2)));
+imAlpha(isnan(LimType(:,:,2))) =0;
+imagesc(lon,lat,LimType(:,:,2),'AlphaData',imAlpha)
 cb=colorbar('Ticks',[0,1,2,3],'TickLabels',{'N-Lim','P-Lim','Co-Lim','Co-Lim-alt'});
 colormap(Lim_cmap);
 ylabel(cb,'Limitation Type');

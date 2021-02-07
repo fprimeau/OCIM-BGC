@@ -146,7 +146,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 		% fStorage Derivatives
 		if (par.opt_fStorage)
 			par.CellOut.dC2P_dfStorage = M3d*0;
-			par.CellOut.dC2P_dfStorage(iprod) = CellOut.dC2P_dfStorage;
+			par.CellOut.dC2P_dfStorage(iprod) = real(CellOut.dC2P_dfStorage);
 
 			%second Derivatives w.r.t. fStorage
 			xim = zeros(size(x));
@@ -185,7 +185,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 		% PLip_PCutoff derivatives
 		if (par.opt_PLip_PCutoff)
 			par.CellOut.dC2P_dPCutoff  = M3d*0;
-			par.CellOut.dC2P_dPCutoff(iprod)  = CellOut.dC2P_dPCutoff;
+			par.CellOut.dC2P_dPCutoff(iprod)  = real(CellOut.dC2P_dPCutoff);
 
 			%second Derivatives w.r.t. PLip_PCutoff
 			xim = zeros(size(x));
@@ -216,7 +216,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 		% PLip_scale Derivatives
 		if (par.opt_PLip_scale)
 			par.CellOut.dC2P_dPLip_scale = M3d*0;
-			par.CellOut.dC2P_dPLip_scale(iprod) = CellOut.dC2P_dPLipscale;
+			par.CellOut.dC2P_dPLip_scale(iprod) = real(CellOut.dC2P_dPLipscale);
 
 			%second Derivatives w.r.t. PLip_scale
 			xim = zeros(size(x));
@@ -243,7 +243,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 		% PStor_rCutoff derivatives
 		if (par.opt_PStor_rCutoff)
 			par.CellOut.dC2P_drCutoff  = M3d*0;
-			par.CellOut.dC2P_drCutoff(iprod)  = CellOut.dC2P_drCutoff;
+			par.CellOut.dC2P_drCutoff(iprod)  = real(CellOut.dC2P_drCutoff);
 
 			%second Derivatives w.r.t. PStor_rCutoff
 			xim = zeros(size(x));
@@ -266,7 +266,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 		% PStor_scale derivatives
 		if (par.opt_PStor_scale)
 			par.CellOut.dC2P_dPStor_scale = M3d*0;
-			par.CellOut.dC2P_dPStor_scale(iprod) = CellOut.dC2P_dPStorscale;
+			par.CellOut.dC2P_dPStor_scale(iprod) = real(CellOut.dC2P_dPStorscale);
 
 			%second Derivatives w.r.t. PStor_scale
 			xim = zeros(size(x));
@@ -285,7 +285,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 		% alphaS derivatives
 		if (par.opt_alphaS)
 			par.CellOut.dC2P_dalphaS = M3d*0;
-			par.CellOut.dC2P_dalphaS(iprod) = CellOut.dC2P_dalphaS;
+			par.CellOut.dC2P_dalphaS(iprod) = real(CellOut.dC2P_dalphaS);
 
 			%second Derivatives w.r.t. alphaS
 			xim = zeros(size(x));
@@ -356,6 +356,11 @@ function [f, fx, fxx, data] = neglogpost(x, par)
         f   = f + 0.5*(eic.'*Wic*eic) + 0.5*(eoc.'*Woc*eoc) + ...
               0.5*(elk.'*Wlk*elk);
     end
+
+% debugging gradient --> fixed!
+%	[ibadx,ibady] = find(Cx ~= real(Cx));
+%	ibadparam = unique(ibady)
+%	keyboard;
     %%%%%%%%%%%%%%%%%%   End Solve C    %%%%%%%%%%%%%%%%%%%%
 
     %%%%%%%%%%%%%%%%%%   Solve O    %%%%%%%%%%%%%%%%%%%%%%%%
