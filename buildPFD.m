@@ -201,6 +201,10 @@ function [DIV,IU,M,MSK,iwet] = mkOperators(M3d,grd);
     M3D        = zeros(ny,nx,nz+1);
     M3D(:,:,1:end-1) = M3d;
 
+    ZW3d = grd.ZW3d;
+    ZW3d = ZW3d(:,:,[1:end,end]);
+    ZW3d(:,:,end) = grd.ZW3d(:,:,end)+grd.dzt(end);
+     
     % areas of the top of the grid box
     dAt = (grd.DXT3d.*grd.DYT3d).*M3d;
     % volume of the grid boxes
