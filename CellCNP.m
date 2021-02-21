@@ -22,18 +22,18 @@ function [out,M] = CellCNP(par,x,P,N,T,Irr)
 	if (par.opt_Q10Photo == on)
 	    lQ10Photo  = x(par.pindx.lQ10Photo);
 		M.Q10Photo  = exp(lQ10Photo);
-	end
-
-	%fRibE
-	if (par.opt_fRibE == on)
-		lfRibE = x(par.pindx.lfRibE);
-		M.fRibE = exp(lfRibE);
-	end
+    end
 
 	%fStorage
 	if (par.opt_fStorage == on)
 		lfStorage = x(par.pindx.lfStorage);
 		M.fStorage = exp(lfStorage);
+    end
+    
+    %fRibE
+	if (par.opt_fRibE == on)
+		lfRibE = x(par.pindx.lfRibE);
+		M.fRibE = exp(lfRibE);
 	end
 
 	%kST0
@@ -67,6 +67,11 @@ function [out,M] = CellCNP(par,x,P,N,T,Irr)
     if (par.opt_alphaS == on)
 		lalphaS = x(par.pindx.lalphaS);
 		M.alphaS = exp(lalphaS);
+    end
+	%fRibE
+	if (par.opt_fRibE == on)
+		lfRibE = x(par.pindx.lfRibE); % need to add to SetPar and PackPar
+		M.fRibE = exp(lfRibE);
     end
 
 
@@ -277,6 +282,9 @@ function [out,M] = CellCNP(par,x,P,N,T,Irr)
           % always as part of its structural pool
 	PS = gammaDNA/gammaS*PDNA;
 
+dNE_dfRibE = -NProt+NRib;
+dCE_dfRibE = -CProt+CRib;
+dPE_dfRibE = PRib;
 % why is P fraction not defined for each of the Light, membrane, or other structure pools?
 
 %% Solving for PLim
@@ -284,7 +292,7 @@ function [out,M] = CellCNP(par,x,P,N,T,Irr)
     %aP= (3*DP.*P)/10^6 /(pDry*rho);
     % units of P:[g/m^3]*DP-> [g/m/hr]/10^6 -> [g/um/hr] % rho:[g/um^3] % alphaS:[um]
     % units of aP = [um^2/hr]
-    coefA = aP.*CI.^2/alphaS^2-kST*PRib;
+    coefA = aP.*CI.^2/alphaS^2-kST*PRib;	% why not kST*PE???
     coefB = -2*(1-gammaS)*CI.*aP/alphaS^2-gammaDNA*PDNA*kST;
     coefC = (1-gammaS)^2.*aP/alphaS^2;
 
@@ -335,6 +343,12 @@ function [out,M] = CellCNP(par,x,P,N,T,Irr)
 
 	dENLim_dalphaS = ((2*coefA.*(-dcoefB_dalphaS - 1./(2*sqrt(coefB.^2-4*coefA.*coefC)).*(2*coefB.*dcoefB_dalphaS-4*dcoefA_dalphaS.*coefC-4*coefA.*dcoefC_dalphaS)) -(-coefB-sqrt(coefB.^2-4*coefA.*coefC)).*2.*dcoefA_dalphaS)./(4*coefA.^2) );
 
+%dNE_dfRibE
+	dcoefA_dNE = -kST;
+	dcoefB_dNE = 0;
+	dENLim_dNE = ((2*coefA.*(-dcoefB_dNE - 1./(2*sqrt(coefB.^2-4*coefA.*coefC)).*(2*coefB.*dcoefB_dNE-4*dcoefA_dNE.*coefC)) -(-coefB-sqrt(coefB.^2-4*coefA.*coefC)).*2.*dcoefA_dNE)./(4*coefA.^2) );
+	dENLim_dfRibE = dENLim_dNE.*dNE_dfRibE;
+
 %% reset ANLim to AMin if the mass fraction of periplasm is too small (for large phytoplankton),
 	rLG_ind = find(rNLim>rFullA);  % equivalent to find(ANLim<AMin) ;
         ANLim(rLG_ind) = AMin;
@@ -369,6 +383,13 @@ function [out,M] = CellCNP(par,x,P,N,T,Irr)
 
 		dENLim_dalphaS_LG = ((2*coefA.*(-dcoefB_dalphaS - 1./(2*sqrt(coefB.^2-4*coefA.*coefC)).*(2*coefB.*dcoefB_dalphaS-4*dcoefA_dalphaS.*coefC-4*coefA.*dcoefC_dalphaS)) -(-coefB-sqrt(coefB.^2-4*coefA.*coefC)).*2.*dcoefA_dalphaS)./(4*coefA.^2) );
 		dENLim_dalphaS(rLG_ind) = dENLim_dalphaS_LG(rLG_ind);
+
+		% dfRibE
+		dcoefA_dNE = -kST;
+		dcoefB_dNE = 0;
+		dENLim_dNE = ((2*coefA.*(-dcoefB_dNE - 1./(2*sqrt(coefB.^2-4*coefA.*coefC)).*(2*coefB.*dcoefB_dNE-4*dcoefA_dNE.*coefC)) -(-coefB-sqrt(coefB.^2-4*coefA.*coefC)).*2.*dcoefA_dNE)./(4*coefA.^2) );
+		dENLim_dfRibE_LG = dENLim_dNE.*dNE_dfRibE;
+		dENLim_dfRibE(rLG_ind) = dENLim_dfRibE_LG(rLG_ind);
 
 %% Calculate growth rates (biosynthetic rate) under each condition
     muNLim = kST.*ENLim;  % units: [1/hr]
@@ -422,6 +443,8 @@ dfProtAOpt_dCI = all_nan;
 dfProtAOpt_dE = all_nan;
 dE_dCI = all_nan;
 dE_dalphaS = all_nan;
+dE_dfRibE = all_nan;
+pdfProtAOpt_fRibE =all_nan;
 
 ibad=[];
 %% loop through points to calculate cell quotas
@@ -435,22 +458,25 @@ if ~isnan(Irr(i)) & ~isnan(T(i)) & ~isnan(P(i)) & ~isnan(N(i))
 			CIi = CI(i);
 			kSTi = kST(i);
             EOpt_i = ENLim(i);
-            fProtAOpti = fProtANLim(i);
+            fProtAOpti = fProtANLim(i); % = 2*AMin./(1-gammaS-CI.*ENLim)
             %AOpti= ANLim(i);
             %rOpt_i = rNLim(i);
 
             %%% derivatives
             dE_dCI(i) = dENLim_dCI(i);
 			dE_dalphaS(i) = dENLim_dalphaS(i);
+			dE_dfRibE(i) = dENLim_dfRibE(i);
 
 			if ANLim(i)>AMin
 				dfProtAOpt_dE(i) = fProtAOpti^2*CIi/(2*AMin); %if ANLim> AMin
 				dfProtAOpt_dCI(i) = fProtAOpti^2/(2*AMin)*(EOpt_i);
                 %dfProtAOpt_dCI(i) = -2*AMin./(1-gammaS -CIi.*EOpt_i).^2.*(-1.*EOpt_i); %same as before
                 %dfProtAOpt_dE(i) = -2*AMin./(1-gammaS -CIi.*EOpt_i).^2.*(-1.*CIi);
+                pdfProtAOpt_fRibE(i) = 0;
 			else
 				dfProtAOpt_dE(i) = 0;
 				dfProtAOpt_dCI(i) = 0;
+                pdfProtAOpt_fRibE(i) = 0;
             end
 
             %dE_dQ10Photo(i) = dENLim_dQ10Photo(i);
@@ -464,16 +490,16 @@ if ~isnan(Irr(i)) & ~isnan(T(i)) & ~isnan(P(i)) & ~isnan(N(i))
 
             EMin=1e-4;
             EMax=(1-gammaS)/CIi;
-			[EOpt_i, dE_dCI(i), dE_dalphaS(i)] = EColim(EMin,EMax);
-
+			[EOpt_i, dE_dCI(i), dE_dalphaS(i), dE_dfRibE(i)] = EColim(EMin,EMax);
+			% dE_dfRibE(i)
 
             %fProtAOpti = AMin*2*rOpt_i/alphaS;  %  =2*AMin/(1-gammaS -CIi.*EOpt_i) this is only for NLim
             %case, when minimum P uptake is used
 
-			[fProtAOpti, dfProtAOpt_dCI(i), dfProtAOpt_dE(i)] = AColim(EOpt_i);
+			[fProtAOpti, dfProtAOpt_dCI(i), dfProtAOpt_dE(i), pdfProtAOpt_fRibE(i)] = AColim(EOpt_i);
 
             %dE_dQ10Photo(i) = dE_dCI(i)*dCI_dQ10Photo(i);
-            %muPColim = fProtAOpt_i.*aP/rOpt_i.^2/((EOpt*fRibE*PRib+(gammaDNA)*PDNA ));
+            %muPColim = fProtAOpt_i.*aP/rOpt_i.^2/((EOpt*PE+(gammaDNA)*PDNA ));
             %muNColim = aNi./rOpt_i.^2/(EOpt*NE+EOpt.*(CIi-1)*NL+gammaS*NS+fProtAOpt_i*alphaS./(2.0*rOpt_i)*NProt+alphaS/(2.0*rOpt_i)*NM);
         end
     elseif muPLim(i) <= muNLim(i)
@@ -491,6 +517,8 @@ if ~isnan(Irr(i)) & ~isnan(T(i)) & ~isnan(P(i)) & ~isnan(N(i))
 			dE_dalphaS(i) = dEPLim_dalphaS(i);
             dfProtAOpt_dE(i) = 0;
 			dfProtAOpt_dCI(i) = 0;
+			dE_dfRibE(i) = 0;
+            pdfProtAOpt_fRibE(i) = 0;
 			%dE_dQ10Photo(i) = dEPLim_dQ10Photo(i);
 
         else
@@ -502,12 +530,14 @@ if ~isnan(Irr(i)) & ~isnan(T(i)) & ~isnan(P(i)) & ~isnan(N(i))
 
             EMin = 1e-4;
             EMax = (1-gammaS)/CIi;
-			[EOpt_i, dE_dCI(i), dE_dalphaS(i)] = EColim(EMin,EMax);
+			[EOpt_i, dE_dCI(i), dE_dalphaS(i),dE_dfRibE(i)] = EColim(EMin,EMax);
+			%dE_dfRibE(i)
 
-            [fProtAOpti, dfProtAOpt_dCI(i), dfProtAOpt_dE(i)] = AColim(EOpt_i); %AColim(EOpt_i);
+            [fProtAOpti, dfProtAOpt_dCI(i), dfProtAOpt_dE(i), pdfProtAOpt_fRibE(i)] = AColim(EOpt_i); %AColim(EOpt_i);
                 %AColim(E) must be between 0 and 1
 
-            %muPColim = fProtAOpti.*aPi/rOpt_i^2/((EOpt_i*fRibE*PRib+(gammaDNA)*PDNA ));
+
+            %muPColim = fProtAOpti.*aPi/rOpt_i^2/((EOpt_i*PE+(gammaDNA)*PDNA ));
             %muNColim = aN./rOpt_i.^2/(EOpt_i*NE+EOpt_i.*(CIi-1)*NL+gammaS*NS+fProtAOpti*alphaS./(2.0*rOpt_i)*NProt+alphaS/(2.0*rOpt_i)*NM);
         end
     end % end cases
@@ -557,8 +587,8 @@ AOpt = (1-gammaS-CI.*EOpt)./2;  % periplasm fraction of cell
 MOpt = AOpt;                    % membrane fraction of cell
 rOpt = alphaS./(1-gammaS - CI.*EOpt); % cell radius
 
-QPnostor = (EOpt.*fRibE*PRib + gammaDNA*PDNA )./molarP;
-%C2P = (molarP/molarC)*((EOpt*CE+EOpt.*(CI-1)*CL+gammaS*CS+(AMin./AOpt).*(1-gammaS - CI.*EOpt)/2.0*CProt+ (1-gammaS - CI.*EOpt)/2.0*CM).*(1+24.0*.25*kST.*EOpt*(1+PhiS)) ) ./ (EOpt*fRibE*PRib+(gammaDNA)*PDNA); % only tiny random error (10^-13) from CP
+QPnostor = (EOpt.*PE + gammaDNA*PDNA )./molarP;
+%C2P = (molarP/molarC)*((EOpt*CE+EOpt.*(CI-1)*CL+gammaS*CS+(AMin./AOpt).*(1-gammaS - CI.*EOpt)/2.0*CProt+ (1-gammaS - CI.*EOpt)/2.0*CM).*(1+24.0*.25*kST.*EOpt*(1+PhiS)) ) ./ (EOpt*PE+(gammaDNA)*PDNA); % only tiny random error (10^-13) from CP
 
 %%%%%%%%% Add P storage and phospholipids %%%%%%%%%%%%%%%%%%%
  % each scaled by logistic function with 2 parameters each: PLip: PLip_scale & PLip_PCutoff; PStor: PStor_scale & PStor_rCutoff
@@ -572,8 +602,8 @@ QPnostor = (EOpt.*fRibE*PRib + gammaDNA*PDNA )./molarP;
 %       PStor(Nindx) = fStorage .*P .*(1./(1 + exp(-PStor_scale.*(rOpt-PStor_rCutoff))));
 
 %%%%%%%% Calculate Cell Quotas %%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% what is the extra part added on to QC?
-QP =((EOpt.*fRibE*PRib+(gammaDNA)*PDNA + PLip +PStor ))/molarP;
+%%% what is the extra part added on to QC? %L=kST.*E*(1+PhiS)/alphaI  % CI  = 1+(kST.*(1+PhiS))./alphaI; %=(1+6L)
+QP =((EOpt.*PE +(gammaDNA)*PDNA + PLip +PStor ))/molarP;
 QC = (EOpt.*CE +EOpt.*(CI-1)*CL +gammaS*CS +fProtAOpt.*AOpt.*CProt +MOpt.*CM)./molarC .*(1+24.0*.25*kST.*EOpt.*(1+PhiS));
 QN = (EOpt.*NE +EOpt.*(CI-1).*NL +gammaS*NS +fProtAOpt.*AOpt.*NProt +MOpt.*NM)./molarN;
 
@@ -589,7 +619,7 @@ CN = QC./QN;
 		% Take partial derivatives with respect to all these variables
 		%pdQC_E = (CE + (CI-1)*CL).*(1+24.0*.25*kST.*EOpt.*(1+PhiS))./molarC + (EOpt.*CE+EOpt.*(CI-1).*CL+gammaS*CS+fProtAOpt.*alphaS./(2.0*rOpt).*CProt+alphaS./(2.0*rOpt)*CM).*24.0*0.25.*kST*(1+PhiS)/molarC;
 		pdQC_E = (CE + (CI-1)*CL).*(1+24.0*.25*kST.*EOpt.*(1+PhiS))./molarC + (EOpt.*CE +EOpt.*(CI-1)*CL +gammaS*CS +fProtAOpt.*AOpt.*CProt +MOpt.*CM).*24.0*0.25.*kST*(1+PhiS)/molarC;
-		pdQC_CE = 0; % do later
+		pdQC_CE = EOpt./molarC.*(1+24.0*.25*kST.*EOpt.*(1+PhiS));
 		pdQC_CI = (EOpt*CL).*(1+24.0*.25*kST.*EOpt*(1+PhiS))/molarC;
 		pdQC_CL = 0; % do later
 		pdQC_gammaS = CS./molarC.*(1+24.0*.25*kST.*EOpt.*(1+PhiS)); % do later
@@ -606,9 +636,8 @@ CN = QC./QN;
 		pdQC_PhiS = 24*0.25.*kST.*EOpt; %  do later
 		% QP = QP(E,fRibE,PRib,gammaDNA,PDNA)
 		% Take partial derivatives with respect to all these variables
-		pdQP_E = fRibE*PRib/molarP;
-		pdQP_fRibE = EOpt.*PRib/molarP;
-		pdQP_PRib = EOpt.*fRibE/molarP;
+		pdQP_E = PE/molarP;
+		pdQP_PE = EOpt./molarP;
 		pdQP_gammaDNA = PDNA/molarP;
 		pdQP_PDNA = gammaDNA/molarP;
         %pdQP_PLip = 1./molarP;
@@ -640,8 +669,7 @@ CN = QC./QN;
 		pdC2P_CM = pdQC_CM./QP;
 		pdC2P_kSTi = pdQC_kSTi./QP;
 		pdC2P_PhiS = pdQC_PhiS./QP;
-		pdC2P_fRibE = -pdQP_fRibE.*QC./QP.^2;
-		pdC2P_PRib = -pdQP_PRib.*QC./QP.^2;
+		pdC2P_PE = -pdQP_PE.*QC./QP.^2;
 		pdC2P_gammaDNA = -pdQP_gammaDNA.*QC./QP.^2;
 		pdC2P_PDNA = -pdQP_PDNA.*QC./QP.^2;
 
@@ -677,13 +705,16 @@ CN = QC./QN;
 		dC2P_dQ10Photo = pdC2P_E.*dE_dQ10Photo + pdC2P_CI.*dCI_dQ10Photo + pdC2P_fProtAOpt.*dfProtAOpt_dQ10Photo + pdC2P_AOpt.*dAOpt_dQ10Photo + pdC2P_MOpt.*dMOpt_dQ10Photo + pdC2P_rOpt.*drOpt_dQ10Photo;
         %d2C2P_dQ10Photo2 =pdC2P_E.*dE_dQ10Photo_dQ10Photo + dE_dQ10Photo.*dC2P_dE_dQ10Photo + pdC2P_CI.*dCI_dQ10Photo_dQ10Photo +dC2P_dCI_dQ10Photo.*dCI_dQ10Photo;
 
-	% derivative w.r.t. alphaS [INCOMPLETE, need dfprotA]
+	% derivative w.r.t. alphaS
         dAOpt_dalphaS = pdAOpt_E.*dE_dalphaS;
 		dMOpt_dalphaS = pdMOpt_E.*dE_dalphaS;
 		dfProtAOpt_dalphaS = dfProtAOpt_dE.*dE_dalphaS;
 		drOpt_dalphaS = pdrOpt_E.*dE_dalphaS + pdrOpt_alphaS;
 
-        dC2P_dalphaS = pdC2P_dE.*dE_dalphaS +pdC2P_AOpt.*dAOpt_dalphaS +pdC2P_MOpt.*dMOpt_dalphaS +pdC2P_fProtAOpt.*dfProtAOpt_dalphaS +pdC2P_rOpt.*drOpt_dalphaS;
+        dC2P_dalphaS = pdC2P_E.*dE_dalphaS +pdC2P_AOpt.*dAOpt_dalphaS +pdC2P_MOpt.*dMOpt_dalphaS +pdC2P_fProtAOpt.*dfProtAOpt_dalphaS +pdC2P_rOpt.*drOpt_dalphaS;
+
+	% derivative w.r.t fRibE [INCOMPLETE]
+		dC2P_dfRibE = pdC2P_PE.*dPE_dfRibE + pdC2P_CE.*dCE_dfRibE + pdC2P_E.*dE_dfRibE + pdC2P_fProtAOpt.*pdfProtAOpt_fRibE +pdC2P_AOpt.*pdAOpt_E.*dE_dfRibE +pdrOpt_E.*dE_dfRibE;
 
 %% add PStorage
 %%% Why is Pstorage tacked on at the end? %%%
@@ -732,7 +763,7 @@ CN = QC./QN;
 %         PStor = fStorage*5000*P./(1+exp(-CStor.*(rOpt-r0Cutoff)));
 %         %fPLipCell = fPlipM * alphaS./(2.0*rOpt);  % alphaS./(2.0*rOpt)= membrane fraction of cell; fPlipM = phospholipid fraction of membrane
 %         PM=fPlipM*PPhospholipid;
-%         QPstor =((EOpt.*fRibE*PRib+(gammaDNA)*PDNA + alphaS./(2.0*rOpt).*PM +PStor ))/molarP;
+%         QPstor =((EOpt.*PE+(gammaDNA)*PDNA + alphaS./(2.0*rOpt).*PM +PStor ))/molarP;
 %         QCstor = (EOpt.*CE+EOpt.*(CI-1)*CL+gammaS*CS+fProtAOpt.*alphaS./(2.0*rOpt)*CProt+alphaS./(2.0*rOpt)*CM)/molarC .*(1+24.0*.25*kSTi.*EOpt_i*(1+PhiS));
 %
 %         CPstor = QCstor./QPstor;
@@ -773,6 +804,7 @@ CN = QC./QN;
     out.mu = muOpt;
 	out.PStor = PStor;
     out.PLip = PLip;
+	out.CI = CI;
 
     % name a second structure for derivatives C2Px?
 	out.dC2P_dQ10Photo = dC2P_dQ10Photo;
@@ -785,25 +817,23 @@ CN = QC./QN;
     out.dC2P_dPLipscale = dC2P_dPLipscale;
     out.dC2P_dPStorscale = dC2P_dPStorscale;
 	out.dC2P_dalphaS = dC2P_dalphaS;
+	out.dC2P_dfRibE = dC2P_dfRibE;
 
-    out.dE_dCI = dE_dCI;
-    out.dE_dQ10Photo = dE_dQ10Photo;
-    out.dCI_dQ10Photo =dCI_dQ10Photo;
-    out.dfProtAOpt_dE = dfProtAOpt_dE;
-    out.dfProtAOpt_dCI = dfProtAOpt_dCI;
-
-    out.CI = CI;
-    out.dCI_dQ10Photo = dCI_dQ10Photo;
-
-    out.fProtA = fProtAOpt;
-    out.dfProtA_dQ10Photo  = dfProtAOpt_dQ10Photo;
-
+    %out.dE_dCI = dE_dCI;
+    %out.dE_dQ10Photo = dE_dQ10Photo;
+    %out.dCI_dQ10Photo =dCI_dQ10Photo;
+    %out.dfProtAOpt_dE = dfProtAOpt_dE;
+    %out.dfProtAOpt_dCI = dfProtAOpt_dCI;
+    %out.dCI_dQ10Photo = dCI_dQ10Photo;
+    %out.fProtA = fProtAOpt;
+    %out.dfProtA_dQ10Photo  = dfProtAOpt_dQ10Photo;
+    
 	disp('Cell Model Done')
     % L, A, S?
     %save par values
 
 %% define functions
-	function [EColim, dEColim_dCI, dEColim_dalphaS] = EColim(EMin,EMax) % rhsFuncColim(EMin,EMax)
+	function [EColim, dEColim_dCI, dEColim_dalphaS, dEColim_dfRibE] = EColim(EMin,EMax) % rhsFuncColim(EMin,EMax)
         % polynomial coefficients
 		c3 = kSTi^2*NProt*PE + (aPi*aNi/alphaS^4)*CIi^3 - (aPi/alphaS^2)*kSTi*CIi*(NE+(CIi-1)*NL-0.5*CIi*NM);
 		% function to return all derivs of c3 wrt params
@@ -823,6 +853,7 @@ CN = QC./QN;
         sol = fsolve_cmplx(f,E0);
 		EColim = sol;
 
+
 		dc3_dCI = 3*(aPi*aNi/alphaS^4)*CIi^2 - (aPi/alphaS^2)*kSTi*(NE+(CIi-1)*NL-0.5*CIi*NM) - (aPi/alphaS^2)*kSTi*CIi*(NL-0.5*NM);
 		dc2_dCI = -6*(aPi*aNi/alphaS^4)*CIi*(1-gammaS) + (aPi/alphaS^2)*kSTi*(1-gammaS)*(NL-0.5*NM) - (aPi/alphaS^2)*kSTi*(gammaS*NS+0.5*(1-gammaS)*NM);
 		dc1_dCI = 3*(aPi*aNi/alphaS^4)*(1-gammaS)^2;
@@ -834,6 +865,16 @@ CN = QC./QN;
 		dc1_dalphaS = -4*3*(aPi*aNi/alphaS^5)*CIi*(1-gammaS)^2 + -2*(aPi/alphaS^3)*kSTi*(1-gammaS)*(gammaS*NS+0.5*(1-gammaS)*NM);
 		dc0_dalphaS = 4*(aPi*aNi/alphaS^5)*(1-gammaS)^3;
 		dEColim_dalphaS = -(EColim^3*dc3_dalphaS+EColim^2*dc2_dalphaS+EColim*dc1_dalphaS+dc0_dalphaS)/(3*EColim^2*c3 +2*EColim*c2 +c1);
+
+		%dfRibE
+		dc3_dPE = kSTi^2*NProt;
+		dEColim_dPE = -(EColim^3*dc3_dPE)/(3*EColim^2*c3 +2*EColim*c2 +c1);
+		dc3_dNE = -(aPi/alphaS^2)*kSTi*CIi;
+		dc2_dNE = (aPi/alphaS^2)*kSTi*(1-gammaS);
+		dc1_dNE = 0;
+		dc0_dNE = 0;
+		dEColim_dNE = -(EColim^3*dc3_dNE+EColim^2*dc2_dNE)/(3*EColim^2*c3 +2*EColim*c2 +c1);
+		dEColim_dfRibE = dEColim_dPE.*dPE_dfRibE + dEColim_dNE.*dNE_dfRibE;
     end
 
 	function dEColim_dCI_dQ10Photo = dEColim_dCI_dQ10Photo(E)
@@ -842,7 +883,7 @@ CN = QC./QN;
 
 %dEdalphaS_colim
 
-    function [fProtAColim, dfProtA_dCI, dfProtA_dE]  =AColim(EOpt_i)
+    function [fProtAColim, dfProtA_dCI, dfProtA_dE, dfProtA_dfRibE]  =AColim(EOpt_i)
         % fProtA (fraction periplasm (A) devoted to protein)
         % uptake rate of phosphorous = linear function of how much prot in periplasm
         %AColim = (-2*aN*(-1+CI*E+gammaS)^2+alphaS^2*E*kST*(2*E*(NE+(CI-1)*NL)+NM*(1-CI*E-gammaS)+2*gammaDNA*NProt))/(alphaS^2*E*(CI*E-1+gammaS)*kST*NProt);
@@ -879,7 +920,13 @@ CN = QC./QN;
         pdcoefB_E = -(1/2)*CIi*NM +NE +(CIi-1)*NL;
         pdcoefC_E = -DN(i)/DP(i)*molarN/molarP*N(i)/P(i) *PE;
         dfProtA_dE = (2*coefA.*(-pdcoefB_E + 1./(2*sqrt(coefB.^2-4*coefA.*coefC)).*(2*coefB.*pdcoefB_E-4*(pdcoefA_E.*coefC+pdcoefC_E*coefA))) -(-coefB+sqrt(coefB.^2-4*coefA.*coefC)).*2.*pdcoefA_E)./(4*coefA.^2);
-
+		%dfRibE;
+		pdcoefA_NE = 0;
+		pdcoefB_NE = EOpt_i;
+		dfProtA_dNE = (-pdcoefB_NE+0.5/sqrt(coefB^2-4*coefA*coefC)*(2*coefB*pdcoefB_NE)) / (2*coefA);
+		pdcoefC_PE = -DN(i)/DP(i)*molarN/molarP*N(i)/P(i)*(EOpt_i);
+		dfProtA_dPE =(0.5/sqrt(coefB.^2-4*coefA.*coefC).*(-4*coefA*pdcoefC_PE))./(2*coefA);
+		dfProtA_dfRibE = dfProtA_dNE*dNE_dfRibE + dfProtA_dPE*dPE_dfRibE;
 
         %dAColim_dQ10Photo = dAColim_dCI.*dCI_dQ10Photo(i)+dAColim_dE*dE_dCI(i)*dCI_dQ10Photo(i);
     end
