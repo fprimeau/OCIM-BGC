@@ -153,16 +153,16 @@ function par = SetPar(par)
 		par.BIO.Q10Photo = xhat.Q10Photo;
 	else
 		par.BIO.Q10Photo = 1.983;		% Q10 of photosynthesis
+	end	
+	if exist('xhat') & isfield(xhat,'fStorage')
+		par.BIO.fStorage = xhat.fStorage;
+	else
+		par.BIO.fStorage = exp(-.358);  % strength of luxury P storage [L/molC]
 	end
 	if exist('xhat') & isfield(xhat,'fRibE')
 		par.BIO.fRibE = xhat.fRibE;
 	else
 		par.BIO.fRibE = .618;           % ribosome fraction of biosynthetic apparatus
-	end
-	if exist('xhat') & isfield(xhat,'fStorage')
-		par.BIO.fStorage = xhat.fStorage;
-	else
-		par.BIO.fStorage = exp(-.358);  % strength of luxury P storage [L/molC]
 	end
 	if exist('xhat') & isfield(xhat,'kST0')
 		par.BIO.kST0 = xhat.kST0;

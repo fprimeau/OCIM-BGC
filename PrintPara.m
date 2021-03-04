@@ -249,6 +249,11 @@ function PrintPara(x, par);
             fprintf('current fStorage       is  % 3.2e \n', exp(x(ifStorage)));
             xhat.fStorage = exp(x(ifStorage));
         end
+		if (par.opt_fRibE == on)
+            ifRibE = par.pindx.tfRibE;
+            fprintf('current fRibE         is  % 3.2e \n', 0.5*(1+tanh(x(ifRibE))) ); %fRibE = 0.5*(1+tanh(x(ifRibE)))
+            xhat.fRibE = 0.5*(1+tanh(x(ifRibE)));
+        end
 		if (par.opt_PLip_PCutoff == on)
             iPLip_PCutoff = par.pindx.lPLip_PCutoff;
             fprintf('current PLip_PCutoff   is  % 3.2e \n', exp(x(iPLip_PCutoff)));

@@ -74,17 +74,20 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 	%%%%%%%%%%%%%%     Solve for C2P with Cell model   %%%%%%%%%%%%%%%%%%%%%
 	if (par.Cellmodel == on)
 		iprod = find(M3d(:,:,1:2)); %production in top two layers
-		P0 = data.DIP(iprod)./10^6; 			% convert ug/m^3 to g/m^3
-		N0 = par.no3obs(iprod)./10^6;   % convert ug/m^3 to g/m^3
+		P0 = data.DIP(iprod)./10^6; 			% convert ug/m^3 to g/m^3  data.DIP:[mmol/m^3] convert to mol/L
+		N0 = par.no3obs(iprod)./10^6;   % convert ug/m^3 to g/m^3 <- NO [mmol/m^3 --> mol/L]
 		T0 = par.Temp(iprod);
 		Irr0 = par.PARobs(iprod);
 
 %keyboard;
 		%parBIO=par.BIO;
         %M3dsurf=par.M3d(:,:,1:2);
+		%dVtsurf=par.dVt(:,:,1:2);
 		%pindx=par.pindx;
+		%P0alt = par.po4raw(iprod)./10^6;
+		%N0alt = par.no3raw(iprod)./10^6;
 		%x0=x;
-		%save('inputs_surf_CellCNP.mat','P0','N0','T0','Irr0','M3dsurf','x0','parBIO','iprod','pindx');
+		%save('inputs_surf_CellCNP.mat','P0','N0','T0','Irr0','M3dsurf','dVtsurf','x0','parBIO','iprod','pindx','P0alt',N0alt');
 
  		[CellOut, parBIO] = CellCNP(par,x, P0,N0,T0,Irr0);
 		par.BIO = parBIO;
@@ -121,6 +124,10 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 				par.CellOut.d2C2P_dfStorage_dQ10Photo = M3d*0;
 				par.CellOut.d2C2P_dfStorage_dQ10Photo(iprod) = imag(CellOut.dC2P_dfStorage)./eps^3;
 			end
+			if (par.opt_fRibE)
+                par.CellOut.d2C2P_dfRibE_dQ10Photo = M3d*0;
+				par.CellOut.d2C2P_dfRibE_dQ10Photo(iprod) = imag(CellOut.dC2P_dfRibE)./eps^3;
+            end
 			if (par.opt_PLip_PCutoff)
 				par.CellOut.d2C2P_dPCutoff_dQ10Photo = M3d*0;
 				par.CellOut.d2C2P_dPCutoff_dQ10Photo(iprod) = imag(CellOut.dC2P_dPCutoff)./eps^3;
@@ -138,7 +145,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 				par.CellOut.d2C2P_dPLipscale_dQ10Photo(iprod) = imag(CellOut.dC2P_dPLipscale)./eps^3;
 			end
 			if (par.opt_alphaS)
-				par.CellOut.d2C2P_dPLipscale_dQ10Photo = M3d*0;
+				par.CellOut.d2C2P_dalphaS_dQ10Photo = M3d*0;
 				par.CellOut.d2C2P_dalphaS_dQ10Photo(iprod) = imag(CellOut.dC2P_dalphaS)./eps^3;
 			end
 		end
@@ -156,10 +163,14 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 			par.CellOut.d2C2P_dfStorage2 = M3d*0;
 			par.CellOut.d2C2P_dfStorage2(iprod) = imag(CellOut.dC2P_dfStorage)./eps^3;
 
-			if (par.opt_Q10Photo)
-				par.CellOut.d2C2P_dQ10Photo_dfStorage = M3d*0;
-				par.CellOut.d2C2P_dQ10Photo_dfStorage(iprod) = imag(CellOut.dC2P_dQ10Photo)./eps^3;
-			end
+			%if (par.opt_Q10Photo)
+			%	par.CellOut.d2C2P_dQ10Photo_dfStorage = M3d*0;
+			%	par.CellOut.d2C2P_dQ10Photo_dfStorage(iprod) = imag(CellOut.dC2P_dQ10Photo)./eps^3;
+			%end
+			if (par.opt_fRibE)
+                par.CellOut.d2C2P_dfRibE_dfStorage = M3d*0;
+				par.CellOut.d2C2P_dfRibE_dfStorage(iprod) = imag(CellOut.dC2P_dfRibE)./eps^3;
+            end
 			if (par.opt_PLip_PCutoff)
 				par.CellOut.d2C2P_dPCutoff_dfStorage = M3d*0;
 				par.CellOut.d2C2P_dPCutoff_dfStorage(iprod) = imag(CellOut.dC2P_dPCutoff)./eps^3;
@@ -181,6 +192,41 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 				par.CellOut.d2C2P_dalphaS_dfStorage(iprod) = imag(CellOut.dC2P_dalphaS)./eps^3;
 			end
 		end
+
+		%fRibE derivatives
+		if (par.opt_fRibE)
+			par.CellOut.dC2P_dfRibE  = M3d*0;
+			par.CellOut.dC2P_dfRibE(iprod)  = real(CellOut.dC2P_dfRibE);
+
+			%second Derivatives w.r.t. fRibE
+			xim = zeros(size(x));
+			xim(par.pindx.tfRibE) = sqrt(-1)*eps^3;
+			[CellOut, ~] = CellCNP(par,x+xim, P0,N0,T0,Irr0);
+
+			par.CellOut.d2C2P_dfRibE2 = M3d*0;
+			par.CellOut.d2C2P_dfRibE2(iprod) = imag(CellOut.dC2P_dfRibE)./eps^3;
+
+            if (par.opt_PLip_PCutoff)
+				par.CellOut.d2C2P_dPCutoff_dfRibE = M3d*0;
+				par.CellOut.d2C2P_dPCutoff_dfRibE(iprod) = imag(CellOut.dC2P_dPCutoff)./eps^3;
+			end
+			if (par.opt_PLip_scale)
+				par.CellOut.d2C2P_dPLipscale_dfRibE = M3d*0;
+				par.CellOut.d2C2P_dPLipscale_dfRibE(iprod) = imag(CellOut.dC2P_dPLipscale)./eps^3;
+			end
+			if (par.opt_PStor_rCutoff)
+				par.CellOut.d2C2P_drCutoff_dfRibE = M3d*0;
+				par.CellOut.d2C2P_drCutoff_dfRibE(iprod) = imag(CellOut.dC2P_drCutoff)./eps^3;
+			end
+			if (par.opt_PStor_scale)
+				par.CellOut.d2C2P_dPStorscale_dfRibE = M3d*0;
+				par.CellOut.d2C2P_dPStorscale_dfRibE(iprod) = imag(CellOut.dC2P_dPStorscale)./eps^3;
+			end
+			if (par.opt_alphaS)
+				par.CellOut.d2C2P_dalphaS_dfRibE = M3d*0;
+				par.CellOut.d2C2P_dalphaS_dfRibE(iprod) = imag(CellOut.dC2P_dalphaS)./eps^3;
+			end
+        end
 
 		% PLip_PCutoff derivatives
 		if (par.opt_PLip_PCutoff)
@@ -312,7 +358,12 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 		% par.CellOut.dC2P_dPLip_scale(iprod) = CellOut.dC2P_dPLipscale;
 		% %par.CellOut.dC2P_dalphaS(iprod) = CellOut.dC2P_dalphaS;
 
-		data.CellOut = par.CellOut;
+		%data.CellOut = par.CellOut;
+		data.CellOut.C2P =  par.CellOut.C2P;
+		data.CellOut.N2P = par.CellOut.N2P;
+		data.CellOut.C2N = par.CellOut.C2N;
+		data.CellOut.LimType = par.CellOut.LimType;
+		data.CellOut.r = par.CellOut.r;
 	end
 
     %%%%%%%%%%%%%%%%%%     Solve C   %%%%%%%%%%%%%%%%%%%%%%%%
@@ -544,7 +595,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
             tmp(1:npx,1:npx) = fxx;
             fxx = tmp;
             % -------------------------------
-            % P model parameters and C parameters
+            % P model parameters and C parameters and Cell parameters
             for ju = 1:npx
                 for jo = (npx+1):(npx+ncx+nbx)
                     kk = kk + 1;
@@ -558,7 +609,33 @@ function [f, fx, fxx, data] = neglogpost(x, par)
             end
             % -------------------------------
             % Only C parameters
-            for ju = (npx+1):(npx+ncx+nbx)
+            for ju = (npx+1):(npx+ncx)  %to npx+ncx+nbx to include cell params (check order in Cxx)
+                for jo = ju:(npx+ncx)
+                    kk = kk + 1;
+                    fxx(ju, jo) = fxx(ju, jo) + ...
+                        icx(idic,ju).'*Wic*icx(idic,jo) + eic.'*Wic*icxx(idic,kk) + ...
+                        ocx(idoc,ju).'*Woc*ocx(idoc,jo) + eoc.'*Woc*ocxx(idoc,kk) + ...
+                        lkx(ialk,ju).'*Wlk*lkx(ialk,jo) + elk.'*Wlk*lkxx(ialk,kk) ;
+
+                    fxx(jo, ju) = fxx(ju, jo);
+                end
+            end
+			% -------------------------------
+            % C model parameters and Cell model parameters
+            for ju = (npx+1):(npx+ncx)
+                for jo = (npx+ncx+1):(npx+ncx+nbx)
+                    kk = kk + 1;
+                    fxx(ju, jo) = fxx(ju, jo) + ...
+                        icx(idic,ju).'*Wic*icx(idic,jo) + eic.'*Wic*icxx(idic,kk) + ...
+                        ocx(idoc,ju).'*Woc*ocx(idoc,jo) + eoc.'*Woc*ocxx(idoc,kk) + ...
+                        lkx(ialk,ju).'*Wlk*lkx(ialk,jo) + elk.'*Wlk*lkxx(ialk,kk) ;
+
+                    fxx(jo,ju) = fxx(ju, jo);
+                end
+            end
+			% -------------------------------
+            % Only Cell parameters
+            for ju = (npx+ncx+1):(npx+ncx+nbx)
                 for jo = ju:(npx+ncx+nbx)
                     kk = kk + 1;
                     fxx(ju, jo) = fxx(ju, jo) + ...

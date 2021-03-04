@@ -377,5 +377,27 @@ function  x = ResetPara(x, par);
             end
         end
     end
+	%------------------------
+	if par.Cellmodel==on
+		%Q10Photo
+		if (par.opt_Q10Photo == on)
+	        iQ10Photo = pindx.lQ10Photo    ;
+	        xnew  = exp(x(iQ10Photo))  ;
+	        xold  = exp(x0(iQ10Photo)) ;
+	        if (xnew > fb*xold | xnew < fs*xold);
+	            x(iQ10Photo) = log( exp(x0(iQ10Photo))*(0.1*rand + 0.95) );
+	        end
+	    end
+		%fRibE
+		% if (par.opt_fRibE == on)
+	    %     ifRibE = pindx.tfRibE      ;
+	    %     xnew   = exp(x(ifRibE))    ;
+	    %     xold   = exp(x0(ifRibE))   ;
+	    %     if (xnew > 1 | xnew <= 0)
+	    %         x(ifRibE) = log(0.3+rand*0.2) ;
+	    %     end
+	    % end
+	end
+
 
 end

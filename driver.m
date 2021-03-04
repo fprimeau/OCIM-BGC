@@ -23,7 +23,7 @@ par.Cmodel  = on ;
 par.Omodel  = off ;
 par.Simodel = off ;
 par.Cellmodel = on; % cellular trait model for phyto uptake stoichiometry
-par.LoadOpt = off ; % if load optimial par.
+par.LoadOpt = on ; % if load optimial par.
 par.pscale  = 0.0 ;
 par.cscale  = 0.25 ; % factor to weigh DOC in the objective function
 
@@ -63,17 +63,15 @@ par.opt_PLip_PCutoff = on;
 par.opt_PLip_scale   = on;
 par.opt_PStor_rCutoff = on;
 par.opt_PStor_scale  = on;
-par.opt_alphaS       = off;
-par.opt_fRibE 	     = off;
+par.opt_alphaS       = on;
+par.opt_fRibE 	     = on;
 par.opt_kST0 	     = off;
 % par.BIO.opt_gammaDNA = off;
 % par.BIO.opt_gammaLipid = off;
-% par.BIO.opt_lPCutoff = off;
 % par.BIO.opt_DNT0 = off;
 % par.BIO.opt_DPT0 = off;
 % par.BIO.opt_Q10Diffusivity = off;
 % par.BIO.opt_AMin = off;
-% par.BIO.opt_CStor = off;
 % par.BIO.opt_PhiS = off;
 
 
@@ -180,7 +178,7 @@ options = optimoptions(@fminunc                  , ...
                        'PrecondBandWidth',Inf)   ;
 %
 nip = length(x0);
-if(Gtest);
+if (Gtest);
     dx = sqrt(-1)*eps.^3*eye(nip);
     % for ii = nip : -1 : 13
     for ii = 1 : nip

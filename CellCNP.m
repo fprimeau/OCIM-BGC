@@ -9,7 +9,7 @@ function [out,M] = CellCNP(par,x,P,N,T,Irr)
   % Irr is light level (PAR, not total irradiance) in microeinsteins m^-2 s^-1 (i.e. umol photons m^-2 s^-1)
 	% %%% PAR, but with units of photosynthetic photon flux density (PPFD) [μmole photons m-2 s-1]
   % T is temperature in Celsius
-  % P is phosphate concentration in mol/L
+  % P is phosphate concentration in mol/L (OCIM-BGC in mmol/m^3)
 
   % AUTHOR: George Hagstrom. MODIFIED BY: Megan Sullivan
 
@@ -29,11 +29,11 @@ function [out,M] = CellCNP(par,x,P,N,T,Irr)
 		lfStorage = x(par.pindx.lfStorage);
 		M.fStorage = exp(lfStorage);
     end
-    
+
     %fRibE
 	if (par.opt_fRibE == on)
-		lfRibE = x(par.pindx.lfRibE);
-		M.fRibE = exp(lfRibE);
+		tfRibE = x(par.pindx.tfRibE);
+		M.fRibE = 0.5*(1+tanh(tfRibE)); % change fRibE = 0.5*(1+tanh(tfRibE))
 	end
 
 	%kST0
@@ -68,12 +68,6 @@ function [out,M] = CellCNP(par,x,P,N,T,Irr)
 		lalphaS = x(par.pindx.lalphaS);
 		M.alphaS = exp(lalphaS);
     end
-	%fRibE
-	if (par.opt_fRibE == on)
-		lfRibE = x(par.pindx.lfRibE); % need to add to SetPar and PackPar
-		M.fRibE = exp(lfRibE);
-    end
-
 
   % Read in parameter values from par
 		 %%% optimize these first %%%
@@ -288,9 +282,10 @@ dPE_dfRibE = PRib;
 % why is P fraction not defined for each of the Light, membrane, or other structure pools?
 
 %% Solving for PLim
-    aP= (3*DP.*P)*molarP/10^6 /(pDry*rho);  % molarP messes up units, but without it, C:P is too high
+    aP= (3*DP.*P)*molarP/10^6 /(pDry*rho);  % molarP messes up units, but without it, C:P is too high %jk, but now i think the /10^6 need to be /10^3
     %aP= (3*DP.*P)/10^6 /(pDry*rho);
     % units of P:[g/m^3]*DP-> [g/m/hr]/10^6 -> [g/um/hr] % rho:[g/um^3] % alphaS:[um]
+	% units of P:[mol/L]*[1000L/m^3]*DP:[m^2/hr]-> [mol/m/hr]*molarP:[g/mol] -> [g/m/hr]/[10^6um/m] -> [g/um/hr] % rho:[g/um^3] % alphaS:[um]
     % units of aP = [um^2/hr]
     coefA = aP.*CI.^2/alphaS^2-kST*PRib;	% why not kST*PE???
     coefB = -2*(1-gammaS)*CI.*aP/alphaS^2-gammaDNA*PDNA*kST;
@@ -571,10 +566,13 @@ if ~isnan(Irr(i)) & ~isnan(T(i)) & ~isnan(P(i)) & ~isnan(N(i))
 %                 if AOpt(i) > 1 | AOpt(i) < 0
 %                     fprintf('at i = %i , AOpt =alphaS/(2*r) = %0.5g \n',i,AOpt(i))
 %                 end
-%                 if fProtAOpt(i) > 1 | fProtAOpt(i) < 0
-%                     fprintf('at i = %i , fProtAOpt  = %0.5g \n',i,fProtAOpt(i))
-%                     %ibad = [ibad, i ];
-%                 end
+            if fProtAOpt(i) > 1 | fProtAOpt(i) < 0
+				ibad = [ibad, i ];
+				% fProtAOpt(i) =1;
+				if length(ibad) < 4
+                    fprintf('at i = %i , fProtAOpt  = %0.5g \n',i,fProtAOpt(i))
+				end
+            end
 
 else
     fprintf('NaN value in cell model i = %d : Irr(i) = %0.5g , T(i) = %0.5g, P(i) = %0.5g, N(i) = %0.5g', i,Irr(i),T(i),P(i),N(i))
@@ -602,7 +600,8 @@ QPnostor = (EOpt.*PE + gammaDNA*PDNA )./molarP;
 %       PStor(Nindx) = fStorage .*P .*(1./(1 + exp(-PStor_scale.*(rOpt-PStor_rCutoff))));
 
 %%%%%%%% Calculate Cell Quotas %%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% what is the extra part added on to QC? %L=kST.*E*(1+PhiS)/alphaI  % CI  = 1+(kST.*(1+PhiS))./alphaI; %=(1+6L)
+%%% what is the extra part added on to QC? %L=kST.*E*(1+PhiS)/alphaI  % CI  = 1+(kST.*(1+PhiS))./alphaI; %QC=QC*(1+6L*alphaI)
+%	% totalC = ((.3*alphaS/r+.05)*CPhospholipid+.7*alphaS*CProtein/r+.10*CLipid+.04*CCarb+(1-alphaE)*E*CProtein+alphaE*E*CRibosomeEu+(1-E-alphaS/r-gamma)*CProtein+.01*CDNA)/12.0;
 QP =((EOpt.*PE +(gammaDNA)*PDNA + PLip +PStor ))/molarP;
 QC = (EOpt.*CE +EOpt.*(CI-1)*CL +gammaS*CS +fProtAOpt.*AOpt.*CProt +MOpt.*CM)./molarC .*(1+24.0*.25*kST.*EOpt.*(1+PhiS));
 QN = (EOpt.*NE +EOpt.*(CI-1).*NL +gammaS*NS +fProtAOpt.*AOpt.*NProt +MOpt.*NM)./molarN;
@@ -827,7 +826,7 @@ CN = QC./QN;
     %out.dCI_dQ10Photo = dCI_dQ10Photo;
     %out.fProtA = fProtAOpt;
     %out.dfProtA_dQ10Photo  = dfProtAOpt_dQ10Photo;
-    
+
 	disp('Cell Model Done')
     % L, A, S?
     %save par values
@@ -903,8 +902,9 @@ CN = QC./QN;
             if tmp >0 & tmp<=1
                 fProtAColim = tmp;
                 fprintf(' fProtAColim = tmp \n')
-            else
-                fprintf('Error in AColim at i=%i ,fProtAColim=%.4g \n',i,fProtAColim)
+            %else
+			%	fProtAColim = 1;
+			%	fprintf('Error in AColim at i=%i ,fProtAColim=%.4g \n',i,fProtAColim)
             end
         end
 

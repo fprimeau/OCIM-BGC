@@ -80,6 +80,10 @@ if isfield(xhat,'fStorage')
 	kk=kk+1;
     parstr{kk,1} = ['fStorage=' num2str(xhat.fStorage)] ;
 end
+if isfield(xhat,'fRibE')
+	kk=kk+1;
+    parstr{kk,1} = ['fRibE=' num2str(xhat.fRibE)] ;
+end
 if isfield(xhat,'PLip_PCutoff')
 	kk=kk+1;
     parstr{kk,1} = ['PLip PCutoff=' num2str(xhat.PLip_PCutoff)] ;
@@ -94,7 +98,11 @@ if isfield(xhat,'PStor_rCutoff')
 end
 if isfield(xhat,'PStor_scale')
 	kk=kk+1;
-    parstr{kk,1} = ['PStor scale=' num2str(xhat.PStor_scale)]
+    parstr{kk,1} = ['PStor scale=' num2str(xhat.PStor_scale)];
+end
+if isfield(xhat,'alphaS')
+	kk=kk+1;
+    parstr{kk,1} = ['alphaS=' num2str(xhat.alphaS)] 
 end
 
 

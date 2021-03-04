@@ -240,19 +240,21 @@ function par = PackPar(par)
 			p0 = [p0; lQ10Photo]		;
 			par.pindx.lQ10Photo = strt : length(p0);
 		end
-		if (par.opt_fRibE == on)
-			nbx  = nbx + 1        		;
-			lfRibE = log(par.BIO.fRibE) ;
-			strt = length(p0) + 1		;
-			p0 = [p0; lfRibE]			;
-			par.pindx.lfRibE = strt : length(p0);
-		end
 		if (par.opt_fStorage == on)
 			nbx  = nbx + 1        		;
 			lfStorage =log(par.BIO.fStorage);
 			strt = length(p0) + 1		;
 			p0 = [p0; lfStorage]		;
 			par.pindx.lfStorage = strt : length(p0);
+		end
+		if (par.opt_fRibE == on)
+			nbx  = nbx + 1        		;
+			%lfRibE = log(par.BIO.fRibE) ;
+			tfRibE = atanh(2*par.BIO.fRibE – 1);
+			%fRibE = 0.5*(1+tanh(x(par.pindx.tfRibE))); %change to tanh so fRibE must be between 0 and 1
+			strt = length(p0) + 1		;
+			p0 = [p0; tfRibE]			;
+			par.pindx.tfRibE = strt : length(p0);
 		end
 		if (par.opt_kST0 == on);
 			nbx  = nbx + 1        		;
