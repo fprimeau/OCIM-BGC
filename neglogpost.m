@@ -573,5 +573,3 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 end
 
 
-end
-
