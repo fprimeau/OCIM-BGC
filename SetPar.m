@@ -15,7 +15,7 @@ function par = SetPar(par)
     if isfile(par.fxhat) & par.LoadOpt == on 
         load(par.fxhat)
     end
-    
+
     if exist('xhat') & isfield(xhat,'sigma')
         par.sigma = xhat.sigma ;
     else 

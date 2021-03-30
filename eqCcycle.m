@@ -1,4 +1,4 @@
-function [par, C, Cx, Cxx] = eqCcycle(x, par);
+function [par, C, Cx, Cxx, cfluxes] = eqCcycle(x, par, getfluxes);
 % ip is the mapping from x to parameter names (see switch below)
 % output: C is model prediction of DIP,POP,and DOP
 % output: F partial derivative of P model w.r.t. model parameters x
@@ -78,23 +78,27 @@ function [par, C, Cx, Cxx] = eqCcycle(x, par);
         Cx   = sparse(5*par.nwet, nx) ;
         Cxx  = sparse(5*par.nwet, nchoosek(nx,2)+nx) ;
         [par.G,par.Gx,par.Gxx] = uptake_C(par) ;
-    elseif (ierr == 0 & par.optim == on)
-        % reset the global variable for the next call eqCcycle
-        GC = real(C) + 1e-8*randn(5*nwet,1) ;
-        X0 = GC;
-        F = C_eqn(C, par) ;
-        % test if norm of F small enough, if now rerun nsnew;
-        if (norm(F) > 1e-12)
-            [C,ierr] = nsnew(X0,@(X) C_eqn(X, par),options);
-        end 
-        %
-        if nargout > 2
-            [F,FD,Cx,Cxx,par] = C_eqn(C, par);
-        end 
+    elseif ( ierr == 0 )
+      % reset the global variable for the next call eqCcycle
+      GC = real(C) + 1e-8*randn(5*nwet,1) ;
+      X0 = GC;
+      
+      F = C_eqn(C, par) ;
+      % test if norm of F small enough, if not rerun nsnew;
+      if (norm(F) > 1e-12)
+        [C,ierr] = nsnew(X0,@(X) C_eqn(X, par),options);
+      end 
+      %
+      if nargout > 2
+        [F,FD,Cx,Cxx,par] = C_eqn(C, par);
+      end
+      if (nargin>2)
+        [F,FD,Cx,Cxx,par,cfluxes] = C_eqn(C, par, getfluxes);
+      end
     end
 end
 
-function [F,FD,Cx,Cxx,par] = C_eqn(X, par)    
+function [F,FD,Cx,Cxx,par,cfluxes] = C_eqn(X, par, getfluxes)    
 % unpack some useful stuff
     on = true; off = false;
     grd   = par.grd   ;
@@ -171,7 +175,14 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
           - 2*kPIC*PIC - kappa_g*(ALK - ALKbar) + pme*sALKbar ;
     
     F   = [eq1; eq2; eq3; eq4; eq5];
-    
+    if (nargin>2)
+      cfluxes.J1  =  -kC*DOC;
+      cfluxes.J2  =  -kPIC*PIC;
+      cfluxes.J3  =  (I+(1-sigma)*RR)*(G*C2P);
+      cfluxes.J4  =  pme*sDICbar;
+      cfluxes.J5  = -JgDIC;
+      cfluxes.J6  =   TRdiv*DIC;
+    end
     if nargout > 1
         % construct the LHS matrix for the offline model
         % disp('Preparing LHS and RHS matrix:')
