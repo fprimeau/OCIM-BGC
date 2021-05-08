@@ -251,8 +251,13 @@ function PrintPara(x, par);
         end
 		if (par.opt_fRibE == on)
             ifRibE = par.pindx.tfRibE;
-            fprintf('current fRibE         is  % 3.2e \n', 0.5*(1+tanh(x(ifRibE))) ); %fRibE = 0.5*(1+tanh(x(ifRibE)))
+            fprintf('current fRibE          is  % 3.2e \n', 0.5*(1+tanh(x(ifRibE))) ); %fRibE = 0.5*(1+tanh(x(ifRibE)))
             xhat.fRibE = 0.5*(1+tanh(x(ifRibE)));
+        end
+		if (par.opt_kST0 == on)
+            ikST0 = par.pindx.lkST0;
+            fprintf('current kST0           is  % 3.2e \n', exp(x(ikST0)));
+            xhat.kST0 = exp(x(ikST0));
         end
 		if (par.opt_PLip_PCutoff == on)
             iPLip_PCutoff = par.pindx.lPLip_PCutoff;

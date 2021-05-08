@@ -47,10 +47,15 @@ par.opt_bt    = on  ;
 par.opt_aa    = on  ;
 par.opt_bb    = on  ;
 %Trait Model parameters
-par.opt_Q10Photo = on ;
-par.opt_fRibE 	 = off;
-par.opt_fStorage = off;
-par.opt_kST0 	 = off;
+par.opt_Q10Photo     = on ;
+par.opt_fStorage     = on;
+par.opt_PLip_PCutoff = on;
+par.opt_PLip_scale   = off;
+par.opt_PStor_rCutoff = on;
+par.opt_PStor_scale  = off;
+par.opt_alphaS       = on;
+par.opt_fRibE 	     = on;
+par.opt_kST0 	     = off;
 %
 %-------------load data and set up parameters---------------------
 SetUp ;
@@ -68,6 +73,7 @@ elseif isunix
                         % 'TempSensi/MSK91/Zscore/'], GridVer);
     % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/COP4WWF/' ...
                         % 'MSK%2d/'],GridVer);
+	fig_dir = strcat(output_dir,'FIGS_PCCellv3b_DOC0.25_DOP0/');
 end
 VER = strcat(output_dir,TRdivVer);
 catDOC = sprintf('_DOC%0.2g_DOP%0.2g',par.cscale,par.pscale); % used to add scale factors to file names
@@ -90,7 +96,7 @@ elseif (par.Cmodel == off & par.Omodel == off & par.Simodel == off & par.Cellmod
 	base_name = strcat(VER,'_PCell');
 	fname = strcat(base_name,catDOC);
 elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off & par.Cellmodel == on)
-	base_name = strcat(VER,'_PCCell');
+	base_name = strcat(VER,'_PCCellv3b');
 	fname = strcat(base_name,catDOC);
 elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off & par.Cellmodel == on)
 	base_name = strcat(VER,'_PCOCell');
@@ -254,10 +260,12 @@ fprintf('Model POC export is %3.3e Pg C /yr \n\n',Sum_POCexp);
 
 C2Pexp = POCexp./POPexp;
 
-keyboard;
+%keyboard;
 %%% plot export
+% this idoes not work yet
+%{
 figure;
-contourf(grd.xt,grd.yt,C2Pexp); colorbar
+contourf(grd.xt,grd.yt,C2Pexp); c = colorbar;
 title('Model C:P export','Fontsize',18);
 xlabel('Longitude');
 ylabel('Latitude');
@@ -265,7 +273,8 @@ ylabel(c,'C:P [gC/gP]');
 grid off
 
 figTitle = 'C2Pexport';
-print(gcf,[fname '_FIG_' figTitle '.png'],'-dpng')
+print(gcf,[fig_dir 'FIG_' figTitle '.png'],'-dpng')
+%}
 
 
 %--------------- compare to ANCP -----------------------------

@@ -23,7 +23,7 @@ par.Cmodel  = on ;
 par.Omodel  = off ;
 par.Simodel = off ;
 par.Cellmodel = on; % cellular trait model for phyto uptake stoichiometry
-par.LoadOpt = on ; % if load optimial par.
+par.LoadOpt = off ; % if load optimial par.
 par.pscale  = 0.0 ;
 par.cscale  = 0.25 ; % factor to weigh DOC in the objective function
 
@@ -60,9 +60,9 @@ par.opt_bb    = off  ;
 par.opt_Q10Photo     = on ;
 par.opt_fStorage     = on;
 par.opt_PLip_PCutoff = on;
-par.opt_PLip_scale   = on;
+par.opt_PLip_scale   = off;
 par.opt_PStor_rCutoff = on;
-par.opt_PStor_scale  = on;
+par.opt_PStor_scale  = off;
 par.opt_alphaS       = on;
 par.opt_fRibE 	     = on;
 par.opt_kST0 	     = off;
@@ -117,7 +117,7 @@ elseif Gtest == off
         base_name = strcat(VER,'_PCell');
         fname = strcat(base_name,catDOC);
 	elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off & par.Cellmodel == on)
-        base_name = strcat(VER,'_PCCellv2');
+        base_name = strcat(VER,'_PCCellv3b');
         fname = strcat(base_name,catDOC);
 	elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off & par.Cellmodel == on)
 		base_name = strcat(VER,'_PCOCell');
@@ -179,6 +179,7 @@ options = optimoptions(@fminunc                  , ...
 %
 nip = length(x0);
 if (Gtest);
+	fprintf('derivative test \n')
     dx = sqrt(-1)*eps.^3*eye(nip);
     % for ii = nip : -1 : 13
     for ii = 1 : nip

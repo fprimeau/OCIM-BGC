@@ -21,12 +21,12 @@ set(groot,'defaultTextFontName','Times',...
 close all;
 
 GridVer = 90;
-RunVer = 'Tv4_PCCellv2_DOC0.25_DOP0';
+RunVer = 'Tv4_PCCellv3b_DOC0.25_DOP0';
 
 %ver = datestr(now,'mmmdd');
 %model output directory
 outputDir = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK90/';
-figDir = strcat(outputDir,'FIGS_PCCellv2_DOC0.25_DOP0/');
+figDir = strcat(outputDir,'FIGS_PCCellv3b_DOC0.25_DOP0/');
 
 %outPath='/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK90/FIGS_PCCell_DOC0.25_DOP0/';
 outPath = figDir;
@@ -102,7 +102,7 @@ if isfield(xhat,'PStor_scale')
 end
 if isfield(xhat,'alphaS')
 	kk=kk+1;
-    parstr{kk,1} = ['alphaS=' num2str(xhat.alphaS)] 
+    parstr{kk,1} = ['alphaS=' num2str(xhat.alphaS)]
 end
 
 
@@ -165,8 +165,11 @@ figTitle = 'C2Nsurface';
 print(gcf,[outPath 'FIG_' figTitle '.png'],'-dpng')
 
 %%% C2N lower EZ
-figure;
-contourf(lon,lat,C2N(:,:,2)); hold on
+figure; hold on;
+imAlpha = ones(size(C2N(:,:,2)));
+imAlpha(isnan(C2N(:,:,2))) =0;
+imagesc(lon,lat,C2N(:,:,2),'AlphaData',imAlpha)
+%contourf(lon,lat,C2N(:,:,2)); hold on
 c=colorbar;
 colormap(flipud(summer));
 title('Cell Model C:N Uptake Ratio: Lower EZ','Fontsize',18);
@@ -261,11 +264,13 @@ print(gcf,[outPath 'FIG_' figTitle '.png'],'-dpng')
 
 
 %% radius
-%Zlevs = [0.25:0.25:2.75];
+Zlevs = [0:0.2:6];
 figure;
-contourf(lon,lat,radius(:,:,1)); hold on
+contourf(lon,lat,radius(:,:,1),Zlevs); hold on
 c=colorbar;
 colormap(flipud(summer));
+[CC,hh] = contour(lon,lat,radius(:,:,1),[0.2,2],'k');
+clabel(CC,hh,'FontName','Times');
 %caxis([Zlevs(1) Zlevs(end)]);
 %cmocean('matter',length(Zlevs)-1);
 
@@ -281,9 +286,11 @@ print(gcf,[outPath 'FIG_' figTitle '.png'],'-dpng')
 
 %Zlevs = [0.25:0.25:2.75];
 figure;
-contourf(lon,lat,radius(:,:,2)); hold on
+contourf(lon,lat,radius(:,:,2),Zlevs); hold on
 c=colorbar;
 colormap(flipud(summer));
+[CC,hh] = contour(lon,lat,radius(:,:,2),[0.2,2],'k');
+clabel(CC,hh,'FontName','Times');
 %caxis([Zlevs(1) Zlevs(end)]);
 %cmocean('matter',length(Zlevs)-1);
 title('Cell radius: Lower EZ','Fontsize',18);

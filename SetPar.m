@@ -153,7 +153,7 @@ function par = SetPar(par)
 		par.BIO.Q10Photo = xhat.Q10Photo;
 	else
 		par.BIO.Q10Photo = 1.983;		% Q10 of photosynthesis
-	end	
+	end
 	if exist('xhat') & isfield(xhat,'fStorage')
 		par.BIO.fStorage = xhat.fStorage;
 	else
@@ -177,17 +177,17 @@ function par = SetPar(par)
 	if exist('xhat') & isfield(xhat,'PLip_scale')
 		par.BIO.PLip_scale = xhat.PLip_scale;
 	else
-		par.BIO.PLip_scale = 1.00;  % log of [P] below which more PLipids are substituted with Slipids
+		par.BIO.PLip_scale = 1.00;  % scale factor for logistic function controlling phospholipid quota
 	end
 	if exist('xhat') & isfield(xhat,'PStor_rCutoff')
 		par.BIO.PStor_rCutoff = xhat.PStor_rCutoff;
 	else
-		par.BIO.PStor_rCutoff = 2.25;  % log of [P] below which more PLipids are substituted with Slipids
+		par.BIO.PStor_rCutoff = 2.25;  % log of [r] above which cell stores more excess phosphorus?
 	end
 	if exist('xhat') & isfield(xhat,'PStor_scale')
 		par.BIO.PStor_scale = xhat.PStor_scale;
 	else
-		par.BIO.PStor_scale = 1.00;  % log of [P] below which more PLipids are substituted with Slipids
+		par.BIO.PStor_scale = 1.00;  % scale factor for logistic function controlling luxury phosphorus storage
 	end
 	if exist('xhat') & isfield(xhat,'alphaS')
 		par.BIO.alphaS = xhat.alphaS;

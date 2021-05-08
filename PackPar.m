@@ -250,7 +250,7 @@ function par = PackPar(par)
 		if (par.opt_fRibE == on)
 			nbx  = nbx + 1        		;
 			%lfRibE = log(par.BIO.fRibE) ;
-			tfRibE = atanh(2*par.BIO.fRibE – 1);
+			tfRibE = atanh(2*par.BIO.fRibE-1);
 			%fRibE = 0.5*(1+tanh(x(par.pindx.tfRibE))); %change to tanh so fRibE must be between 0 and 1
 			strt = length(p0) + 1		;
 			p0 = [p0; tfRibE]			;

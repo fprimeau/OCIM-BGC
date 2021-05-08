@@ -58,7 +58,48 @@ for jj = 1:npx
                 end
             end
 end
+%% cell model only
+for jj = (npx+ncx+1):(npx+ncx+nbx)
+            for jk = jj:(npx+ncx+nbx)
+                kk = kk + 1;
+                C2Ptmp = C2Pxx(:,kk);
+                    tmp = [-(I+(1-sigma)*RR)*(G*dC2Ptmp); ...
+                         (1-sigma)*G*dC2Ptmp; ...
+                         sigma*G*dC2Ptmp; ...
+                         (1-sigma)*RR*(G*dC2Ptmp); ...
+                         -2*(1-sigma)*RR*(G*dC2Ptmp) + ...
+                         N2C*G*dC2Ptmp];
 
+                    Cxx(:,kk) = mfactor(FD, tmp);
+            end
+end
+%% 
+if (par.opt_Q10Photo == on)
+        	C2P_Q10 = par.CellOut.dC2P_dQ10Photo(iwet); % =C2Px(:,par.pindx.lQ10Photo);
+			dQ10_lQ10Photo = par.BIO.Q10Photo;
+			tmp = dQ10_lQ10Photo*[-(I+(1-sigma)*RR)*(G*C2P_Q10); ...
+                      (1-sigma)*G*C2P_Q10; ...
+                      sigma*G*C2P_Q10; ...
+                      (1-sigma)*RR*(G*C2P_Q10); ...
+                      -2*(1-sigma)*RR*(G*C2P_Q10) + ...
+                      N2C*G*C2P_Q10];
+        	Cx(:,pindx.lQ10Photo) = mfactor(FD, tmp);
+    	end
+
+% Q10Photo fRibE
+		if (par.opt_Q10Photo & par.opt_fRibE)
+			C2P_fRibE_lQ10 = par.CellOut.d2C2P_dfRibE_dQ10Photo(iwet);
+            dC2Ptmp = C2P_fRibE_lQ10 *dfRibE_tfRibE;
+            kk = kk + 1;
+            tmp = [-(I+(1-sigma)*RR)*(G*dC2Ptmp); ...
+                         (1-sigma)*G*dC2Ptmp; ...
+                         sigma*G*dC2Ptmp; ...
+                         (1-sigma)*RR*(G*dC2Ptmp); ...
+                         -2*(1-sigma)*RR*(G*dC2Ptmp) + ...
+                         N2C*G*dC2Ptmp];
+
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
 % Q10Photo Q10Photo
         if (par.opt_Q10Photo)
 			C2P_Q10_Q10 = par.CellOut.d2C2P_dQ10Photo2(iwet);
@@ -72,12 +113,15 @@ end
 
             Cxx(:,kk) = mfactor(FD, tmp);
         end
-% Q10Photo Q10Photo
+
+        % Q10Photo Q10Photo
         if (par.opt_Q10Photo)
-			C2P_Q10_Q10 = par.CellOut.d2C2P_dQ10Photo2(iwet);
-            dC2Ptmp = C2P_Q10+par.BIO.Q10Photo*C2P_Q10_Q10;
+			C2P_Q10_lQ10 = par.CellOut.d2C2P_dQ10Photo2(iwet); %complex step takes second deriv wrt log(Q10)
+			d2Q10_lQ10Photo = par.BIO.Q10Photo;
+            %dC2Ptmp = (C2P_Q10+par.BIO.Q10Photo*C2P_Q10_Q10)*par.BIO.Q10Photo;
+			dC2Ptmp = (C2P_Q10 *d2Q10_lQ10Photo + C2P_Q10_lQ10*dQ10_lQ10Photo);
             kk = kk + 1;
-            tmp = par.BIO.Q10Photo*[-(I+(1-sigma)*RR)*(G*(dC2Ptmp)); ...
+            tmp = [-(I+(1-sigma)*RR)*(G*(dC2Ptmp)); ...
                       (1-sigma)*G*(dC2Ptmp); ...
                       sigma*G*(dC2Ptmp); ...
                       (1-sigma)*RR*(G*(dC2Ptmp)); ...

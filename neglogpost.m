@@ -1,6 +1,9 @@
 function [f, fx, fxx, data] = neglogpost(x, par)
     global iter
     on = true; off = false;
+	current_time = string(datetime('now')) ; %for runtime diagnostic purposes
+	fprintf('current time: %s \n',current_time) ;
+
     % print and save current parameter values to
     % a file that is used to reset parameters ;
     if iter == 0
@@ -26,6 +29,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
     %
     f    = 0 ;
     %%%%%%%%%%%%%%%%%%   Solve P    %%%%%%%%%%%%%%%%%%%%%%%%
+	tic
     idip = find(par.po4raw(iwet) > 0.02) ;
     Wp   = d0(dVt(iwet(idip))/sum(dVt(iwet(idip)))) ;
     mu   = sum(Wp*par.po4raw(iwet(idip)))/sum(diag(Wp)) ;
@@ -51,6 +55,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
     eip = DIP(iwet(idip)) - par.po4raw(iwet(idip)) ;
     eop = DOP(iwet(idop)) - par.dopraw(iwet(idop)) ;
     f  = f + 0.5*(eip.'*Wip*eip) + 0.5*(eop.'*Wop*eop);
+	toc
     %%%%%%%%%%%%%%%%%%   End Solve P    %%%%%%%%%%%%%%%%%%%%
 
     %%%%%%%%%%%%%%%%%%   Solve Si       %%%%%%%%%%%%%%%%%%%%
@@ -73,13 +78,18 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 
 	%%%%%%%%%%%%%%     Solve for C2P with Cell model   %%%%%%%%%%%%%%%%%%%%%
 	if (par.Cellmodel == on)
+		tic
+		[par, C2P, C2Px, C2Pxx] = eqC2Puptake(x, par, data); % this line replaces the rest of this section
+		par.C2Px = C2Px;
+		par.C2Pxx = C2Pxx;
+%{
 		iprod = find(M3d(:,:,1:2)); %production in top two layers
 		P0 = data.DIP(iprod)./10^6; 			% convert ug/m^3 to g/m^3  data.DIP:[mmol/m^3] convert to mol/L
 		N0 = par.no3obs(iprod)./10^6;   % convert ug/m^3 to g/m^3 <- NO [mmol/m^3 --> mol/L]
 		T0 = par.Temp(iprod);
 		Irr0 = par.PARobs(iprod);
 
-%keyboard;
+   % keyboard;
 		%parBIO=par.BIO;
         %M3dsurf=par.M3d(:,:,1:2);
 		%dVtsurf=par.dVt(:,:,1:2);
@@ -357,17 +367,19 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 		% par.CellOut.dC2P_dPStor_scale(iprod) = CellOut.dC2P_dPStorscale;
 		% par.CellOut.dC2P_dPLip_scale(iprod) = CellOut.dC2P_dPLipscale;
 		% %par.CellOut.dC2P_dalphaS(iprod) = CellOut.dC2P_dalphaS;
-
+%}
 		%data.CellOut = par.CellOut;
 		data.CellOut.C2P =  par.CellOut.C2P;
 		data.CellOut.N2P = par.CellOut.N2P;
 		data.CellOut.C2N = par.CellOut.C2N;
 		data.CellOut.LimType = par.CellOut.LimType;
 		data.CellOut.r = par.CellOut.r;
+		toc
 	end
 
     %%%%%%%%%%%%%%%%%%     Solve C   %%%%%%%%%%%%%%%%%%%%%%%%
     if (par.Cmodel == on)
+		tic
         idic = find(par.dicraw(iwet) > 0) ;
         Wic  = d0(dVt(iwet(idic))/sum(dVt(iwet(idic)))) ;
         mu   = sum(Wic*par.dicraw(iwet(idic)))/sum(diag(Wic)) ;
@@ -406,6 +418,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
         elk = ALK(iwet(ialk)) - par.alkraw(iwet(ialk)) ;
         f   = f + 0.5*(eic.'*Wic*eic) + 0.5*(eoc.'*Woc*eoc) + ...
               0.5*(elk.'*Wlk*elk);
+		toc
     end
 
 % debugging gradient --> fixed!
@@ -416,6 +429,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 
     %%%%%%%%%%%%%%%%%%   Solve O    %%%%%%%%%%%%%%%%%%%%%%%%
     if (par.Omodel == on)
+		tic
         io2 = find(par.o2raw(iwet)>0) ;
         Wo  = d0(dVt(iwet(io2))/sum(dVt(iwet(io2)))) ;
         mu  = sum(Wo*par.o2raw(iwet(io2)))/sum(diag(Wo)) ;
@@ -427,6 +441,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
         data.O2 = O2 ;
         eo = O2(iwet(io2)) - par.o2raw(iwet(io2)) ;
         f  = f + 0.5*(eo.'*Wo*eo)   ;
+		toc
     end
     %%%%%%%%%%%%%%%%%%   End Solve O    %%%%%%%%%%%%%%%%%%%%
     fprintf('current objective function value is %3.3e \n\n',f)
@@ -595,9 +610,21 @@ function [f, fx, fxx, data] = neglogpost(x, par)
             tmp(1:npx,1:npx) = fxx;
             fxx = tmp;
             % -------------------------------
-            % P model parameters and C parameters and Cell parameters
+            % P model parameters and C parameters
             for ju = 1:npx
-                for jo = (npx+1):(npx+ncx+nbx)
+                for jo = (npx+1):(npx+ncx)
+                    kk = kk + 1;
+                    fxx(ju, jo) = fxx(ju, jo) + ...
+                        icx(idic,ju).'*Wic*icx(idic,jo) + eic.'*Wic*icxx(idic,kk) + ...
+                        ocx(idoc,ju).'*Woc*ocx(idoc,jo) + eoc.'*Woc*ocxx(idoc,kk) + ...
+                        lkx(ialk,ju).'*Wlk*lkx(ialk,jo) + elk.'*Wlk*lkxx(ialk,kk) ;
+
+                    fxx(jo,ju) = fxx(ju, jo);
+                end
+            end
+			% P model parameters and Cell parameters
+            for ju = 1:npx
+                for jo = (npx+ncx+1):(npx+ncx+nbx)
                     kk = kk + 1;
                     fxx(ju, jo) = fxx(ju, jo) + ...
                         icx(idic,ju).'*Wic*icx(idic,jo) + eic.'*Wic*icxx(idic,kk) + ...
@@ -657,7 +684,21 @@ function [f, fx, fxx, data] = neglogpost(x, par)
             % -------------------------------
             % P and C model parameters
             for ju = 1:npx
-                for jo = (npx+1):(npx+ncx+nbx)
+                for jo = (npx+1):(npx+ncx)
+                    kk = kk + 1;
+                    fxx(ju, jo) = ...
+                        fxx(ju, jo) + ...
+                        icx(idic,ju).'*Wic*icx(idic,jo) + eic.'*Wic*icxx(idic,kk) + ...
+                        ocx(idoc,ju).'*Woc*ocx(idoc,jo) + eoc.'*Woc*ocxx(idoc,kk) + ...
+                        lkx(ialk,ju).'*Wlk*lkx(ialk,jo) + elk.'*Wlk*lkxx(ialk,kk) + ...
+                        ox(io2,ju).'*Wo*ox(io2,jo) + eo.'*Wo*oxx(io2,kk);
+
+                    fxx(jo, ju) = fxx(ju, jo);
+                end
+            end
+			% P and Cell model parameters
+            for ju = 1:npx
+                for jo = (npx+ncx+1):(npx+ncx+nbx)
                     kk = kk + 1;
                     fxx(ju, jo) = ...
                         fxx(ju, jo) + ...
@@ -671,7 +712,35 @@ function [f, fx, fxx, data] = neglogpost(x, par)
             end
             % -------------------------------
             % C model parameters
-            for ju = (npx+1):(npx+ncx+nbx)
+            for ju = (npx+1):(npx+ncx)
+                for jo = ju:(npx+ncx)
+                    kk = kk + 1;
+                    fxx(ju, jo) = ...
+                        fxx(ju, jo) + ...
+                        icx(idic,ju).'*Wic*icx(idic,jo) + eic.'*Wic*icxx(idic,kk) + ...
+                        ocx(idoc,ju).'*Woc*ocx(idoc,jo) + eoc.'*Woc*ocxx(idoc,kk) + ...
+                        lkx(ialk,ju).'*Wlk*lkx(ialk,jo) + elk.'*Wlk*lkxx(ialk,kk) + ...
+                        ox(io2,ju).'*Wo*ox(io2,jo) + eo.'*Wo*oxx(io2,kk);
+
+                    fxx(jo, ju) = fxx(ju, jo);
+                end
+            end
+			% C and cell model parameters
+            for ju = (npx+1):(npx+ncx)
+                for jo = (npx+ncx+1):(npx+ncx+nbx)
+                    kk = kk + 1;
+                    fxx(ju, jo) = ...
+                        fxx(ju, jo) + ...
+                        icx(idic,ju).'*Wic*icx(idic,jo) + eic.'*Wic*icxx(idic,kk) + ...
+                        ocx(idoc,ju).'*Woc*ocx(idoc,jo) + eoc.'*Woc*ocxx(idoc,kk) + ...
+                        lkx(ialk,ju).'*Wlk*lkx(ialk,jo) + elk.'*Wlk*lkxx(ialk,kk) + ...
+                        ox(io2,ju).'*Wo*ox(io2,jo) + eo.'*Wo*oxx(io2,kk);
+
+                    fxx(jo, ju) = fxx(ju, jo);
+                end
+            end
+			% Cell model parameters
+            for ju = (npx+ncx+1):(npx+ncx+nbx)
                 for jo = ju:(npx+ncx+nbx)
                     kk = kk + 1;
                     fxx(ju, jo) = ...
@@ -696,7 +765,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
                 end
             end
             % -------------------------------
-            % C and O model parameters
+            % C and O model parameters     % need to add cell model with O
             for ju = (npx+1):(npx+ncx+nbx)
                 for jo = (npx+ncx+nbx+1):(npx+ncx+nbx+nox)
                     kk = kk + 1;

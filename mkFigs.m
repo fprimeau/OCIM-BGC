@@ -66,6 +66,10 @@ elseif isunix
     % input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/COP4WWF/' ...
     % 'MSK%2d/'],GridVer);
 end
+% directory to save figures to
+figPath = strcat(input_dir,'FIGS_PCCellv3b_DOC0.25_DOP0/')
+
+
 VER   = strcat(input_dir,TRdivVer);
 catDOC = sprintf('_DOC%0.2g_DOP%0.2g',cscale,pscale); % used to add scale factors to file names
 if (Cmodel == off & Omodel == off & Simodel == off & Cellmodel == off)
@@ -180,6 +184,8 @@ if isfield(xhat,'bP_T')
     pcolor(bP2D) ; colorbar ; shading flat
     title('b4P')
     % saveas(gcf,'Figs91/b4P.png')
+	figTitle = 'b4P';
+	print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
 end
 
 if isfield(xhat,'kP_T')
@@ -194,6 +200,8 @@ if isfield(xhat,'kP_T')
     % caxis([80 140])
     title('ka4P')
     % saveas(gcf,'Figs91/kappa4P.png')
+	figTitle = 'kappa4P';
+	print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
 end
 
 if Cmodel == on
@@ -208,6 +216,8 @@ if Cmodel == on
         pcolor(bC2D); colorbar ; shading flat
         title('b4C')
         % saveas(gcf,'Figs91/b4C.png')
+		figTitle = 'b4C';
+		print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
     end
 
     if isfield(xhat,'R_Si')
@@ -223,7 +233,9 @@ if Cmodel == on
         pcolor(RR3d(:,:,1));colorbar;shading flat
         % caxis([100 600])
         title('rain ratio')
-        % saveas(gcf,'Figs91/kappa4C.png')
+        % saveas(gcf,'Figs91/R_Si.png')
+		figTitle = 'RainRatio';
+		print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
     end
 
     if isfield(xhat,'kC_T')
@@ -237,6 +249,8 @@ if Cmodel == on
         % caxis([100 600])
         title('kd4C')
         % saveas(gcf,'Figs91/kappa4C.png')
+		figTitle = 'kappa4C';
+		print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
     end
 
     if isfield(xhat,'cc')

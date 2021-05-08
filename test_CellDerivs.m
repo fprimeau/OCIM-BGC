@@ -90,9 +90,20 @@ param_range = [0.01:step:4];
 % choose a point
 j = 100;
 
-%% dC2P_dfRibE 
+%% dC2P_dkST0
+param_name = 'kST0';
+lparam_name = 'lkST0';
+dparam_name = 'dC2P_dkST0';
+opt_name = 'opt_kST0'
+step = 0.01;
+param_range = [0.01:step:2];
+
+% choose a point
+j = 100;
+
+%% dC2P_dfRibE %%%% need to modify to match tanh version of fRibE
 param_name = 'fRibE';
-lparam_name = 'lfRibE';
+lparam_name = 'tfRibE';
 dparam_name = 'dC2P_dfRibE';
 opt_name = 'opt_fRibE'
 step = 0.01;
@@ -142,7 +153,7 @@ dC2P_diff=diff(C2P)./step;
 dC2P_dlogparam = dC2P.*param_range';
 
 
-% picking wher to display annotations
+% picking where to display annotations
 len = length(param_range);
 
 %% plot
