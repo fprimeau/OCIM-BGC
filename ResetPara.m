@@ -381,14 +381,14 @@ function  x = ResetPara(x, par);
 	%------------------------
 	if par.Cellmodel==on
 		%Q10Photo
-		if (par.opt_Q10Photo == on)
-	        iQ10Photo = pindx.lQ10Photo    ;
-	        xnew  = exp(x(iQ10Photo))  ;
-	        xold  = exp(x0(iQ10Photo)) ;
-	        if (xnew > fb*xold | xnew < fs*xold);
-	            x(iQ10Photo) = log( exp(x0(iQ10Photo))*(0.1*rand + 0.95) );
-	        end
-	    end
+		% if (par.opt_Q10Photo == on)
+	    %     iQ10Photo = pindx.lQ10Photo    ;
+	    %     xnew  = exp(x(iQ10Photo))  ;
+	    %     xold  = exp(x0(iQ10Photo)) ;
+	    %     if (xnew > fb*xold | xnew < fs*xold);
+	    %         x(iQ10Photo) = log( exp(x0(iQ10Photo))*(0.1*rand + 0.95) );
+	    %     end
+	    % end
 		%fRibE
 		% if (par.opt_fRibE == on)
 	    %     ifRibE = pindx.tfRibE      ;

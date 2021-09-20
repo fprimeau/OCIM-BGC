@@ -11,9 +11,9 @@ function [f, fx, fxx, data] = neglogpost(x, par)
     end
     % reset parameters if optimization routine
     % suggests strange parameter values ;
-%    if iter < 3
-%        x = ResetPara(x, par) ;
-%    end
+    if iter < 3
+        x = ResetPara(x, par) ;
+    end
     % print current parameters
     if iter > 0
         PrintPara(x, par) ;
