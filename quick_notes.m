@@ -1,3 +1,65 @@
+%% ploting CNPP int
+    lat = [-89:2:89];
+    lon = [1:2:360];
+    spa = 60*60*24*365;
+    
+figure;
+contourf(lon,lat,CNPP_surface,[0:10:130]); c = colorbar;
+colormap(flipud(summer));
+title('Model surface CNPP','Fontsize',18);
+xlabel('Longitude');
+ylabel('Latitude');
+ylabel(c,'NPP [gC/m^2/yr]');
+
+hold on
+[CC,hh] = contour(lon,lat,CNPP_surface,[10,60],'k');
+clabel(CC,hh,'FontName','Times');
+
+figTitle = 'CNPP_surface';
+print(gcf,[outPath 'FIG_' figTitle '.png'],'-dpng')
+
+
+
+
+figure;
+contourf(lon,lat,CNPP_Z2); c = colorbar;
+title('Model CNPP (depth box 2)','Fontsize',18);
+xlabel('Longitude');
+ylabel('Latitude');
+ylabel(c,'NPP [gC/m^2/yr]');
+
+%%
+DIP = DIPsurf;
+DIP1 = DIP(:,:,1);
+DIP2 = DIP(:,:,2);
+DIP(DIPsurf<0) = min(DIPsurf(DIPsurf>0));
+DIPmin = min(DIPsurf(DIPsurf>0))
+neg_indx1 = DIPsurf(:,:,1)<0;
+neg_indx2 = DIPsurf(:,:,2)<0;
+
+
+CNPP_surface(neg_indx1) = CNPP_surface(neg_indx1)./DIP1(neg_indx1)*DIPmin;
+CNPP_Z2(neg_indx2) = CNPP_Z2(neg_indx2)./DIP2(neg_indx2)*DIPmin;
+
+Int_CNPP = CNPP_surface+CNPP_Z2;
+
+
+figure;
+contourf(lon,lat,Int_CNPP,[0:10:220],'Linecolor','none'); c = colorbar;
+title('Model CNPP integrated over top two grid boxes','Fontsize',18);
+%colormap(flipud(summer));
+xlabel('Longitude');
+ylabel('Latitude');
+ylabel(c,'NPP [gC/m^2/yr]');
+
+hold on
+[CC,hh] = contour(lon,lat,Int_CNPP,[0 0],'k','Linewidth',2);
+clabel(CC,hh,'FontName','Times');
+
+%Zlevs = [-200:20:200];
+%caxis([Zlevs(1) Zlevs(end)]);
+%cmocean('delta',length(Zlevs)-1);
+
 %% simplifying cell params hessian like for P 
 % P model only
 for jj = 1:npx

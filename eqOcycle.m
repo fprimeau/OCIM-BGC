@@ -106,6 +106,7 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
     d2LdO2 = kC*DOC.*O2C.*d2RdO2   ;
     % O2 function
     F = TRdiv*O2 - PO2 + LO2 - KO2*(o2sat-O2) ;
+
     %
     if (nargout > 1)
         FD = mfactor(TRdiv + dLdO + KO2) ;

@@ -11,7 +11,7 @@ par.Cmodel    = on ; % on: run C model ;
 par.Omodel    = off ; % on: run O model;
 par.Simodel   = off ; % on: run Si model;
 par.Cellmodel = on;
-par.LoadOpt   = off ; % on: load optimial parameters;
+par.LoadOpt   = on ; % on: load optimial parameters; %never used
                     % factor to weigh DOP in the objective function
 par.pscale  = 0.0 ;
 % factor to weigh DOC in the objective function
@@ -24,13 +24,19 @@ if ismac
     input_dir = sprintf('~/Documents/CP-model/MSK%2d/',GridVer);
 elseif isunix
     input_dir = sprintf('/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK%2d/', GridVer);
-    % input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
-    %                    'MSK%2d/PME4DICALK/'],GridVer);
-    % input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/COP4WWF/' ...
-                        % 'MSK%2d/'],GridVer);
+
+
 end
+% directory to save figures to
+figPath = strcat(input_dir,'FIGS_PCCellv3b_DOC0.25_DOP0/')
+
+%%%%% TEMPORARY: use duplicate copies to test surface
+figPath = strcat(input_dir,'FIGS_PCCellv3b_DOC0.25_DOP0/')
+input_dir = sprintf('/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK%2d/v3b_duplicate/', GridVer); %temporary. test run
+
+
 VER = strcat(input_dir,TRdivVer);
-catDOC = sprintf('_DOC%0.2g_DOP%0.2g',cscale,pscale); % used to add scale factors to file names
+catDOC = sprintf('_DOC%0.2g_DOP%0.2g',par.cscale,par.pscale); % used to add scale factors to file names
 % Creat output file names based on which model(s) is(are) optimized
 if (par.Cmodel == off & par.Omodel == off & par.Simodel == off & par.Cellmodel == off)
 	fname = strcat(VER,'_P');
@@ -50,7 +56,7 @@ elseif (par.Cmodel == off & par.Omodel == off & par.Simodel == off & par.Cellmod
 	base_name = strcat(VER,'_PCell');
 	fname = strcat(base_name,catDOC);
 elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off & par.Cellmodel == on)
-	base_name = strcat(VER,'_PCCell');
+	base_name = strcat(VER,'_PCCellv3b');
 	fname = strcat(base_name,catDOC);
 elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off & par.Cellmodel == on)
 	base_name = strcat(VER,'_PCOCell');
@@ -66,37 +72,73 @@ fxhat     = strcat(fname,'_xhat.mat');
 par.fxhat = fxhat ;
 load(par.fxhat) ;
 load(par.fname) ;
-%------------------ compare DIP ---------------------------------
+
+%--------------------- prepare parameters ------------------
+xhat
+% if par.LoadOpt == on
+%     % load optimal parameters from a file or set them to default values
+%     par = SetPar(par) ;
+%     % pack parameters into an array, assign them corresponding indices.
+%     par = PackPar(par) ;
+% 	x0    = par.p0 ;
+% 	iter = 0;
+% 	PrintPara(x0, par) ;
+% end
+
+%----------------surface indices---------------------------
+iprod = find(par.M3d(:,:,1:2));
+iprod1 = find(par.M3d(:,:,1)); % surface layer only
+iprod2 = find(par.M3d(:,:,2)); % second EZ depth layer
+
+%%% PLOT ONLY SURFACE VALUES
+%iwet = iprod;
+%figPath = strcat(input_dir,'FIGS_PCCellv3b_DOC0.25_DOP0/surf')
+
+%----------------NPP---------------
+
+
+%------------------ compare P model ---------------------------------
+%------ DOP ---------
 nfig = 0;
 if (par.Pmodel == on)
     if ~exist('DOP')
         DOP = data.DOP ;
     end
 
-    dopraw = DOPobs - 0.03 ; % less refractory DOP
+    %dopraw = DOPobs - 0.03 ; % less refractory DOP
+	dopraw = par.dopraw;
     idop   = find(dopraw(:) > 0 & DOP(:)>0) ;
     iDOP_ATL = find(dopraw(iwet)>0 & ATL(iwet)>0) ;
     iDOP_PAC = find(dopraw(iwet)>0 & PAC(iwet)>0) ;
     iDOP_IND = find(dopraw(iwet)>0 & IND(iwet)>0) ;
     iDOP_ARC = find(dopraw(iwet)>0 & ARC(iwet)>0) ;
     iDOP_MED = find(dopraw(iwet)>0 & MED(iwet)>0) ;
-    fprintf('R^2 for DIP is %3.3f \n',rsquare(dopraw(idop),DOP(idop)))
-    % nfig = nfig + 1;
-    % figure(nfig)
-    % plot(dopraw(iwet(iDOP_ATL)), DOP(iwet(iDOP_ATL)),'ro')
-    % hold on
-    % plot(dopraw(iwet(iDOP_PAC)), DOP(iwet(iDOP_PAC)),'ks')
-    % hold on
-    % plot(dopraw(iwet(iDOP_IND)), DOP(iwet(iDOP_IND)),'b^')
-    % hold on
-    % plot(dopraw(iwet(iDOP_ARC)), DOP(iwet(iDOP_ARC)),'g*')
-    % hold on
-    % plot(dopraw(iwet(iDOP_MED)), DOP(iwet(iDOP_MED)),'c>')
-    % hold on
-    % plot([0 0.75],[0 0.75],'r-','linewidth',3)
-    % xlim([0 0.75])
-    % ylim([0 0.75])
+    fprintf('R^2 for DOP is %3.3f \n',rsquare(dopraw(idop),DOP(idop)))
 
+    nfig = nfig + 1;
+    figure(nfig)
+    plot(dopraw(iwet(iDOP_ATL)), DOP(iwet(iDOP_ATL)),'ro')
+    hold on
+    plot(dopraw(iwet(iDOP_PAC)), DOP(iwet(iDOP_PAC)),'ks')
+    hold on
+    plot(dopraw(iwet(iDOP_IND)), DOP(iwet(iDOP_IND)),'b^')
+    hold on
+    plot(dopraw(iwet(iDOP_ARC)), DOP(iwet(iDOP_ARC)),'g*')
+    hold on
+    plot(dopraw(iwet(iDOP_MED)), DOP(iwet(iDOP_MED)),'c>')
+    hold on
+	legend('ATL','PAC','IND','ARC','Location','northwest')
+	hold on
+    plot([0 0.75],[0 0.75],'r-','linewidth',3)
+    xlim([0 0.75])
+    ylim([0 0.75])
+
+	xlabel('Observed DOP (mmol/m^3)');
+    ylabel('Model DOP (mmol/m^3)');
+	figTitle = 'DOPcompare2obs';
+	print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
+
+%------ DIP ---------
     if ~exist('DIP')
         DIP = data.DIP ;
     end
@@ -123,7 +165,7 @@ if (par.Pmodel == on)
     %set(gca,'FontSize',16);
     grid on
     axis square
-    xlabel('Observed DIP (mmol/m^3)');
+    xlabel('Observed DIP (mmol/m^3)');  % GLODAP units = umol/kg
     ylabel('Model DIP (mmol/m^3)');
     % title('model V.S. observation')
     plot([0 4],[0 4],'r--','linewidth',2);
@@ -139,6 +181,8 @@ if (par.Pmodel == on)
     ylabel('(percentile)')
     % exportfig(gcf,'DIP_MvsO','fontmode','fixed','fontsize',12, ...
               % 'color','rgb','renderer','painters')
+	figTitle = 'DIPcompare2obs';
+	print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
 end
 
 % -----------------------------------------------------
@@ -189,6 +233,8 @@ if (par.Cmodel == on)
     ylabel('(percentile)')
     % exportfig(gcf,'DIC_MvsO','fontmode','fixed','fontsize',12,...
               % 'color','rgb','renderer','painters')
+	figTitle = 'DICcompare2obs';
+	print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
 
     if ~exist('ALK')
         ALK = data.ALK ;
@@ -235,6 +281,8 @@ if (par.Cmodel == on)
     ylabel('(percentile)')
     % exportfig(gcf,'ALK_MvsO','fontmode','fixed','fontsize',12,...
     % 'color','rgb','renderer','painters')
+	figTitle = 'ALKcompare2obs';
+	print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
 
     if isfield(data,'DOC')
         DOC = data.DOC  ;
@@ -271,6 +319,9 @@ if (par.Cmodel == on)
     M = DOC(iwet(iDOC)) ;
     fprintf('R^2 for DOC is %3.3f \n',rsquare(O,M))
     % OvsM = [O, M] ;
+
+	figTitle = 'DOCcompare2obs';
+	print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
 
     %%%%%%%% compare to sediment trap %%%%%%%%%%%%
     POC = data.POC ;
@@ -359,6 +410,8 @@ if (par.Cmodel == on)
     fprintf('R^2 for rain ratio is %3.3f \n', ...
             rsquare(log10(rR(iwet(ikp))),log10(rRatio(iwet(ikp)))))
     % exportfig(gcf,'rRatio','fontmode','fixed','fontsize',12,'color','rgb','renderer','painters')
+	figTitle = 'POCcompare2obs';
+	print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
 end
 
 % ---------------------------------------------------

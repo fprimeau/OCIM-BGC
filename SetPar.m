@@ -3,14 +3,17 @@ function par = SetPar(par)
     spd  = 24*60^2 ;  spa  = 365*spd ;
     % fixed parameters
     par.kappa_g  = 1/(1e6*spa)  ; % geological restoring time [1/s];
-    par.taup     = 720*60^2     ; % (s) pic dissolution time-scale
+    par.taup     = 30*24*60^2     ; % (s) pic dissolution time-scale
     % par.tau_TA   = 1./par.taup  ;
-    par.kappa_p  = 1/(720*60^2) ;
-    % PIC dissolution constant 0.38 day^-1 based on first-order
-    % reaction kinetics according to Sarmiento
-    % and Gruber book (p.271);
+    par.kappa_p  = 1/(30*24*60^2) ;
+	% the parameters kappa_p and b, which affect the sinking flux attenuation profile,
+	% are not independently identified by the data. We therefore prescribe the value kappa_p of 1/(30 days)
     par.tauPIC = 30*spd ;
     par.kPIC   = 1/par.tauPIC ;
+	% PIC dissolution constant 0.38 day^-1 based on first-order
+    % reaction kinetics according to Sarmiento
+    % and Gruber book (p.271);
+
     % load optimal parameters if they exist
     if isfile(par.fxhat) & par.LoadOpt == on
         load(par.fxhat)
@@ -19,7 +22,7 @@ function par = SetPar(par)
     if exist('xhat') & isfield(xhat,'sigma')
         par.sigma = xhat.sigma ;
     else
-        par.sigma = 1.0e-01 ;
+        par.sigma = 0.30 ; % default was 1.0e-01 , however 0.30 is used by (Wang, 2019: Nitrogen fixation)
     end
     if exist('xhat') & isfield(xhat,'kP_T')
         par.kP_T = xhat.kP_T ;
@@ -177,17 +180,17 @@ function par = SetPar(par)
 	if exist('xhat') & isfield(xhat,'PLip_scale')
 		par.BIO.PLip_scale = xhat.PLip_scale;
 	else
-		par.BIO.PLip_scale = 1.00;  % scale factor for logistic function controlling phospholipid quota
+		par.BIO.PLip_scale = 3.0e6;  % scale factor for logistic function controlling phospholipid quota (changed from 1.0 b.c. not using log(P). changed from 1e6 to 3e6 to make transition sharper)
 	end
 	if exist('xhat') & isfield(xhat,'PStor_rCutoff')
 		par.BIO.PStor_rCutoff = xhat.PStor_rCutoff;
 	else
-		par.BIO.PStor_rCutoff = 2.25;  % log of [r] above which cell stores more excess phosphorus?
+		par.BIO.PStor_rCutoff = 2.25;  % radius [um] above which cell stores luxury phosphorus?
 	end
 	if exist('xhat') & isfield(xhat,'PStor_scale')
 		par.BIO.PStor_scale = xhat.PStor_scale;
 	else
-		par.BIO.PStor_scale = 1.00;  % scale factor for logistic function controlling luxury phosphorus storage
+		par.BIO.PStor_scale = 3.00;  % scale factor for logistic function controlling luxury phosphorus storage (changed default from 1 to 3 to give sharper transition)
 	end
 	if exist('xhat') & isfield(xhat,'alphaS')
 		par.BIO.alphaS = xhat.alphaS;

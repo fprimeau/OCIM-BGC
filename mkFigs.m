@@ -14,7 +14,7 @@ end
 format long
 %
 Cmodel  = on ;
-Omodel  = on ;
+Omodel  = off ;
 Simodel = off ;
 Cellmodel = on;
 pscale  = 0.0 ;
@@ -90,7 +90,7 @@ elseif (Cmodel == off & Omodel == off & Simodel == off & Cellmodel == on) % cell
 	base_name = strcat(VER,'_PCell');
 	fname = strcat(base_name,catDOC);
 elseif (Cmodel == on & Omodel == off & Simodel == off & Cellmodel == on)
-	base_name = strcat(VER,'_PCCell');
+	base_name = strcat(VER,'_PCCellv3b');
 	fname = strcat(base_name,catDOC);
 elseif (Cmodel == on & Omodel == on & Simodel == off & Cellmodel == on)
 	base_name = strcat(VER,'_PCOCell');
@@ -174,6 +174,7 @@ Tz3d = M3d + nan ;
 Tz3d(iwet) = Tz  ;
 aveT   = nanmean(Tz3d(:,:,1:2),3) ;
 
+% ----------------make figures---------------------
 nfig = 0;
 if isfield(xhat,'bP_T')
     nfig = nfig + 1;

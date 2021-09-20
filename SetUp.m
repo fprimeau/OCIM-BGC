@@ -75,7 +75,7 @@ if GridVer == 90
     load GLODAPv2_talk.mat
     load PME_TS_90x180x24.mat  pme
     load DICant_90x180x24.mat
-    load GLODAPv2_90x180x24raw.mat
+    load GLODAPv2_90x180x24raw.mat  % GLODAP Nutrient units = [umol/kg] ??? are units changed for the .mat file?
 	load raw_no3obs_90x180x24.mat   % GLODAP NO3
     load splco2_mod_monthly.mat     % monthly CO2 data
     load co2syspar90.mat co2syspar

@@ -16,8 +16,9 @@ function  x = ResetPara(x, par);
         xnew   = exp(x(isigma))    ;
         xold   = exp(x0(isigma))   ;
         if (xnew > 1 | xnew < 0.1)
-            % x(isigma) = x0(isigma) ;
-            x(isigma) = log(0.3+rand*0.2) ;
+            % x(isigma) = x0(isigma);
+            % x(isigma) = log(0.3+rand*0.2) ;
+			x(isigma) = log( exp(x0(isigma))*(0.1*rand + 0.95) );
         end
     end
 

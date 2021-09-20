@@ -39,7 +39,13 @@ function [G, Gx, Gxx] = uptake_C(par)
         end
 
         Gx = Gp*DIPx+d0(DIP)*Gpx;
+
+		% fprintf('Gx(:,pindx.lsigma) = %3.5e \n', max(real(Gx(:,pindx.lsigma))))
+		% fprintf('complex step of G: %3.5e \n', max(imag(alpha*L*DIP))/eps.^3)
+		% diff = max(abs((real(Gx(:,pindx.lsigma)) - imag(alpha*L*DIP)/eps.^3)./(imag(alpha*L*DIP)/eps.^3)),[],'all');
+		% fprintf('dG_dsigma relative error = %3.5e  \n',diff);
     end
+
 
     %% ------------------------------------------------
     if par.optim == off

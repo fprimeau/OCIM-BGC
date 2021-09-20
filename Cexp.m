@@ -1,22 +1,44 @@
 clc; clear all; close all
-global iter
-iter = 0 ;
+% global iter
+% iter = 0 ;
 on   = true  ;
 off  = false ;
 format long
-%
+
+%ver = datestr(now,'mmmdd');
+RunVer = 'Tv4_PCCellv5c_DOC0.25_DOP0';
+
+%model output directory
+outputDir = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK90/v5c_duplicate2/';
+figDir = strcat(outputDir,'../FIGS_PCCellv5c_DOC0.25_DOP0/');
+outPath = figDir;
+
+% load model output fields
+fname = strcat(outputDir, RunVer, '.mat');
+par.fname = fname;
+load(fname);
+model = data;
+
+% load optimal parameter values
+fxhat = strcat(outputDir, RunVer,'_xhat.mat');
+par.fxhat = fxhat;
+load(fxhat);
+
 GridVer  = 90  ;
 operator = 'A' ;
-
-par.optim   = off ;
 par.Cmodel  = on ;
 par.Omodel  = off ;
 par.Simodel = off ;
-par.Cellmodel = on;
-par.LoadOpt = on ; % if load optimial par.
+par.Cellmodel = on; % cellular trait model for phyto uptake stoichiometry
 par.pscale  = 0.0 ;
 par.cscale  = 0.25 ; % factor to weigh DOC in the objective function
+par.LoadOpt = on ; % if load optimial par.
 
+%-------------load data and set up parameters---------------------
+SetUp ;
+xhat
+
+%{
 % P model parameters
 par.opt_sigma = on ;
 par.opt_kP_T  = on ;
@@ -74,6 +96,7 @@ elseif isunix
     % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/COP4WWF/' ...
                         % 'MSK%2d/'],GridVer);
 	fig_dir = strcat(output_dir,'FIGS_PCCellv3b_DOC0.25_DOP0/');
+	output_dir = sprintf('/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK%2d/v3b_duplicate/', GridVer); %temporary
 end
 VER = strcat(output_dir,TRdivVer);
 catDOC = sprintf('_DOC%0.2g_DOP%0.2g',par.cscale,par.pscale); % used to add scale factors to file names
@@ -131,12 +154,12 @@ fxhat     = strcat(fname,'_xhat.mat');
 par.fxhat = fxhat ;
 load(par.fname) ;
 load(par.fxhat) ;
-
+%}
 %--------------------- prepare parameters ------------------
 % load optimal parameters from a file or set them to default values
 par = SetPar(par) ;
 % pack parameters into an array, assign them corresponding indices.
-par = PackPar(par) ;
+% par = PackPar(par) ;
 
 %------------------ extract parameters ---------------------------
 % POP disolution constant [s^-1];
@@ -154,18 +177,18 @@ LAM(:,:,2) = (par.npp2.^beta).*par.Lambda(:,:,2);
 L          = d0(LAM(iwet));  % PO4 assimilation rate [s^-1];
 
 %------------------ extract data ---------------------------------
-DIP  = data.DIP(iwet) ;
-DIC  = data.DIC(iwet) ;
-POC  = data.POC(iwet) ;
-DOC  = data.DOC(iwet) ;
-PO4  = po4obs(iwet)   ;
+DIP  = model.DIP(iwet) ;
+DIC  = model.DIC(iwet) ;
+POC  = model.POC(iwet) ;
+DOC  = model.DOC(iwet) ;
+PO4  = par.po4obs(iwet)   ;
 TRdiv= par.TRdiv      ;
 I    = par.I          ;
 % -------------- C:P uptake ratio --------------------------------
 W = d0(dVt(iwet)) ;
 C2P3D = M3d + nan ;
 if par.Cellmodel==on
-	C2P3D(iwet) = data.CellOut.C2P(iwet);
+	C2P3D(iwet) = model.CellOut.C2P(iwet);
 else
 	C2P3D(iwet) = 1./(par.cc*PO4 + par.dd) ;
 end
@@ -188,6 +211,23 @@ CNPP = Int_CNPP*spa*1e-3 ; % convert production from mg C/m^3/s to g
 tem_CNPP = CNPP.*dAt(:,:,1)*1e-15 ;
 Sum_CNPP = nansum(tem_CNPP(:))    ;
 fprintf('Model NPP is %3.3e \n',Sum_CNPP) ;
+
+%----------plot and save CNPP-----------------------
+%{
+DIPsurf = data.DIP(:,:,1:2);
+CNPP_surface = G(:,:,1).*grd.dzt(1).*C2P3D(:,:,1)*12*spa*1e-3; %[gC/m^2/yr]
+CNPP_Z2 =G(:,:,2).*grd.dzt(2).*C2P3D(:,:,2)*12*spa*1e-3; %[gC/m^2/yr]
+figure;
+contourf(grd.xt,grd.yt,CNPP); c = colorbar;
+title('Model NPP','Fontsize',18);
+xlabel('Longitude');
+ylabel('Latitude');
+ylabel(c,'NPP [gC/m^2/yr]');
+figTitle = 'Int_CNPP';
+print(gcf,[fig_dir 'FIG_' figTitle '.png'],'-dpng')
+save([fig_dir 'Int_CNPP.mat'],'CNPP_surface','CNPP_Z2','DIPsurf')
+%}
+
 
 %---------------- calculate phosphorus export --------------------
 PFD = buildPFD(par, 'POP') ;
@@ -253,12 +293,28 @@ tem_POCexp = POCexp.*dAt(:,:,2);
 Sum_POCexp = nansum(tem_POCexp(:))*365*1e-18;
 fprintf('Model POC export is %3.3e Pg C /yr \n\n',Sum_POCexp);
 
-
-
+% ----- calculate POC flux
+% fPOC = w(:,:,2:25).*POC*spd*12 ; % POC flux (mg/m^2/day)
 
 %----------- C:P export ratio -------------------------
 
-C2Pexp = POCexp./POPexp;
+C2Pexp = M3d+nan;
+C2Pexp = C3d./P3d;
+% average across Latitude or basin?
+% plot all vertical profiles of C2Pexp
+% plot profiles within a basin
+
+figure; hold on
+for ii = 1:180
+	plot(squeeze(C2Pexp(30,ii,:)),grd.zt); hold on
+end
+title(['C:P export profiles at lat =' num2str(grd.yt(30))])
+xlabel('C:P total organic matter export')
+ylabel('depth')
+figTitle = 'C2Pexport_profiles30';
+print(gcf,[figDir 'FIG_' figTitle '.png'],'-dpng')
+
+%C2Pexp = POCexp./POPexp;
 
 %keyboard;
 %%% plot export

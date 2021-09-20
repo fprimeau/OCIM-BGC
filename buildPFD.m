@@ -21,7 +21,7 @@ function [PFdiv,Gout,Hout] = buildPFD(par,Ptype)
 %
     M3d = par.M3d;
     grd = par.grd;
-    [DIV,IU,M,MSK,iwet] = mkOperators(M3d,grd);
+    [DIV,IU,M,MSK,iwet] = mkOperators(M3d,grd); % func at end of file
 
     if ( strcmp(Ptype,'POP') | strcmp(Ptype,'POC') )
         % Define a temperature dependent powerlaw exponent

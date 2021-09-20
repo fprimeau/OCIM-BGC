@@ -1,5 +1,9 @@
 clc; clear all; close all
 global iter
+%global fmin_history
+
+parpool(16) % if running in parallel; comment out to run serial
+
 iter = 0 ;
 on   = true  ;
 off  = false ;
@@ -23,23 +27,23 @@ par.Cmodel  = on ;
 par.Omodel  = off ;
 par.Simodel = off ;
 par.Cellmodel = on; % cellular trait model for phyto uptake stoichiometry
-par.LoadOpt = off ; % if load optimial par.
+par.LoadOpt = on ; % if load optimial par.
 par.pscale  = 0.0 ;
 par.cscale  = 0.25 ; % factor to weigh DOC in the objective function
 
 % P model parameters
-par.opt_sigma = on ;
-par.opt_kP_T  = on ;
+par.opt_sigma = off ;
+par.opt_kP_T  = off ;
 par.opt_kdP   = on ;
-par.opt_bP_T  = on ;
+par.opt_bP_T  = off ;
 par.opt_bP    = on ;
 par.opt_alpha = on ;
 par.opt_beta  = on ;
 % C model parameters
-par.opt_bC_T  = on ;
+par.opt_bC_T  = off ;
 par.opt_bC    = on ;
 par.opt_d     = on ;
-par.opt_kC_T  = on ;
+par.opt_kC_T  = off ;
 par.opt_kdC   = on ;
 par.opt_R_Si  = on ;
 par.opt_rR    = on ;
@@ -58,14 +62,14 @@ par.opt_aa    = off  ;
 par.opt_bb    = off  ;
 %Trait Model parameters
 par.opt_Q10Photo     = on ;
-par.opt_fStorage     = on;
-par.opt_PLip_PCutoff = on;
-par.opt_PLip_scale   = off;
+par.opt_fStorage     = on ;
+par.opt_PLip_PCutoff = on ;
+par.opt_PLip_scale   = off ;
 par.opt_PStor_rCutoff = on;
-par.opt_PStor_scale  = off;
-par.opt_alphaS       = on;
-par.opt_fRibE 	     = on;
-par.opt_kST0 	     = off;
+par.opt_PStor_scale  = off ;
+par.opt_alphaS       = off ;
+par.opt_fRibE 	     = off ;
+par.opt_kST0 	     = on ;
 % par.BIO.opt_gammaDNA = off;
 % par.BIO.opt_gammaLipid = off;
 % par.BIO.opt_DNT0 = off;
@@ -96,9 +100,9 @@ end
 VER = strcat(output_dir,TRdivVer);
 catDOC = sprintf('_DOC%0.2g_DOP%0.2g',par.cscale,par.pscale); % used to add scale factors to file names
 % Creat output file names based on which model(s) is(are) optimized
-if Gtest == on
-    fname = strcat(VER,'_GHtest');
-elseif Gtest == off
+%if Gtest == on
+%    fname = strcat(VER,'_GHtest');
+%elseif Gtest == off
     if (par.Cmodel == off & par.Omodel == off & par.Simodel == off & par.Cellmodel == off)
         fname = strcat(VER,'_P');
     elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off & par.Cellmodel == off)
@@ -117,7 +121,7 @@ elseif Gtest == off
         base_name = strcat(VER,'_PCell');
         fname = strcat(base_name,catDOC);
 	elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off & par.Cellmodel == on)
-        base_name = strcat(VER,'_PCCellv3b');
+        base_name = strcat(VER,'_PCCellv6');
         fname = strcat(base_name,catDOC);
 	elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off & par.Cellmodel == on)
 		base_name = strcat(VER,'_PCOCell');
@@ -126,11 +130,13 @@ elseif Gtest == off
         base_name = strcat(VER,'_PCOSiCell');
         fname = strcat(base_name,catDOC);
     end
-end
+%end
 % -------------------- Set up output files ---------------
 par.fname = strcat(fname,'.mat') ;
-fxhat     = strcat(fname,'_xhat.mat');
+fxhat     = strcat(fname,'_xhat.mat') %;
 par.fxhat = fxhat ;
+
+%par.fhistory = strcat(fname,'_history.mat');
 
 % -------------------update initial guesses --------------
 if isfile(par.fname)
@@ -154,7 +160,7 @@ if par.Omodel == on
 end
 
 %--------------------- prepare parameters ------------------
-if par.optim == on
+if (par.optim == on) | (par.LoadOpt == on)
     % load optimal parameters from a file or set them to default values
     par = SetPar(par) ;
     % pack parameters into an array, assign them corresponding indices.
@@ -164,6 +170,41 @@ end
 %-------------------set up fminunc -------------------------
 x0    = par.p0 ;
 myfun = @(x) neglogpost(x, par);
+
+%fmin_history = struct;
+% function stop = fminoutfun(x, optimValues, state)
+% 	%global iter
+% 	%global fmin_history
+% 	stop = false;
+% 	switch state
+%   		case 'init'
+% 			fmin_history = struct();
+% 		    % fmin_history.x = x;
+% 		    % fmin_history.optimValues = optimValues;
+% 		    % fmin_history.timerVal = tic;
+% 			fmin_history.x = zeros(100,length(x));
+% 			fmin_history.gradient = zeros(100,length(x));
+% 			fmin_history.fval = zeros(100,1);
+% 			fmin_history.timerVal = zeros(100,1);
+% 			fmin_history.timerStart = tic;
+% 			fprintf('iter value at init state = %i',iter)
+% 		case 'iter'
+% 			% ind = length(fmin_history)+1;
+% 		    % fmin_history(iter).x = x;
+% 		    % fmin_history(iter).optimValues = optimValues;
+% 		    % fmin_history(iter).timerVal = toc(fmin_history(1).timerVal);
+% 			fmin_history.x(iter,:) = x;
+% 			fmin_history.fval(iter) = optimValues.fval;
+% 			fmin_history.gradient(iter,:) = optimValues.gradient;
+% 			fmin_history.timerVal = toc(fmin_history.timerStart);
+% 		case 'done'
+% 			%
+%   	end
+% 	%history.x = [history.x; x];
+% 	%history.fval = [history.fval; optimValues.fval];
+% 	%history.gradient = [history.gradient; optimValues.gradient'];
+% 	%save(par.fhistory,'history') %try making history an output of fminunc after exitflag, then only need to save once
+% end
 options = optimoptions(@fminunc                  , ...
                        'Algorithm','trust-region', ...
                        'GradObj','on'            , ...
@@ -175,7 +216,8 @@ options = optimoptions(@fminunc                  , ...
                        'TolFun',5e-7             , ...
                        'DerivativeCheck','off'   , ...
                        'FinDiffType','central'   , ...
-                       'PrecondBandWidth',Inf)   ;
+                       'PrecondBandWidth',Inf    ) ;
+					   %'OutputFcn',@fminoutfun ) 	 ;
 %
 nip = length(x0);
 if (Gtest);
@@ -201,17 +243,22 @@ if (Gtest);
         end
         fprintf('\n');
     end
-    keyboard
+	format shortE
+	real(fx)
+	real(full(fxx))
+    %keyboard
 else
     [xhat,fval,exitflag] = fminunc(myfun,x0,options);
     [f,fx,fxx,data] = neglogpost(xhat,par);
     load(fxhat)
+	%xhat.pindx = par.pindx;
     xhat.f   = f   ;
     xhat.fx  = fx  ;
     xhat.fxx = fxx ;
     % save results
     save(fxhat, 'xhat')
     save(par.fname, 'data')
+	%save(par.fhistory,'fmin_history')
 end
 
 fprintf('-------------- end! ---------------\n');

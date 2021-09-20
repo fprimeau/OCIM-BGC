@@ -76,7 +76,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
 
     % fixed parameters
     Tz      = par.Tz ;
-    DIPbar  = M3d(iwet)*par.DIPbar;  % gobal arerage PO4 conc.[mmol m^-3];
+    DIPbar  = M3d(iwet)*par.DIPbar;  % gobal average PO4 conc.[mmol m^-3];
     kappa_g = par.kappa_g; % PO4 geological restore const.[s^-1];
     kappa_p = par.kappa_p; % POP solubilization rate constant
     npp     = par.npp;     % net primary production

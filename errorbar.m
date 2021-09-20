@@ -1,52 +1,63 @@
-clc; clear alul; close all
+clc; clear all; close all
 global iter
 iter = 0 ;
 on   = true  ;
 off  = false ;
 format long
 %
-GridVer  = 91  ;
+GridVer  = 90  ;
 operator = 'A' ;
 
 Gtest = off ;
 Htest = off ;
 par.optim   = on ;
 par.Cmodel  = on ;
-par.Omodel  = on ;
+par.Omodel  = off ;
 par.Simodel = off ;
+par.Cellmodel = on; % cellular trait model for phyto uptake stoichiometry
 par.LoadOpt = on ; % if load optimial par.
 par.pscale  = 0.0 ;
 par.cscale  = 0.25 ; % factor to weigh DOC in the objective function
 
 % P model parameters
 par.opt_sigma = on ;
-par.opt_kP_T  = off ;
+par.opt_kP_T  = on ;
 par.opt_kdP   = on ;
-par.opt_bP_T  = off ;
+par.opt_bP_T  = on ;
 par.opt_bP    = on ;
-par.opt_beta  = on ;
 par.opt_alpha = on ;
+par.opt_beta  = on ;
 % C model parameters
-par.opt_bC_T  = off ;
+par.opt_bC_T  = on ;
 par.opt_bC    = on ;
 par.opt_d     = on ;
-par.opt_kC_T  = off ;
+par.opt_kC_T  = on ;
 par.opt_kdC   = on ;
-par.opt_R_Si  = off ;
+par.opt_R_Si  = on ;
 par.opt_rR    = on ;
-par.opt_cc    = on ;
-par.opt_dd    = on ;
+par.opt_cc    = off ; %always off if cell model on
+par.opt_dd    = off ; %always off if cell model on
 % O model parameters
 par.opt_O2C_T = off ;
 par.opt_rO2C  = on ;
 par.opt_O2P_T = off ;
 par.opt_rO2P  = on ;
 % Si model parameters
-par.opt_dsi   = on  ;
+par.opt_dsi   = off  ;
 par.opt_at    = off ;
-par.opt_bt    = on  ;
-par.opt_aa    = on  ;
-par.opt_bb    = on  ;
+par.opt_bt    = off  ;
+par.opt_aa    = off  ;
+par.opt_bb    = off  ;
+%Trait Model parameters
+par.opt_Q10Photo     = on ;
+par.opt_fStorage     = on;
+par.opt_PLip_PCutoff = on;
+par.opt_PLip_scale   = off;
+par.opt_PStor_rCutoff = on;
+par.opt_PStor_scale  = off;
+par.opt_alphaS       = on;
+par.opt_fRibE 	     = on;
+par.opt_kST0 	     = off;
 %
 %-------------load data and set up parameters---------------------
 SetUp ;
@@ -57,34 +68,44 @@ SetUp ;
 if ismac
     output_dir = sprintf('~/Documents/CP-model/MSK%2d/',GridVer);
 elseif isunix
-    output_dir = sprintf('/DFS-L/DATA/primeau/weilewang/Cexp/');
+	output_dir = sprintf('/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK%2d/', GridVer);
+	% output_dir = sprintf('/DFS-L/DATA/primeau/weilewang/Cexp/');
     % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
     % 'MSK%2d/PME4DICALK/'],GridVer);
     % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/COP4WWF/' ...
                         % 'MSK%2d/'],GridVer);
 end
 VER = strcat(output_dir,TRdivVer);
+catDOC = sprintf('_DOC%0.2g_DOP%0.2g',par.cscale,par.pscale); % used to add scale factors to file names
 % Creat output file names based on which model(s) is(are) optimized
 if Gtest == on
     fname = strcat(VER,'_GHtest');
 elseif Gtest == off
-    if (par.Cmodel == off & par.Omodel == off & par.Simodel == off)
+    if (par.Cmodel == off & par.Omodel == off & par.Simodel == off & par.Cellmodel == off)
         fname = strcat(VER,'_P');
-    elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off)
-        base_name = strcat(VER,'_PCv2');
-        catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
+    elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off & par.Cellmodel == off)
+        base_name = strcat(VER,'_PC');
         fname = strcat(base_name,catDOC);
-    elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off)
-        base_name = strcat(VER,'_PCOv1');
-        catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
+    elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off & par.Cellmodel == off)
+        base_name = strcat(VER,'_PCO');
         fname = strcat(base_name,catDOC);
-    elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on)
+    elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on & par.Cellmodel == off)
         base_name = strcat(VER,'_PCSi');
-        catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
         fname = strcat(base_name,catDOC);
-    elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on)
+    elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on & par.Cellmodel == off)
         base_name = strcat(VER,'_PCOSi');
-        catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
+        fname = strcat(base_name,catDOC);
+	elseif (par.Cmodel == off & par.Omodel == off & par.Simodel == off & par.Cellmodel == on) % cell model does nothing if C model is not on, so this case =Ponly
+        base_name = strcat(VER,'_PCell');
+        fname = strcat(base_name,catDOC);
+	elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off & par.Cellmodel == on)
+        base_name = strcat(VER,'_PCCellv3b');
+        fname = strcat(base_name,catDOC);
+	elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off & par.Cellmodel == on)
+		base_name = strcat(VER,'_PCOCell');
+		fname = strcat(base_name,catDOC);
+	elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on & par.Cellmodel == on)
+        base_name = strcat(VER,'_PCOSiCell');
         fname = strcat(base_name,catDOC);
     end
 end
@@ -115,7 +136,7 @@ if (par.Cmodel == off & par.Omodel == off & par.Simodel == off)
     sig = 2*xhat.f/ndip ;
     HH  = xhat.fxx/sig  ;
 elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off)
-    if fscale ~= 0
+    if par.cscale ~= 0
         sig = (2*xhat.f)/(ndip+ndic+ndoc);
         HH  = xhat.fxx/sig  ;
     else
@@ -137,6 +158,9 @@ pindex = par.pindx ;
 error  = sqrt(diag(inv(HH))) ;
 nx = 0 ;
 n  = numel(fieldnames(par.pindx)) ;
+%%%
+n= 14; %temporary value. change back once cell model parameters are added
+%%%%
 R.xhat   = zeros(n, 1) ;
 R.upbar  = zeros(n, 1) ;
 R.lowbar = zeros(n, 1) ;
@@ -157,7 +181,7 @@ if exist('xhat') & isfield(xhat,'kP_T')
     kP_T = xhat.kP_T ;
     kP_T_up  = (kP_T+error(pindex.kP_T)) - kP_T;
     kP_T_lo  = kP_T - (kP_T-error(pindex.kP_T));
-    name{nx} = "kP_T" ;
+    name{nx} = 'kP_T' ;
     R.xhat(nx)   = kP_T    ;
     R.upbar(nx)  = kP_T_up ;
     R.lowbar(nx) = kP_T_lo ;
@@ -168,7 +192,7 @@ if exist('xhat') & isfield(xhat,'kdP')
     kdP = xhat.kdP ;
     kdP_up = exp(log(kdP)+error(pindex.lkdP)) - kdP ;
     kdP_lo = kdP - exp(log(kdP)-error(pindex.lkdP)) ;
-    name{nx} = "kdP" ;
+    name{nx} = 'kdP' ;
     R.xhat(nx)   = kdP    ;
     R.upbar(nx)  = kdP_up ;
     R.lowbar(nx) = kdP_lo ;
@@ -179,7 +203,7 @@ if exist('xhat') & isfield(xhat,'bP_T')
     bP_T = xhat.bP_T ;
     bP_T_up = (bP_T+error(pindex.bP_T)) - bP_T;
     bP_T_lo = bP_T - (bP_T-error(pindex.bP_T));
-    name{nx} = "bP_T" ;
+    name{nx} = 'bP_T' ;
     R.xhat(nx)   = bP_T    ;
     R.upbar(nx)  = bP_T_up ;
     R.lowbar(nx) = bP_T_lo ;
@@ -190,7 +214,7 @@ if exist('xhat') & isfield(xhat,'bP')
     bP  = xhat.bP ;
     bP_up = exp(log(bP)+error(pindex.lbP)) - bP;
     bP_lo = bP - exp(log(bP)-error(pindex.lbP));
-    name{nx}     = "bP"  ;
+    name{nx}     = 'bP'  ;
     R.xhat(nx)   = bP    ;
     R.upbar(nx)  = bP_up ;
     R.lowbar(nx) = bP_lo ;
@@ -201,7 +225,7 @@ if exist('xhat') & isfield(xhat,'alpha')
     alpha = xhat.alpha ;
     alpha_up = exp(log(alpha)+error(pindex.lalpha)) - alpha;
     alpha_lo = alpha - exp(log(alpha)-error(pindex.lalpha));
-    name{nx}     = "alpha"  ;
+    name{nx}     = 'alpha'  ;
     R.xhat(nx)   = alpha    ;
     R.upbar(nx)  = alpha_up ;
     R.lowbar(nx) = alpha_lo ;
@@ -212,7 +236,7 @@ if exist('xhat') & isfield(xhat,'beta')
     beta = xhat.beta ;
     beta_up = exp(log(beta)+error(pindex.lbeta)) - beta;
     beta_lo = beta - exp(log(beta)-error(pindex.lbeta));
-    name{nx}     = "beta"  ;
+    name{nx}     = 'beta'  ;
     R.xhat(nx)   = beta    ;
     R.upbar(nx)  = beta_up ;
     R.lowbar(nx) = beta_lo ;
@@ -224,7 +248,7 @@ if exist('xhat') & isfield(xhat,'bC_T')
     bC_T = xhat.bC_T ;
     bC_T_up = (bC_T+error(pindex.bC_T)) - bC_T;
     bC_T_lo = bC_T - (bC_T-error(pindex.bC_T));
-    name{nx}     = "bC_T"  ;
+    name{nx}     = 'bC_T'  ;
     R.xhat(nx)   = bC_T    ;
     R.upbar(nx)  = bC_T_up ;
     R.lowbar(nx) = bC_T_lo ;
@@ -235,7 +259,7 @@ if exist('xhat') & isfield(xhat,'bC')
     bC = xhat.bC ;
     bC_up = exp(log(bC)+error(pindex.lbC)) - bC;
     bC_lo = bC - exp(log(bC)-error(pindex.lbC));
-    name{nx}     = "bC"  ;
+    name{nx}     = 'bC'  ;
     R.xhat(nx)   = bC    ;
     R.upbar(nx)  = bC_up ;
     R.lowbar(nx) = bC_lo ;
@@ -246,7 +270,7 @@ if exist('xhat') & isfield(xhat,'d')
     d = xhat.d   ;
     d_up = exp(log(d)+error(pindex.ld)) - d;
     d_lo = d - exp(log(d)-error(pindex.ld));
-    name{nx}     = "d"  ;
+    name{nx}     = 'd'  ;
     R.xhat(nx)   = d    ;
     R.upbar(nx)  = d_up ;
     R.lowbar(nx) = d_lo ;
@@ -257,7 +281,7 @@ if exist('xhat') & isfield(xhat,'kC_T')
     kC_T = xhat.kC_T;
     kC_T_up = (kC_T+error(pindex.kC_T)) - kC_T;
     kC_T_lo = kC_T - (kC_T-error(pindex.kC_T));
-    name{nx}     = "kC_T"  ;
+    name{nx}     = 'kC_T'  ;
     R.xhat(nx)   = kC_T    ;
     R.upbar(nx)  = kC_T_up ;
     R.lowbar(nx) = kC_T_lo ;
@@ -268,7 +292,7 @@ if exist('xhat') & isfield(xhat,'kdC')
     kdC = xhat.kdC ;
     kdC_up = exp(log(kdC)+error(pindex.lkdC)) - kdC;
     kdC_lo = kdC - exp(log(kdC)-error(pindex.lkdC));
-    name{nx}     = "kdC"  ;
+    name{nx}     = 'kdC'  ;
     R.xhat(nx)   = kdC    ;
     R.upbar(nx)  = kdC_up ;
     R.lowbar(nx) = kdC_lo ;
@@ -279,7 +303,7 @@ if exist('xhat') & isfield(xhat,'R_Si')
     R_Si = xhat.R_Si  ;
     R_Si_up = error(pindex.R_Si) ;
     R_Si_lo = error(pindex.R_Si) ;
-    name{nx}     = "R_Si"  ;
+    name{nx}     = 'R_Si'  ;
     R.xhat(nx)   = R_Si    ;
     R.upbar(nx)  = R_Si_up ;
     R.lowbar(nx) = R_Si_lo ;
@@ -290,7 +314,7 @@ if exist('xhat') & isfield(xhat,'rR')
     rR = xhat.rR  ;
     rR_up = exp(log(rR)+error(pindex.lrR)) - rR;
     rR_lo = rR - exp(log(rR)-error(pindex.lrR));
-    name{nx}     = "rR"  ;
+    name{nx}     = 'rR'  ;
     R.xhat(nx)   = rR    ;
     R.upbar(nx)  = rR_up ;
     R.lowbar(nx) = rR_lo ;
@@ -417,9 +441,20 @@ if exist('xhat') & isfield(xhat,'bb')
     R.upbar(nx)  = bb_up ;
     R.lowbar(nx) = bb_lo ;
 end
+% -------Cell Parameters-------------------
+if exist('xhat') & isfield(xhat,'Q10Photo')
+    nx = nx + 1 ;
+    Q10Photo = xhat.Q10Photo  ;
+    Q10Photo_up = exp(log(Q10Photo)+error(pindex.lQ10Photo)) - Q10Photo;
+    Q10Photo_lo = Q10Photo - exp(log(Q10Photo)-error(pindex.lQ10Photo));
+    name{nx}     = 'Q10Photo'  ;
+    R.xhat(nx)   = Q10Photo    ;
+    R.upbar(nx)  = Q10Photo_up ;
+    R.lowbar(nx) = Q10Photo_lo ;
+end
 
-xhat   = R.xhat       ;
+x_hat   = R.xhat       ;
 upbar  = R.upbar      ;
 lowbar = R.lowbar     ;
 name   = string(name) ;
-T = table(xhat,upbar,lowbar,'RowNames',name)
+T = table(x_hat,upbar,lowbar,'RowNames',name)
