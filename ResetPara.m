@@ -60,7 +60,8 @@ function  x = ResetPara(x, par);
         xnew = exp(x(ikdP))   ;
         xold = exp(x0(ikdP))  ;
         if (xnew > fb*xold | xnew < fs*xold);
-            x(ikdP) = log( exp(x0(ikdP))*(0.1*rand + 0.95) );
+            % x(ikdP) = log( exp(x0(ikdP))*(0.1*rand + 0.95) );
+			x(ikdP) = x0(ikdP); %reset to previous value
         end
     end
 
@@ -97,7 +98,8 @@ function  x = ResetPara(x, par);
         xnew = exp(x(ibP))  ;
         xold = exp(x0(ibP)) ;
         if (xnew < 0.3 | xnew > 3) ;
-            x(ibP) = log( exp(x0(ibP))*(0.1*rand + 0.95) );
+            %x(ibP) = log( exp(x0(ibP))*(0.1*rand + 0.95) );
+			x(ibP) = x0(ibP); % reset to previous value
         end
     end
 
@@ -106,7 +108,8 @@ function  x = ResetPara(x, par);
         xnew   = exp(x(ialpha))  ;
         xold   = exp(x0(ialpha)) ;
         if (xnew > fb*xold | xnew < fs*xold);
-            x(ialpha) = log( exp(x0(ialpha))*(0.1*rand + 0.95) );
+            %x(ialpha) = log( exp(x0(ialpha))*(0.1*rand + 0.95) );
+			x(ialpha) = x0(ialpha); % reset to previous value
         end
     end
 
@@ -115,7 +118,8 @@ function  x = ResetPara(x, par);
         xnew  = exp(x(ibeta))  ;
         xold  = exp(x0(ibeta)) ;
         if (xnew > fb*xold | xnew < fs*xold);
-            x(ibeta) = log( exp(x0(ibeta))*(0.1*rand + 0.95) );
+            %x(ibeta) = log( exp(x0(ibeta))*(0.1*rand + 0.95) );
+			x(ibeta) = x0(ibeta); % reset to previous value
         end
     end
 
@@ -152,7 +156,8 @@ function  x = ResetPara(x, par);
             xnew = exp(x(ibC))  ;
             xold = exp(x0(ibC)) ;
             if (xnew < 0.3 | xnew > 3) ;
-                x(ibC) = log( exp(x0(ibC))*(0.1*rand + 0.95) );
+                %x(ibC) = log( exp(x0(ibC))*(0.1*rand + 0.95) );
+				x(ibC) = x0(ibC); % reset to previous value
             end
         end
 
@@ -161,7 +166,8 @@ function  x = ResetPara(x, par);
             xnew = exp(x(id))  ;
             xold = exp(x0(id)) ;
             if (xnew > fb*xold | xnew < fs*xold) ;
-                x(id) = log( exp(x0(id))*(0.1*rand + 0.95) );
+                %x(id) = log( exp(x0(id))*(0.1*rand + 0.95) );
+				x(id) =x0(id); % reset to previous value
             end
         end
 
@@ -203,7 +209,8 @@ function  x = ResetPara(x, par);
             xnew = exp(x(ikdC))  ;
             xold = exp(x0(ikdC)) ;
             if (xnew > fb*xold | xnew < fs*xold) ;
-                x(ikdC) = log( exp(x0(ikdC))*(0.1*rand + 0.95) );
+                %x(ikdC) = log( exp(x0(ikdC))*(0.1*rand + 0.95) );
+				x(ikdC) = x0(ikdC); % reset to previous value
             end
         end
 
@@ -224,8 +231,10 @@ function  x = ResetPara(x, par);
             oRR   = mean(diag(RR))   ;
 
             if (nRR > fb*oRR | nRR < fs*oRR);
-                x(iR_Si) = x0(iR_Si)  + (0.02*rand - 0.01);
-                x(irR)   = log( exp(x0(irR))*(0.1*rand + 0.95) );
+                %x(iR_Si) = x0(iR_Si)  + (0.02*rand - 0.01);
+                %x(irR)   = log( exp(x0(irR))*(0.1*rand + 0.95) );
+				x(iR_Si) = x0(iR_Si);  % reset to previous value
+				x(irR) = x0(irR);  % reset to previous value
             end
         end
 
