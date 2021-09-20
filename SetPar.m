@@ -69,7 +69,7 @@ function par = SetPar(par)
     if exist('xhat') & isfield(xhat,'d')
         par.d = xhat.d   ;
     else
-        par.d = 2.00e3    % default was par.d = 4.54e+03 ;
+        par.d = 4.54e+03;    % default was par.d = 4.54e+03 ;
     end
     if exist('xhat') & isfield(xhat,'kC_T')
         par.kC_T = xhat.kC_T ;
