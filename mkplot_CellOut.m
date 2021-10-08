@@ -345,6 +345,23 @@ figTitle = 'Muvsradius';
 print(gcf,[outPath 'FIG_' figTitle '.png'],'-dpng')
 clear h1 h2
 
+iNlim1 = find(LimType(:,:,1) == 0);
+iPlim1 = find(LimType(:,:,1) == 1);
+iColim1 = find(LimType(:,:,1) == 2 | LimType(:,:,1) == 3);
+r1 = radius(:,:,1);
+mu1 = mu(:,:,1);
+figure
+h2 = plot(r1(iColim1),mu1(iColim1),'.','Color',aqua); hold on
+h0 = plot(r1(iNlim1),mu1(iNlim1),'.r'); hold on
+h1 = plot(r1(iPlim1),mu1(iPlim1),'.b');
+legend([h0(1) h1(1) h2(1)],{'N-limited','P-Limited','Co-Limited'},'Location','best')
+xlabel('radius [$\mu m$]')
+ylabel('growth rate')
+title('optimal cellular growth rate vs cell radius for surface layer')
+grid on
+figTitle = 'Muvsradius_LimType';
+print(gcf,[outPath 'FIG_' figTitle '.png'],'-dpng')
+clear h0 h1 h2
 % would it be meaningful to multiply cell model's growth rate by biomass in the grid cell?
 
 %%-----------------C2P vs cellular allocation -------------
@@ -650,6 +667,20 @@ title('Latitudinal Average Modeled Cell Radius')
 axis tight;
 
 figTitle = 'radius_lat_avg';
+print(gcf,[outPath 'FIG_' figTitle '.png'],'-dpng')
+
+%% Growth rate
+figure;
+contourf(lon,lat,mu(:,:,1)); hold on
+c=colorbar;
+colormap(flipud(summer));
+title('Cell growth rate: Surface','Fontsize',18);
+xlabel('Longitude');
+ylabel('Latitude');
+ylabel(c,'growth rate [ ]');
+axis tight; grid off
+
+figTitle = 'mu_surf';
 print(gcf,[outPath 'FIG_' figTitle '.png'],'-dpng')
 
 close all;

@@ -1,4 +1,40 @@
 clc; clear all; close all
+on   = true  ;
+off  = false ;
+
+%ver = datestr(now,'mmmdd');
+RunVer = 'Tv4_PCCellv5c_DOC0.25_DOP0';
+
+%model output directory
+outputDir = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK90/';
+figDir = strcat(outputDir,'FIGS_PCCellv5c_DOC0.25_DOP0/');
+outPath = figDir;
+
+% load model output fields
+fname = strcat(outputDir, RunVer, '.mat');
+load(fname);
+model = data;
+
+% load optimal parameter values
+fxhat = strcat(outputDir, RunVer,'_xhat.mat');
+load(fxhat);
+
+GridVer  = 90  ;
+operator = 'A' ;
+par.Cmodel  = on ;
+par.Omodel  = off ;
+par.Simodel = off ;
+par.Cellmodel = on; % cellular trait model for phyto uptake stoichiometry
+par.pscale  = 0.0 ;
+par.cscale  = 0.25 ; % factor to weigh DOC in the objective function
+
+%-------------load data and set up parameters---------------------
+SetUp ;
+xhat
+iwet = par.iwet;
+% need to turn on the opt_parmetername fields to use PackPar
+
+%{
 global iter
 iter = 0 ;
 on   = true  ;
@@ -114,11 +150,12 @@ par.fname = strcat(fname,'.mat') ;
 par.fxhat = strcat(fname,'_xhat.mat');
 load(par.fxhat) ;
 load(par.fname) ;
+%}
 %--------------------- prepare parameters ------------------
 % load optimal parameters from a file or set them to default values
-par = SetPar(par) ;
+%par = SetPar(par) ;
 % pack parameters into an array, assign them corresponding indices.
-par = PackPar(par) ;
+%par = PackPar(par) ;
 
 idip = find(par.po4raw(iwet)>0)  ;
 isil = find(par.sio4raw(iwet)>0) ;

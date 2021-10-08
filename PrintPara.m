@@ -1,4 +1,4 @@
-function PrintPara(x, par);
+function xhat = PrintPara(x, par);
     global iter
     on = true; off = false;
     %++++++++++ print out all parameters to the log file
@@ -287,8 +287,8 @@ function PrintPara(x, par);
 
 	end
 	% ------------------------------------------------------------
-    x0 = x ;
-    if (par.optim == on)
-        save(par.fxhat, 'x0','xhat')
-    end
+    % x0 = x ;
+    % if (par.optim == on)
+    %     save(par.fxhat, 'x0','xhat')
+    % end
 end

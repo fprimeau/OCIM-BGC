@@ -240,7 +240,7 @@ function [out,M] = CellCNP(par,x,P,N,T,Irr)
 % | cell membrane is made up of lipid and protein
   %  fProtM = 0.25;               % protein fraction of cell membranes
     fLipidM = 1-fProtM;          % Lipid fraction of cell membranes  % not the same as alphaPLip (alphaPLip = biomass of membrane in cell)
-	%	alphaPLip = 0.12; 						% fraction of membrane that is phopholipids ???
+	%	alphaPLip = 0.12; 						% fraction of membrane that is phopholipids (but all phospholipids are in the membrane) % other models have used phospholipids = 1/3 of all lipids. maybe it should be fLipidM*0.33=alphaPLip = 0.12; fLipidM=0.75, 0.75*0.33 = 0.25; or maybe MOpt*fLipidM*0.33+L*fLipidL*0.33; should (fProtM+fLipidM+alphaPLip)=1?; phospholipid content of cell = alphaPlip*M
 
 % | light harvesting apparatus is 70% protein. The rest is Lipid
   %  fProtL = .7;            % protein fraction of light harvesting apparatus
@@ -252,7 +252,7 @@ function [out,M] = CellCNP(par,x,P,N,T,Irr)
 
 
 %% FUNCTIONAL POOLS
-    %%% _L = light/photosynthesis --> (proteins)
+    %%% _L = light/photosynthesis --> (proteins) % +lipids??
     %%% _M = cell membrane?       --> (lipids + proteins)
     %%% _E = biosynthesis         --> (proteins,ribosomes,) %%% That is right
     %%% _S = other structure components (not membrane)? --> (DNA +lipids)
@@ -271,13 +271,17 @@ function [out,M] = CellCNP(par,x,P,N,T,Irr)
 							  % CL1 = CProt*fProtL1 + CLipid*(1-fProtL1)
 							  % CL2 = CChlor
 							  % CL = CL1*alphaPhoto + CL2*(1-alphaPhoto)
+							  % what are the lipids in the photosynthetic pool? can they be phospholipids?
 
     NM = fProtM*NProt;        % N fraction of membrane
                               %   = fraction of cell membrane that is protein * fraction of protein that is N
     CM = fProtM*CProt+fLipidM*CPhospholipid;     % carbon fraction of membrane
-%                                          % (membrane carbon from proteins + lipids)
+%                                          % (membrane carbon from proteins + lipids) % should this be CLipid instead of CPhospholipid?
+										   % Q: is membrane lipid ideally all plipids, but sometimes p is replaced, but chemical structure remains same, so carbon fraction is same as for plipids (CPhospholipid).
+										   % Then when we use CLipid, these are a different type of lipid that hold more carbon and never have phosphorus content?
     %CM = fProtM*CProt+fLipidM*CLipid;
-    %CM = fProtM*CProt+fLipidM*(1-alphaPLip)*CLipid+fLipidM*(alphaPLip)*CPhospholipid;
+    %CM = fProtM*CProt+(fLipidM-alphaPLip)*CLipid ; + alphaPLip*CPhospholipid added at end;
+	%PM %for M&L,only P content is from phospholipids, which are added at the end. PLip=PM*M +PL*L & PM=fLipidM/3*PPhospholipid , PL=fLipidL/3*PPhospholipid.
 
     NE = NProt*fProtE+NRib*fRibE;             % Nitrogen fraction of biosynthetic components
     CE = CProt*fProtE+CRib*fRibE;             % Carbon fraction of biosynthesis pool
@@ -292,7 +296,7 @@ function [out,M] = CellCNP(par,x,P,N,T,Irr)
 	PS = gammaDNA/gammaS*PDNA;
 
 dNE_dfRibE = -NProt+NRib;
-dCE_dfRibE = -CProt+CRib;
+dCE_dfRibE = -CProt+CRib; % d(CProt*(1-fRibE)+CRib*fRibE)/dfRibE
 dPE_dfRibE = PRib;
 % why is P fraction not defined for each of the Light, membrane, or other structure pools?
 
@@ -668,18 +672,19 @@ rOpt = alphaS./(1-gammaS - CI.*EOpt); % cell radius
 muOpt = kST.*EOpt;
 
 QPnostor = (EOpt.*PE + gammaDNA*PDNA )./molarP;
-%C2P = (molarP/molarC)*((EOpt*CE+EOpt.*(CI-1)*CL+gammaS*CS+(AMin./AOpt).*(1-gammaS - CI.*EOpt)/2.0*CProt+ (1-gammaS - CI.*EOpt)/2.0*CM).*(1+24.0*.25*kST.*EOpt*(1+PhiS)) ) ./ (EOpt*PE+(gammaDNA)*PDNA); % only tiny random error (10^-13) from CP
 
 %%%%%%%%% Add P storage and phospholipids %%%%%%%%%%%%%%%%%%%
  % each scaled by logistic function with 2 parameters each: PLip: PLip_scale & PLip_PCutoff; PStor: PStor_scale & PStor_rCutoff
  % can turn of PLip and PStorage by setting alphaPLip = 0 and fStorage = 0;
  PLip = alphaPLip*MOpt*PPhospholipid .*(1./(1 + exp(-PLip_scale*(P-PLip_PCutoff))));
+ 	% do we need to add carbon content of phospholipids to QC? and replace some lipid with phospholipid carbon fraction? e.g.:
+	% CPLip = PLip./PPhospholipid*CPhospholipid - PLip./PPhospholipid*CLipid ;
+	% only do this if carbon content changes when the p in phospholipids is substituted out. i dont think this is the case, so CPhospholipid is already acounted for in CM (need to look up how substitution works)
  PStor = fStorage.*5000.*P .*(1./(1 + exp(-PStor_scale.*(rOpt-PStor_rCutoff)))); % change max value? change units of P (was P*5000)
-
- % should PStor only exist if nitrogen limited?
-%       Nindx = find(LimType ==0);
-%       PStor = zeros(size(P));
-%       PStor(Nindx) = fStorage .*P .*(1./(1 + exp(-PStor_scale.*(rOpt-PStor_rCutoff))));
+	% should PStor only exist if nitrogen limited?
+	%       Nindx = find(LimType ==0);
+	%       PStor = zeros(size(P));
+	%       PStor(Nindx) = fStorage .*P .*(1./(1 + exp(-PStor_scale.*(rOpt-PStor_rCutoff))));
 
 %%%%%%%% Calculate Cell Quotas %%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% what is the extra part added on to QC? %L=kST.*E*(1+PhiS)/alphaI  % CI  = 1+(kST.*(1+PhiS))./alphaI;
@@ -691,7 +696,7 @@ QPnostor = (EOpt.*PE + gammaDNA*PDNA )./molarP;
 %	% totalC = ((.3*alphaS/r+.05)*CPhospholipid+.7*alphaS*CProtein/r+.10*CLipid+.04*CCarb+(1-alphaE)*E*CProtein+alphaE*E*CRibosomeEu+(1-E-alphaS/r-gamma)*CProtein+.01*CDNA)/12.0;
 
 % Cell quotas in moles P, C, and N
-QP =((EOpt.*PE +(gammaDNA)*PDNA + PLip +PStor ))/molarP;
+QP =((EOpt.*PE +(gammaDNA)*PDNA + PLip +PStor ))/molarP;     % PLip=MOpt*PM
 QC = (EOpt.*CE +EOpt.*(CI-1)*CL +gammaS*CS +fProtAOpt.*AOpt.*CProt +MOpt.*CM)./molarC .*(1+24.0*.25*kST.*EOpt.*(1+PhiS));
 QN = (EOpt.*NE +EOpt.*(CI-1).*NL +gammaS*NS +fProtAOpt.*AOpt.*NProt +MOpt.*NM)./molarN;
 
@@ -853,7 +858,7 @@ CN = QC./QN;
 	    % exp(lfStorage)*5000*P/(1+exp(-CStor*(rOpt-r0Cutoff)))+PLip
 
 %
-%         %PLip = alphaPLip*.5./rOpt*PPhospholipid/CPhospholipid*molarC/molarP./(1+exp((P./lPCutoff - 1)))   ; % original, doesn;t make sense
+%         %PLip = alphaPLip*.5./rOpt*PPhospholipid/CPhospholipid*molarC/molarP./(1+exp((P./PCutoff - 1)))   ; % original, doesn;t make sense
 %         PLip = alphaPLip./(2*rOpt)*PPhospholipid/CPhospholipid*molarC/molarP./(1+exp(-1*(P./exp(lPCutoff) - 1)))   ; %low P ->low pLip
 %         %PLip = alphaPLip*.5./rOpt*PPhospholipid/CPhospholipid*molarC/molarP./(1+exp(-1*(log(P)-lPCutoff)))   ; %at low P, very little PLip
 %         % log(P)-lPCutoff = log(P/PCutoff)
@@ -882,28 +887,8 @@ CN = QC./QN;
 %         CPstor = QCstor./QPstor;
 
 
-
        % what is the max PStorage value
 
-        %dC2P_dfStorage = QCstor./(QPstor.^2).*(1./molarP).*5000.*P .*(1./(1 + exp(-PStor_scale.*(rOpt-PStor_rCutoff))));
-%keyboard;
-
-%% Calculate C:P derivatives including PStorage %%%
-		%dPLip_drOpt = -PLip./rOpt;
-		%dPStorage_drOpt = -(PStorage-PLip)./(1+exp(-CStor.*(rOpt-r0Cutoff))).*(-CStor.*exp(-CStor.*(rOpt-r0Cutoff))) +dPLip_drOpt;
-		% dQ10Photo
-		%dPStorage_dQ10Photo = dPStorage_drOpt.* drOpt_dQ10Photo;
-		%dC2Pstor_dQ10Photo = -CPwithPStor.^2 .*(-1./CP.^2 .*dC2P_dQ10Photo +dPStorage_dQ10Photo);
-		% dfStorage
-		%dPStorage_dfStorage = 5000*P./(1+exp(-CStor.*(rOpt-r0Cutoff)));
-		%dC2Pstor_dfStorage = -CPwithPStor.^2 .*dPStorage_dfStorage;
-
-        %dlPCutoff
-        %dPLip_dlPCutoff = -1*alphaPLip./(2*rOpt)*PPhospholipid/CPhospholipid*molarC/molarP./(1+exp(-1*(P./exp(lPCutoff) - 1))).^2 .*exp(-1*(P./exp(lPCutoff) - 1)) .* (-1*-1*P./exp(lPCutoff)^2).* exp(lPCutoff);
-
-
-%%% change Nans to zeros (trying to fix error in newton solver)
-%CP(isnan(CP)) = 0;
 
 %% Output
     out.CP = CP;

@@ -4,10 +4,18 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 	current_time = string(datetime('now')) ; %for runtime diagnostic purposes
 	fprintf('current time: %s \n',current_time) ;
 
+	nx   = length(x) ; % number of parameters
+    dVt  = par.dVt   ;
+    M3d  = par.M3d   ;
+    iwet = par.iwet  ;
+    nwet = par.nwet  ;
+    %
+    f    = 0 ; % initialize objective function value
+
     % print and save current parameter values to
     % a file that is used to reset parameters ;
     if iter == 0
-        PrintPara(x, par) ;
+        xhat = PrintPara(x, par) ;
     end
     % reset parameters if optimization routine
     % suggests strange parameter values ;
@@ -16,20 +24,37 @@ function [f, fx, fxx, data] = neglogpost(x, par)
     %end
     % print current parameters
     if iter > 0
-        PrintPara(x, par) ;
+        xhat = PrintPara(x, par) ;
     end
     fprintf('current iteration is %d \n',iter) ;
     iter = iter + 1  ;
 
-    nx   = length(x) ; % number of parameters
-    dVt  = par.dVt   ;
-    M3d  = par.M3d   ;
-    iwet = par.iwet  ;
-    nwet = par.nwet  ;
-    %
-    f    = 0 ;
 	%myobjfun = [];
 	%myobjfunx = [];
+
+	% do not execute code  if solver suggests very bad values
+if iter>1 & iter<5
+	ibad = BadStep(x,par);
+	% replace resetPara with BadStep(x, par).  use the same stopping criteria, except instead of replacing parameter value, add the pindx to a vector ibad. then if ibad has length > 0, set f to a large number (f=1000); set fx to a vector of zeros the right length; and set fxx to a matrix of correct size. length(fx) = length(x)
+	% do this step before printpara, because print para updates the values saved in fxhat
+	if ~isempty(ibad)
+		load(par.fxhat);
+		f = 10000;
+		%fx = zeros(length(x), 1);
+		%fxx = sparse(nx, nx);
+		data = struct;
+		fprintf('solver suggested unrealistic parameter values. exiting neglogpost... \n')
+		return
+	end
+end
+% save current set of parameter values to a file
+if (par.optim == on)
+	x0 = x ;
+	save(par.fxhat, 'x0','xhat')
+	fprintf('saving x0 and xhat to par.fxhat...\n')
+end
+
+
     %%%%%%%%%%%%%%%%%%   Solve P    %%%%%%%%%%%%%%%%%%%%%%%%
 	tic
     idip = find(par.po4raw(iwet) > 0.02) ;
@@ -56,7 +81,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
     % DIP error
     eip = DIP(iwet(idip)) - par.po4raw(iwet(idip)) ;
     eop = DOP(iwet(idop)) - par.dopraw(iwet(idop)) ;
-    f  = f + 0.5*(eip.'*Wip*eip) + 0.5*(eop.'*Wop*eop);
+    f  = f + 0.5*(eip.'*Wip*eip) + 0.5*(eop.'*Wop*eop); %+ prior.bP
 	toc
     %%%%%%%%%%%%%%%%%%   End Solve P    %%%%%%%%%%%%%%%%%%%%
 
@@ -183,9 +208,9 @@ function [f, fx, fxx, data] = neglogpost(x, par)
         ipx  = Px(0*nwet+1:nwet,:) ;
         opx  = Px(2*nwet+1:end ,:) ;
         npx = par.npx              ;
-        % ---------------------------------
+        % ---------Pmodel------------------------
         for ji = 1 : npx
-            fx(ji) = eip.'*Wip*ipx(idip,ji) + eop.'*Wop*opx(idop,ji);
+            fx(ji) = eip.'*Wip*ipx(idip,ji) + eop.'*Wop*opx(idop,ji); % + 2*10^6(par.bP-1) dobj_fun_dbP = dP_dbP*prior + f*dprior_dbP
         end
         % ---------------------------------
         if (par.Simodel == on & par.Omodel == off & par.Cmodel == off)
@@ -696,7 +721,14 @@ function [f, fx, fxx, data] = neglogpost(x, par)
                 end
             end
         end
-    end
+
+		if iter < 5
+			load(par.fxhat);
+			save(par.fxhat, 'x0','xhat','f','fx','fxx')
+		end
+	end %(nargout>2)
+
+
 	% if testing single parameter
 	% myobjfun = [myobjfun, f];
 	% myobjfunx = [myobjfunx, fx];

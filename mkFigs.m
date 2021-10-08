@@ -1,6 +1,35 @@
 clc; clear all; close all
 on = true;      off = false;
 spd  = 24*60^2; spa  = 365*spd;
+RunVer = 'Tv4_PCCellv5c_DOC0.25_DOP0';
+
+%model output directory
+outputDir = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK90/';
+figDir = strcat(outputDir,'FIGS_PCCellv5c_DOC0.25_DOP0/');
+outPath = figDir;
+
+% load model output fields
+fname = strcat(outputDir, RunVer, '.mat');
+load(fname);
+model = data;
+
+% load optimal parameter values
+fxhat = strcat(outputDir, RunVer,'_xhat.mat');
+load(fxhat);
+
+GridVer  = 90  ;
+operator = 'A' ;
+par.Cmodel  = on ;
+par.Omodel  = off ;
+par.Simodel = off ;
+par.Cellmodel = on; % cellular trait model for phyto uptake stoichiometry
+par.pscale  = 0.0 ;
+par.cscale  = 0.25 ; % factor to weigh DOC in the objective function
+
+%-------------load data and set up parameters---------------------
+SetUp ;
+xhat
+%{
 % addpath according to opterating system
 if ismac
     addpath('~/Dropbox/myfunc'     )
@@ -173,6 +202,10 @@ Tz = (vT - min(vT))./(max(vT) - min(vT)) ;
 Tz3d = M3d + nan ;
 Tz3d(iwet) = Tz  ;
 aveT   = nanmean(Tz3d(:,:,1:2),3) ;
+%}
+
+aveT = par.aveT;
+Tz = par.Tz;
 
 % ----------------make figures---------------------
 nfig = 0;
@@ -186,7 +219,7 @@ if isfield(xhat,'bP_T')
     title('b4P')
     % saveas(gcf,'Figs91/b4P.png')
 	figTitle = 'b4P';
-	print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
+	print(gcf,[figDir 'FIG_' figTitle '.png'],'-dpng')
 end
 
 if isfield(xhat,'kP_T')
@@ -196,16 +229,16 @@ if isfield(xhat,'kP_T')
     kdP   = xhat.kdP  ;
 
     kP3d = M3d + nan ;
-    kP3d(iwet) = (1./(kP_T * Tz * 1e-8 + kdP))/spd ;
+    kP3d(iwet) = (1./(kP_T * Tz + kdP))/spd ;
     pcolor(kP3d(:,:,2));colorbar;shading flat
     % caxis([80 140])
     title('ka4P')
     % saveas(gcf,'Figs91/kappa4P.png')
 	figTitle = 'kappa4P';
-	print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
+	print(gcf,[figDir 'FIG_' figTitle '.png'],'-dpng')
 end
 
-if Cmodel == on
+if par.Cmodel == on
     % DOP remineralization rate constant.
     if isfield(xhat,'bC_T')
         nfig = nfig + 1        ;
@@ -218,7 +251,7 @@ if Cmodel == on
         title('b4C')
         % saveas(gcf,'Figs91/b4C.png')
 		figTitle = 'b4C';
-		print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
+		print(gcf,[figDir 'FIG_' figTitle '.png'],'-dpng')
     end
 
     if isfield(xhat,'R_Si')
@@ -236,7 +269,7 @@ if Cmodel == on
         title('rain ratio')
         % saveas(gcf,'Figs91/R_Si.png')
 		figTitle = 'RainRatio';
-		print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
+		print(gcf,[figDir 'FIG_' figTitle '.png'],'-dpng')
     end
 
     if isfield(xhat,'kC_T')
@@ -245,13 +278,13 @@ if Cmodel == on
         kC_T = xhat.kC_T ;
         kdC  = xhat.kdC  ;
         kC3d = M3d + nan ;
-        kC3d(iwet) = (1./(kC_T * Tz * 1e-8 + kdC))/spd;
+        kC3d(iwet) = (1./(kC_T * Tz + kdC))/spd;
         pcolor(kC3d(:,:,2));colorbar;shading flat
         % caxis([100 600])
         title('kd4C')
         % saveas(gcf,'Figs91/kappa4C.png')
 		figTitle = 'kappa4C';
-		print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
+		print(gcf,[figDir 'FIG_' figTitle '.png'],'-dpng')
     end
 
     if isfield(xhat,'cc')
@@ -268,7 +301,7 @@ if Cmodel == on
     end
 end
 
-if Omodel == on
+if par.Omodel == on
     if isfield(xhat,'O2C_T')
         nfig = nfig + 1    ;
         figure(nfig)
@@ -294,7 +327,7 @@ if Omodel == on
     end
 end
 
-if Simodel == on
+if par.Simodel == on
     nfig  = nfig + 1 ;
     aa    = xhat.aa  ;
     bb    = xhat.bb  ;
@@ -310,7 +343,7 @@ if Simodel == on
     pcolor(Si2C);colorbar; shading flat;
 end
 
-if Cellmodel ==on
+%if par.Cellmodel ==on
 	% CellOut.C2P=data.CellOut.C2P(:,:,1:2);
 	% CellOut.N2P=data.CellOut.N2P(:,:,1:2);
 	% CellOut.C2N=data.CellOut.C2N(:,:,1:2);
@@ -323,4 +356,4 @@ if Cellmodel ==on
 	% fnamecell =strcat(FIGdir,'PCCell_CellOut_surf.mat');
 	% save('fnamecell','CellOut')
 
-end
+%end

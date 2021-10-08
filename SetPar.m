@@ -226,6 +226,6 @@ function par = SetPar(par)
 		par.BIO.CPhospholipid = .65;    % carbon mass fraction in phospholipids [gC/g] - why seperate form lipids?
 		par.BIO.CLipid = .76;			% carbon mass fraction in other lipids (that are not phospholipids) [gC/g]
 		par.BIO.CRib = .419;     		% carbon mass fraction in ribosomes [gC/g] (technically, only correct for eukaryotes)
-		par.BIO.alphaPLip = 0.12;
+		par.BIO.alphaPLip = 0.12;       % phospholipid fraction of cell membrane
 	end
 end

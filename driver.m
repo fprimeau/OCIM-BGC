@@ -2,7 +2,10 @@ clc; clear all; close all
 global iter
 %global fmin_history
 
-parpool(16) % if running in parallel; comment out to run serial
+if isempty(gcp('nocreate'))
+	poolobj = parpool(16) % if running in parallel; comment out to run serial
+	%to close the parallel pool: delete(poolobj)
+end
 
 iter = 0 ;
 on   = true  ;
@@ -27,7 +30,7 @@ par.Cmodel  = on ;
 par.Omodel  = off ;
 par.Simodel = off ;
 par.Cellmodel = on; % cellular trait model for phyto uptake stoichiometry
-par.LoadOpt = off ; % if load optimial par.
+par.LoadOpt = on ; % if load optimial par.
 par.pscale  = 0.0 ;
 par.cscale  = 0.25 ; % factor to weigh DOC in the objective function
 
@@ -35,12 +38,12 @@ par.cscale  = 0.25 ; % factor to weigh DOC in the objective function
 par.opt_sigma = off ;
 par.opt_kP_T  = off ;
 par.opt_kdP   = on ;
-par.opt_bP_T  = off ;
+par.opt_bP_T  = on ;
 par.opt_bP    = on ;
 par.opt_alpha = on ;
 par.opt_beta  = on ;
 % C model parameters
-par.opt_bC_T  = off ;
+par.opt_bC_T  = on ;
 par.opt_bC    = on ;
 par.opt_d     = on ;
 par.opt_kC_T  = off ;
@@ -121,7 +124,7 @@ catDOC = sprintf('_DOC%0.2g_DOP%0.2g',par.cscale,par.pscale); % used to add scal
         base_name = strcat(VER,'_PCell');
         fname = strcat(base_name,catDOC);
 	elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off & par.Cellmodel == on)
-        base_name = strcat(VER,'_PCCellv6');
+        base_name = strcat(VER,'_PCCellv6b');
         fname = strcat(base_name,catDOC);
 	elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off & par.Cellmodel == on)
 		base_name = strcat(VER,'_PCOCell');
@@ -218,7 +221,7 @@ options = optimoptions(@fminunc                  , ...
                        'FinDiffType','central'   , ...
                        'PrecondBandWidth',Inf    , ...
 					   'SubproblemAlgorithm','factorization') ; %testing this
-					   %'OutputFcn',@fminoutfun ) 	 ; % maybe use 'SubproblemAlgorithm','factorization'
+					   %'OutputFcn',@fminoutfun ) 	 ; % maybe use 'SubproblemAlgorithm','factorization' -changing subproblem did not seem to effect anything
 %
 nip = length(x0);
 if (Gtest);
@@ -250,9 +253,11 @@ if (Gtest);
     %keyboard
 else
     [xhat,fval,exitflag] = fminunc(myfun,x0,options);
+	fprintf('----fminunc complete----\n')
     [f,fx,fxx,data] = neglogpost(xhat,par);
+	fprintf('----neglogpost solved for final parameter values----\n')
     load(fxhat)
-	%xhat.pindx = par.pindx;
+	xhat.pindx = par.pindx;
     xhat.f   = f   ;
     xhat.fx  = fx  ;
     xhat.fxx = fxx ;
@@ -261,5 +266,5 @@ else
     save(par.fname, 'data')
 	%save(par.fhistory,'fmin_history')
 end
-
+fprintf('testing...')
 fprintf('-------------- end! ---------------\n');
