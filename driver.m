@@ -2,9 +2,11 @@ clc; clear all; close all
 global iter
 %global fmin_history
 
+% set up parallel pool
 if isempty(gcp('nocreate'))
 	poolobj = parpool(16) % if running in parallel; comment out to run serial
 	%to close the parallel pool: delete(poolobj)
+	poolobj.IdleTimeout = 120;
 end
 
 iter = 0 ;
@@ -138,6 +140,9 @@ catDOC = sprintf('_DOC%0.2g_DOP%0.2g',par.cscale,par.pscale); % used to add scal
 par.fname = strcat(fname,'.mat') ;
 fxhat     = strcat(fname,'_xhat.mat') %;
 par.fxhat = fxhat ;
+if Htest ==on
+	fGHtest = strcat(fname,'_GHtest.mat')  ;
+end
 
 %par.fhistory = strcat(fname,'_history.mat');
 
@@ -226,12 +231,22 @@ options = optimoptions(@fminunc                  , ...
 nip = length(x0);
 if (Gtest);
 	fprintf('derivative test \n')
+	GHtest.fx_cstep = NaN([nip,1]);
+	GHtest.fxx_cstep = NaN(nip);
+	GHtest.pindx = par.pindx;
     dx = sqrt(-1)*eps.^3*eye(nip);
     % for ii = nip : -1 : 13
     for ii = 1 : nip
         x  = real(x0)+dx(:,ii);
+		iter = 5; %bypasses the BadStep check and extra save commands
         if Htest == on
             [f,fx,fxx] = neglogpost(x, par) ;
+			GHtest.fx_cstep(ii) = imag(f)/eps.^3     ;
+			GHtest.fxx_cstep(:,ii) = imag(fx)/eps.^3 ;
+			%save complex step gradient and hessian
+			fprintf('saving GHtest to file: %s \n',fGHtest)
+			save(fGHtest,'GHtest')
+
             % print relative errors
             diff = (real(fx(ii)) - imag(f)/eps.^3)/(imag(f)/eps.^3);
             fprintf('%i % .3e  \n',ii,diff);
@@ -252,19 +267,21 @@ if (Gtest);
 	real(full(fxx))
     %keyboard
 else
-    [xhat,fval,exitflag] = fminunc(myfun,x0,options);
+    [xsol,fval,exitflag] = fminunc(myfun,x0,options);
 	fprintf('----fminunc complete----\n')
-    [f,fx,fxx,data] = neglogpost(xhat,par);
+    [f,fx,fxx,data] = neglogpost(xsol,par);
 	fprintf('----neglogpost solved for final parameter values----\n')
-    load(fxhat)
+    load(fxhat,'xhat')
 	xhat.pindx = par.pindx;
     xhat.f   = f   ;
     xhat.fx  = fx  ;
     xhat.fxx = fxx ;
     % save results
+	fprintf('saving optimized parameters to file: %s \n',fxhat)
+	fprintf('saving model solution to file: %s \n',par.fname)
     save(fxhat, 'xhat')
     save(par.fname, 'data')
 	%save(par.fhistory,'fmin_history')
 end
-fprintf('testing...')
+delete(gcp('nocreate')) % shut down parallel pool
 fprintf('-------------- end! ---------------\n');
