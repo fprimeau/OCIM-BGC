@@ -84,7 +84,7 @@ function [par, C, Cx, Cxx] = eqCcycle(x, par);
         GC = real(C) + 1e-8*randn(5*nwet,1) ;
         X0 = GC;
         F = C_eqn(C, par) ;
-        % test if norm of F small enough, if now rerun nsnew;
+        % test if norm of F small enough, if not rerun nsnew;
         if (norm(F) > 1e-12)
             [C,ierr] = nsnew(X0,@(X) C_eqn(X, par),options);
         end
@@ -152,6 +152,10 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
 	% Stoichiometric ratios
 	if isfield(par,'CellOut')
 		C2P = par.CellOut.C2P(iwet);
+		% note C2P field is stored with 2 different sizes
+		% size(par.C2P) =  [191169 , 1]
+		% size(par.CellOut.C2P) = [90 , 180 , 24]
+
 		%N2C = 1./par.CellOut.C2N(iwet);
 		N2C   = 16/117 ;
 		%fprintf('Using Cell Model Output for C2P \n')
@@ -657,7 +661,7 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
             for jk = jj:npx
                 kk = kk + 1;
                 if (par.opt_sigma == on)
-                    % sigma sigma
+                    % sigma sigma %% HAS NOT BEEN UPDATED
                     if (jj == jk & jj == pindx.lsigma)
                         tmp = sigma*[RR*G*C2P + 2*d0(RR*Gx(:,jj))*C2P; ...
                                      -G*C2P - 2*d0(Gx(:,jj))*C2P;...
@@ -684,7 +688,7 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
 								(1-sigma)*(d0(Gxx(:,kk))*C2P +G*C2Ppxx(:,kk) +d0(Gx(:,jj))*C2Px(:,jk)+d0(Gx(:,jk))*C2Px(:,jj)); ...
 								sigma*(d0(Gxx(:,kk))*C2P +G*C2Ppxx(:,kk) +d0(Gx(:,jj))*C2Px(:,jk)+d0(Gx(:,jk))*C2Px(:,jj)); ...
 								(1-sigma)*RR*(d0(Gxx(:,kk))*C2P +G*C2Ppxx(:,kk) +d0(Gx(:,jj))*C2Px(:,jk)+d0(Gx(:,jk))*C2Px(:,jj)); ...
-								-2*(1*sigma)*RR*(d0(Gxx(:,kk))*C2P +G*C2Ppxx(:,kk) +d0(Gx(:,jj))*C2Px(:,jk)+d0(Gx(:,jk))*C2Px(:,jj)) + ...
+								-2*(1-sigma)*RR*(d0(Gxx(:,kk))*C2P +G*C2Ppxx(:,kk) +d0(Gx(:,jj))*C2Px(:,jk)+d0(Gx(:,jk))*C2Px(:,jj)) + ...
 								N2C*(d0(Gxx(:,kk))*C2P +G*C2Ppxx(:,kk) +d0(Gx(:,jj))*C2Px(:,jk)+d0(Gx(:,jk))*C2Px(:,jj))];
 
                         Cxx(:,kk) = mfactor(FD, tmp);
