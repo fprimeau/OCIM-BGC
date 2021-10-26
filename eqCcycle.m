@@ -516,8 +516,8 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
 		% -------------------- CellModel parameters ------------------
 		%  Q10Photo
 		if (par.opt_Q10Photo == on)
-        	C2P_Q10 = par.CellOut.dC2P_dQ10Photo(iwet); % =C2Px(:,par.pindx.lQ10Photo); % same thing saved 2 ways, switching to C2Px notation
-			dQ10_lQ10Photo = par.BIO.Q10Photo;
+        	C2P_Q10 = par.CellOut.dC2P_dQ10Photo(iwet);
+			dQ10_lQ10Photo = par.BIO.Q10Photo;   % C2P_Q10*dQ10_lQ10Photo =C2Px(:,par.pindx.lQ10Photo); % same thing saved 2 ways, switching to C2Px notation
 			tmp = dQ10_lQ10Photo*[-(I+(1-sigma)*RR)*(G*C2P_Q10); ...
                       (1-sigma)*G*C2P_Q10; ...
                       sigma*G*C2P_Q10; ...
@@ -528,8 +528,8 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
     	end
 		%  fStorage
 		if (par.opt_fStorage == on)
-        	C2P_fStor = par.CellOut.dC2P_dfStorage(iwet); % =C2Px(:,par.pindx.lfStorage);
-			dfStor_lfStorage = par.BIO.fStorage;
+        	C2P_fStor = par.CellOut.dC2P_dfStorage(iwet);
+			dfStor_lfStorage = par.BIO.fStorage;      % C2P_fStor* dfStor_lfStorage=C2Px(:,par.pindx.lfStorage);
 			tmp = dfStor_lfStorage*[-(I+(1-sigma)*RR)*(G*C2P_fStor); ...
                       (1-sigma)*G*C2P_fStor; ...
                       sigma*G*C2P_fStor; ...
@@ -540,9 +540,10 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
     	end
 		%  fRibE
 		if (par.opt_fRibE == on)
-        	C2P_fRibE = par.CellOut.dC2P_dfRibE(iwet); % = C2Px(:,par.pindx.tfRibE);
+        	C2P_fRibE = par.CellOut.dC2P_dfRibE(iwet);
 			tfRibE = atanh(2*par.BIO.fRibE-1);
-			dfRibE_tfRibE = 0.5*sech(tfRibE)^2; 	% dfRibE/dtfRibE = 0.5*sech(tfRibE)^2
+			dfRibE_tfRibE = 0.5*sech(tfRibE)^2; 	% = C2Px(:,par.pindx.tfRibE);
+			% dfRibE/dtfRibE = 0.5*sech(tfRibE)^2
 			%C2P_tfRibE = C2P_fRibE*dfRibE_dtfRibE;
 			tmp = dfRibE_tfRibE*[-(I+(1-sigma)*RR)*(G*C2P_fRibE); ...
                       (1-sigma)*G*C2P_fRibE; ...
@@ -554,9 +555,9 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
     	end
 		%  kST0
 		if (par.opt_kST0 == on)
-        	C2P_kST0 = par.CellOut.dC2P_dkST0(iwet); % = C2Px(:,par.pindx.lkST0);
+        	C2P_kST0 = par.CellOut.dC2P_dkST0(iwet);
 			dkST0_lkST0 = par.BIO.kST0;
-			C2Ptmp = C2P_kST0*dkST0_lkST0;
+			C2Ptmp = C2P_kST0*dkST0_lkST0; % = C2Px(:,par.pindx.lkST0);
 			tmp = [-(I+(1-sigma)*RR)*(G*C2Ptmp); ...
                       (1-sigma)*G*C2Ptmp; ...
                       sigma*G*C2Ptmp; ...
@@ -742,7 +743,7 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
                     %        d0((1-sigma)*RR*Gxx(:,kk))*C2P; ...
                     %        d0(-2*(1-sigma)*RR*Gxx(:,kk))*C2P + ...
                     %        d0(N2C*Gxx(:,kk))*C2P];
-					% C2Ppxx is the second deriv of Cell model wrt P model parameters only (2nd deriv for cell model params stored in C2Pxx)
+					% C2Ppxx is the second deriv of Cell model C:P wrt P model parameters only (2nd deriv for cell model params stored in C2Pxx)
 					tmp = [-(I+(1-sigma)*RR)*(d0(Gxx(:,kk))*C2P +G*C2Ppxx(:,kk) +d0(Gx(:,jj))*C2Px(:,jk)+d0(Gx(:,jk))*C2Px(:,jj)); ...
 							(1-sigma)*(d0(Gxx(:,kk))*C2P +G*C2Ppxx(:,kk) +d0(Gx(:,jj))*C2Px(:,jk)+d0(Gx(:,jk))*C2Px(:,jj)); ...
 							sigma*(d0(Gxx(:,kk))*C2P +G*C2Ppxx(:,kk) +d0(Gx(:,jj))*C2Px(:,jk)+d0(Gx(:,jk))*C2Px(:,jj)); ...
@@ -1550,6 +1551,52 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
         end
 
 %%% P & Cell model Parameters
+%make this a loop
+if (par.Cellmodel)
+	ck = sum(1:npx);
+	for jj=1:par.npx
+		for jk = npx+ncx+1:npx+ncx+nbx
+			kk = kk + 1;
+			ck = ck +1 ;
+			if (par.opt_sigma == on)
+				if (jj == par.pindx.lsigma)
+	 		    	tmp = [RR*sigma*G*C2Px(:,jk); ...
+	 					 -sigma*G*C2Px(:,jk); ...
+	 					 sigma*G*C2Px(:,jk); ...
+	 					 -RR*sigma*G*C2Px(:,jk); ...
+	 					 2*RR*sigma*G*C2Px(:,jk)] + ...
+	 				 [-(I+(1-sigma)*RR)*(d0(Gx(:,jj))*C2Px(:,jk) + G*C2Ppxx(:,ck) ) ; ...
+ 						(1-sigma)*(d0(Gx(:,jj))*C2Px(:,jk) + G*C2Ppxx(:,ck) ); ...
+ 					 	sigma*(d0(Gx(:,jj))*C2Px(:,jk) + G*C2Ppxx(:,ck) ); ...
+ 					 	(1-sigma)*RR*(d0(Gx(:,jj))*C2Px(:,jk) + G*C2Ppxx(:,ck) ); ...
+ 					 	-2*(1-sigma)*RR*(d0(Gx(:,jj))*C2Px(:,jk) + G*C2Ppxx(:,ck) ) + ...
+ 					 	N2C*(d0(Gx(:,jj))*C2Px(:,jk) + G*C2Ppxx(:,ck) )];
+
+					Cxx(:,kk) = mfactor(FD, tmp);
+				else
+					tmp = [-(I+(1-sigma)*RR)*(d0(Gx(:,jj))*C2Px(:,jk) + G*C2Ppxx(:,ck) ) ; ...
+						(1-sigma)*(d0(Gx(:,jj))*C2Px(:,jk) + G*C2Ppxx(:,ck) ); ...
+					 	sigma*(d0(Gx(:,jj))*C2Px(:,jk) + G*C2Ppxx(:,ck) ); ...
+					 	(1-sigma)*RR*(d0(Gx(:,jj))*C2Px(:,jk) + G*C2Ppxx(:,ck) ); ...
+					 	-2*(1-sigma)*RR*(d0(Gx(:,jj))*C2Px(:,jk) + G*C2Ppxx(:,ck) ) + ...
+					 	N2C*(d0(Gx(:,jj))*C2Px(:,jk) + G*C2Ppxx(:,ck) )];
+
+					Cxx(:,kk) = mfactor(FD, tmp);
+				end
+			else
+				tmp = [-(I+(1-sigma)*RR)*(d0(Gx(:,jj))*C2Px(:,jk) + G*C2Ppxx(:,ck) ) ; ...
+					(1-sigma)*(d0(Gx(:,jj))*C2Px(:,jk) + G*C2Ppxx(:,ck) ); ...
+				 	sigma*(d0(Gx(:,jj))*C2Px(:,jk) + G*C2Ppxx(:,ck) ); ...
+				 	(1-sigma)*RR*(d0(Gx(:,jj))*C2Px(:,jk) + G*C2Ppxx(:,ck) ); ...
+				 	-2*(1-sigma)*RR*(d0(Gx(:,jj))*C2Px(:,jk) + G*C2Ppxx(:,ck) ) + ...
+				 	N2C*(d0(Gx(:,jj))*C2Px(:,jk) + G*C2Ppxx(:,ck) )];
+
+				Cxx(:,kk) = mfactor(FD, tmp);
+			end
+		end
+	end 
+end
+%{
 % sigma + Cell model params  %%% make this a loop
 	   % sigma Q10Photo
 	   if (par.opt_sigma & par.opt_Q10Photo)
@@ -1714,22 +1761,20 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
 		   Cxx(:,kk) = mfactor(FD, tmp);
 	   end
 
+	% Pmodel (excluding sigma)+ cell model non-looped version
 	% kP_T + cell model
 	   % kP_T Q10Photo
 	   if (par.opt_kP_T & par.opt_Q10Photo)
 		   kk = kk + 1;
 		   dC2Ptmp = C2P_Q10 * dQ10_lQ10Photo; %dQ10_lQ10Photo = par.BIO.Q10Photo
+		   %dC2Ptmp = C2Px(:,par.pindx.lQ10Photo);
 		   tmp = [-d0((I+(1-sigma)*RR)*Gx(:,pindx.kP_T))*dC2Ptmp; ...
 					 (1-sigma)*d0(Gx(:,pindx.kP_T))*dC2Ptmp; ...
 					 sigma*d0(Gx(:,pindx.kP_T))*dC2Ptmp; ...
 					 d0((1-sigma)*RR*Gx(:,pindx.kP_T))*dC2Ptmp; ...
 					 d0(-2*(1-sigma)*RR*Gx(:,pindx.kP_T))*dC2Ptmp + ...
 					 d0(N2C*Gx(:,pindx.kP_T))*dC2Ptmp];
-			% example: line 3 needs to become
-			% sigma*d0(Gx(:,pindx.kP_T))*dC2Ptmp + G*C2Ppcellxx(:,kk) ;
-			% create 1 vector for each cell model parameter. fillin dC2P_dcellparm_dPparam indexing from 1:npx.
-			% then in eqCcycle, dC2PdQ10dP(:,pindx.kP_T)
-			% C2Ppcellxx(npx,nbx)
+			% missing term + G*C2Ppxx(:,ck)
 		   Cxx(:,kk) = mfactor(FD, tmp);
 	   end
 
@@ -2439,6 +2484,7 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
 
 		   Cxx(:,kk) = mfactor(FD, tmp);
 	   end
+%}
 
 %%%% C model only parameters
         % bC_T bC_T

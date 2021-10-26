@@ -117,72 +117,74 @@ C2Pxx = [];
 		%--------------------------------------------
 
 		%--------- Cell Model Parameters ----------------
+		dQ10_lQ10Photo = par.BIO.Q10Photo;
+		dfStor_lfStorage = par.BIO.fStorage;
+		tfRibE = atanh(2*par.BIO.fRibE-1);
+		dfRibE_tfRibE = 0.5*sech(tfRibE)^2;
+		dkST0_lkST0 = par.BIO.kST0;
+		dPCutoff_lPCutoff = par.BIO.PLip_PCutoff;
+		dPLipscale_lPLipscale = par.BIO.PLip_scale;
+		drCutoff_lrCutoff = par.BIO.PStor_rCutoff;
+		dPStorscale_lPStorscale = par.BIO.PStor_scale;
+		dalphaS_lalphaS = par.BIO.alphaS;
+
         if (par.opt_Q10Photo)
             dC2P_dQ10Photo = M3d*0;
 			dC2P_dQ10Photo(iprod) = CellOut.dC2P_dQ10Photo;
-            C2Px(:,par.pindx.lQ10Photo) = dC2P_dQ10Photo(iwet);
+            C2Px(:,par.pindx.lQ10Photo) = dC2P_dQ10Photo(iwet) *dQ10_lQ10Photo;
 			par.CellOut.dC2P_dQ10Photo = dC2P_dQ10Photo;
         end
         if (par.opt_fStorage)
             dC2P_dfStorage = M3d*0;
 			dC2P_dfStorage(iprod) = CellOut.dC2P_dfStorage;
-            C2Px(:,par.pindx.lfStorage) = dC2P_dfStorage(iwet);
+            C2Px(:,par.pindx.lfStorage) = dC2P_dfStorage(iwet) * dfStor_lfStorage;
 			par.CellOut.dC2P_dfStorage = dC2P_dfStorage;
         end
         if par.opt_fRibE
             dC2P_dfRibE  = M3d*0;
 			dC2P_dfRibE(iprod)  = CellOut.dC2P_dfRibE;
-            C2Px(:,par.pindx.tfRibE) = dC2P_dfRibE(iwet);
+            C2Px(:,par.pindx.tfRibE) = dC2P_dfRibE(iwet) * dfRibE_tfRibE;
 			par.CellOut.dC2P_dfRibE = dC2P_dfRibE;
         end
 		if par.opt_kST0
             dC2P_dkST0  = M3d*0;
 			dC2P_dkST0(iprod)  = CellOut.dC2P_dkST0;
-            C2Px(:,par.pindx.lkST0) = dC2P_dkST0(iwet);
+            C2Px(:,par.pindx.lkST0) = dC2P_dkST0(iwet) * dkST0_lkST0;
 			par.CellOut.dC2P_dkST0 = dC2P_dkST0;
         end
 		if (par.opt_PLip_PCutoff)
             dC2P_dPCutoff  = M3d*0;
 			dC2P_dPCutoff(iprod)  = CellOut.dC2P_dPCutoff;
-			C2Px(:,par.pindx.lPLip_PCutoff) = dC2P_dPCutoff(iwet);
+			C2Px(:,par.pindx.lPLip_PCutoff) = dC2P_dPCutoff(iwet) * dPCutoff_lPCutoff;
 			par.CellOut.dC2P_dPCutoff = dC2P_dPCutoff;
         end
         if (par.opt_PLip_scale)
             dC2P_dPLip_scale = M3d*0;
 			dC2P_dPLip_scale(iprod) = CellOut.dC2P_dPLipscale;
-			C2Px(:,par.pindx.lPLip_scale) = dC2P_dPLip_scale(iwet);
+			C2Px(:,par.pindx.lPLip_scale) = dC2P_dPLip_scale(iwet) * dPLipscale_lPLipscale;
 			par.CellOut.dC2P_dPLip_scale = dC2P_dPLip_scale;
 		end
 		if (par.opt_PStor_rCutoff)
             dC2P_drCutoff  = M3d*0;
 			dC2P_drCutoff(iprod)  = CellOut.dC2P_drCutoff;
-			C2Px(:,par.pindx.lPStor_rCutoff) = dC2P_drCutoff(iwet);
+			C2Px(:,par.pindx.lPStor_rCutoff) = dC2P_drCutoff(iwet) * drCutoff_lrCutoff;
 			par.CellOut.dC2P_drCutoff = dC2P_drCutoff;
         end
         if par.opt_PStor_scale
             dC2P_dPStor_scale = M3d*0;
 			dC2P_dPStor_scale(iprod) = CellOut.dC2P_dPStorscale;
-			C2Px(:,par.pindx.lPStor_scale) = dC2P_dPStor_scale(iwet);
+			C2Px(:,par.pindx.lPStor_scale) = dC2P_dPStor_scale(iwet) * dPStorscale_lPStorscale;
 			par.CellOut.dC2P_dPStor_scale = dC2P_dPStor_scale;
         end
         if par.opt_alphaS
             dC2P_dalphaS = M3d*0;
 			dC2P_dalphaS(iprod) = CellOut.dC2P_dalphaS;
-            C2Px(:,par.pindx.lalphaS) =  dC2P_dalphaS(iwet);
+            C2Px(:,par.pindx.lalphaS) =  dC2P_dalphaS(iwet) * dalphaS_lalphaS;
 			par.CellOut.dC2P_dalphaS = dC2P_dalphaS;
         end
     end
 
-dQ10_lQ10Photo = par.BIO.Q10Photo;
-dfStor_lfStorage = par.BIO.fStorage;
-tfRibE = atanh(2*par.BIO.fRibE-1);
-dfRibE_tfRibE = 0.5*sech(tfRibE)^2;
-dkST0_lkST0 = par.BIO.kST0;
-dPCutoff_lPCutoff = par.BIO.PLip_PCutoff;
-dPLipscale_lPLipscale = par.BIO.PLip_scale;
-drCutoff_lrCutoff = par.BIO.PStor_rCutoff;
-dPStorscale_lPStorscale = par.BIO.PStor_scale;
-dalphaS_lalphaS = par.BIO.alphaS;
+
 %iwet = par.iwet;
 
  %%%%%% hessian v2 %%%%%%%%%
@@ -204,6 +206,8 @@ dalphaS_lalphaS = par.BIO.alphaS;
 		[CellOut, ~] = CellCNP(par,x,P0+xim,N0,T0,Irr0);
 		d2C2P_dDIPmolperL = M3d*0;
 		d2C2P_dDIPmolperL(iprod) = imag(CellOut.dC2P_dDIP)./eps^3 ; %% this might be the problem (complex step) is the one where we dont do grad test always wrong because complex perturbation on DIP and on parameter
+
+
 		% d2C2P_dDIPmolperL(iprod(negDIPindx)) = 0;   %does seting deriv of reset (neg) values make sense?
 		d2C2P_dDIP2 = d2C2P_dDIPmolperL * dDIPmolperL_dDIPmmolperm3^2 ;
 
@@ -216,6 +220,91 @@ dalphaS_lalphaS = par.BIO.alphaS;
 				C2Ppxx(:,kk) = dC2P_dDIP(iwet).*DIPxx(:,kk) + d2C2P_dDIP2(iwet).*DIPx(:,jj).*DIPx(:,jk) ;
 			end
 		end
+
+	% add P model Parametrs x Cell model parameters
+		% need to extract from CellOut dC2P_dcellmodelparameter (C2Px)
+		% d2C2P_dcellparam_dPparam
+		% eg  dC2P_dQ10photo * dQ10photo_dlQ10Photo
+		% d2C2P_dlQ10Photo_dlDIP = imag(CellOut.dC2P_dQ10Photo)./eps^3 * dQ10photo_dlQ10Photo
+		% d2C2P_dlQ10Photo_dPparam = d2C2P_dlQ10Photo_dDIP*dDIPmolperL_dDIPmmolperm3 * DIPx()
+		% loop through phosphorus params; inside the loop, will have to do if statements for each cell model parameter
+		ck = kk; % ck = sum(1:npx)
+		kk = 0;
+		for jj=1:par.npx
+			if (par.opt_Q10Photo)
+				kk = kk + 1;
+				d2C2P_dlQ10Photo_dDIP = M3d*0;
+				d2C2P_dlQ10Photo_dDIP(iprod) = imag(CellOut.dC2P_dQ10Photo)./eps^3 .* dQ10_lQ10Photo;
+				C2Ppcellxx(:,kk) = d2C2P_dlQ10Photo_dDIP(iwet).*dDIPmolperL_dDIPmmolperm3.*DIPx(:,jj);
+				ck = ck + 1;
+				C2Ppxx(:,ck) = d2C2P_dlQ10Photo_dDIP(iwet).*dDIPmolperL_dDIPmmolperm3.*DIPx(:,jj);
+			end
+			if (par.opt_fStorage)
+                kk = kk + 1;
+				d2C2P_dlfStorage_dDIP = M3d*0;
+				d2C2P_dlfStorage_dDIP(iprod) = imag(CellOut.dC2P_dfStorage)./eps^3 *dfStor_lfStorage ;
+				C2Ppcellxx(:,kk) = d2C2P_dlfStorage_dDIP(iwet).*dDIPmolperL_dDIPmmolperm3.*DIPx(:,jj);
+				ck = ck + 1;
+				C2Ppxx(:,ck) = d2C2P_dlfStorage_dDIP(iwet).*dDIPmolperL_dDIPmmolperm3.*DIPx(:,jj);
+			end
+			if (par.opt_fRibE)
+                kk = kk + 1;
+                d2C2P_dfRibE_dDIP = M3d*0;
+				d2C2P_dtfRibE_dDIP(iprod) = imag(CellOut.dC2P_dfRibE)./eps^3 *dfRibE_tfRibE;
+				C2Ppcellxx(:,kk) = d2C2P_dftRibE_dDIP(iwet).*dDIPmolperL_dDIPmmolperm3.*DIPx(:,jj) ;
+				ck = ck + 1;
+				C2Ppxx(:,ck) = d2C2P_dftRibE_dDIP(iwet).*dDIPmolperL_dDIPmmolperm3.*DIPx(:,jj) ;
+			end
+			if (par.opt_kST0)
+                kk = kk + 1;
+                d2C2P_dlkST0_dDIP = M3d*0;
+				d2C2P_dlkST0_dDIP(iprod) = imag(CellOut.dC2P_dkST0)./eps^3 * dkST0_lkST0;
+				C2Ppcellxx(:,kk) = d2C2P_dlkST0_dDIP(iwet).*dDIPmolperL_dDIPmmolperm3.*DIPx(:,jj) ;
+				ck = ck + 1;
+				C2Ppxx(:,ck) = d2C2P_dlkST0_dDIP(iwet).*dDIPmolperL_dDIPmmolperm3.*DIPx(:,jj) ;
+			end
+			if (par.opt_PLip_PCutoff)
+                kk = kk + 1;
+				d2C2P_dlPCutoff_dDIP = M3d*0;
+				d2C2P_dlPCutoff_dDIP(iprod) = imag(CellOut.dC2P_dPCutoff)./eps^3 *dPCutoff_lPCutoff;
+				C2Ppcellxx(:,kk) = d2C2P_dlPCutoff_dDIP(iwet).*dDIPmolperL_dDIPmmolperm3.*DIPx(:,jj) ;
+				ck = ck + 1;
+				C2Ppxx(:,ck) = d2C2P_dlPCutoff_dDIP(iwet).*dDIPmolperL_dDIPmmolperm3.*DIPx(:,jj) ;
+			end
+			if (par.opt_PLip_scale)
+			    kk = kk + 1;
+				d2C2P_dlPLipscale_dDIP = M3d*0;
+				d2C2P_dlPLipscale_dDIP(iprod) = imag(CellOut.dC2P_dPLipscale)./eps^3 * dPLipscale_lPLipscale;
+				C2Ppcellxx(:,kk) = d2C2P_dlPLipscale_dDIP(iwet).*dDIPmolperL_dDIPmmolperm3.*DIPx(:,jj) ;
+				ck = ck + 1;
+				C2Ppxx(:,ck) = d2C2P_dlPLipscale_dDIP(iwet).*dDIPmolperL_dDIPmmolperm3.*DIPx(:,jj) ;
+			end
+			if (par.opt_PStor_rCutoff)
+                kk = kk + 1;
+				d2C2P_dlrCutoff_dDIP = M3d*0;
+				d2C2P_dlrCutoff_dDIP(iprod) = imag(CellOut.dC2P_drCutoff)./eps^3 * drCutoff_lrCutoff;
+				C2Ppcellxx(:,kk) = d2C2P_dlrCutoff_dDIP(iwet).*dDIPmolperL_dDIPmmolperm3.*DIPx(:,jj) ;
+				ck = ck + 1;
+				C2Ppxx(:,ck) = d2C2P_dlrCutoff_dDIP(iwet).*dDIPmolperL_dDIPmmolperm3.*DIPx(:,jj) ;
+			end
+			if (par.opt_PStor_scale)
+                kk = kk + 1;
+				d2C2P_dlPStorscale_dDIP = M3d*0;
+				d2C2P_dlPStorscale_dDIP(iprod) = imag(CellOut.dC2P_dPStorscale)./eps^3 * dPStorscale_lPStorscale;
+				C2Ppcellxx(:,kk) = d2C2P_dlPStorscale_dDIP(iwet).*dDIPmolperL_dDIPmmolperm3.*DIPx(:,jj) ;
+				ck = ck + 1;
+				C2Ppxx(:,ck) = d2C2P_dlPStorscale_dDIP(iwet).*dDIPmolperL_dDIPmmolperm3.*DIPx(:,jj) ;
+			end
+			if (par.opt_alphaS)
+                kk = kk + 1;
+				d2C2P_dlalphaS_dDIP = M3d*0;
+				d2C2P_dlalphaS_dDIP(iprod) = imag(CellOut.dC2P_dalphaS)./eps^3 * dalphaS_lalphaS;
+				C2Ppcellxx(:,kk) = d2C2P_dlalphaS_dDIP(iwet).*dDIPmolperL_dDIPmmolperm3.*DIPx(:,jj) ;
+				ck = ck + 1;
+				C2Ppxx(:,ck) = d2C2P_dlalphaS_dDIP(iwet).*dDIPmolperL_dDIPmmolperm3.*DIPx(:,jj) ;
+			end
+		end
+
 	%----------Cell model parameter----------------
 		kk = 0;
         % Q10Photo Derivatives
@@ -233,6 +322,7 @@ dalphaS_lalphaS = par.BIO.alphaS;
 			C2P_Q10_lQ10 = d2C2P_dQ10Photo2(iwet); %complex step takes second deriv wrt log(Q10)
 			d2Q10_lQ10Photo = par.BIO.Q10Photo;
 			C2Pxx(:,kk) = (C2Px(:,par.pindx.lQ10Photo)*d2Q10_lQ10Photo + C2P_Q10_lQ10*dQ10_lQ10Photo);
+			%need to remove d2Q10_lQ10Photo after updating C2Px ;
 
 
 			if (par.opt_fStorage)
@@ -641,7 +731,7 @@ dalphaS_lalphaS = par.BIO.alphaS;
 end % if TestVer == 2
 
 if TestVer == 3 %trying to index explicitly in 2 dimensions instead of using kk
-	%C2Pxx = zeros(nwet,npx+ncx+nbx,npx+ncx+nbx);
+	C2Pxx = zeros(nwet,npx+ncx+nbx,npx+ncx+nbx);
 
 	%-----P model Derivatives------------
 	DIPxx = par.Pxx(1:nwet,:);
@@ -658,7 +748,7 @@ if TestVer == 3 %trying to index explicitly in 2 dimensions instead of using kk
 			kk = kk + 1;
 			%C2Pxx = dC2P_dDIP * d2DIP_dx1_dx2 + d2C2P_dDIP2*dDIP_dx1*dDIP_dx2;
 			% C2Pxx(:,jj,jk)
-			C2Ppxx(:,kk) = dC2P_dDIP(iwet).*DIPxx(:,kk) + d2C2P_dDIP2(iwet).*DIPx(:,jj).*DIPx(:,jk) ;
+			C2Ppxx(:,jj,jk) = dC2P_dDIP(iwet).*DIPxx(:,kk) + d2C2P_dDIP2(iwet).*DIPx(:,jj).*DIPx(:,jk) ;
 		end
 	end
 
