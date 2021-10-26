@@ -321,8 +321,9 @@ C2Pxx = [];
 			%C2Pxx(:,kk) = d2C2P_dQ10Photo2(iwet);
 			C2P_Q10_lQ10 = d2C2P_dQ10Photo2(iwet); %complex step takes second deriv wrt log(Q10)
 			d2Q10_lQ10Photo = par.BIO.Q10Photo;
-			C2Pxx(:,kk) = (C2Px(:,par.pindx.lQ10Photo)*d2Q10_lQ10Photo + C2P_Q10_lQ10*dQ10_lQ10Photo);
-			%need to remove d2Q10_lQ10Photo after updating C2Px ;
+			%C2Pxx(:,kk) = (C2Px(:,par.pindx.lQ10Photo)*d2Q10_lQ10Photo + C2P_Q10_lQ10*dQ10_lQ10Photo);
+			% need to remove d2Q10_lQ10Photo after updating C2Px ;
+			C2Pxx(:,kk) = (C2Px(:,par.pindx.lQ10Photo) + C2P_Q10_lQ10*dQ10_lQ10Photo);
 
 
 			if (par.opt_fStorage)
@@ -412,7 +413,9 @@ C2Pxx = [];
             %C2Pxx(:,kk) = d2C2P_dfStorage2(iwet);
 			C2P_fStor_lfStor = d2C2P_dfStorage2(iwet);
 			d2fStor_lfStorage = par.BIO.fStorage;
-			C2Pxx(:,kk) = C2Px(:,par.pindx.lfStorage)*d2fStor_lfStorage + C2P_fStor_lfStor*dfStor_lfStorage;
+			%C2Pxx(:,kk) = C2Px(:,par.pindx.lfStorage)*d2fStor_lfStorage + C2P_fStor_lfStor*dfStor_lfStorage;
+			% need to remove d2fStor_lfStorage after updating C2Px ;
+			C2Pxx(:,kk) = C2Px(:,par.pindx.lfStorage) + C2P_fStor_lfStor*dfStor_lfStorage;
 
             if (par.opt_fRibE)
                 kk = kk + 1;
@@ -485,10 +488,14 @@ C2Pxx = [];
 			d2C2P_dfRibE2(iprod) = imag(CellOut.dC2P_dfRibE)./eps^3;
             %C2Pxx(:,kk) = d2C2P_dfRibE2(iwet);
 			C2P_fRibE_tfRibE = d2C2P_dfRibE2(iwet);
+			% tfRibE = atanh(2*par.BIO.fRibE-1);
+			% dfRibE_tfRibE = 0.5*sech(tfRibE)^2;
 			d2fRibE_tfRibE = -sech(tfRibE)^2 * tanh(tfRibE);
 			% dC2Ptmp = d/dtfRibE[dC2P/dfRibE *dfRibE/dtfRibE]
 			% = dC2P/dfRibE * d/dtfRibE[dfRibE/dtfRibE] + d/dtfRibE[dC2P/dfRibE] *dfRibE/dtfRibE
-			C2Pxx(:,kk) = C2Px(:,par.pindx.tfRibE) * d2fRibE_tfRibE + C2P_fRibE_tfRibE * dfRibE_tfRibE;
+			% C2Pxx(:,kk) = C2Px(:,par.pindx.tfRibE) * d2fRibE_tfRibE + C2P_fRibE_tfRibE * dfRibE_tfRibE;
+			% need to remove d2fRibE_tfRibE after updating C2Px? ;
+			C2Pxx(:,kk) = C2P_fRibE_tfRibE * dfRibE_tfRibE;
 
 			if (par.opt_kST0)
                 kk = kk + 1;
@@ -555,7 +562,9 @@ C2Pxx = [];
 			C2P_kST0_lkST0 = M3d*0;
 			C2P_kST0_lkST0(iprod) = imag(CellOut.dC2P_dkST0)./eps^3;
 			d2kST0_lkST0 = par.BIO.kST0;
-			C2Pxx(:,kk) = C2Px(:,par.pindx.lkST0) * d2kST0_lkST0 + C2P_kST0_lkST0(iwet) * dkST0_lkST0;
+			% C2Pxx(:,kk) = C2Px(:,par.pindx.lkST0) * d2kST0_lkST0 + C2P_kST0_lkST0(iwet) * dkST0_lkST0;
+			% need to remove d2kST0_lkST0 after updating C2Px? ;
+			C2Pxx(:,kk) = C2Px(:,par.pindx.lkST0) + C2P_kST0_lkST0(iwet) * dkST0_lkST0;
 
             if (par.opt_PLip_PCutoff)
                 kk = kk + 1;
@@ -604,7 +613,9 @@ C2Pxx = [];
 			C2P_PCutoff_lPCutoff = M3d*0;
 			C2P_PCutoff_lPCutoff(iprod) = imag(CellOut.dC2P_dPCutoff)./eps^3;
 			d2PCutoff_lPCutoff = par.BIO.PLip_PCutoff;
-            C2Pxx(:,kk) = C2P_PCutoff_lPCutoff(iwet) * dPCutoff_lPCutoff + C2Px(:,par.pindx.lPLip_PCutoff) * d2PCutoff_lPCutoff;
+            % C2Pxx(:,kk) = C2P_PCutoff_lPCutoff(iwet) * dPCutoff_lPCutoff + C2Px(:,par.pindx.lPLip_PCutoff) * d2PCutoff_lPCutoff;
+			% need to remove d2PCutoff_lPCutoff after updating C2Px? ;
+			C2Pxx(:,kk) = C2P_PCutoff_lPCutoff(iwet) * dPCutoff_lPCutoff + C2Px(:,par.pindx.lPLip_PCutoff);
 
 			if (par.opt_PLip_scale)
                 kk = kk + 1;
@@ -643,7 +654,9 @@ C2Pxx = [];
 			C2P_PLipscale_lPLipscale = M3d*0;
 			C2P_PLipscale_lPLipscale(iprod) = imag(CellOut.dC2P_dPLipscale)./eps^3;
 			d2PLipscale_lPLipscale = par.BIO.PLip_scale;
-            C2Pxx(:,kk) = C2P_PLipscale_lPLipscale(iwet) * dPLipscale_lPLipscale + C2Px(:,par.pindx.lPLip_scale)*d2PLipscale_lPLipscale;
+            % C2Pxx(:,kk) = C2P_PLipscale_lPLipscale(iwet) * dPLipscale_lPLipscale + C2Px(:,par.pindx.lPLip_scale)*d2PLipscale_lPLipscale;
+			% need to remove d2PLipscale_lPLipscale after updating C2Px? ;
+			C2Pxx(:,kk) = C2P_PLipscale_lPLipscale(iwet) * dPLipscale_lPLipscale + C2Px(:,par.pindx.lPLip_scale);
 
 			if (par.opt_PStor_rCutoff)
                 kk = kk + 1;
@@ -676,7 +689,9 @@ C2Pxx = [];
 			C2P_rCutoff_lrCutoff = M3d*0;
 			C2P_rCutoff_lrCutoff(iprod) = imag(CellOut.dC2P_drCutoff)./eps^3;
 			d2rCutoff_lrCutoff = par.BIO.PStor_rCutoff;
-            C2Pxx(:,kk) = C2P_rCutoff_lrCutoff(iwet) * drCutoff_lrCutoff + C2Px(:,par.pindx.lPStor_rCutoff)*d2rCutoff_lrCutoff;
+            % C2Pxx(:,kk) = C2P_rCutoff_lrCutoff(iwet) * drCutoff_lrCutoff + C2Px(:,par.pindx.lPStor_rCutoff)*d2rCutoff_lrCutoff;
+			% need to remove d2rCutoff_lrCutoff after updating C2Px? ;
+			C2Pxx(:,kk) = C2P_rCutoff_lrCutoff(iwet) * drCutoff_lrCutoff + C2Px(:,par.pindx.lPStor_rCutoff);
 
 			if (par.opt_PStor_scale)
                 kk = kk + 1;
@@ -703,7 +718,9 @@ C2Pxx = [];
 			C2P_PStorscale_lPStorscale = M3d*0;
 			C2P_PStorscale_lPStorscale(iprod) = imag(CellOut.dC2P_dPStorscale)./eps^3;
 			d2PStorscale_lPStorscale = par.BIO.PStor_scale;
-            C2Pxx(:,kk) = C2P_PStorscale_lPStorscale(iwet)*dPStorscale_lPStorscale + C2Px(:,par.pindx.lPStor_scale)*d2PStorscale_lPStorscale;
+            % C2Pxx(:,kk) = C2P_PStorscale_lPStorscale(iwet)*dPStorscale_lPStorscale + C2Px(:,par.pindx.lPStor_scale)*d2PStorscale_lPStorscale;
+			% need to remove d2PLipscale_lPLipscale after updating C2Px? ;
+			C2Pxx(:,kk) = C2P_PStorscale_lPStorscale(iwet)*dPStorscale_lPStorscale + C2Px(:,par.pindx.lPStor_scale);
 
 			if (par.opt_alphaS)
                 kk = kk + 1;
@@ -724,7 +741,9 @@ C2Pxx = [];
 			C2P_alphaS_lalphaS = M3d*0;
 			C2P_alphaS_lalphaS(iprod) = imag(CellOut.dC2P_dalphaS)./eps^3;
 			d2alphaS_lalphaS = par.BIO.alphaS;
-            C2Pxx(:,kk) = C2P_alphaS_lalphaS(iwet)*dalphaS_lalphaS + C2Px(:,par.pindx.lalphaS)*d2alphaS_lalphaS;
+            % C2Pxx(:,kk) = C2P_alphaS_lalphaS(iwet)*dalphaS_lalphaS + C2Px(:,par.pindx.lalphaS)*d2alphaS_lalphaS;
+			% need to remove d2alphaS_lalphaS after updating C2Px? ;
+			C2Pxx(:,kk) = C2P_alphaS_lalphaS(iwet)*dalphaS_lalphaS + C2Px(:,par.pindx.lalphaS);
         end
 
     end %if par.optim
