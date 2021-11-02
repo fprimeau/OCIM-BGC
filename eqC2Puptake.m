@@ -201,12 +201,10 @@ C2Pxx = [];
 	% DIPxx = par.Pxx(1:nwet,:);
 	% C2Pxx(:,pindx.kP_T) = dC2P_dDIP*DIPxx(:,pindx.kP_T) + d2C2P_dDIP2*DIPx(:,pindx.kP_T).^2;
 		DIPxx = par.Pxx(1:nwet,:);
-
 		xim = sqrt(-1)*eps^3;
 		[CellOut, ~] = CellCNP(par,x,P0+xim,N0,T0,Irr0);
 		d2C2P_dDIPmolperL = M3d*0;
 		d2C2P_dDIPmolperL(iprod) = imag(CellOut.dC2P_dDIP)./eps^3 ; %% this might be the problem (complex step) is the one where we dont do grad test always wrong because complex perturbation on DIP and on parameter
-
 
 		% d2C2P_dDIPmolperL(iprod(negDIPindx)) = 0;   %does seting deriv of reset (neg) values make sense?
 		d2C2P_dDIP2 = d2C2P_dDIPmolperL * dDIPmolperL_dDIPmmolperm3^2 ;
@@ -324,7 +322,6 @@ C2Pxx = [];
 			%C2Pxx(:,kk) = (C2Px(:,par.pindx.lQ10Photo)*d2Q10_lQ10Photo + C2P_Q10_lQ10*dQ10_lQ10Photo);
 			% need to remove d2Q10_lQ10Photo after updating C2Px ;
 			C2Pxx(:,kk) = (C2Px(:,par.pindx.lQ10Photo) + C2P_Q10_lQ10*dQ10_lQ10Photo);
-
 
 			if (par.opt_fStorage)
                 kk = kk + 1;
@@ -690,7 +687,7 @@ C2Pxx = [];
 			C2P_rCutoff_lrCutoff(iprod) = imag(CellOut.dC2P_drCutoff)./eps^3;
 			d2rCutoff_lrCutoff = par.BIO.PStor_rCutoff;
             % C2Pxx(:,kk) = C2P_rCutoff_lrCutoff(iwet) * drCutoff_lrCutoff + C2Px(:,par.pindx.lPStor_rCutoff)*d2rCutoff_lrCutoff;
-			% need to remove d2rCutoff_lrCutoff after updating C2Px? ;
+			% need to remove d2rCutoff_lrCutoff after updating C2Px ;
 			C2Pxx(:,kk) = C2P_rCutoff_lrCutoff(iwet) * drCutoff_lrCutoff + C2Px(:,par.pindx.lPStor_rCutoff);
 
 			if (par.opt_PStor_scale)
