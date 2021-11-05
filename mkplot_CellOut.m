@@ -3,11 +3,11 @@ on   = true  ;
 off  = false ;
 
 %ver = datestr(now,'mmmdd');
-RunVer = 'Tv4_PCCellv5c_DOC0.25_DOP0';
+RunVer = 'v6b_duplicate/Tv4_PCCellv6b_DOC0.25_DOP0';
 
 %model output directory
 outputDir = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK90/';
-figDir = strcat(outputDir,'FIGS_PCCellv5c_DOC0.25_DOP0/');
+figDir = strcat(outputDir,'FIGS_PCCellv6b_DOC0.25_DOP0/');
 outPath = figDir;
 
 % load model output fields

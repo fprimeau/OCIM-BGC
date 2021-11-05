@@ -149,6 +149,14 @@ end
 % -------------------update initial guesses --------------
 if isfile(par.fname)
     load(par.fname)
+
+	% make sure these fields are real values only
+	fnames = fieldnames(data);
+	for ii = 1:length(fnames)
+		if isnumeric(data.(fnames{ii}))
+			data.(fnames{ii}) = real(data.(fnames{ii}));
+		end
+	end
 end
 
 %---------------- inital guesses on C and O ---------------
@@ -161,6 +169,8 @@ if par.Cmodel == on
 	% temprarily use following line to create ALK initial field for 90x180 grid
 	% GC = [DIC(iwet); data.POC(iwet); data.DOC(iwet); data.PIC(iwet); data.DIC(iwet)];
 
+	% GC is used inside eqCcycle. Should GC be set to a global variable within this script (driver)?
+	% global GC is called at  start of eqCcycle.
     GC  = GC + 1e-6*randn(5*nwet,1) ;
 end
 if par.Omodel == on

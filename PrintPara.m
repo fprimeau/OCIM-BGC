@@ -284,9 +284,16 @@ function xhat = PrintPara(x, par);
             fprintf('current alphaS         is  % 3.2e \n', exp(x(ialphaS)));
             xhat.alphaS = exp(x(ialphaS));
         end
-
-	end
+	end %end cell model params
 	% ------------------------------------------------------------
+	% make sure only real part of parameter gets saved to  avoid issues with
+	% complex step derivatives
+	nx = length(x);
+	fnames = fieldnames(xhat);
+	for ii = 1:nx
+		xhat.(fnames{ii}) = real(xhat.(fnames{ii}));
+	end
+	% xhat %print result to make sure only real parts are saved
     % x0 = x ;
     % if (par.optim == on)
     %     save(par.fxhat, 'x0','xhat')

@@ -153,47 +153,47 @@ function par = SetPar(par)
 	%
 	% Cell model parameters
 	if exist('xhat') & isfield(xhat,'Q10Photo') % Q10 of photosynthesis
-		par.BIO.Q10Photo = xhat.Q10Photo;
+		par.BIO.Q10Photo = real(xhat.Q10Photo);
 	else
 		par.BIO.Q10Photo = 1.983;		% Q10 of photosynthesis
 	end
 	if exist('xhat') & isfield(xhat,'fStorage')
-		par.BIO.fStorage = xhat.fStorage;
+		par.BIO.fStorage = real(xhat.fStorage);
 	else
 		par.BIO.fStorage = exp(-.358);  % strength of luxury P storage [L/molC]
 	end
 	if exist('xhat') & isfield(xhat,'fRibE')
-		par.BIO.fRibE = xhat.fRibE;
+		par.BIO.fRibE = real(xhat.fRibE);
 	else
 		par.BIO.fRibE = .618;           % ribosome fraction of biosynthetic apparatus
 	end
 	if exist('xhat') & isfield(xhat,'kST0')
-		par.BIO.kST0 = xhat.kST0;
+		par.BIO.kST0 = real(xhat.kST0);
 	else
 		par.BIO.kST0 =0.185;            % specific synthesis rate of synthetic apparatus at 25degC [1/hr]
 	end
 	if exist('xhat') & isfield(xhat,'PLip_PCutoff')
-		par.BIO.PLip_PCutoff = xhat.PLip_PCutoff;
+		par.BIO.PLip_PCutoff = real(xhat.PLip_PCutoff);
 	else
 		par.BIO.PLip_PCutoff = exp(-14.408);  % log of [P] below which more PLipids are substituted with Slipids
 	end
 	if exist('xhat') & isfield(xhat,'PLip_scale')
-		par.BIO.PLip_scale = xhat.PLip_scale;
+		par.BIO.PLip_scale = real(xhat.PLip_scale);
 	else
 		par.BIO.PLip_scale = 3.0e6;  % scale factor for logistic function controlling phospholipid quota (changed from 1.0 b.c. not using log(P). changed from 1e6 to 3e6 to make transition sharper)
 	end
 	if exist('xhat') & isfield(xhat,'PStor_rCutoff')
-		par.BIO.PStor_rCutoff = xhat.PStor_rCutoff;
+		par.BIO.PStor_rCutoff = real(xhat.PStor_rCutoff);
 	else
 		par.BIO.PStor_rCutoff = 2.25;  % radius [um] above which cell stores luxury phosphorus?
 	end
 	if exist('xhat') & isfield(xhat,'PStor_scale')
-		par.BIO.PStor_scale = xhat.PStor_scale;
+		par.BIO.PStor_scale = real(xhat.PStor_scale);
 	else
 		par.BIO.PStor_scale = 3.00;  % scale factor for logistic function controlling luxury phosphorus storage (changed default from 1 to 3 to give sharper transition)
 	end
 	if exist('xhat') & isfield(xhat,'alphaS')
-		par.BIO.alphaS = xhat.alphaS;
+		par.BIO.alphaS = real(xhat.alphaS);
 	else
 		par.BIO.alphaS = 0.225;          % radius at which cell is all periplasm and membrane [um]
 	end

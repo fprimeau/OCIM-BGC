@@ -11,6 +11,7 @@ slurm.*
 *.log
 *.err
 *.mat
+Pdebug*
 .remote-sync.json
 *~
 OutputData90/
