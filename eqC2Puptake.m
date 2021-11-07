@@ -204,16 +204,17 @@ C2Pxx = [];
 		xim = sqrt(-1)*eps^3;
 		[CellOut, ~] = CellCNP(par,x,P0+xim,N0,T0,Irr0);
 		d2C2P_dDIPmolperL = M3d*0;
-		d2C2P_dDIPmolperL(iprod) = imag(CellOut.dC2P_dDIP)./eps^3 ; %% this might be the problem (complex step) is the one where we dont do grad test always wrong because complex perturbation on DIP and on parameter
+		d2C2P_dDIPmolperL(iprod) = imag(CellOut.dC2P_dDIP)./eps^3 ; %% this might be a problem when doing complex step test because complex perturbation on DIP and on parameter
 
-		% d2C2P_dDIPmolperL(iprod(negDIPindx)) = 0;   %does seting deriv of reset (neg) values make sense?
+		d2C2P_dDIPmolperL(iprod(negDIPindx)) = 0;   % seting deriv of reset (neg) P values to zero. (CellOut.dC2P_dDIP(negDIPindx) = 0;)
 		d2C2P_dDIP2 = d2C2P_dDIPmolperL * dDIPmolperL_dDIPmmolperm3^2 ;
 
 		kk = 0;
 		for jj = 1:par.npx
 			for jk = jj:par.npx
 				kk = kk + 1;
-				%C2Pxx = dC2P_dDIP * d2DIP_dx1_dx2 + d2C2P_dDIP2*dDIP_dx1*dDIP_dx2;
+				% C2Px = dC2P_dDIP * dDIP_dx1
+				% C2Pxx = dC2P_dDIP * d2DIP_dx1_dx2 + d2C2P_dDIP2*dDIP_dx1*dDIP_dx2;
 				% C2Pxx(:,jj,jk)
 				C2Ppxx(:,kk) = dC2P_dDIP(iwet).*DIPxx(:,kk) + d2C2P_dDIP2(iwet).*DIPx(:,jj).*DIPx(:,jk) ;
 			end
