@@ -233,6 +233,7 @@ C2Pxx = [];
 			if (par.opt_Q10Photo)
 				kk = kk + 1;
 				d2C2P_dlQ10Photo_dDIP = M3d*0;
+				CellOut.dC2P_dQ10Photo(negDIPindx) = 0;   % for reset P values
 				d2C2P_dlQ10Photo_dDIP(iprod) = imag(CellOut.dC2P_dQ10Photo)./eps^3 .* dQ10_lQ10Photo;
 				C2Ppcellxx(:,kk) = d2C2P_dlQ10Photo_dDIP(iwet).*dDIPmolperL_dDIPmmolperm3.*DIPx(:,jj);
 				ck = ck + 1;
@@ -241,6 +242,7 @@ C2Pxx = [];
 			if (par.opt_fStorage)
                 kk = kk + 1;
 				d2C2P_dlfStorage_dDIP = M3d*0;
+				CellOut.dC2P_dfStorage(negDIPindx) = 0;
 				d2C2P_dlfStorage_dDIP(iprod) = imag(CellOut.dC2P_dfStorage)./eps^3 *dfStor_lfStorage ;
 				C2Ppcellxx(:,kk) = d2C2P_dlfStorage_dDIP(iwet).*dDIPmolperL_dDIPmmolperm3.*DIPx(:,jj);
 				ck = ck + 1;
@@ -249,6 +251,7 @@ C2Pxx = [];
 			if (par.opt_fRibE)
                 kk = kk + 1;
                 d2C2P_dfRibE_dDIP = M3d*0;
+				CellOut.dC2P_dfRibE(negDIPindx) = 0;
 				d2C2P_dtfRibE_dDIP(iprod) = imag(CellOut.dC2P_dfRibE)./eps^3 *dfRibE_tfRibE;
 				C2Ppcellxx(:,kk) = d2C2P_dftRibE_dDIP(iwet).*dDIPmolperL_dDIPmmolperm3.*DIPx(:,jj) ;
 				ck = ck + 1;
@@ -257,6 +260,7 @@ C2Pxx = [];
 			if (par.opt_kST0)
                 kk = kk + 1;
                 d2C2P_dlkST0_dDIP = M3d*0;
+				CellOut.dC2P_dkST0(negDIPindx) = 0;
 				d2C2P_dlkST0_dDIP(iprod) = imag(CellOut.dC2P_dkST0)./eps^3 * dkST0_lkST0;
 				C2Ppcellxx(:,kk) = d2C2P_dlkST0_dDIP(iwet).*dDIPmolperL_dDIPmmolperm3.*DIPx(:,jj) ;
 				ck = ck + 1;
@@ -265,6 +269,7 @@ C2Pxx = [];
 			if (par.opt_PLip_PCutoff)
                 kk = kk + 1;
 				d2C2P_dlPCutoff_dDIP = M3d*0;
+				CellOut.dC2P_dPCutoff(negDIPindx) = 0;
 				d2C2P_dlPCutoff_dDIP(iprod) = imag(CellOut.dC2P_dPCutoff)./eps^3 *dPCutoff_lPCutoff;
 				C2Ppcellxx(:,kk) = d2C2P_dlPCutoff_dDIP(iwet).*dDIPmolperL_dDIPmmolperm3.*DIPx(:,jj) ;
 				ck = ck + 1;
@@ -273,6 +278,7 @@ C2Pxx = [];
 			if (par.opt_PLip_scale)
 			    kk = kk + 1;
 				d2C2P_dlPLipscale_dDIP = M3d*0;
+				CellOut.dC2P_dPLipscale(negDIPindx) = 0;
 				d2C2P_dlPLipscale_dDIP(iprod) = imag(CellOut.dC2P_dPLipscale)./eps^3 * dPLipscale_lPLipscale;
 				C2Ppcellxx(:,kk) = d2C2P_dlPLipscale_dDIP(iwet).*dDIPmolperL_dDIPmmolperm3.*DIPx(:,jj) ;
 				ck = ck + 1;
@@ -281,6 +287,7 @@ C2Pxx = [];
 			if (par.opt_PStor_rCutoff)
                 kk = kk + 1;
 				d2C2P_dlrCutoff_dDIP = M3d*0;
+				CellOut.dC2P_drCutoff(negDIPindx) = 0;
 				d2C2P_dlrCutoff_dDIP(iprod) = imag(CellOut.dC2P_drCutoff)./eps^3 * drCutoff_lrCutoff;
 				C2Ppcellxx(:,kk) = d2C2P_dlrCutoff_dDIP(iwet).*dDIPmolperL_dDIPmmolperm3.*DIPx(:,jj) ;
 				ck = ck + 1;
@@ -289,6 +296,7 @@ C2Pxx = [];
 			if (par.opt_PStor_scale)
                 kk = kk + 1;
 				d2C2P_dlPStorscale_dDIP = M3d*0;
+				CellOut.dC2P_dPStorscale(negDIPindx) = 0;
 				d2C2P_dlPStorscale_dDIP(iprod) = imag(CellOut.dC2P_dPStorscale)./eps^3 * dPStorscale_lPStorscale;
 				C2Ppcellxx(:,kk) = d2C2P_dlPStorscale_dDIP(iwet).*dDIPmolperL_dDIPmmolperm3.*DIPx(:,jj) ;
 				ck = ck + 1;
@@ -297,6 +305,7 @@ C2Pxx = [];
 			if (par.opt_alphaS)
                 kk = kk + 1;
 				d2C2P_dlalphaS_dDIP = M3d*0;
+				CellOut.dC2P_dalphaS(negDIPindx) = 0;
 				d2C2P_dlalphaS_dDIP(iprod) = imag(CellOut.dC2P_dalphaS)./eps^3 * dalphaS_lalphaS;
 				C2Ppcellxx(:,kk) = d2C2P_dlalphaS_dDIP(iwet).*dDIPmolperL_dDIPmmolperm3.*DIPx(:,jj) ;
 				ck = ck + 1;
