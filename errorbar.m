@@ -1,13 +1,16 @@
+%% notes: imaginary values in the covariance matrix indicate:
+% need to run cell model once more after the second deriv so the imaginary part isn't carried through?
+
 clc; clear all; close all
 on   = true  ;
 off  = false ;
 
 %ver = datestr(now,'mmmdd');
-RunVer = 'Tv4_PCCellv5c_DOC0.25_DOP0';
+RunVer = 'Tv4_PCCellv7_DOC0.25_DOP0';
 
 %model output directory
 outputDir = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK90/';
-figDir = strcat(outputDir,'FIGS_PCCellv5c_DOC0.25_DOP0/');
+figDir = strcat(outputDir,'FIGS_PCCellv7_DOC0.25_DOP0/');
 outPath = figDir;
 
 % load model output fields
@@ -33,6 +36,7 @@ SetUp ;
 xhat
 iwet = par.iwet;
 % need to turn on the opt_parmetername fields to use PackPar
+% but we will need pindx later in this code. saved pindx in xhat instead
 
 %{
 global iter
@@ -191,12 +195,11 @@ elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on)
     HH  = xhat.fxx/sig  ;
 end
 
-pindex = par.pindx ;
+pindex = xhat.pindx ;
 error  = sqrt(diag(inv(HH))) ;
 nx = 0 ;
-n  = numel(fieldnames(par.pindx)) ;
-%%%
-n= 14; %temporary value. change back once cell model parameters are added
+n  = numel(fieldnames(xhat.pindx)) ;
+
 %%%%
 R.xhat   = zeros(n, 1) ;
 R.upbar  = zeros(n, 1) ;
@@ -490,6 +493,98 @@ if exist('xhat') & isfield(xhat,'Q10Photo')
     R.lowbar(nx) = Q10Photo_lo ;
 end
 
+if exist('xhat') & isfield(xhat,'fStorage')
+    nx = nx + 1 ;
+    fStorage = xhat.fStorage  ;
+    fStor_up = exp(log(fStorage)+error(pindex.lfStorage)) - fStorage;
+    fStor_lo = fStorage - exp(log(fStorage)-error(pindex.lfStorage));
+    name{nx}     = 'fStorage'  ;
+    R.xhat(nx)   = fStorage    ;
+    R.upbar(nx)  = fStor_up ;
+    R.lowbar(nx) = fStor_lo ;
+end
+
+% up and lo units in error same as transformed units
+if exist('xhat') & isfield(xhat,'fRibE')
+    nx = nx + 1 ;
+	%fRibE = 0.5*(1+tanh(tfRibE))
+	%tfRibE = atanh(2*fRibE-1);
+    fRibE = xhat.fRibE  ;
+    fRibE_up = 0.5*(1+tanh( atanh(2*fRibE-1)+error(pindex.tfRibE))) - fRibE;
+    fRibE_lo = fRibE - 0.5*(1+tanh( atanh(2*fRibE-1) - error(pindex.tfRibE)));
+    name{nx}     = 'fRibE'  ;
+    R.xhat(nx)   = fRibE    ;
+    R.upbar(nx)  = fRibE_up ;
+    R.lowbar(nx) = fRibE_lo ;
+end
+
+if exist('xhat') & isfield(xhat,'kST0')
+    nx = nx + 1 ;
+    kST0 = xhat.kST0   ;
+    kST0_up = exp(log(kST0)+error(pindex.lkST0)) - kST0 ;
+    kST0_lo = kST0 - exp(log(kST0)-error(pindex.lkST0));
+    name{nx}     = 'kST0'  ;
+    R.xhat(nx)   = kST0     ;
+    R.upbar(nx)  = kST0_up ;
+    R.lowbar(nx) = kST0_lo ;
+end
+
+if exist('xhat') & isfield(xhat,'PLip_PCutoff')
+    nx = nx + 1 ;
+    PCutoff = xhat.PLip_PCutoff   ;
+    PCutoff_up = exp(log(PCutoff)+error(pindex.lPLip_PCutoff)) - PCutoff ;
+    PCutoff_lo = PCutoff - exp(log(PCutoff)-error(pindex.lPLip_PCutoff));
+    name{nx}     = 'PLip_PCutoff'  ;
+    R.xhat(nx)   = PCutoff    ;
+    R.upbar(nx)  = PCutoff_up ;
+    R.lowbar(nx) = PCutoff_lo ;
+end
+
+if exist('xhat') & isfield(xhat,'PLip_scale')
+    nx = nx + 1 ;
+    PLipscale = xhat.PLip_scale  ;
+    PLipscale_up = exp(log(PLipscale)+error(pindex.lPLip_scale)) - PLipscale ;
+    PLipscale_lo = PLipscale - exp(log(PLipscale)-error(pindex.lPLip_scale));
+    name{nx}     = 'PLip_scale'  ;
+    R.xhat(nx)   = PLipscale    ;
+    R.upbar(nx)  = PLipscale_up ;
+    R.lowbar(nx) = PLipscale_lo ;
+end
+
+if exist('xhat') & isfield(xhat,'PStor_rCutoff')
+    nx = nx + 1 ;
+    rCutoff = xhat.PStor_rCutoff   ;
+    rCutoff_up = exp(log(rCutoff)+error(pindex.lPStor_rCutoff)) - rCutoff ;
+    rCutoff_lo = rCutoff - exp(log(rCutoff)-error(pindex.lPStor_rCutoff));
+    name{nx}     = 'PStor_rCutoff'  ;
+    R.xhat(nx)   = rCutoff    ;
+    R.upbar(nx)  = rCutoff_up ;
+    R.lowbar(nx) = rCutoff_lo ;
+end
+
+if exist('xhat') & isfield(xhat,'PStor_scale')
+    nx = nx + 1 ;
+    PStorscale = xhat.PStor_scale  ;
+    PStorscale_up = exp(log(PStorscale)+error(pindex.lPStor_scale)) - PStorscale ;
+    PStorscale_lo = PStorscale - exp(log(PStorscale)-error(pindex.lPStor_scale));
+    name{nx}     = 'PStor_scale'  ;
+    R.xhat(nx)   = PStorscale    ;
+    R.upbar(nx)  = PStorscale_up ;
+    R.lowbar(nx) = PStorscale_lo ;
+end
+
+if exist('xhat') & isfield(xhat,'alphaS')
+    nx = nx + 1 ;
+    alphaS = xhat.alphaS   ;
+    alphaS_up = exp(log(alphaS)+error(pindex.lalphaS)) - alphaS ;
+    alphaS_lo = alphaS - exp(log(alphaS)-error(pindex.lalphaS));
+    name{nx}     = 'alphaS'  ;
+    R.xhat(nx)   = alphaS     ;
+    R.upbar(nx)  = alphaS_up ;
+    R.lowbar(nx) = alphaS_lo ;
+end
+
+%-----------Make Table-----------------------
 x_hat   = R.xhat       ;
 upbar  = R.upbar      ;
 lowbar = R.lowbar     ;
