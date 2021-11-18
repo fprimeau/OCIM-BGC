@@ -1,18 +1,21 @@
 function par = SetPar(par)
     on   = true    ;  off  = false   ;
-    spd  = 24*60^2 ;  spa  = 365*spd ;
+    spd  = 24*60^2 ;  	% seconds per day
+	spa  = 365*spd ;  	% seconds per year
     % fixed parameters
     par.kappa_g  = 1/(1e6*spa)  ; % geological restoring time [1/s];
-    par.taup     = 30*24*60^2     ; % (s) pic dissolution time-scale
+    par.taup     = 30*spd       ; % [s] pic dissolution time-scale
     % par.tau_TA   = 1./par.taup  ;
-    par.kappa_p  = 1/(30*24*60^2) ;
-	% the parameters kappa_p and b, which affect the sinking flux attenuation profile,
-	% are not independently identified by the data. We therefore prescribe the value kappa_p of 1/(30 days)
-    par.tauPIC = 30*spd ;
+    par.kappa_p  = 1/(30*spd) ;   % [1/s] POM solubilization rate constant (fixed) (for both POP and POC)
+								  % the parameters kappa_p and b, which affect
+								  % the sinking flux attenuation profile, are not
+								  % independently identified by the data. We therefore
+								  % prescribe the value kappa_p of 1/(30 days)
+    par.tauPIC = 30*spd ;   	% [s] The CaCO3 e-folding dissolution time is 30 days. converted to seconds.
     par.kPIC   = 1/par.tauPIC ;
-	% PIC dissolution constant 0.38 day^-1 based on first-order
-    % reaction kinetics according to Sarmiento
-    % and Gruber book (p.271);
+								% PIC dissolution constant 0.38 day^-1 based on
+								% first-order reaction kinetics according to
+								% Sarmiento and Gruber book (p.271);
 
     % load optimal parameters if they exist
     if isfile(par.fxhat) & par.LoadOpt == on
@@ -22,84 +25,85 @@ function par = SetPar(par)
     if exist('xhat') & isfield(xhat,'sigma')
         par.sigma = xhat.sigma ;
     else
-        par.sigma = 0.30 ; % default was 1.0e-01 , however 0.30 is used by (Wang, 2019: Nitrogen fixation)
+        par.sigma = 0.30 ;  			% Fraction of organic P production allocated directly to the dissolved pool
+										% default was 1.0e-01 , however 0.30 is used by (Wang, 2019: Nitrogen fixation)
     end
     if exist('xhat') & isfield(xhat,'kP_T')
         par.kP_T = xhat.kP_T ;
     else
-        par.kP_T = 0.00 ;
+        par.kP_T = 0.00 ;				% linear temperature dependence of DOP remineralization
     end
     if exist('xhat') & isfield(xhat,'kdP')
         par.kdP = xhat.kdP ;
     else
-        par.kdP = 2.42e-08 ;
+        par.kdP = 2.42e-08 ;			% DOP remineralization constant [s^-1]
     end
     if exist('xhat') & isfield(xhat,'bP_T')
         par.bP_T = xhat.bP_T ;
     else
-        par.bP_T = 0.00e+00 ;
+        par.bP_T = 0.00e+00 ;			% Martin exponent of POP solubilization (slope)
     end
     if exist('xhat') & isfield(xhat,'bP')
         par.bP  = xhat.bP ;
     else
-        par.bP  = 9.60e-01 ;
+        par.bP  = 9.60e-01 ;			% Martin exponent of POP solubilization (const term)
     end
     if exist('xhat') & isfield(xhat,'alpha')
         par.alpha = xhat.alpha ;
     else
-        par.alpha = 3.37e-08   ;
+        par.alpha = 3.37e-08   ;		% NPP scaling factor for DIP uptake rate
     end
     if exist('xhat') & isfield(xhat,'beta')
         par.beta = xhat.beta ;
     else
-        par.beta = 1.65e-02  ;
+        par.beta = 1.65e-02  ;			% NPP scaling exponent for DIP uptake rate
     end
 
     % C model parameters
     if exist('xhat') & isfield(xhat,'bC_T')
         par.bC_T = xhat.bC_T ;
     else
-        par.bC_T =  0.00e+00 ;
+        par.bC_T =  0.00e+00 ;			% Martin exponent of POP solubilization (linear T dependence)
     end
     if exist('xhat') & isfield(xhat,'bC')
         par.bC = xhat.bC ;
     else
-        par.bC = 9.38e-01    ;
+        par.bC = 9.38e-01    ;			% Martin exponent of POC solubilization (const term)
     end
     if exist('xhat') & isfield(xhat,'d')
         par.d = xhat.d   ;
     else
-        par.d = 4.54e+03;    % default was par.d = 4.54e+03 ;
+        par.d = 4.54e+03;    			% CaCO3 dissolution length scale [m]
     end
     if exist('xhat') & isfield(xhat,'kC_T')
         par.kC_T = xhat.kC_T ;
     else
-        par.kC_T = 0.00e+00 ;
+        par.kC_T = 0.00e+00 ;			%  DOC remineralization constant linear T dependence
     end
     if exist('xhat') & isfield(xhat,'kdC')
         par.kdC = xhat.kdC ;
     else
-        par.kdC = 7.35e-08 ;
+        par.kdC = 7.35e-08 ;			% DOC remineralization constant (const. term) [s^-1]
     end
     if exist('xhat') & isfield(xhat,'R_Si')
         par.R_Si = xhat.R_Si ;
     else
-        par.R_Si = 0.00 ;
+        par.R_Si = 0.00 ;				% CaCO3 to POC production ratio linear silica dependence
     end
     if exist('xhat') & isfield(xhat,'rR')
         par.rR = xhat.rR  ;
     else
-        par.rR = 2.64e-02 ;
+        par.rR = 2.64e-02 ;				% CaCO3 to POC production ratio (const. term)
     end
     if exist('xhat') & isfield(xhat,'cc')
         par.cc = xhat.cc  ;
     else
-        par.cc = 7.51e-4 ;
+        par.cc = 7.51e-4 ;				% slope for P:C as a linear function of DIP
     end
     if exist('xhat') & isfield(xhat,'dd')
         par.dd = xhat.dd  ;
     else
-        par.dd = 5.56e-03 ;
+        par.dd = 5.56e-03 ;				% intercept for P:C as a linear function of DIP
     end
 
     % O model parameters
@@ -152,7 +156,7 @@ function par = SetPar(par)
     end
 	%
 	% Cell model parameters
-	if exist('xhat') & isfield(xhat,'Q10Photo') % Q10 of photosynthesis
+	if exist('xhat') & isfield(xhat,'Q10Photo') 
 		par.BIO.Q10Photo = real(xhat.Q10Photo);
 	else
 		par.BIO.Q10Photo = 1.983;		% Q10 of photosynthesis
@@ -175,7 +179,7 @@ function par = SetPar(par)
 	if exist('xhat') & isfield(xhat,'PLip_PCutoff')
 		par.BIO.PLip_PCutoff = real(xhat.PLip_PCutoff);
 	else
-		par.BIO.PLip_PCutoff = exp(-14.408);  % log of [P] below which more PLipids are substituted with Slipids
+		par.BIO.PLip_PCutoff = exp(-14.408);  % log of [P (mol/L)] below which more PLipids are substituted with Slipids
 	end
 	if exist('xhat') & isfield(xhat,'PLip_scale')
 		par.BIO.PLip_scale = real(xhat.PLip_scale);
