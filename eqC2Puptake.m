@@ -28,6 +28,10 @@ function [par, C2P, C2Px, C2Pxx, C2Ppxx] = eqC2Puptake(x, par, data)
 		negDIPindx = (P0<0);
 	    P0(P0<0)= real(min(P0(P0>=0)));
 
+		fprintf('replacing %d negative DIN concentrations with the minimum positive concentration \n',length(N0(N0<0)))
+		negDINindx = (N0<0);
+	    N0(N0<0)= real(min(N0(N0>=0)));
+
 		[CellOut, parBIO] = CellCNP(par,x, P0,N0,T0,Irr0);
 		par.BIO = parBIO;
 		clear parBIO;
@@ -250,12 +254,12 @@ C2Pxx = [];
 			end
 			if (par.opt_fRibE)
                 kk = kk + 1;
-                d2C2P_dfRibE_dDIP = M3d*0;
+                d2C2P_dtfRibE_dDIP = M3d*0;
 				CellOut.dC2P_dfRibE(negDIPindx) = 0;
 				d2C2P_dtfRibE_dDIP(iprod) = imag(CellOut.dC2P_dfRibE)./eps^3 *dfRibE_tfRibE;
-				C2Ppcellxx(:,kk) = d2C2P_dftRibE_dDIP(iwet).*dDIPmolperL_dDIPmmolperm3.*DIPx(:,jj) ;
+				C2Ppcellxx(:,kk) = d2C2P_dtfRibE_dDIP(iwet).*dDIPmolperL_dDIPmmolperm3.*DIPx(:,jj) ;
 				ck = ck + 1;
-				C2Ppxx(:,ck) = d2C2P_dftRibE_dDIP(iwet).*dDIPmolperL_dDIPmmolperm3.*DIPx(:,jj) ;
+				C2Ppxx(:,ck) = d2C2P_dtfRibE_dDIP(iwet).*dDIPmolperL_dDIPmmolperm3.*DIPx(:,jj) ;
 			end
 			if (par.opt_kST0)
                 kk = kk + 1;
