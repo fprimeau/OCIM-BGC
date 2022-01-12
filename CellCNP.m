@@ -12,12 +12,12 @@ function [out,M] = CellCNP(par,x,P,N,T,Irr)
   % P is phosphate concentration in mol/L (OCIM-BGC in mmol/m^3. function input was converted to mol/L in eqC2Puptake)
   % N is nitrate concentration in mol/L (same not for OCIM-BGC)
 
-  % AUTHOR: George Hagstrom. MODIFIED BY: Megan Sullivan
+  % Original Author: George Hagstrom.
+  % Updated by: Megan Sullivan
 
     on = true; off = false;
 	% unpack the parameters to be optimized
 	M = par.BIO;
-	nbx = 0; % count number of C model tunable parameters;
 
 	%Q10Photo
 	if (par.opt_Q10Photo == on)
@@ -71,48 +71,44 @@ function [out,M] = CellCNP(par,x,P,N,T,Irr)
     end
 
   % Read in parameter values from par
-		 %%% optimize these first %%%
-     Q10Photo = M.Q10Photo;
-     fRibE = M.fRibE;
-     fStorage = M.fStorage;
-	 kST0 = M.kST0;
-
-	 alphaS = M.alphaS;
-     gammaDNA = M.gammaDNA;
-     gammaLipid = M.gammaLipid;
-     %lPCutoff = M.lPCutoff;
-     PLip_PCutoff = M.PLip_PCutoff;
-     PLip_scale = M.PLip_scale;
-     %r0Cutoff = M.r0Cutoff;
-     PStor_rCutoff = M.PStor_rCutoff;
-	 PStor_scale = M.PStor_scale; %(replaces CStor)
-		%
-     DNT0 = M.DNT0;
-     DPT0 = M.DPT0;
+	 %%% optimize these first %%%
+     Q10Photo 		= M.Q10Photo;
+     fRibE 			= M.fRibE;
+     fStorage 		= M.fStorage;
+	 kST0 			= M.kST0;
+	 %%%
+	 alphaS 		= M.alphaS;
+     gammaDNA 		= M.gammaDNA;
+     gammaLipid 	= M.gammaLipid;
+     %lPCutoff 		= M.lPCutoff;
+     PLip_PCutoff 	= M.PLip_PCutoff;
+     PLip_scale 	= M.PLip_scale;
+     PStor_rCutoff 	= M.PStor_rCutoff;
+	 PStor_scale 	= M.PStor_scale; %(replaces CStor)
+	 %CStor 		= M.CStor;
+     DNT0 			= M.DNT0;
+     DPT0 			= M.DPT0;
      Q10Diffusivity = M.Q10Diffusivity;
-     AMin = M.AMin;
-     %CStor = M.CStor;
-     PhiS = M.PhiS;
-		%
-	 alphaPLip = M.alphaPLip;
-		%
-		% %%% everything below here should remain fixed %%%
-     pDry = M.pDry;  % fixed
-     rho = M.rho;     % fixed
-     fProtM = M.fProtM;
-     fProtL = M.fProtL;
+     AMin 			= M.AMin;
+     PhiS 			= M.PhiS;
+	 alphaPLip 		= M.alphaPLip;
+	% %%% everything below here should remain fixed %%%
+     pDry 			= M.pDry;
+     rho 			= M.rho;
+     fProtM 		= M.fProtM;
+     fProtL 		= M.fProtL;
      % Define the P, N, and C content of each cellular component (protein, lipid, ribosome, etc.)
-     PDNA = M.PDNA; % fixed
-     PRib = M.PRib; % fixed
-     PPhospholipid = M.PPhospholipid; % fixed
-     NProt = M.NProt;  % fixed
-	 NRib = M.NRib;  %fixed
-     NDNA = M.NDNA; % fixed
-     CProt = M.CProt; % fixed
-     CDNA = M.CDNA; % fixed
-     CPhospholipid = M.CPhospholipid; % fixed
-     CLipid = M.CLipid;  % fixed
-	 CRib = M.CRib;
+     PDNA 			= M.PDNA;
+     PRib 			= M.PRib;
+     PPhospholipid 	= M.PPhospholipid;
+     NProt 			= M.NProt;
+	 NRib 			= M.NRib;
+     NDNA 			= M.NDNA;
+     CProt 			= M.CProt;
+     CDNA 			= M.CDNA;
+     CPhospholipid 	= M.CPhospholipid;
+     CLipid 		= M.CLipid;
+	 CRib 			= M.CRib;
     %
 	par.BIO = M;
 
@@ -121,19 +117,11 @@ function [out,M] = CellCNP(par,x,P,N,T,Irr)
 		fprintf('Warning: [ %i ] NaNs found in Cell Model input fields. \n',length(nanindx))
     end
 
-    %set negative phosphate values to smallest positive concentration.
-    %(negative values mess up the code)
-	% moved to eqC2Puptake
-    % fprintf('replacing %d negative Phosphate concentrations with the minimum positive concentration \n',length(P(P<0)))
-	% negDIPindx = (P<0);
-    % P(P<0)= real(min(P(P>=0))); %imaginary part = 0, so these points dont affect deriv
-
-
 %% Define constants
 	    molarC = 12.0;              % molar mass of carbon [g/mol]
 	    molarN = 14.0;              % molar mass of nitrogen [g/mol]
 	    molarP = 31.0;              % molar mass of phosphorus [g/mol]
-		T0 = 25.0;                  % standard temperature [degC]
+		T0 	   = 25.0;              % standard temperature [degC]
 
 
 %%% optimizable Parameters %%%
@@ -671,36 +659,63 @@ MOpt = AOpt;                    % membrane fraction of cell
 rOpt = alphaS./(1-gammaS - CI.*EOpt); % cell radius
 muOpt = kST.*EOpt;
 
-QPnostor = (EOpt.*PE + gammaDNA*PDNA )./molarP;
 
-%%%%%%%%% Add P storage and phospholipids %%%%%%%%%%%%%%%%%%%
+%%%%%%% Calculate Cell quotas in moles P, C, and N %%%%%%%%%%%%%%%
+QPnostor = (EOpt.*PE + gammaDNA*PDNA )./molarP;
+QC = (EOpt.*CE +EOpt.*(CI-1)*CL +gammaS*CS +fProtAOpt.*AOpt.*CProt +MOpt.*CM)./molarC .*(1 + 24.0*.25*kST.*EOpt.*(1+PhiS));
+		%%% what is the extra part added on to QC? %L=kST.*E*(1+PhiS)/alphaI  % CI  = 1+(kST.*(1+PhiS))./alphaI;
+			% QC = QC*(1 +L*alphaI*0.25*24)
+			% alphaI = alphaPhoto*Q10Photo.^((T-T0)./10) = F1*(temperature dependence of carbon fixation)
+			% L*F1  = total allocation to carbon fixation component of photosynthetic apparatus
+			% L*alphaI*0.25*24 = % of cell dedicated to photosynthetic carbon fixation * temperature dependence * rate constant of 0.25 hr^-1 * 24 hr/day
+			% = amount of carbon fixed by photosynthesis in a day ? is this equivalent to the carbohydrate quota of the cell?
+		%	% totalC = ((.3*alphaS/r+.05)*CPhospholipid+.7*alphaS*CProtein/r+.10*CLipid+.04*CCarb+(1-alphaE)*E*CProtein+alphaE*E*CRibosomeEu+(1-E-alphaS/r-gamma)*CProtein+.01*CDNA)/12.0;
+QN = (EOpt.*NE +EOpt.*(CI-1).*NL +gammaS*NS +fProtAOpt.*AOpt.*NProt +MOpt.*NM)./molarN;
+
+
+%%%%%%% Add P storage and phospholipids %%%%%%%%%%%%%%%%%%%
  % each scaled by logistic function with 2 parameters each: PLip: PLip_scale & PLip_PCutoff; PStor: PStor_scale & PStor_rCutoff
  % can turn of PLip and PStorage by setting alphaPLip = 0 and fStorage = 0;
- PLip = alphaPLip*MOpt*PPhospholipid .*(1./(1 + exp(-PLip_scale*(P-PLip_PCutoff))));
+ PLip = alphaPLip*MOpt*PPhospholipid./CPhospholipid.*molarC./molarP.*(1./(1 + exp(-PLip_scale*(P-PLip_PCutoff))));
+ 	% PLip unit = molP/molC
+	% MOpt unit = unitless (volume fraction)
+	% PPhospholipid unit = [gP/g] (mass fraction) /molarP -> molP/g
+	% CPhospholipid unit = [gC/g] (mass fraction) /molarC -> molC/g
+	% alphaPLip unit = unitless (volume fraction)
+
  	% do we need to add carbon content of phospholipids to QC? and replace some lipid with phospholipid carbon fraction? e.g.:
 	% CPLip = PLip./PPhospholipid*CPhospholipid - PLip./PPhospholipid*CLipid ;
 	% only do this if carbon content changes when the p in phospholipids is substituted out. i dont think this is the case, so CPhospholipid is already acounted for in CM (need to look up how substitution works)
  PStor = fStorage.*5000.*P .*(1./(1 + exp(-PStor_scale.*(rOpt-PStor_rCutoff)))); % change max value? change units of P (was P*5000)
+ 	% PStor unit = molP/molC
+	% [P] units = molP/L
+	% fStorage units = L/molC
+	% aside: DIC =molC/L ; if 5000 was replaced with seawater 1./DIC, then fStorage would be unitless. Would it ake sense to have PStor be a function of the DIP:DIC ratio in seawater?
 	% should PStor only exist if nitrogen limited?
 	%       Nindx = find(LimType ==0);
 	%       PStor = zeros(size(P));
 	%       PStor(Nindx) = fStorage .*P .*(1./(1 + exp(-PStor_scale.*(rOpt-PStor_rCutoff))));
 
-%%%%%%%% Calculate Cell Quotas %%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% what is the extra part added on to QC? %L=kST.*E*(1+PhiS)/alphaI  % CI  = 1+(kST.*(1+PhiS))./alphaI;
-	% QC = QC*(1 +L*alphaI*0.25*24)
-	% alphaI = alphaPhoto*Q10Photo.^((T-T0)./10) = F1*(temperature dependence of carbon fixation)
-	% L*F1  = total allocation to carbon fixation component of photosynthetic apparatus
-	% L*alphaI*0.25*24 = % of cell dedicated to photosynthetic carbon fixation * temperature dependence * rate constant of 0.25 hr^-1 * 24 hr/day
-	% = amount of carbon fixed by photosynthesis in a day ? is this equivalent to the carbohydrate quota of the cell?
-%	% totalC = ((.3*alphaS/r+.05)*CPhospholipid+.7*alphaS*CProtein/r+.10*CLipid+.04*CCarb+(1-alphaE)*E*CProtein+alphaE*E*CRibosomeEu+(1-E-alphaS/r-gamma)*CProtein+.01*CDNA)/12.0;
-
-% Cell quotas in moles P, C, and N
-QP =((EOpt.*PE +(gammaDNA)*PDNA + PLip +PStor ))/molarP;     % PLip=MOpt*PM
-QC = (EOpt.*CE +EOpt.*(CI-1)*CL +gammaS*CS +fProtAOpt.*AOpt.*CProt +MOpt.*CM)./molarC .*(1+24.0*.25*kST.*EOpt.*(1+PhiS));
-QN = (EOpt.*NE +EOpt.*(CI-1).*NL +gammaS*NS +fProtAOpt.*AOpt.*NProt +MOpt.*NM)./molarN;
+%%%%%% Recalculate Phosphorus Cell Quota %%%%%%%%%%%%%%%%%
+% old: QP =((EOpt.*PE +(gammaDNA)*PDNA + PLip +PStor ))/molarP;     % PLip=MOpt*PM
+% update code to match george's original equation: CP = 1./(1./(QC./QP)+ PStor + PLip);
+% still need to change all derivatives to match this new version
+PLip = PLip.*QC;		%[molP/molC*molC = molP]
+PStor = PStor.*QC;	%[molP/molC*molC = molP]
+QP =(EOpt.*PE +(gammaDNA)*PDNA)/molarP + PLip +PStor;
 
 
+
+%pdPLip_QC = alphaPLip*MOpt*PPhospholipid./CPhospholipid.*molarC./molarP.*(1./(1 + exp(-PLip_scale*(P-PLip_PCutoff))));
+%pdPStor_QC = fStorage.*5000.*P .*(1./(1 + exp(-PStor_scale.*(rOpt-PStor_rCutoff))));
+pdPStor_fStorage = QC.*5000.*P .*(1./(1 + exp(-PStor_scale.*(rOpt-PStor_rCutoff))));
+pdPStor_DIP = QC.*fStorage.*5000.*(1./(1 + exp(-PStor_scale.*(rOpt-PStor_rCutoff))));
+pdPLip_DIP = QC.*alphaPLip.*MOpt*PPhospholipid/CPhospholipid*molarC/molarP.*(-1./(1 + exp(-PLip_scale*(P-PLip_PCutoff))).^2).*(-PLip_scale*exp(-PLip_scale*(P-PLip_PCutoff))) ;
+
+%pdQP_QC = pdPLip_QC + pdPStor_QC;
+%pdQP_E = PE/molarP + pdQP_QC.*pdQC_E;
+
+%%%%%% Calculate Stoichiometric Ratios %%%%%%%%%%%%%%%%
 CP = QC./QP;
 NP = QN./QP;
 CN = QC./QN;
@@ -727,46 +742,88 @@ CN = QC./QN;
 		pdQC_CM = 0; % do later
 		pdQC_kST = 24*0.25.*EOpt.*(1+PhiS).*(EOpt.*CE +EOpt.*(CI-1)*CL +gammaS*CS +fProtAOpt.*AOpt.*CProt +MOpt.*CM)./molarC ;
 		pdQC_PhiS = 24*0.25.*kST.*EOpt.*(EOpt.*CE +EOpt.*(CI-1)*CL +gammaS*CS +fProtAOpt.*AOpt.*CProt +MOpt.*CM)./molarC ;
+
 		% QP = QP(E,fRibE,PRib,gammaDNA,PDNA)
 		% Take partial derivatives with respect to all these variables
-		pdQP_E = PE/molarP;
-		pdQP_PE = EOpt./molarP;
-		pdQP_gammaDNA = PDNA/molarP;
+		% QP depends on QC through the PStor andPLip terms
+		pdQP_PLip = 1;
+		pdQP_PStor = 1 ;
+		pdPLip_QC = alphaPLip*MOpt*PPhospholipid./CPhospholipid.*molarC./molarP.*(1./(1 + exp(-PLip_scale*(P-PLip_PCutoff))));
+		pdPStor_QC = fStorage.*5000.*P .*(1./(1 + exp(-PStor_scale.*(rOpt-PStor_rCutoff))));
+		pdQP_QC = pdPLip_QC + pdPStor_QC;
+		pdQP_E = PE./molarP + pdQP_QC.*pdQC_E;
+		pdQP_PE = EOpt./molarP + 0; %QC does not depend on PE
+		pdQP_gammaDNA = PDNA/molarP + pdQP_QC.*pdQC_gammaS;	% QC depends on gammaS, which is defined from gammaDNA; this term is never used in the CP derivatives, so may be wrong; dgammaS_dgammaDNA = 1
 		pdQP_PDNA = gammaDNA/molarP;
-		% expand PLip to treat QP as if PLip eqn is written out fully, so marams in PLIp are directly in QP
-		pdQP_PLip = 1./molarP;
-        pdQP_MOpt = pdQP_PLip*(PLip./MOpt);
-        pdQP_alphaPLip = pdQP_PLip*(PLip./alphaPLip);
-        pdQP_PLipscale = (pdQP_PLip)*alphaPLip*MOpt*PPhospholipid .* (-1./(1 + exp(-PLip_scale*(P-PLip_PCutoff))).^2) .*exp(-PLip_scale*(P-PLip_PCutoff)) .* -1.*(P-PLip_PCutoff);
-        pdQP_PLipPCutoff = (pdQP_PLip)*alphaPLip*MOpt*PPhospholipid .* (-1./(1 + exp(-PLip_scale*(P-PLip_PCutoff))).^2) .*exp(-PLip_scale*(P-PLip_PCutoff)) .*PLip_scale;
-		% expand PStor
-        pdQP_PStor = 1./molarP;
-        pdQP_fStorage = pdQP_PStor*(PStor./fStorage);
-        pdQP_rOpt = pdQP_PStor * fStorage*5000.*P .*(-1./(1 + exp(-PStor_scale.*(rOpt-PStor_rCutoff))).^2) .* exp(-PStor_scale.*(rOpt-PStor_rCutoff)) .*-PStor_scale;
-        pdQP_rCutoff = (pdQP_PStor)*fStorage*5000.*P .*(-1./(1 + exp(-PStor_scale.*(rOpt-PStor_rCutoff))).^2) .* exp(-PStor_scale.*(rOpt-PStor_rCutoff)) .*PStor_scale;
-        pdQP_PStorscale = (pdQP_PStor) * -1*PStor.^2./(fStorage*5000.*P) .*exp(-PStor_scale.*(rOpt-PStor_rCutoff)) .* -1.*(rOpt-PStor_rCutoff);
+		% PLip terms
+		pdQP_MOpt = pdQP_PLip.*(PLip./MOpt) + pdQP_QC.*pdQC_MOpt;
+		pdQP_alphaPLip = pdQP_PLip.*(PLip./alphaPLip);	% no alphaPLip in QC
+		pdQP_PLipscale = (pdQP_PLip).*QC.*alphaPLip.*MOpt.*PPhospholipid./CPhospholipid.*molarC./molarP .* (-1./(1 + exp(-PLip_scale*(P-PLip_PCutoff))).^2) .*exp(-PLip_scale*(P-PLip_PCutoff)) .* -1.*(P-PLip_PCutoff);
+		pdQP_PLipPCutoff = (pdQP_PLip).*QC.*alphaPLip.*MOpt.*PPhospholipid./CPhospholipid.*molarC./molarP .* (-1./(1 + exp(-PLip_scale*(P-PLip_PCutoff))).^2) .*exp(-PLip_scale*(P-PLip_PCutoff)) .*PLip_scale;
+		%PStor terms
+		pdQP_fStorage = pdQP_PStor.*(PStor./fStorage); 	% QC does not depend on fStorage
+		pdQP_rOpt = pdQP_PStor.*QC.* fStorage.*5000.*P .*(-1./(1 + exp(-PStor_scale.*(rOpt-PStor_rCutoff))).^2) .* exp(-PStor_scale.*(rOpt-PStor_rCutoff)) .*-PStor_scale + pdQP_QC.*pdQC_rOpt;	% QC does not depend directly on rOpt
+		pdQP_rCutoff = (pdQP_PStor).*QC.*fStorage*5000.*P .*(-1./(1 + exp(-PStor_scale.*(rOpt-PStor_rCutoff))).^2) .* exp(-PStor_scale.*(rOpt-PStor_rCutoff)) .*PStor_scale;
+        pdQP_PStorscale = (pdQP_PStor) * -1*PStor.^2./(QC.*fStorage*5000.*P) .*exp(-PStor_scale.*(rOpt-PStor_rCutoff)) .* -1.*(rOpt-PStor_rCutoff);
 		%DIP is in both PLip and PStor; easier to follow if seperate then add together
-		pdPLip_DIP = alphaPLip*MOpt*PPhospholipid .*(-1./(1 + exp(-PLip_scale*(P-PLip_PCutoff))).^2).*(-PLip_scale*exp(-PLip_scale*(P-PLip_PCutoff))) ;
-		pdPStor_DIP = fStorage.*5000.*(1./(1 + exp(-PStor_scale.*(rOpt-PStor_rCutoff))));
-		pdQP_DIP = pdQP_PLip*pdPLip_DIP + pdQP_PStor*pdPStor_DIP;
+		pdPStor_DIP = QC.*fStorage.*5000.*(1./(1 + exp(-PStor_scale.*(rOpt-PStor_rCutoff))));
+		pdPLip_DIP = QC.*alphaPLip.*MOpt*PPhospholipid/CPhospholipid*molarC/molarP.*(-1./(1 + exp(-PLip_scale*(P-PLip_PCutoff))).^2).*(-PLip_scale*exp(-PLip_scale*(P-PLip_PCutoff))) ;
+		pdQP_DIP = pdQP_PLip.*pdPLip_DIP + pdQP_PStor.*pdPStor_DIP;
+		% QC only terms
+		pdQP_CE = pdQP_QC.*pdQC_CE;
+		pdQP_CI = pdQP_QC.*pdQC_CI;
+		pdQP_CL = pdQP_QC.*pdQC_CL; % do later
+		pdQP_gammaS = pdQP_QC.*pdQC_gammaS;
+		pdQP_CS = pdQP_QC.*pdQC_CS;
+		pdQP_fProtAOpt = pdQP_QC.*pdQC_fProtAOpt;
+		pdQP_AOpt = pdQP_QC.*pdQC_AOpt;
+		pdQP_CM = pdQP_QC.*pdQC_CM;		% do later
+		pdQP_CProt = pdQP_QC.*pdQC_CProt; % do later
+		pdQP_kST = pdQP_QC.*pdQC_kST;
+		pdQP_PhiS = pdQP_QC.*pdQC_PhiS;
+
+
+
+
+		% %%%%% OLD version:Take partial Derivatives
+		% pdQP_E = PE/molarP;
+		% pdQP_PE = EOpt./molarP;
+		% pdQP_gammaDNA = PDNA/molarP;
+		% pdQP_PDNA = gammaDNA/molarP;
+		% % expand PLip to treat QP as if PLip eqn is written out fully, o params in PLip are directly in QP
+		% pdQP_PLip = 1./molarP;
+        % pdQP_MOpt = pdQP_PLip*(PLip./MOpt);
+        % pdQP_alphaPLip = pdQP_PLip*(PLip./alphaPLip);
+        % pdQP_PLipscale = (pdQP_PLip)*alphaPLip*MOpt*PPhospholipid .* (-1./(1 + exp(-PLip_scale*(P-PLip_PCutoff))).^2) .*exp(-PLip_scale*(P-PLip_PCutoff)) .* -1.*(P-PLip_PCutoff);
+        % pdQP_PLipPCutoff = (pdQP_PLip)*alphaPLip*MOpt*PPhospholipid .* (-1./(1 + exp(-PLip_scale*(P-PLip_PCutoff))).^2) .*exp(-PLip_scale*(P-PLip_PCutoff)) .*PLip_scale;
+		% % expand PStor
+        % pdQP_PStor = 1./molarP;
+        % pdQP_fStorage = pdQP_PStor*(PStor./fStorage);
+        % pdQP_rOpt = pdQP_PStor * fStorage*5000.*P .*(-1./(1 + exp(-PStor_scale.*(rOpt-PStor_rCutoff))).^2) .* exp(-PStor_scale.*(rOpt-PStor_rCutoff)) .*-PStor_scale;
+        % pdQP_rCutoff = (pdQP_PStor)*fStorage*5000.*P .*(-1./(1 + exp(-PStor_scale.*(rOpt-PStor_rCutoff))).^2) .* exp(-PStor_scale.*(rOpt-PStor_rCutoff)) .*PStor_scale;
+        % pdQP_PStorscale = (pdQP_PStor) * -1*PStor.^2./(fStorage*5000.*P) .*exp(-PStor_scale.*(rOpt-PStor_rCutoff)) .* -1.*(rOpt-PStor_rCutoff);
+		% %DIP is in both PLip and PStor; easier to follow if seperate then add together
+		% pdPLip_DIP = alphaPLip*MOpt*PPhospholipid .*(-1./(1 + exp(-PLip_scale*(P-PLip_PCutoff))).^2).*(-PLip_scale*exp(-PLip_scale*(P-PLip_PCutoff))) ;
+		% pdPStor_DIP = fStorage.*5000.*(1./(1 + exp(-PStor_scale.*(rOpt-PStor_rCutoff))));
+		% pdQP_DIP = pdQP_PLip*pdPLip_DIP + pdQP_PStor*pdPStor_DIP;
 
 
 		% C:P = C:P(E,CE,CI,CL,gammaS,CS,fProtAOpt,alphaS,rOpt,CProt,CM,kSTi,PhiS,fRibE,PRib,gammaDNA,PDNA)
 		% Use the partial derivatives of QC and QP to calculate the partial derivatives of C:P. pdC2P_E is the only complicated ones
 		pdC2P_E = (QP.*pdQC_E - QC.*pdQP_E)./QP.^2;
-		pdC2P_CE = pdQC_CE./QP;
-		pdC2P_CI = pdQC_CI./QP;
-		pdC2P_CL = pdQC_CL./QP;
-		pdC2P_gammaS = pdQC_gammaS./QP;
-		pdC2P_CS = pdQC_CS./QP;
-		pdC2P_fProtAOpt = pdQC_fProtAOpt./QP;
-        pdC2P_AOpt = pdQC_AOpt./QP;
+		pdC2P_CE = (QP.*pdQC_CE - QC.*pdQP_CE)./QP.^2; % pdQC_CE./QP;
+		pdC2P_CI = (QP.*pdQC_CI - QC.*pdQP_CI)./QP.^2; % pdQC_CI./QP;
+		pdC2P_CL = (QP.*pdQC_CL - QC.*pdQP_CL)./QP.^2; % pdQC_CL./QP;
+		pdC2P_gammaS = (QP.*pdQC_gammaS - QC.*pdQP_gammaS)./QP.^2; % pdQC_gammaS./QP;
+		pdC2P_CS = (QP.*pdQC_CS - QC.*pdQP_CS)./QP.^2; % pdQC_CS./QP;
+		pdC2P_fProtAOpt = (QP.*pdQC_fProtAOpt - QC.*pdQP_fProtAOpt)./QP.^2; % pdQC_fProtAOpt./QP;
+        pdC2P_AOpt = (QP.*pdQC_AOpt - QC.*pdQP_AOpt)./QP.^2; % pdQC_AOpt./QP;
         pdC2P_MOpt = (QP.*pdQC_MOpt - QC.*pdQP_MOpt)./QP.^2;
-        pdC2P_rOpt = -pdQP_rOpt.*QC./QP.^2;
-		pdC2P_CProt = pdQC_CProt./QP;
-		pdC2P_CM = pdQC_CM./QP;
-		pdC2P_kST = pdQC_kST./QP;
-		pdC2P_PhiS = pdQC_PhiS./QP;
+        pdC2P_rOpt = (QP.*pdQC_rOpt - QC.*pdQP_rOpt)./QP.^2; % -pdQP_rOpt.*QC./QP.^2;
+		pdC2P_CProt = (QP.*pdQC_CProt - QC.*pdQP_CProt)./QP.^2; % pdQC_CProt./QP;
+		pdC2P_CM = (QP.*pdQC_CM - QC.*pdQP_CM)./QP.^2; % pdQC_CM./QP;
+		pdC2P_kST = (QP.*pdQC_kST - QC.*pdQP_kST)./QP.^2; % pdQC_kST./QP;
+		pdC2P_PhiS = (QP.*pdQC_PhiS - QC.*pdQP_PhiS)./QP.^2; % pdQC_PhiS./QP;
 		pdC2P_PE = -pdQP_PE.*QC./QP.^2;
 		pdC2P_gammaDNA = -pdQP_gammaDNA.*QC./QP.^2;
 		pdC2P_PDNA = -pdQP_PDNA.*QC./QP.^2;
@@ -784,10 +841,6 @@ CN = QC./QN;
 
 		% Now we need to know the derivatives of E,CE,CI,CL,gammaS,CS,fProtAOpt,alphaS,rOpt,CProt,CM,kSTi,PhiS,fRibE,PRib,gammaDNA,PDNA with respect to the variables we are changing
         %dE_dCI, dfProtAOpt_dE, dfProtAOpt_dCI
-
-		pdPLip_DIP = alphaPLip*MOpt*PPhospholipid .*(-1./(1 + exp(-PLip_scale*(P-PLip_PCutoff))).^2).*(-PLip_scale*exp(-PLip_scale*(P-PLip_PCutoff))) ;
-		pdPStor_DIP = fStorage.*5000.*(1./(1 + exp(-PStor_scale.*(rOpt-PStor_rCutoff))));
-		pdQP_DIP = pdQP_PLip*pdPLip_DIP + pdQP_PStor*pdPStor_DIP;
 
         pdrOpt_E = rOpt.^2./alphaS.*CI;
         pdrOpt_CI =rOpt.^2./alphaS.*EOpt;
