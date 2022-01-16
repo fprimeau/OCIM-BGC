@@ -66,6 +66,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
     par.Pxx  = Pxx ;
     par.DIP  = DIP(iwet) ;
     data.DIP = DIP ; data.POP = POP ; data.DOP = DOP ;
+	data.Px  = Px ;
     % DIP error  % make sure everythinng is real
     eip = DIP(iwet(idip)) - par.po4raw(iwet(idip)) ;
     eop = DOP(iwet(idop)) - par.dopraw(iwet(idop)) ;
@@ -100,6 +101,9 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 		par.C2Pxx = C2Pxx;
 		par.C2Ppxx = C2Ppxx;
 
+		%save derivative for sensitivity tests
+		data.C2Px = C2Px;
+
 		%data.CellOut = par.CellOut;
 		data.CellOut.C2P =  par.CellOut.C2P;
 		data.CellOut.N2P = par.CellOut.N2P;
@@ -112,6 +116,9 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 		data.CellOut.A = par.CellOut.A; % M=A
 		data.CellOut.PLip = par.CellOut.PLip;
 		data.CellOut.PStor = par.CellOut.PStor;
+		data.CellOut.QP = par.CellOut.QP;
+		data.CellOut.QC = par.CellOut.QC;
+
 		toc
 		fprintf('All of Cell model solved \n ')
 
@@ -156,6 +163,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
         data.DIC = DIC ;  data.POC = POC ;
         data.DOC = DOC ;  data.PIC = PIC ;
         data.ALK = ALK ;
+		data.Cx = Cx;
 %
 %		CNPP = M3d+nan ;  CNPP(iwet) = par.G*par.C2P ;
 %		data.CNPP = CNPP;

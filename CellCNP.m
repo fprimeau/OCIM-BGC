@@ -193,7 +193,6 @@ function [out,M] = CellCNP(par,x,P,N,T,Irr)
     end
 
 %keyboard;
-%%
 
 % temperature dependent rates
     DN = DNT0*Q10Diffusivity.^((T-T0)./10.0);    % diffusivity of nitrate [ m^2/hr]
@@ -687,7 +686,7 @@ QN = (EOpt.*NE +EOpt.*(CI-1).*NL +gammaS*NS +fProtAOpt.*AOpt.*NProt +MOpt.*NM)./
 	% CPLip = PLip./PPhospholipid*CPhospholipid - PLip./PPhospholipid*CLipid ;
 	% only do this if carbon content changes when the p in phospholipids is substituted out. i dont think this is the case, so CPhospholipid is already acounted for in CM (need to look up how substitution works)
  PStor = fStorage.*5000.*P .*(1./(1 + exp(-PStor_scale.*(rOpt-PStor_rCutoff)))); % change max value? change units of P (was P*5000)
- 	% PStor unit = molP/molC
+ 	% PStor unit = molP/molC (but values of PStor ~10^-3. (so huge C:P, does this make sense?)
 	% [P] units = molP/L
 	% fStorage units = L/molC
 	% aside: DIC =molC/L ; if 5000 was replaced with seawater 1./DIC, then fStorage would be unitless. Would it ake sense to have PStor be a function of the DIP:DIC ratio in seawater?
@@ -954,6 +953,7 @@ CN = QC./QN;
 	out.A = AOpt;
     out.mu = muOpt;
 	out.QP = QP;
+	out.QC = QC;
 	out.PStor = PStor;
     out.PLip = PLip;
 	out.CI = CI;

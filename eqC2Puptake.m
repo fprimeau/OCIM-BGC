@@ -54,6 +54,8 @@ function [par, C2P, C2Px, C2Pxx, C2Ppxx] = eqC2Puptake(x, par, data)
 		par.CellOut.A       = M3d(:,:,1:2)*NaN;
 		par.CellOut.PLip    = M3d(:,:,1:2)*NaN;
 		par.CellOut.PStor   = M3d(:,:,1:2)*NaN;
+		par.CellOut.QP      = M3d(:,:,1:2)*NaN;
+		par.CellOut.QC      = M3d(:,:,1:2)*NaN;
 
 		par.CellOut.LimType(iprod) = CellOut.LimType;
 		par.CellOut.r(iprod)       = CellOut.r;
@@ -63,6 +65,8 @@ function [par, C2P, C2Px, C2Pxx, C2Ppxx] = eqC2Puptake(x, par, data)
 		par.CellOut.A(iprod)       = CellOut.A;
 		par.CellOut.PLip(iprod)    = CellOut.PLip;
 		par.CellOut.PStor(iprod)   = CellOut.PStor;
+		par.CellOut.QP(iprod)      = CellOut.QP;
+		par.CellOut.QC(iprod)      = CellOut.QC;
 
 
 		% for points where DIP was reset from a negative value, set the derivative to 0
