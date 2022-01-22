@@ -27,6 +27,7 @@ function par = SetPar(par)
     else
         par.sigma = 0.30 ;  			% Fraction of organic P production allocated directly to the dissolved pool
 										% default was 1.0e-01 , however 0.30 is used by (Wang, 2019: Nitrogen fixation)
+										% SONTrap value = 1/3
     end
     if exist('xhat') & isfield(xhat,'kP_T')
         par.kP_T = xhat.kP_T ;
@@ -36,7 +37,7 @@ function par = SetPar(par)
     if exist('xhat') & isfield(xhat,'kdP')
         par.kdP = xhat.kdP ;
     else
-        par.kdP = 2.42e-08 ;			% DOP remineralization constant [s^-1]
+        par.kdP = 2.42e-08 ;			% DOP remineralization constant [s^-1] (SONTrap = 1.57e-7)
     end
     if exist('xhat') & isfield(xhat,'bP_T')
         par.bP_T = xhat.bP_T ;
@@ -46,17 +47,19 @@ function par = SetPar(par)
     if exist('xhat') & isfield(xhat,'bP')
         par.bP  = xhat.bP ;
     else
-        par.bP  = 9.60e-01 ;			% Martin exponent of POP solubilization (const term)
+        par.bP  = 9.60e-01 ;			% Martin exponent of POP solubilization (const term) (SONTrap paper =0.7)
     end
     if exist('xhat') & isfield(xhat,'alpha')
         par.alpha = xhat.alpha ;
     else
-        par.alpha = 3.37e-08   ;		% NPP scaling factor for DIP uptake rate
+        %par.alpha = 3.37e-08   ;		% WeiLei's NPP scaling factor for DIP uptake rate (used until v9b)
+		par.alpha = 1.0   ;		% NPP scaling factor for DIP uptake rate
     end
     if exist('xhat') & isfield(xhat,'beta')
         par.beta = xhat.beta ;
     else
-        par.beta = 1.65e-02  ;			% NPP scaling exponent for DIP uptake rate
+        %par.beta = 1.65e-02  ;			% Weilei's NPP scaling exponent for DIP uptake rate (used until v9b)
+		par.beta = 1.0 ;			% NPP scaling exponent for DIP uptake rate
     end
 
     % C model parameters
@@ -98,12 +101,14 @@ function par = SetPar(par)
     if exist('xhat') & isfield(xhat,'cc')
         par.cc = xhat.cc  ;
     else
-        par.cc = 7.51e-4 ;				% slope for P:C as a linear function of DIP
+        %par.cc = 7.51e-4 ;				% slope for P:C as a linear function of DIP (WeiLei's value)
+		par.cc = 0.0 ;					% slope for P:C as a linear function of DIP. if cc is off, P:C is a constant
     end
     if exist('xhat') & isfield(xhat,'dd')
         par.dd = xhat.dd  ;
     else
-        par.dd = 5.56e-03 ;				% intercept for P:C as a linear function of DIP
+        %par.dd = 5.56e-03 ;			% intercept for P:C as a linear function of DIP (WeiLei's Value)
+		par.dd = 1/106 ;				% intercept for P:C as a linear function of DIP (Redfield)
     end
 
     % O model parameters
@@ -156,7 +161,7 @@ function par = SetPar(par)
     end
 	%
 	% Cell model parameters
-	if exist('xhat') & isfield(xhat,'Q10Photo') 
+	if exist('xhat') & isfield(xhat,'Q10Photo')
 		par.BIO.Q10Photo = real(xhat.Q10Photo);
 	else
 		par.BIO.Q10Photo = 1.983;		% Q10 of photosynthesis
