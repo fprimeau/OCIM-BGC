@@ -4,7 +4,7 @@ global iter
 
 % set up parallel pool
 if isempty(gcp('nocreate'))
-	poolobj = parpool(16) % if running in parallel; comment out to run serial
+	poolobj = parpool(16); % if running in parallel; comment out to run serial
 	%to close the parallel pool: delete(poolobj)
 	poolobj.IdleTimeout = 120;
 end
@@ -25,8 +25,12 @@ operator = 'A' ;
 % E -> KvHIGH_KiLOW_He; F -> KvHIGH_KiLOW_noHe; G -> KiLOW_He;
 % H -> KiLOW_noHe; I -> KvHIGH_He; J -> KvHIGH_noHe; K -> KvHIGH_KiHIGH_noHe
 
-Gtest = off ;
-Htest = off ;
+VerName = ''; 		% optional version name. leave as an empty character array
+					% or add a name ending with an underscore
+VerNum = '';		% optional version number
+
+Gtest = off ;		% do gradient test
+Htest = off ;		% do hessian test
 par.optim   = on ;
 par.Cmodel  = on ;
 par.Omodel  = off ;
@@ -35,6 +39,10 @@ par.Cellmodel = on; % cellular trait model for phyto uptake stoichiometry
 par.LoadOpt = on ; % if load optimial par.
 par.pscale  = 0.0 ;
 par.cscale  = 0.25 ; % factor to weigh DOC in the objective function
+
+% to load parameter values from a run with a different name. need to delete or comment out for loadOpt to work normally
+par.fxhatload = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK90/Tv4_PCCellv8_DOC0.25_DOP0_xhat.mat' ;
+
 
 % P model parameters
 par.opt_sigma = off ;
@@ -47,6 +55,8 @@ par.opt_beta  = on ;
 % C model parameters
 par.opt_bC_T  = on ;
 par.opt_bC    = on ;
+par.opt_bPC	  = off; %new variable to optimize bP and bC with the same value.
+					 % no temperature dependence. must have opt_bP on and opt_bP_T, opt_bC, opt_bC_T off
 par.opt_d     = on ;
 par.opt_kC_T  = off ;
 par.opt_kdC   = on ;
@@ -75,7 +85,7 @@ par.opt_PStor_scale  = off ;
 par.opt_alphaS       = off ;
 par.opt_fRibE 	     = off ;
 par.opt_kST0 	     = on ;
-% par.BIO.opt_gammaDNA = off;
+% par.opt_gammaDNA = off;
 % par.BIO.opt_gammaLipid = off;
 % par.BIO.opt_DNT0 = off;
 % par.BIO.opt_DPT0 = off;
@@ -83,6 +93,10 @@ par.opt_kST0 	     = on ;
 % par.BIO.opt_AMin = off;
 % par.BIO.opt_PhiS = off;
 
+if par.opt_bPC && (par.opt_bC || par.opt_bC_T)
+	fprintf('Error: cannot have opt_bPC turned on if opt_bC or opt_bC_T are on');
+	return
+end
 
 %-------------load data and set up parameters---------------------
 SetUp ;
@@ -102,37 +116,37 @@ elseif isunix
     % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/COP4WWF/' ...
                         % 'MSK%2d/'],GridVer);
 end
-VER = strcat(output_dir,TRdivVer);
+VER = strcat(output_dir,VerName,TRdivVer);
 catDOC = sprintf('_DOC%0.2g_DOP%0.2g',par.cscale,par.pscale); % used to add scale factors to file names
 % Creat output file names based on which model(s) is(are) optimized
 %if Gtest == on
 %    fname = strcat(VER,'_GHtest');
 %elseif Gtest == off
     if (par.Cmodel == off & par.Omodel == off & par.Simodel == off & par.Cellmodel == off)
-        fname = strcat(VER,'_P');
+        fname = strcat(VER,'_P',VerNum);
     elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off & par.Cellmodel == off)
-        base_name = strcat(VER,'_PC');
+        base_name = strcat(VER,'_PC',VerNum);
         fname = strcat(base_name,catDOC);
     elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off & par.Cellmodel == off)
-        base_name = strcat(VER,'_PCO');
+        base_name = strcat(VER,'_PCO',VerNum);
         fname = strcat(base_name,catDOC);
     elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on & par.Cellmodel == off)
-        base_name = strcat(VER,'_PCSi');
+        base_name = strcat(VER,'_PCSi',VerNum);
         fname = strcat(base_name,catDOC);
     elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on & par.Cellmodel == off)
-        base_name = strcat(VER,'_PCOSi');
+        base_name = strcat(VER,'_PCOSi',VerNum);
         fname = strcat(base_name,catDOC);
 	elseif (par.Cmodel == off & par.Omodel == off & par.Simodel == off & par.Cellmodel == on) % cell model does nothing if C model is not on, so this case =Ponly
-        base_name = strcat(VER,'_PCell');
+        base_name = strcat(VER,'_PCell',VerNum);
         fname = strcat(base_name,catDOC);
 	elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off & par.Cellmodel == on)
-        base_name = strcat(VER,'_PCCellv6b');
+        base_name = strcat(VER,'_PCCell',VerNum);
         fname = strcat(base_name,catDOC);
 	elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off & par.Cellmodel == on)
-		base_name = strcat(VER,'_PCOCell');
+		base_name = strcat(VER,'_PCOCell',VerNum);
 		fname = strcat(base_name,catDOC);
 	elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on & par.Cellmodel == on)
-        base_name = strcat(VER,'_PCOSiCell');
+        base_name = strcat(VER,'_PCOSiCell',VerNum);
         fname = strcat(base_name,catDOC);
     end
 %end
@@ -143,6 +157,9 @@ par.fxhat = fxhat ;
 if Htest ==on
 	fGHtest = strcat(fname,'_GHtest.mat')  ;
 end
+%if sensitivityTest ==on
+%	fSensiTest = strcat(fname,'_pert.mat')  ;
+%end
 
 %par.fhistory = strcat(fname,'_history.mat');
 
@@ -237,6 +254,7 @@ options = optimoptions(@fminunc                  , ...
                        'PrecondBandWidth',Inf    , ...
 					   'SubproblemAlgorithm','factorization') ; %testing this
 					   %'OutputFcn',@fminoutfun ) 	 ; % maybe use 'SubproblemAlgorithm','factorization' -changing subproblem did not seem to effect anything
+					   %'OptimalityTolerance', 5e-7;
 %
 nip = length(x0);
 if (Gtest);

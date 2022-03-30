@@ -174,9 +174,9 @@ function [f, fx, fxx, data] = neglogpost(x, par)
         elk = ALK(iwet(ialk)) - par.alkraw(iwet(ialk)) ;
         f   = f + 0.5*(eic.'*Wic*eic) + 0.5*(eoc.'*Woc*eoc) + ...
               0.5*(elk.'*Wlk*elk);
+		fprintf('C model solved \n')
 		toc
     end
-	fprintf('C model solved \n')
 	% fprintf('number of non real values in C output: %i \n', length(find(C~=real(C))))
 	% fprintf('number of non real values in Cx output: %i \n', length(find(Cx~=real(Cx))))
 	% fprintf('number of non real values in Cxx output: %i \n', length(find(Cxx~=real(Cxx))))
@@ -214,13 +214,15 @@ function [f, fx, fxx, data] = neglogpost(x, par)
     % calculate gradient
     if (nargout > 1)
         fx = zeros(length(x), 1)   ;
-        ipx  = Px(0*nwet+1:nwet,:) ;
-        opx  = Px(2*nwet+1:end ,:) ;
-        npx = par.npx              ;
-        % ---------Pmodel------------------------
-        for ji = 1 : npx
-            fx(ji) = eip.'*Wip*ipx(idip,ji) + eop.'*Wop*opx(idop,ji); % + 2*10^6(par.bP-1) dobj_fun_dbP = dP_dbP*prior + f*dprior_dbP
-        end
+		npx = par.npx ;
+		if npx>0
+	        ipx  = Px(0*nwet+1:nwet,:) ;
+	        opx  = Px(2*nwet+1:end ,:) ;         ;
+	        % ---------Pmodel------------------------
+	        for ji = 1 : npx
+	            fx(ji) = eip.'*Wip*ipx(idip,ji) + eop.'*Wop*opx(idop,ji); % + 2*10^6(par.bP-1) dobj_fun_dbP = dP_dbP*prior + f*dprior_dbP
+	        end
+		end
         % ---------------------------------
         if (par.Simodel == on & par.Omodel == off & par.Cmodel == off)
             sx  = Six(1:nwet,:) ;
@@ -325,28 +327,43 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 	end
     %
     if (nargout>2)
-        fxx = sparse(npx, npx)  ;  %shouldn't this be (nx,nx), size of all model params, not just p params
-        ipxx = Pxx(0*nwet+1 : 1*nwet, :) ;
-        opxx = Pxx(2*nwet+1 : 3*nwet, :) ;
+		if par.npx > 0
+        	ipxx = Pxx(0*nwet+1 : 1*nwet, :) ;
+        	opxx = Pxx(2*nwet+1 : 3*nwet, :) ;
+		end
+		if par.Cmodel == on & (par.ncx + par.nbx > 0)
+			icxx = Cxx(0*nwet+1 : 1*nwet, :) ;
+			ocxx = Cxx(2*nwet+1 : 3*nwet, :) ;
+			lkxx = Cxx(4*nwet+1 : 5*nwet, :) ;
+		end
+		if par.Omodel == on & par.nox > 0
+			oxx = Oxx(1:nwet,:);
+		end
+		if par.Simodel == on & par.nsx > 0
+			sxx = Sixx(1:nwet,:);
+		end
+		fxx = sparse(npx, npx)  ;  %shouldn't this be (nx,nx), size of all model params, not (npx, npx) just p params
         % ----------------------------------------------------------------
         kk = 0;
         for ju = 1:npx
             for jo = ju:npx
                 kk = kk + 1 ;
+%				ipxx = Pxx(0*nwet+1 : 1*nwet, :) ;
+%		        opxx = Pxx(2*nwet+1 : 3*nwet, :) ;
                 fxx(ju,jo) = ...
                     ipx(idip,ju).'*Wip*ipx(idip,jo) + eip.'*Wip*ipxx(idip,kk) + ...
                     opx(idop,ju).'*Wop*opx(idop,jo) + eop.'*Wop*opxx(idop,kk);
                 % Simodel
                 if par.Simodel == on
-                    sxx = Sixx(1:nwet,:);
+%                    sxx = Sixx(1:nwet,:);
                     fxx(ju,jo) = fxx(ju, jo) + ...
                         sx(isil,ju).'*Ws*sx(isil,jo) + es.'*Ws*sxx(isil,kk);
                 end
                 % Cmodel
                 if par.Cmodel == on
-                    icxx = Cxx(0*nwet+1 : 1*nwet, :) ;
-                    ocxx = Cxx(2*nwet+1 : 3*nwet, :) ;
-                    lkxx = Cxx(4*nwet+1 : 5*nwet, :) ;
+%                    icxx = Cxx(0*nwet+1 : 1*nwet, :) ;
+%                    ocxx = Cxx(2*nwet+1 : 3*nwet, :) ;
+%                    lkxx = Cxx(4*nwet+1 : 5*nwet, :) ;
                     fxx(ju,jo) = fxx(ju, jo) + ...
                         icx(idic,ju).'*Wic*icx(idic,jo) + eic.'*Wic*icxx(idic,kk) + ...
                         ocx(idoc,ju).'*Woc*ocx(idoc,jo) + eoc.'*Woc*ocxx(idoc,kk) + ...
@@ -354,7 +371,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
                 end
                 % Omodel
                 if par.Omodel == on
-                    oxx = Oxx(1:nwet,:);
+%                    oxx = Oxx(1:nwet,:);
                     fxx(ju,jo) = fxx(ju, jo) + ...
                         ox(io2,ju).'*Wo*ox(io2,jo) + eo.'*Wo*oxx(io2,kk);
                 end

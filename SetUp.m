@@ -67,19 +67,19 @@ if GridVer == 90
     load M3d90x180x24v2.mat MSKS
     load Sobs_90x180x24.mat
     load tempobs_90x180x24.mat
-    load po4obs_90x180x24.mat       % WOA PO4 observation
-	load no3obs_90x180x24.mat		% WOA NO3 obs
+    load po4obs_90x180x24.mat       % WOA PO4 observation [units: umol/kg]
+	load no3obs_90x180x24.mat		% WOA NO3 obs [units: umol/kg]
     load Siobs_90x180x24.mat Siobs
     load Mouw_POC_90x180x24.mat  % sediment trap data MOUW
     %
-    load GLODAPv2_talk.mat
+    load GLODAPv2_talk.mat			% [units: umol/kg]
     load PME_TS_90x180x24.mat  pme
     load DICant_90x180x24.mat
-    load GLODAPv2_90x180x24raw.mat  % GLODAP Nutrient units = [umol/kg] ??? are units changed for the .mat file?
+    load GLODAPv2_90x180x24raw.mat  % GLODAP Nutrient units = [umol/kg]
 	load raw_no3obs_90x180x24.mat   % GLODAP NO3
     load splco2_mod_monthly.mat     % monthly CO2 data
     load co2syspar90.mat co2syspar
-    load cbpm_npp_annual_90x180.mat
+    load cbpm_npp_annual_90x180.mat	% [units: mg C/m^2/day]
     load DOMobs_90x180x24.mat
     load kw660_90x180.mat
 	PARobs = load('annual_PAR_90x180.mat'); %PAR data in units of [Einstein m-2 d-1] (units converted for cell model later in SetUp)
@@ -132,7 +132,7 @@ par.spa = spa ;
 par.Kw660 = Kw660   ;
 par.p4    = p4      ;
 par.c2p   = 110     ;	   % constant C:P ratio
-par.rho   = 1024.5       ; % seawater density;
+par.rho   = 1024.5       ; % seawater density [kg/m^3];  	% consider using WOA18 density field instead of a constant?
 permil    = par.rho*1e-3 ; % from umol/kg to mmol/m3;
 par.permil = permil ;
 % transiant CO2 concentraion;
@@ -192,9 +192,9 @@ par.po4raw  = po4raw  ;
 par.no3raw  = no3raw  ; %no3raw field not in GLODAPv2_90x180x24raw.mat
 par.sio4raw = sio4raw ;
 par.DOCobs  = DOCobs  ;
-par.alkraw  = alkraw*permil ;
-par.dicraw  = dicraw*permil ;
-par.dicant  = DICant*permil ;
+par.alkraw  = alkraw*permil ;		% mmol/m^3
+par.dicraw  = dicraw*permil ;		% mmol/m^3
+par.dicant  = DICant*permil ;		% mmol/m^3
 par.dopraw  = DOPobs - 0.03 ; % less refractory DOP
 DOCclean   = RemoveRef(par) ;
 ibad = find( DOCclean(iarc) > 50 ) ;
@@ -242,13 +242,27 @@ par.DSibar = sum(par.sio4raw(iwet(isil)).*dVt(iwet(isil)))/sum(dVt(iwet(isil)));
 
 %------------------ Prepare Light field the model --------------------
 par.nzo = 2;
-% PAR [Einstein m-2 d-1] is converted into units of [umol photon m^-2 s^-1] for cell model
-PARobs_PPFD = PARobs.par*10^6/spd; % PAR at surface
+
+PARobs = PARobs.par;
+
+% fill in missing values along coastlines
+PARsurf = inpaint_nans(PARobs);
+SURF = M3d(:,:,1);
+ilnd = find(SURF(:) == 0);
+PARsurf(ilnd) = NaN;
+PARsurf(PARsurf<=0) = min(PARobs(:));
+
+% convert PAR [Einstein m^-2 d^-1] into units of [umol photon m^-2 s^-1] for cell model
+PARsurf = PARsurf*10^6/spd; % PAR at surface
 clear PARobs
 
-% remove NaNs along coastlines in Light field (maybe move this into a seperate function)
-PARsurf = cleanPARobs(PARobs_PPFD,M3d); %local function at end of file
-clear PARobs_PPFD
+% % PAR [Einstein m-2 d-1] is converted into units of [umol photon m^-2 s^-1] for cell model
+% PARobs_PPFD = PARobs.par*10^6/spd; % PAR at surface
+% clear PARobs
+%
+% % remove NaNs along coastlines in Light field (maybe move this into a seperate function)
+% PARsurf = cleanPARobs(PARobs_PPFD,M3d); %local function at end of file
+% clear PARobs_PPFD
 
 % extrapolate light to bottom of euphotic zone
 par.kI = 0.04;   % Light attenuation coefficient in seawater [m^-1]
@@ -268,8 +282,8 @@ par.p2c = 0.006+0.0069*po4obs ;
 inan = find(isnan(npp(:)) | npp(:) < 0) ;
 npp(inan) = 0 ;
 
-par.npp   = npp/(12*spd) ;
-par.npp1  = (0.5*par.npp./grd.dzt(1)).*par.p2c(:,:,1) ;
+par.npp   = npp/(12*spd) ;		% units: mmol C/m^2/s
+par.npp1  = (0.5*par.npp./grd.dzt(1)).*par.p2c(:,:,1) ; % units: mmol P/m^2/s
 par.npp2  = (0.5*par.npp./grd.dzt(2)).*par.p2c(:,:,2) ;
 par.Lambda = M3d*0 ;
 par.Lambda(:,:,1) = 1./(1e-6+po4obs(:,:,1)) ;

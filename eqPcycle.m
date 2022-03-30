@@ -76,7 +76,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
 
     % fixed parameters
     Tz      = par.Tz ;
-    DIPbar  = M3d(iwet)*par.DIPbar;  % gobal average PO4 conc.[mmol m^-3];
+    DIPbar  = M3d(iwet)*par.DIPbar;  % gobal average PO4 conc.[umol/kg] [need to multiply by par.permil to get mmol m^-3];
     kappa_g = par.kappa_g; % PO4 geological restore const.[s^-1];
     kappa_p = par.kappa_p; % POP solubilization rate constant
     npp     = par.npp;     % net primary production
@@ -90,7 +90,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
     LAM(:,:,2) = (npp2.^beta).*Lambda(:,:,2);
     L          = d0(LAM(iwet));  % PO4 assimilation rate [s^-1];
     par.L      = L;
-    PO4 = par.po4obs(iwet) ;
+    PO4 = par.po4obs(iwet) ; % [umol/kg];
     % particle flux
     PFD = buildPFD(par,'POP');
     junk = M3d ;
@@ -125,7 +125,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
     % solve for P-cycle model state
     P = mfactor(FFp,RHS);
 
-    if (par.optim == off)
+    if (par.optim == off) | ~any([par.opt_sigma par.opt_kP_T par.opt_kdP par.opt_bP_T par.opt_bP par.opt_alpha par.opt_beta])
         Px = [];
     elseif (par.optim & nargout > 2)
         %
@@ -203,7 +203,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
         end
     end
     %% ---------------------------------------------------------
-    if (par.optim == off)
+    if (par.optim == off) | ~any([par.opt_sigma par.opt_kP_T par.opt_kdP par.opt_bP_T par.opt_bP par.opt_alpha par.opt_beta])
         Pxx = [];
     elseif (par.optim & nargout > 3)
         % Compute the hessian of the solution wrt the parameters

@@ -18,16 +18,25 @@ function par = SetPar(par)
 								% Sarmiento and Gruber book (p.271);
 
     % load optimal parameters if they exist
-    if isfile(par.fxhat) & par.LoadOpt == on
-        load(par.fxhat)
-    end
+    % if isfile(par.fxhat) & par.LoadOpt == on
+    %     load(par.fxhat)
+    % end
+	if par.LoadOpt ==on
+		if isfield(par,'fxhatload') & isfile(par.fxhatload)
+			load(par.fxhatload)
+		elseif isfile(par.fxhat)
+			load(par.fxhat)
+		end
+	end
+
     % P model parameters
     if exist('xhat') & isfield(xhat,'sigma')
         par.sigma = xhat.sigma ;
     else
-        par.sigma = 0.30 ;  			% Fraction of organic P production allocated directly to the dissolved pool
+        %par.sigma = 0.30 ;  			% Fraction of organic P production allocated directly to the dissolved pool
 										% default was 1.0e-01 , however 0.30 is used by (Wang, 2019: Nitrogen fixation)
 										% SONTrap value = 1/3
+		par.sigma = 0.10 ;
     end
     if exist('xhat') & isfield(xhat,'kP_T')
         par.kP_T = xhat.kP_T ;
@@ -72,6 +81,13 @@ function par = SetPar(par)
         par.bC = xhat.bC ;
     else
         par.bC = 9.38e-01    ;			% Martin exponent of POC solubilization (const term)
+		par.bC = 9.60e-01    ;			% set to match bP
+    end
+	% adding a new parameter for b; incomplete
+	if exist('xhat') & isfield(xhat,'bPC')
+        par.bPC = xhat.bPC ;
+    else
+        par.bPC = par.bP    ;			% Martin exponent of POC solubilization set equal to that of POP
     end
     if exist('xhat') & isfield(xhat,'d')
         par.d = xhat.d   ;
@@ -102,13 +118,17 @@ function par = SetPar(par)
         par.cc = xhat.cc  ;
     else
         %par.cc = 7.51e-4 ;				% slope for P:C as a linear function of DIP (WeiLei's value)
+		%par.cc = 1.02e-7 ; 				% WeiLei's new value
+		%par.cc = 6.9e-3 ; 				% value from Galbraith & Martiny 2015
 		par.cc = 0.0 ;					% slope for P:C as a linear function of DIP. if cc is off, P:C is a constant
+										% with cc initially set to 0.0, optimization doesn't work for this param. instead make it a very small value
     end
     if exist('xhat') & isfield(xhat,'dd')
         par.dd = xhat.dd  ;
     else
         %par.dd = 5.56e-03 ;			% intercept for P:C as a linear function of DIP (WeiLei's Value)
-		par.dd = 1/106 ;				% intercept for P:C as a linear function of DIP (Redfield)
+		par.dd = 6.0e-03 ;				% intercept for P:C as a linear function of DIP (value from Galbraith & MArtiny 2015)
+		%par.dd = 1/106 ;				% intercept for P:C as a linear function of DIP (Redfield)
     end
 
     % O model parameters
@@ -206,35 +226,40 @@ function par = SetPar(par)
 	else
 		par.BIO.alphaS = 0.225;          % radius at which cell is all periplasm and membrane [um]
 	end
+	if exist('xhat') & isfield(xhat,'gammaDNA')
+		par.BIO.gammaDNA = real(xhat.gammaDNA);
+	else
+		par.BIO.gammaDNA = 0.016;          % DNA Fraction of cell
+	end
 
 % cell model parameters that don't change
 	if (par.Cellmodel==on)
-		par.BIO.gammaDNA = .016;        % DNA fraction of cell
-		par.BIO.gammaLipid = .173       % structural Lipid (non-membrane or periplasm) fraction of cell
-		%par.BIO.lPCutoff = -7.252;		% log of max [P] for which Plipids will be substituted with Slipids
-		%par.BIO.r0Cutoff = 2.25;		% % NEED TO REDEFINE: r0Cutoff =  rFullA; ASK GEORGE % now PStor_rCutoff
-		par.BIO.DNT0 = 1e-12*3.6e2*3600;    % Diffusivity of Nitrate at 25degC [m^2/hr]
-		par.BIO.DPT0 = 1e-12*3.6e2*3600;    % Diffusivity of Phosphate at 25degC [m^2/hr]
+		%par.BIO.gammaDNA 	= .016;		% DNA fraction of cell
+		par.BIO.gammaLipid 	= .173;		% structural Lipid (non-membrane or periplasm) fraction of cell
+		%par.BIO.lPCutoff 	= -7.252;	% log of max [P] for which Plipids will be substituted with Slipids
+		%par.BIO.r0Cutoff 	= 2.25;		% % NEED TO REDEFINE: r0Cutoff =  rFullA; ASK GEORGE % now PStor_rCutoff
+		par.BIO.DNT0 		= 1e-12*3.6e2*3600;    % Diffusivity of Nitrate at 25degC [m^2/hr]
+		par.BIO.DPT0 		= 1e-12*3.6e2*3600;    % Diffusivity of Phosphate at 25degC [m^2/hr]
 		par.BIO.Q10Diffusivity = 1.5;
-		par.BIO.AMin =.05;              % minimal fraction of cell dry mass that is nutrient uptake proteins
-		%par.BIO.CStor = 1.00;           %replaced by PStor_scale
-		par.BIO.PhiS = .67;             % specific carbon cost of synthesis [gC/gC]
+		par.BIO.AMin 		= .05;		% minimal fraction of cell dry mass that is nutrient uptake proteins
+		%par.BIO.CStor 		= 1.00;		% replaced by PStor_scale
+		par.BIO.PhiS 		= .67;		% specific carbon cost of synthesis [gC/gC]
 		%%% BIO parameters below should remain fixed
-		par.BIO.pDry = .47;             % Dry mass fraction of the cell
-		par.BIO.rho = 1e-12;            % cell density [g/um^3]
-		par.BIO.fProtM = 0.25;          % protein fraction of cell membranes
-		par.BIO.fProtL = .7;            % protein fraction of light harvesting apparatus
-		par.BIO.PDNA = .095;            % phosphorus mass fraction in DNA [gP/g]
-		par.BIO.PRib = 0.047;           % phosphorus mass fraction in ribosomes [gP/g]
-		par.BIO.PPhospholipid = 0.042;  % phosphorus mass fraction in phospholipids [gP/g]
-		par.BIO.NProt = .16;            % nitrogen mass fraction in proteins [gN/g]
-		par.BIO.NDNA = .16;             % nitrogen mass fraction in DNA [gN/g]
-		par.BIO.NRib = .16;             % nitrogen mass fraction in Ribosomes [gN/g]
-		par.BIO.CProt = .53;            % carbon mass fraction in proteins [gC/g]
-		par.BIO.CDNA = .36;             % carbon mass fraction in DNA [gC/g]
-		par.BIO.CPhospholipid = .65;    % carbon mass fraction in phospholipids [gC/g] - why seperate form lipids?
-		par.BIO.CLipid = .76;			% carbon mass fraction in other lipids (that are not phospholipids) [gC/g]
-		par.BIO.CRib = .419;     		% carbon mass fraction in ribosomes [gC/g] (technically, only correct for eukaryotes)
-		par.BIO.alphaPLip = 0.12;       % phospholipid fraction of cell membrane
+		par.BIO.pDry 		= .47;		% Dry mass fraction of the cell
+		par.BIO.rho 		= 1e-12;	% cell density [g/um^3]
+		par.BIO.fProtM 		= 0.25;		% protein fraction of cell membranes
+		par.BIO.fProtL 		= .7;		% protein fraction of light harvesting apparatus
+		par.BIO.PDNA 		= .095;		% phosphorus mass fraction in DNA [gP/g]
+		par.BIO.PRib 		= 0.047;	% phosphorus mass fraction in ribosomes [gP/g]
+		par.BIO.PPhospholipid = 0.042;	% phosphorus mass fraction in phospholipids [gP/g]
+		par.BIO.NProt 		= .16;		% nitrogen mass fraction in proteins [gN/g]
+		par.BIO.NDNA 		= .16;		% nitrogen mass fraction in DNA [gN/g]
+		par.BIO.NRib 		= .16;		% nitrogen mass fraction in Ribosomes [gN/g]
+		par.BIO.CProt 		= .53;		% carbon mass fraction in proteins [gC/g]
+		par.BIO.CDNA 		= .36;		% carbon mass fraction in DNA [gC/g]
+		par.BIO.CPhospholipid = .65;	% carbon mass fraction in phospholipids [gC/g] - why seperate form lipids?
+		par.BIO.CLipid 		= .76;		% carbon mass fraction in other lipids (that are not phospholipids) [gC/g]
+		par.BIO.CRib 		= .419;		% carbon mass fraction in ribosomes [gC/g] (technically, only correct for eukaryotes)
+		par.BIO.alphaPLip 	= 0.12;		% phospholipid fraction of cell membrane
 	end
 end

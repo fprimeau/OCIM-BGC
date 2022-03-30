@@ -18,7 +18,7 @@ function [par, C2P, C2Px, C2Pxx, C2Ppxx] = eqC2Puptake(x, par, data)
 
 		iprod = find(M3d(:,:,1:2)); %production in top two layers
 		P0 = data.DIP(iprod)./10^6;		% data.DIP:[mmol/m^3] convert to mol/L
-		N0 = par.no3obs(iprod)./10^6;   % convert [mmol/m^3 --> mol/L]
+		N0 = par.no3obs(iprod)./10^6;   % *par.permil ; convert [umol/kg --> mmol/m^3 --> mol/L]
 		T0 = par.Temp(iprod);
 		Irr0 = par.PARobs(iprod);
 
@@ -97,30 +97,32 @@ C2Pxx = [];
 		dC2P_dDIP = dC2P_dDIPmolperL * dDIPmolperL_dDIPmmolperm3;
 		%dC2P_dDIP = tmp(iwet);
 
-        DIPx = par.Px(1:nwet,:);
-		% define C2Px(:,pindx.sigma) [for all P model parameters]
-		%Then in eqCcycle: +dDIC_dC2P* C2Px(:,pindx.sigma)  ;where dDIC_dC2P = -(I+(1-sigma)*RR)*G)
-		%--------- P Model Parameters ----------------
-		if (par.opt_sigma == on)
-			C2Px(:,par.pindx.lsigma) = d0(dC2P_dDIP(iwet))*DIPx(:,par.pindx.lsigma) ;
-		end
-		if (par.opt_kP_T == on)
-	        C2Px(:,par.pindx.kP_T) = d0(dC2P_dDIP(iwet))*DIPx(:,par.pindx.kP_T) ;
-		end
-		if (par.opt_kdP   == on)
-			C2Px(:,par.pindx.lkdP) = dC2P_dDIP(iwet).*DIPx(:,par.pindx.lkdP) ;
-		end
-		if (par.opt_bP_T  == on)
-			C2Px(:,par.pindx.bP_T) = dC2P_dDIP(iwet).*DIPx(:,par.pindx.bP_T) ;
-		end
-		if (par.opt_bP    == on)
-			C2Px(:,par.pindx.lbP) = dC2P_dDIP(iwet).*DIPx(:,par.pindx.lbP) ;
-		end
-		if (par.opt_alpha == on)
-			C2Px(:,par.pindx.lalpha) = dC2P_dDIP(iwet).*DIPx(:,par.pindx.lalpha) ;
-		end
-		if (par.opt_beta  == on)
-			C2Px(:,par.pindx.lbeta) = dC2P_dDIP(iwet).*DIPx(:,par.pindx.lbeta) ;
+		if par.npx > 0
+	        DIPx = par.Px(1:nwet,:);
+			% define C2Px(:,pindx.sigma) [for all P model parameters]
+			%Then in eqCcycle: +dDIC_dC2P* C2Px(:,pindx.sigma)  ;where dDIC_dC2P = -(I+(1-sigma)*RR)*G)
+			%--------- P Model Parameters ----------------
+			if (par.opt_sigma == on)
+				C2Px(:,par.pindx.lsigma) = d0(dC2P_dDIP(iwet))*DIPx(:,par.pindx.lsigma) ;
+			end
+			if (par.opt_kP_T == on)
+		        C2Px(:,par.pindx.kP_T) = d0(dC2P_dDIP(iwet))*DIPx(:,par.pindx.kP_T) ;
+			end
+			if (par.opt_kdP   == on)
+				C2Px(:,par.pindx.lkdP) = dC2P_dDIP(iwet).*DIPx(:,par.pindx.lkdP) ;
+			end
+			if (par.opt_bP_T  == on)
+				C2Px(:,par.pindx.bP_T) = dC2P_dDIP(iwet).*DIPx(:,par.pindx.bP_T) ;
+			end
+			if (par.opt_bP    == on)
+				C2Px(:,par.pindx.lbP) = dC2P_dDIP(iwet).*DIPx(:,par.pindx.lbP) ;
+			end
+			if (par.opt_alpha == on)
+				C2Px(:,par.pindx.lalpha) = dC2P_dDIP(iwet).*DIPx(:,par.pindx.lalpha) ;
+			end
+			if (par.opt_beta  == on)
+				C2Px(:,par.pindx.lbeta) = dC2P_dDIP(iwet).*DIPx(:,par.pindx.lbeta) ;
+			end
 		end
 		%--------------------------------------------
 
@@ -201,14 +203,19 @@ C2Pxx = [];
         C2Pxx = [] ;
 		C2Ppxx = [] ;
     elseif (par.optim & nargout > 2)
-		%C2Pxx  = zeros(nwet,nbx*nbx);
+		if par.npx > 0
+			DIPxx = par.Pxx(1:nwet,:);
+		else
+			C2Ppxx = [] ;
+		end
 
  %add C2Pxx for P Parameters
+ 	%C2Pxx  = zeros(nwet,nbx*nbx);
  	% d2C2P_dDIP2 = ???
  	%%%% recall: C2Px(:,pindx.sigma) = dC2P_dDIP*DIPx(:,pindx.kP_T)
 	% DIPxx = par.Pxx(1:nwet,:);
 	% C2Pxx(:,pindx.kP_T) = dC2P_dDIP*DIPxx(:,pindx.kP_T) + d2C2P_dDIP2*DIPx(:,pindx.kP_T).^2;
-		DIPxx = par.Pxx(1:nwet,:);
+
 		xim = sqrt(-1)*eps^3;
 		[CellOut, ~] = CellCNP(par,x,P0+xim,N0,T0,Irr0);
 		d2C2P_dDIPmolperL = M3d*0;
