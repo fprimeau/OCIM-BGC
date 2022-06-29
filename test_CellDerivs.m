@@ -35,7 +35,7 @@ DIP = DIPsurf(iprod);
 mu_model = M3dsurf*0;
 mu_model(iprod) = CellOut.mu;
 
-save('mu_model.mat','mu_model');
+%save('mu_model.mat','mu_model');
 %% set figure properties
 %%%% only run once per matlab session
 
@@ -124,9 +124,9 @@ dC2P_dlfRibE =real(CellOut.dC2P_dfRibE)*0.5*sech(tfRibE)^2; 	% dfRibE/dtfRibE = 
 dC2P_dlfRibE_CSD=imag(CellOut.CP)./eps.^3;
 
 e = dC2P_dlfRibE - dC2P_dlfRibE_CSD;
-
+%%
 mink(abs(e),10)
-ibad2 = find(abs(e)>0.1);  %derivative is wrong for a very large number of points
+ibad2 = find(abs(e)>0.1);  %find where derivative is wrong
 
 unique(CellOut.LimType(ibad2)); %fRibE is wrong in co-limited case only
         

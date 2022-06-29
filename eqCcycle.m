@@ -20,6 +20,12 @@ function [par, C, Cx, Cxx] = eqCcycle(x, par);
         par.bC  = exp(lbC)     ;
     end
 
+	% bPC
+    % if (par.opt_bPC == on)
+    %     lbC = x(par.pindx.lbP) ;
+    %     par.bC  = exp(lbC)     ;
+    % end
+
     % d
     if (par.opt_d == on)
         ld = x(par.pindx.ld) ;
@@ -162,7 +168,7 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
 	else
 		C2P = 1./(cc*PO4 + dd);
 		N2C   = 16/117 ;
-		fprintf('Using Linear function of po4obs for C:P and constant N:C')
+		%fprintf('Using Linear function of po4obs for C:P and constant N:C')
 	end
     par.C2P = C2P  ;
 
@@ -455,6 +461,16 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
 
             Cx(:,pindx.lbC) = mfactor(FD, tmp);
         end
+		%
+		% % bPC
+        % if (par.opt_bPC == on)
+        %     [~,Gout]   = buildPFD(par,'POC');
+        %     PFD_bb     = Gout.PFD_bb;
+        %     par.PFD_bb = PFD_bb;
+        %     tmp = bC*[Z; -PFD_bb*POC; Z; Z; Z];
+		%
+        %     Cx(:,pindx.lbP) = Cx(:,pindx.lbP) + mfactor(FD, tmp);
+        % end
 
         % d
         if (par.opt_d == on)
@@ -650,6 +666,21 @@ function [F,FD,Cx,Cxx,par] = C_eqn(X, par)
                       -2*(1-sigma)*RR*(G*C2P_alphaS) + ...
                       N2C*G*C2P_alphaS];
         	Cx(:,pindx.lalphaS) = mfactor(FD, tmp);
+    	end
+		%  gammaDNA
+		if (par.opt_gammaDNA == on)
+        	C2P_gammaDNA = par.CellOut.dC2P_dgammaDNA(iwet);
+			tgammaDNA = atanh(2*par.BIO.gammaDNA-1);
+			dgammaDNA_tgammaDNA = 0.5*sech(tgammaDNA)^2;
+			% C2P_tgammaDNA = C2P_gammaDNA*dgammaDNA_tgammaDNA % =C2Px(:,par.pindx.tgammaDNA)
+			C2P_tgammaDNA =C2Px(:,par.pindx.tgammaDNA);
+			tmp = [-(I+(1-sigma)*RR)*(G*C2P_tgammaDNA); ...
+                      (1-sigma)*G*C2P_tgammaDNA; ...
+                      sigma*G*C2P_tgammaDNA; ...
+                      (1-sigma)*RR*(G*C2P_tgammaDNA); ...
+                      -2*(1-sigma)*RR*(G*C2P_tgammaDNA) + ...
+                      N2C*G*C2P_tgammaDNA];
+        	Cx(:,pindx.tgammaDNA) = mfactor(FD, tmp);
     	end
 
     end %  end Jacobian
@@ -3303,6 +3334,17 @@ end
 
             Cxx(:,kk) = mfactor(FD, tmp);
         end
+		% bC_T gammaDNA
+        if (par.opt_bC_T & par.opt_gammaDNA)
+            kk = kk + 1;
+            tmp = [Z ; ...
+                   -PFD_bm*POCx(:,pindx.tgammaDNA); ...
+                   Z ; ...
+                   Z ; ...
+                   Z ];
+
+            Cxx(:,kk) = mfactor(FD, tmp);
+		end
 
 		% bC Q10Photo
         if (par.opt_bC & par.opt_Q10Photo)
@@ -3397,6 +3439,17 @@ end
             kk = kk + 1;
             tmp = bC*[Z ; ...
                       -PFD_bb*POCx(:,pindx.lalphaS); ...
+                      Z ; ...
+                      Z ; ...
+                      Z ];
+
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
+		% bC gammaDNA
+        if (par.opt_bC & par.opt_gammaDNA)
+            kk = kk + 1;
+            tmp = bC*[Z ; ...
+                      -PFD_bb*POCx(:,pindx.tgammaDNA); ...
                       Z ; ...
                       Z ; ...
                       Z ];
@@ -3503,6 +3556,17 @@ end
 
             Cxx(:,kk) = mfactor(FD, tmp);
         end
+		% d gammaDNA
+        if (par.opt_d & par.opt_gammaDNA)
+            kk = kk + 1;
+            tmp = d*[Z ; ...
+                     Z ; ...
+                     Z ; ...
+                     -PFD_d*PICx(:,pindx.tgammaDNA); ...
+                     Z ] ;
+
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
 
 		% kC_T Q10Photo
         if (par.opt_kC_T & par.opt_Q10Photo)
@@ -3603,6 +3667,17 @@ end
 
             Cxx(:,kk) = mfactor(FD, tmp);
         end
+		% kC_T gammaDNA
+        if (par.opt_kC_T & par.opt_gammaDNA)
+            kk = kk + 1;
+            tmp = [kC_kC_T*DOCx(:,pindx.tgammaDNA); ...
+                   Z ; ...
+                   -kC_kC_T*DOCx(:,pindx.tgammaDNA); ...
+                   Z ; ...
+                   -N2C*kC_kC_T*DOCx(:,pindx.tgammaDNA)];
+
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
 
 		% kdC Q10Photo
         if (par.opt_kdC & par.opt_Q10Photo)
@@ -3700,6 +3775,17 @@ end
                           -DOCx(:,pindx.lalphaS); ...
                           Z ; ...
                           -N2C*DOCx(:,pindx.lalphaS)];
+
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
+		% kdC gammaDNA
+        if (par.opt_kdC & par.opt_gammaDNA)
+            kk = kk + 1;
+            tmp = kC_kdC*[DOCx(:,pindx.tgammaDNA); ...
+                          Z; ...
+                          -DOCx(:,pindx.tgammaDNA); ...
+                          Z ; ...
+                          -N2C*DOCx(:,pindx.tgammaDNA)];
 
             Cxx(:,kk) = mfactor(FD, tmp);
         end
@@ -3812,6 +3898,19 @@ end
 
             Cxx(:,kk) = mfactor(FD, tmp);
         end
+		% R_Si gammaDNA
+        if (par.opt_R_Si & par.opt_gammaDNA)
+            kk = kk + 1;
+			%dC2Ptmp = C2P_gammaDNA * dgammaDNA_tgammaDNA;
+			dC2Ptmp = C2P_tgammaDNA;
+			tmp = [-(1-sigma)*RR_Si*G*dC2Ptmp; ...
+                   Z; ...
+                   Z; ...
+                   (1-sigma)*RR_Si*G*dC2Ptmp; ...
+                   -2*(1-sigma)*RR_Si*G*dC2Ptmp];
+
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
 
 		% rR Q10Photo
         if (par.opt_rR & par.opt_Q10Photo)
@@ -3914,6 +4013,18 @@ end
             kk = kk + 1;
 			dC2Ptmp = C2P_alphaS * dalphaS_lalphaS;
             tmp = [-(1-sigma)*RR_rR*(G*dC2Ptmp); ...
+                   Z; ...
+                   Z; ...
+                   (1-sigma)*RR_rR*(G*dC2Ptmp); ...
+                   -2*(1-sigma)*RR_rR*(G*dC2Ptmp)];
+
+            Cxx(:,kk) = mfactor(FD, tmp);
+        end
+		% rR gammaDNA
+        if (par.opt_rR & par.opt_gammaDNA)
+            kk = kk + 1;
+			dC2Ptmp = C2P_tgammaDNA;
+			tmp = [-(1-sigma)*RR_rR*(G*dC2Ptmp); ...
                    Z; ...
                    Z; ...
                    (1-sigma)*RR_rR*(G*dC2Ptmp); ...

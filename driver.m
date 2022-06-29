@@ -2,6 +2,13 @@ clc; clear all; close all
 global iter
 %global fmin_history
 
+% NOTE: run with sigma set to zero, alpha and beta initialized at result of PCa1e-8b1e-3
+% beta = 5.93e-01
+% cell model C2P
+% dynamic P = off
+
+cd ..
+
 % set up parallel pool
 if isempty(gcp('nocreate'))
 	poolobj = parpool(16); % if running in parallel; comment out to run serial
@@ -25,7 +32,7 @@ operator = 'A' ;
 % E -> KvHIGH_KiLOW_He; F -> KvHIGH_KiLOW_noHe; G -> KiLOW_He;
 % H -> KiLOW_noHe; I -> KvHIGH_He; J -> KvHIGH_noHe; K -> KvHIGH_KiHIGH_noHe
 
-VerName = ''; 		% optional version name. leave as an empty character array
+VerName = 'ESS225_'; 		% optional version name. leave as an empty character array
 					% or add a name ending with an underscore
 VerNum = '';		% optional version number
 
@@ -36,31 +43,33 @@ par.Cmodel  = on ;
 par.Omodel  = off ;
 par.Simodel = off ;
 par.Cellmodel = on; % cellular trait model for phyto uptake stoichiometry
+par.dynamicP = off ; % if on, cell model uses modeled DIP. if off, cell model uses WOA observed DIP field.
+
 par.LoadOpt = on ; % if load optimial par.
 par.pscale  = 0.0 ;
 par.cscale  = 0.25 ; % factor to weigh DOC in the objective function
 
 % to load parameter values from a run with a different name. need to delete or comment out for loadOpt to work normally
-par.fxhatload = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK90/Tv4_PCCellv8_DOC0.25_DOP0_xhat.mat' ;
-
+% par.fxhatload = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK90/Tv4_PCCellv8_DOC0.25_DOP0_xhat.mat' ;
+par.fxhatload = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK90/ESS225_xhat.mat' ;
 
 % P model parameters
 par.opt_sigma = off ;
 par.opt_kP_T  = off ;
 par.opt_kdP   = on ;
-par.opt_bP_T  = on ;
+par.opt_bP_T  = off ;
 par.opt_bP    = on ;
 par.opt_alpha = on ;
 par.opt_beta  = on ;
 % C model parameters
-par.opt_bC_T  = on ;
+par.opt_bC_T  = off ;
 par.opt_bC    = on ;
 par.opt_bPC	  = off; %new variable to optimize bP and bC with the same value.
 					 % no temperature dependence. must have opt_bP on and opt_bP_T, opt_bC, opt_bC_T off
 par.opt_d     = on ;
 par.opt_kC_T  = off ;
 par.opt_kdC   = on ;
-par.opt_R_Si  = on ;
+par.opt_R_Si  = off ;
 par.opt_rR    = on ;
 par.opt_cc    = off ; %always off if cell model on
 par.opt_dd    = off ; %always off if cell model on
@@ -76,16 +85,16 @@ par.opt_bt    = off  ;
 par.opt_aa    = off  ;
 par.opt_bb    = off  ;
 %Trait Model parameters
-par.opt_Q10Photo     = on ;
-par.opt_fStorage     = on ;
-par.opt_PLip_PCutoff = on ;
+par.opt_Q10Photo     = off ;
+par.opt_fStorage     = off ; %
+par.opt_fRibE 	     = off ;
+par.opt_kST0 	     = off ; %
+par.opt_PLip_PCutoff = off ; %
 par.opt_PLip_scale   = off ;
-par.opt_PStor_rCutoff = on;
+par.opt_PStor_rCutoff = off; %
 par.opt_PStor_scale  = off ;
 par.opt_alphaS       = off ;
-par.opt_fRibE 	     = off ;
-par.opt_kST0 	     = on ;
-% par.opt_gammaDNA = off;
+par.opt_gammaDNA	 = off; %
 % par.BIO.opt_gammaLipid = off;
 % par.BIO.opt_DNT0 = off;
 % par.BIO.opt_DPT0 = off;
@@ -195,12 +204,12 @@ if par.Omodel == on
 end
 
 %--------------------- prepare parameters ------------------
-if (par.optim == on) | (par.LoadOpt == on)
+% if (par.optim == on) | (par.LoadOpt == on)
     % load optimal parameters from a file or set them to default values
     par = SetPar(par) ;
     % pack parameters into an array, assign them corresponding indices.
     par = PackPar(par) ;
-end
+% end
 
 %-------------------set up fminunc -------------------------
 x0    = par.p0 ;
@@ -247,14 +256,15 @@ options = optimoptions(@fminunc                  , ...
                        'Display','iter'          , ...
                        'MaxFunEvals',2000        , ...
                        'MaxIter',2000            , ...
-                       'TolX',5e-7               , ...
-                       'TolFun',5e-7             , ...
+					   'StepTolerance',5e-12      , ...
+                       'OptimalityTolerance',5e-12, ...
                        'DerivativeCheck','off'   , ...
                        'FinDiffType','central'   , ...
                        'PrecondBandWidth',Inf    , ...
 					   'SubproblemAlgorithm','factorization') ; %testing this
 					   %'OutputFcn',@fminoutfun ) 	 ; % maybe use 'SubproblemAlgorithm','factorization' -changing subproblem did not seem to effect anything
-					   %'OptimalityTolerance', 5e-7;
+					   %'TolX',5e-7               , ...
+                       %'TolFun',5e-7             , ...
 %
 nip = length(x0);
 if (Gtest);
@@ -277,7 +287,7 @@ if (Gtest);
 
             % print relative errors
             diff = (real(fx(ii)) - imag(f)/eps.^3)/(imag(f)/eps.^3);
-            fprintf('%i % .3e  \n',ii,diff);
+            fprintf('gradient relative error (%i): % .3e  \n',ii,diff);
             diffx = (real(fxx(:,ii))-imag(fx)/eps.^3)./(imag(fx)/eps.^3+eps.^3);
             for jj = 1:length(fx)
                 fprintf('% .3e  ', diffx(jj));
@@ -295,21 +305,30 @@ if (Gtest);
 	real(full(fxx))
     %keyboard
 else
-    [xsol,fval,exitflag] = fminunc(myfun,x0,options);
-	fprintf('----fminunc complete----\n')
-    [f,fx,fxx,data] = neglogpost(xsol,par);
-	fprintf('----neglogpost solved for final parameter values----\n')
-    load(fxhat,'xhat')
-	xhat.pindx = par.pindx;
-    xhat.f   = f   ;
-    xhat.fx  = fx  ;
-    xhat.fxx = fxx ;
-    % save results
-	fprintf('saving optimized parameters to file: %s \n',fxhat)
-	fprintf('saving model solution to file: %s \n',par.fname)
-    save(fxhat, 'xhat')
-    save(par.fname, 'data')
-	%save(par.fhistory,'fmin_history')
+	if (par.optim)
+	    [xsol,fval,exitflag] = fminunc(myfun,x0,options);
+		fprintf('----fminunc complete----\n')
+	    [f,fx,fxx,data] = neglogpost(xsol,par);
+		fprintf('----neglogpost solved for final parameter values----\n')
+	    load(fxhat,'xhat')
+		xhat.pindx = par.pindx;
+	    xhat.f   = f   ;
+	    xhat.fx  = fx  ;
+	    xhat.fxx = fxx ;
+	    % save results
+		fprintf('saving optimized parameters to file: %s \n',fxhat)
+		fprintf('saving model solution to file: %s \n',par.fname)
+	    save(fxhat, 'xhat')
+	    save(par.fname, 'data')
+		%save(par.fhistory,'fmin_history')
+	else
+		xsol = x0;
+		iter = 6;
+		[f,fx,fxx,data] = neglogpost(xsol,par);
+		fprintf('----neglogpost complete----\n')
+		%fprintf('saving model solution to file: %s \n',par.fname)
+	    %save(par.fname, 'data')
+	end
 end
 delete(gcp('nocreate')) % shut down parallel pool
 fprintf('-------------- end! ---------------\n');

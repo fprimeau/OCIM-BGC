@@ -499,6 +499,7 @@ dE_dgammaDNA = all_nan;
 dfProtAOpt_dgammaDNA =  all_nan;
 
 %ibad=[];
+errcount = 0;
 %% loop through points to calculate cell quotas
 % handle definitions needed to run loop in parallel
 EColim_handle = @EColim;
@@ -629,6 +630,9 @@ parfor i =1:length(P)   % to run in parallel
 
 end % end for loop
 %toc
+if errcount >0
+    fprintf('complex_cubic solver error count: %d \n',errcount)
+end
 
 AOpt = (1-gammaS-CI.*EOpt)./2;        % optimal periplasm fraction of cell
 MOpt = AOpt;                          % optimal membrane fraction of cell
@@ -950,7 +954,11 @@ muL = alphaI.*L./(1+PhiS);
         end
 		sol = fsolve_cmplx(@f,E0);
 %}
-        sol = complex_cubic_zero(c3,c2,c1,c0,E0);
+        [sol,exitflag] = complex_cubic_zero(c3,c2,c1,c0,E0);
+		if exitflag <=0
+            errcount = errcount + 1;
+            %keyboard;
+        end
 		EColim = sol;
         %fprintf('EColim is: % 3.4e \n', EColim);
 

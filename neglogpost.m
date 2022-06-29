@@ -118,6 +118,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 		data.CellOut.PStor = par.CellOut.PStor;
 		data.CellOut.QP = par.CellOut.QP;
 		data.CellOut.QC = par.CellOut.QC;
+		data.CellOut.dC2P_dDIP = par.CellOut.dC2P_dDIP;
 
 		toc
 		fprintf('All of Cell model solved \n ')
@@ -331,7 +332,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
         	ipxx = Pxx(0*nwet+1 : 1*nwet, :) ;
         	opxx = Pxx(2*nwet+1 : 3*nwet, :) ;
 		end
-		if par.Cmodel == on & (par.ncx + par.nbx > 0)
+		if par.Cmodel == on & (par.npx + par.ncx + par.nbx > 0)
 			icxx = Cxx(0*nwet+1 : 1*nwet, :) ;
 			ocxx = Cxx(2*nwet+1 : 3*nwet, :) ;
 			lkxx = Cxx(4*nwet+1 : 5*nwet, :) ;

@@ -6,12 +6,19 @@ on   = true  ;
 off  = false ;
 
 %ver = datestr(now,'mmmdd');
-RunVer = 'Tv4_PCCellv7_DOC0.25_DOP0';
+%RunVer = 'Tv4_PCCellv8_DOC0.25_DOP0';
+%RunVer = 'Tv4_PC_DOC0.25_DOP0v8';
+%RunVer = 'Tv4_PCCellv9c_DOC0.25_DOP0'
+%RunVer = 'Tv4_PCv9_DOC0.25_DOP0'
+%RunVer = 'testNPP_Tv4_PCCella8e-4b6e-1_DOC0.25_DOP0';
+%RunVer = 'testNPP_CTL_He_PCa1e-8b1e-3_DOC0.25_DOP0'
+%RunVer = 'testPobs_CTL_He_PCCella1b1_DOC0.25_DOP0';
+RunVer = 'testPobs_Tv4_PCCella1b1_DOC0.25_DOP0'
 
 %model output directory
 outputDir = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK90/';
-figDir = strcat(outputDir,'FIGS_PCCellv7_DOC0.25_DOP0/');
-outPath = figDir;
+%figDir = strcat(outputDir,'FIGS_PCCellv10_DOC0.25_DOP0/');
+%outPath = figDir;
 
 % load model output fields
 fname = strcat(outputDir, RunVer, '.mat');
@@ -582,6 +589,17 @@ if exist('xhat') & isfield(xhat,'alphaS')
     R.xhat(nx)   = alphaS     ;
     R.upbar(nx)  = alphaS_up ;
     R.lowbar(nx) = alphaS_lo ;
+end
+
+if exist('xhat') & isfield(xhat,'gammaDNA')
+    nx = nx + 1 ;
+    gammaDNA = xhat.gammaDNA   ;
+	gammaDNA_up = 0.5*(1+tanh( atanh(2*gammaDNA-1)+error(pindex.tgammaDNA))) - gammaDNA;
+    gammaDNA_lo = gammaDNA - 0.5*(1+tanh( atanh(2*gammaDNA-1) - error(pindex.tgammaDNA)));
+    name{nx}     = 'gammaDNA'  ;
+    R.xhat(nx)   = gammaDNA     ;
+    R.upbar(nx)  = gammaDNA_up ;
+    R.lowbar(nx) = gammaDNA_lo ;
 end
 
 %-----------Make Table-----------------------

@@ -1,11 +1,17 @@
 clc; clear all; close all
 on = true;      off = false;
 spd  = 24*60^2; spa  = 365*spd;
-RunVer = 'Tv4_PCCellv5c_DOC0.25_DOP0';
+
+%RunVer = 'Tv4_PCCellv8_DOC0.25_DOP0';
+%RunVer = 'Tv4_PC_DOC0.25_DOP0v8';
+%RunVer = 'Tv4_PCv9_DOC0.25_DOP0'
+%RunVer = 'Tv4_PC_DOC0.25_DOP0v8_onlyC2P'
+RunVer = 'testNPP_Tv4_PCa1b1_DOC0.25_DOP0';
 
 %model output directory
 outputDir = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK90/';
-figDir = strcat(outputDir,'FIGS_PCCellv5c_DOC0.25_DOP0/');
+%figDir = strcat(outputDir,'FIGS_PC_DOC0.25_DOP0v8/onlyC2P/');
+figDir = strcat(outputDir,'FIGS_testNPP_PC/a1b1_');
 outPath = figDir;
 
 % load model output fields
@@ -22,9 +28,30 @@ operator = 'A' ;
 par.Cmodel  = on ;
 par.Omodel  = off ;
 par.Simodel = off ;
-par.Cellmodel = on; % cellular trait model for phyto uptake stoichiometry
+par.Cellmodel = off; % cellular trait model for phyto uptake stoichiometry
 par.pscale  = 0.0 ;
 par.cscale  = 0.25 ; % factor to weigh DOC in the objective function
+
+%-------Define some colors ------
+colors.maroon 		= [128/255 0 0];
+colors.tomato 		= [255/255 99/255 71/255];	% light red-orange
+colors.indianred 	= [205/255 92/255 92/255]; % light red-brown
+colors.limegreen 	= [50/255 205/255 50/255];
+colors.darkgreen 	= [0 100/255 0];
+colors.teal 		= [0 128/255 128/255];
+colors.aqua 		= [0.2 0.8 0.8];
+colors.lblue 		= [0 191/255 255/255];
+colors.navy 		= [ 0 0 128/255];
+colors.darkmagenta 	= [139/255 0 139/255];
+
+set(groot,'defaultAxesFontName','Times',...
+    'defaultAxesFontSize',14,...
+    'defaultAxesTickLabelInterpreter','latex',...
+    'defaultAxesXMinorTick','on',...
+    'defaultAxesYMinorTick','on');
+% TEXT PROPERTIES
+set(groot,'defaultTextFontName','Times',...
+    'defaultTextInterpreter','latex');
 
 %-------------load data and set up parameters---------------------
 SetUp ;
@@ -207,6 +234,9 @@ aveT   = nanmean(Tz3d(:,:,1:2),3) ;
 aveT = par.aveT;
 Tz = par.Tz;
 
+lat = grd.yt;
+lon = grd.xt;
+
 % ----------------make figures---------------------
 nfig = 0;
 if isfield(xhat,'bP_T')
@@ -289,15 +319,113 @@ if par.Cmodel == on
 
     if isfield(xhat,'cc')
         nfig = nfig + 1  ;
-        figure(nfig)
+        figure(nfig); hold on
         cc   = xhat.cc   ;
         dd   = xhat.dd   ;
-
+		DIP  = model.DIP(iwet) ;
         C2P = M3d + nan  ;
-        C2P(iwet)  = 1./(cc*PO4 + dd) ;
-        pcolor(C2P(:,:,1)); colorbar;shading flat
-        title('C:P uptake ratio')
+        C2P(iwet)  = 1./(cc*DIP + dd) ;
+
+        %pcolor(C2P(:,:,1)); colorbar;shading flat
+		imAlpha = ones(size(C2P(:,:,1)));
+		imAlpha(isnan(C2P(:,:,1))) =0;
+		imagesc(lon,lat,C2P(:,:,1),'AlphaData',imAlpha); hold on
+		cb=colorbar;
+		colormap(flipud(summer))
+		[CC,hh] = contour(lon,lat,C2P(:,:,1),[106 106],'k');
+		clabel(CC,hh,'FontName','Times');
+		xlabel('Longitude');
+		ylabel('Latitude');
+		ylabel(cb,'C:P [molC/molP]');
+        title('Surface C:P uptake ratio')
+		figTitle = 'C2Pratio';
+		print(gcf,[figDir 'FIG_' figTitle '.png'],'-dpng')
         % saveas(gcf,'Figs91/CP ratio.png')
+
+		%% C2P as a function of latitude
+		C2P_latavg1 = mean(C2P(:,:,1),2,'omitnan');
+		C2P_latavg2 = mean(C2P(:,:,2),2,'omitnan');
+		C2P_latavg = mean(C2P(:,:,1:2),[2 3],'omitnan');
+		C2P_latmedian1 = median(C2P(:,:,1),2,'omitnan');
+		C2P_latmedian2 = median(C2P(:,:,2),2,'omitnan');
+		C2P_latstd1 = std(C2P(:,:,1),0,2,'omitnan');
+		C2P_latstd2 = std(C2P(:,:,2),0,2,'omitnan');
+		ind1 = ~isnan(C2P_latavg1);
+		ind2 = ~isnan(C2P_latavg2);
+
+		nfig = nfig + 1  ;
+		figure(nfig);
+		% plot +/-1 standard deviation
+		% boundedline(lat,C2P_latavg1,C2P_latstd1,'-b*',lat,C2P_latavg2,C2P_latstd2,'-m*','alpha','nan','gap')
+		h(1) = fill([lat(ind1),fliplr(lat(ind1))],[(C2P_latavg1(ind1)-C2P_latstd1(ind1))', fliplr((C2P_latavg1(ind1)+C2P_latstd1(ind1))')],'b','LineStyle','none'); alpha(0.1); hold on
+		h(2) = fill([lat(ind2),fliplr(lat(ind2))],[(C2P_latavg2(ind2)-C2P_latstd2(ind2))', fliplr((C2P_latavg2(ind2)+C2P_latstd2(ind2))')],'m','LineStyle','none'); alpha(0.1);
+		h(3) = plot(lat,C2P_latavg1,'-bo'); hold on
+		%plot(lat,C2P_latmedian1,'-.b','linewidth',2);
+		h(4) = plot(lat,C2P_latavg2,'-mo');
+		%plot(lat,C2P_latmedian2,'-.m','linewidth',2);
+		legend(h([3 4]),'surface','lower EZ');
+		xlabel('Latitude')
+		ylabel(['C:P [molC:molP] = 1/(' num2str(cc) '*DIP + ' num2str(dd) ')'])
+		title('Zonal Average Biological C:P')
+		axis tight; grid on
+		%ylim([0 550])
+		figTitle = 'C2P_lat_avg';
+		print(gcf,[outPath 'FIG_' figTitle '.png'],'-dpng')
+		clear h;
+
+
+		% --- Pacific vs Atlantic
+		M.ATL = ATL(:,:,1:2);
+		M.ATL(M.ATL==0)=NaN;
+		M.PAC = PAC(:,:,1:2);
+		M.PAC(M.PAC==0)=NaN;
+		M.IND = IND(:,:,1:2);
+		M.IND(M.IND==0)=NaN;
+		M.ARC = ARC(:,:,1:2);
+		M.ARC(M.ARC==0)=NaN;
+
+		C2P_ATL = C2P(:,:,1:2).*M.ATL;
+		C2P_ATL_latavg = mean(C2P_ATL,[2 3],'omitnan');
+		C2P_ATL_latstd = std(C2P_ATL,0,[2 3],'omitnan');
+
+		C2P_PAC = C2P(:,:,1:2).*M.PAC;
+		C2P_PAC_latavg = mean(C2P_PAC,[2 3],'omitnan');
+		C2P_PAC_latstd = std(C2P_PAC,0,[2 3],'omitnan');
+
+		C2P_IND = C2P(:,:,1:2).*M.IND;
+		C2P_IND_latavg = mean(C2P_IND,[2 3],'omitnan');
+		C2P_IND_latstd = std(C2P_PAC,0,[2 3],'omitnan');
+
+		C2P_ARC = C2P(:,:,1:2).*M.ARC;
+		C2P_ARC_latavg = mean(C2P_ARC,[2 3],'omitnan');
+		C2P_ARC_latstd = std(C2P_ARC,0,[2 3],'omitnan');
+
+		ind1 = ~isnan(C2P_ATL_latavg);
+		ind2 = ~isnan(C2P_PAC_latavg);
+		ind3 = ~isnan(C2P_IND_latavg);
+		ind4 = ~isnan(C2P_ARC_latavg);
+
+		figure;
+		h(1) = fill([lat(ind1),fliplr(lat(ind1))],[(C2P_ATL_latavg(ind1)-C2P_ATL_latstd(ind1))', fliplr((C2P_ATL_latavg(ind1)+C2P_ATL_latstd(ind1))')],'m','LineStyle','none'); alpha(0.1); hold on
+		h(2) = fill([lat(ind2),fliplr(lat(ind2))],[(C2P_PAC_latavg(ind2)-C2P_PAC_latstd(ind2))', fliplr((C2P_PAC_latavg(ind2)+C2P_PAC_latstd(ind2))')],'b','LineStyle','none'); alpha(0.1);
+		h(3) = fill([lat(ind3),fliplr(lat(ind3))],[(C2P_IND_latavg(ind3)-C2P_IND_latstd(ind3))', fliplr((C2P_IND_latavg(ind3)+C2P_IND_latstd(ind3))')],colors.limegreen,'LineStyle','none'); alpha(0.1);
+		h(4) = fill([lat(ind4),fliplr(lat(ind4))],[(C2P_ARC_latavg(ind4)-C2P_ARC_latstd(ind4))', fliplr((C2P_ARC_latavg(ind4)+C2P_ARC_latstd(ind4))')],colors.lblue,'LineStyle','none'); alpha(0.1);
+
+		h(5) = plot(lat,C2P_ATL_latavg,'-mo'); hold on
+		%plot(lat,C2P_latmedian1,'-.b','linewidth',2);
+		h(6) = plot(lat,C2P_PAC_latavg,'-bo');
+		h(7) = plot(lat,C2P_IND_latavg,'-o','Color',colors.limegreen);
+		h(8) = plot(lat,C2P_ARC_latavg,'-o','Color',colors.lblue);
+		legend(h([5 6 7 8]),'Atlantic','Pacific','Indian','Arctic');
+		xlabel('Latitude')
+		ylabel('C:P [molC:molP]')
+		title('Zonal Average C:P in EZ')
+		axis tight; grid on
+		%ylim([0 525])
+		figTitle = 'C2P_lat_avg_basin';
+		print(gcf,[outPath 'FIG_' figTitle '.png'],'-dpng')
+		clear h;
+
     end
 end
 

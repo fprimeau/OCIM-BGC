@@ -10,7 +10,8 @@ if ismac
     addpath('~/Documents/DATA/'    )
     addpath('~/Documents/DATA/OCIM')
 elseif isunix
-    addpath('/DFS-L/DATA/primeau/weilewang/my_func/'  )
+    addpath('/DFS-L/DATA/primeau/meganrs/DATA/')
+	addpath('/DFS-L/DATA/primeau/weilewang/my_func/'  )
     addpath('/DFS-L/DATA/primeau/weilewang/DATA/'     )
     addpath('/DFS-L/DATA/primeau/weilewang/DATA/OCIM2')
 end
@@ -20,7 +21,7 @@ if GridVer == 90
 elseif GridVer == 91
     switch(operator)
       case 'A'
-        TRdivVer = 'CTL_He'             ;
+        TRdivVer = 'CTL_He'             ; % choose this one %has along isopycnal diffusion
       case 'B'
         TRdivVer = 'CTL_noHe'           ;
       case 'C'
@@ -49,6 +50,14 @@ if par.Cmodel == on
     fprintf('------- C model is on ------ \n')
     fprintf('DOP scaling factor is %2.2e \n', par.pscale)
     fprintf('DOC scaling factor is %2.2e \n', par.cscale)
+	if ~isfield(par,'dynamicP')
+		par.dynamicP = off;
+		fprintf('--- default: P:C is a linear function of WOA observed phosphate ------ \n')
+	elseif par.dynamicP == on
+		fprintf('--- P:C is a linear function of modelled DIP ------ \n')
+	else
+		fprintf('--- P:C is a linear function of WOA observed phosphate ------ \n')
+	end
 end
 if par.Omodel == on
     fprintf('------ O model is on ------- \n')
@@ -58,7 +67,16 @@ if par.Simodel == on
 end
 if par.Cellmodel == on
     fprintf('------ Cell stoichiometry model is on ------ \n')
+	if ~isfield(par,'dynamicP')
+		fprintf('--- default: Cell model depends on modelled DIP ------ \n')
+		par.dynamicP = on;
+	elseif par.dynamicP == on
+		fprintf('--- Cell model depends on modelled DIP ------ \n')
+	else
+		fprintf('--- Cell model depends on observed nutrient fields ------ \n')
+	end
 end
+
 fprintf('\n')
 
 %
@@ -83,6 +101,7 @@ if GridVer == 90
     load DOMobs_90x180x24.mat
     load kw660_90x180.mat
 	PARobs = load('annual_PAR_90x180.mat'); %PAR data in units of [Einstein m-2 d-1] (units converted for cell model later in SetUp)
+	load Kd490_MODIS_90x180.mat		% diffuse attenuation [m^-1]
     if ismac
         load MSK90/fixedPO_C.mat
         load MSK90/fixedPO_O2.mat
@@ -114,6 +133,8 @@ elseif GridVer == 91
     load DOMobs_91x180x24.mat
     load kw660_91x180.mat
 	PARobs = load('annual_PAR_91x180.mat'); %PAR data in units of [Einstein m-2 d-1] (units converted for cell model later in SetUp)
+	PARobs.par = PARobs.PAR;
+	load Kd490_MODIS_91x180.mat		% diffuse attenuation [m^-1]
     if ismac
         load MSK91/CTL_He_PCO.mat
         load MSK91/CTL_He_PCO.mat
@@ -261,11 +282,20 @@ clear PARobs
 % clear PARobs
 %
 % % remove NaNs along coastlines in Light field (maybe move this into a seperate function)
-% PARsurf = cleanPARobs(PARobs_PPFD,M3d); %local function at end of file
+% PARsurf = cleanPARobs(PARobs_PPFD,M3d); %local function at end of file % replaced with inpaint_nans
 % clear PARobs_PPFD
 
 % extrapolate light to bottom of euphotic zone
 par.kI = 0.04;   % Light attenuation coefficient in seawater [m^-1]
+%CESM light attenuation: average K for par wavelengths, plus absorbtion due to water; as a function of chlorophyll
+%CHL = [mg/m^3]
+%kI = 0.09*CHL.^0.4 ; % [m^-1]
+%CbPM model uses Satellite diffuse attenuation coefficient
+%	 median mixed layer light level = surface irradiance * exp (-k490 * MLD/2)
+%	kI = k490
+%	revised CbPM uses 9 different wavelengths
+%par.kI = Kd490;
+
 	PAR        = 0*M3d;
 	for ii=1:par.nzo % only needed in euphotic zone for cell growth
 		PAR(:,:,ii) = PARsurf.*exp(-par.kI*grd.zt(ii)); %PAR at mid depth of grid box [ii]
@@ -293,40 +323,40 @@ par.Lambda(:,:,3:end) = 0 ;
 %---------------------------- end ----------------------------------
 
 
-function PARsurf = cleanPARobs(PARobs_PPFD,M3d)
-    iwet1 = find(M3d(:,:,1));
-    %ibad = find(isnan(PARobs_PPFD(iwet1)));
-
-    PARsurf        = 0*M3d(:,:,1);
-    PARsurf(iwet1)=PARobs_PPFD(iwet1);
-
-    [ibady,ibadx] =find(isnan(PARsurf));
-
-    for ii=1:length(ibadx)
-        ilat = ibady(ii);
-        ilon = ibadx(ii);
-        if ilon>1 & ilon <180
-            nearby=PARsurf(ilat-1:ilat+1,ilon-1:ilon+1); % would be better to weight values on same latitude more
-
-            if length(nearby(nearby>0)) > 0
-                PARsurf(ilat,ilon) = nanmean(nearby(nearby>0));
-            else
-                nearby=PARsurf(ilat-2:ilat+2,ilon-2:ilon+2);
-                if length(nearby(nearby>0)) > 0
-                    PARsurf(ilat,ilon) = nanmean(nearby(nearby>0));
-                else
-                    keyboard
-                end
-            end
-
-        else % if ilon==180
-            nearby=PARsurf(ilat-1:ilat+1,ilon-2:ilon);
-            if length(nearby(nearby>0)) > 0
-                PARsurf(ilat,ilon) = nanmean(nearby(nearby>0));
-            else
-                keyboard
-            end
-
-        end
-    end
-end
+% function PARsurf = cleanPARobs(PARobs_PPFD,M3d)
+%     iwet1 = find(M3d(:,:,1));
+%     %ibad = find(isnan(PARobs_PPFD(iwet1)));
+%
+%     PARsurf        = 0*M3d(:,:,1);
+%     PARsurf(iwet1)=PARobs_PPFD(iwet1);
+%
+%     [ibady,ibadx] =find(isnan(PARsurf));
+%
+%     for ii=1:length(ibadx)
+%         ilat = ibady(ii);
+%         ilon = ibadx(ii);
+%         if ilon>1 & ilon <180
+%             nearby=PARsurf(ilat-1:ilat+1,ilon-1:ilon+1); % would be better to weight values on same latitude more
+%
+%             if length(nearby(nearby>0)) > 0
+%                 PARsurf(ilat,ilon) = nanmean(nearby(nearby>0));
+%             else
+%                 nearby=PARsurf(ilat-2:ilat+2,ilon-2:ilon+2);
+%                 if length(nearby(nearby>0)) > 0
+%                     PARsurf(ilat,ilon) = nanmean(nearby(nearby>0));
+%                 else
+%                     keyboard
+%                 end
+%             end
+%
+%         else % if ilon==180
+%             nearby=PARsurf(ilat-1:ilat+1,ilon-2:ilon);
+%             if length(nearby(nearby>0)) > 0
+%                 PARsurf(ilat,ilon) = nanmean(nearby(nearby>0));
+%             else
+%                 keyboard
+%             end
+%
+%         end
+%     end
+% end

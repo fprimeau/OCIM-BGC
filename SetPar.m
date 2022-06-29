@@ -36,7 +36,8 @@ function par = SetPar(par)
         %par.sigma = 0.30 ;  			% Fraction of organic P production allocated directly to the dissolved pool
 										% default was 1.0e-01 , however 0.30 is used by (Wang, 2019: Nitrogen fixation)
 										% SONTrap value = 1/3
-		par.sigma = 0.10 ;
+		%par.sigma = 0.10 ;
+		par.sigma = 0.0 ; 				% all DOM comes from particles. no direct mechanism creates DOM during production.
     end
     if exist('xhat') & isfield(xhat,'kP_T')
         par.kP_T = xhat.kP_T ;
@@ -62,13 +63,23 @@ function par = SetPar(par)
         par.alpha = xhat.alpha ;
     else
         %par.alpha = 3.37e-08   ;		% WeiLei's NPP scaling factor for DIP uptake rate (used until v9b)
-		par.alpha = 1.0   ;		% NPP scaling factor for DIP uptake rate
+		%par.alpha = 1.0   ;		% NPP scaling factor for DIP uptake rate
+		%par.alpha = 1.0e-08 ;
+		par.alpha = 8.07e-04;
     end
     if exist('xhat') & isfield(xhat,'beta')
         par.beta = xhat.beta ;
     else
         %par.beta = 1.65e-02  ;			% Weilei's NPP scaling exponent for DIP uptake rate (used until v9b)
-		par.beta = 1.0 ;			% NPP scaling exponent for DIP uptake rate
+		%par.beta = 1.0 ;			% NPP scaling exponent for DIP uptake rate
+		%par.beta = 1.0e-03 ;
+		par.beta = 5.93e-01 ; 	% inbetween value to test. result of PCa1e-8b1e-3
+    end
+	% adding a new parameter for b, same for both P and C; incomplete
+	if exist('xhat') & isfield(xhat,'bPC')
+        par.bPC = xhat.bPC ;
+    else
+        par.bPC = 9.60e-1    ;			% Martin exponent of POC solubilization set equal to that of POP
     end
 
     % C model parameters
@@ -80,14 +91,8 @@ function par = SetPar(par)
     if exist('xhat') & isfield(xhat,'bC')
         par.bC = xhat.bC ;
     else
-        par.bC = 9.38e-01    ;			% Martin exponent of POC solubilization (const term)
+        %par.bC = 9.38e-01    ;			% Martin exponent of POC solubilization (const term)
 		par.bC = 9.60e-01    ;			% set to match bP
-    end
-	% adding a new parameter for b; incomplete
-	if exist('xhat') & isfield(xhat,'bPC')
-        par.bPC = xhat.bPC ;
-    else
-        par.bPC = par.bP    ;			% Martin exponent of POC solubilization set equal to that of POP
     end
     if exist('xhat') & isfield(xhat,'d')
         par.d = xhat.d   ;
@@ -119,8 +124,8 @@ function par = SetPar(par)
     else
         %par.cc = 7.51e-4 ;				% slope for P:C as a linear function of DIP (WeiLei's value)
 		%par.cc = 1.02e-7 ; 				% WeiLei's new value
-		%par.cc = 6.9e-3 ; 				% value from Galbraith & Martiny 2015
-		par.cc = 0.0 ;					% slope for P:C as a linear function of DIP. if cc is off, P:C is a constant
+		par.cc = 6.9e-3 ; 				% value from Galbraith & Martiny 2015
+		%par.cc = 0.0 ;					% slope for P:C as a linear function of DIP. if cc is off, P:C is a constant
 										% with cc initially set to 0.0, optimization doesn't work for this param. instead make it a very small value
     end
     if exist('xhat') & isfield(xhat,'dd')
@@ -184,12 +189,14 @@ function par = SetPar(par)
 	if exist('xhat') & isfield(xhat,'Q10Photo')
 		par.BIO.Q10Photo = real(xhat.Q10Photo);
 	else
-		par.BIO.Q10Photo = 1.983;		% Q10 of photosynthesis
+		par.BIO.Q10Photo = 2.0;		% Q10 of photosynthesis (default = 1.983)
+		%par.BIO.Q10Photo = 1.88; 	% Eppley value (measured in natural communities)
+		%par.BIO.Q10Photo = 1.46; 	% Anderson et al. 2021 (median for all phytoplankton; compilation of culture studies)
 	end
 	if exist('xhat') & isfield(xhat,'fStorage')
 		par.BIO.fStorage = real(xhat.fStorage);
 	else
-		par.BIO.fStorage = exp(-.358);  % strength of luxury P storage [L/molC]
+		par.BIO.fStorage = 0.7 %1; %exp(-.358);  % strength of luxury P storage [L/molC]
 	end
 	if exist('xhat') & isfield(xhat,'fRibE')
 		par.BIO.fRibE = real(xhat.fRibE);
@@ -200,11 +207,14 @@ function par = SetPar(par)
 		par.BIO.kST0 = real(xhat.kST0);
 	else
 		par.BIO.kST0 =0.185;            % specific synthesis rate of synthetic apparatus at 25degC [1/hr]
+										% empirically derived specific efficiency: 0.168 hr^-1 (shuter 1979)
 	end
 	if exist('xhat') & isfield(xhat,'PLip_PCutoff')
 		par.BIO.PLip_PCutoff = real(xhat.PLip_PCutoff);
 	else
-		par.BIO.PLip_PCutoff = exp(-14.408);  % log of [P (mol/L)] below which more PLipids are substituted with Slipids
+		%par.BIO.PLip_PCutoff = exp(-14.408);  % log of [P (mol/L)] below which more PLipids are substituted with Slipids
+											  % original default = exp(-14.408) = 5.5295e-07
+		par.BIO.PLip_PCutoff = 1.0e-07;
 	end
 	if exist('xhat') & isfield(xhat,'PLip_scale')
 		par.BIO.PLip_scale = real(xhat.PLip_scale);

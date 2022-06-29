@@ -284,6 +284,11 @@ function xhat = PrintPara(x, par);
             fprintf('current alphaS         is  % 3.2e \n', exp(x(ialphaS)));
             xhat.alphaS = exp(x(ialphaS));
         end
+		if (par.opt_gammaDNA == on)
+            igammaDNA = par.pindx.tgammaDNA;
+            fprintf('current gammaDNA       is  % 3.2e \n', 0.5*(1+tanh(x(igammaDNA))));
+            xhat.gammaDNA = 0.5*(1+tanh(x(igammaDNA)));
+        end
 	end %end cell model params
 	% ------------------------------------------------------------
 	% make sure only real part of parameter gets saved to  avoid issues with

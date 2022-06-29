@@ -298,7 +298,7 @@ function par = PackPar(par)
 			p0 = [p0; lalphaS]			;
 			par.pindx.lalphaS = strt : length(p0);
 		end
-		if isfield(par,'opt_gammaDNA')
+		%if isfield(par,'opt_gammaDNA')
 			if (par.opt_gammaDNA == on)
 				nbx  = nbx + 1        		;
 				%lfRibE = log(par.BIO.fRibE) ;
@@ -308,7 +308,7 @@ function par = PackPar(par)
 				p0 = [p0; tgammaDNA]			;
 				par.pindx.tgammaDNA = strt : length(p0);
 			end
-		end
+		%end
 	end
     par.p0  = p0  ;
     par.npx = npx ; par.ncx = ncx ;

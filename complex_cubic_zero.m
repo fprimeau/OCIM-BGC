@@ -1,4 +1,4 @@
-function [root] = complex_cubic_zero(c3,c2,c1,c0,x0)
+function [root,exitflag] = complex_cubic_zero(c3,c2,c1,c0,x0)
 %complex_cubic_zero: only work for complex step functions. dealing with
 %tiny imaginary component (eps^3)
 %   inputs:
@@ -34,8 +34,8 @@ xi = -(c3i*xr^3 + c2i*xr^2 + c1i*xr + c0i)/(3*c3r*xr^2 + 2*c2r*xr + c1r);
 root = xr + i*xi;
 
 
-if exitflag<=0
-		fprintf('exitflag = % i \n', exitflag)
-	end
+	% if exitflag<=0
+	% 	fprintf('complex_cubic_zero exitflag = % i \n', exitflag)
+	% end
 
 end
