@@ -1,6 +1,7 @@
 function xhat = PrintPara(x, par);
     global iter
     on = true; off = false;
+	xhat = struct;
     %++++++++++ print out all parameters to the log file
     if iter == 0
         fprintf('All parameters \n')

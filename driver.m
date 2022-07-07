@@ -2,9 +2,9 @@ clc; clear all; close all
 global iter
 %global fmin_history
 
-% NOTE: run with sigma set to zero, alpha and beta initialized at result of PCa1e-8b1e-3
-% beta = 5.93e-01
-% cell model C2P
+% NOTE: run with sigma set to zero, alpha and beta initialized and 1 and 0.5
+% beta = 0.5
+% GM15 model C2P
 % dynamic P = off
 
 cd ..
@@ -21,7 +21,7 @@ on   = true  ;
 off  = false ;
 format long
 %
-GridVer  = 90  ;
+GridVer  = 91  ;
 operator = 'A' ;
 % GridVer: choose from 90 and 91; Ver 90 is for a Transport
 % operator without diapycnal mixing but optimized using DIP ;
@@ -32,9 +32,9 @@ operator = 'A' ;
 % E -> KvHIGH_KiLOW_He; F -> KvHIGH_KiLOW_noHe; G -> KiLOW_He;
 % H -> KiLOW_noHe; I -> KvHIGH_He; J -> KvHIGH_noHe; K -> KvHIGH_KiHIGH_noHe
 
-VerName = 'ESS225_'; 		% optional version name. leave as an empty character array
+VerName = 'testNPP_'; 		% optional version name. leave as an empty character array
 					% or add a name ending with an underscore
-VerNum = '';		% optional version number
+VerNum = 'constC2P';		% optional version number
 
 Gtest = off ;		% do gradient test
 Htest = off ;		% do hessian test
@@ -42,16 +42,16 @@ par.optim   = on ;
 par.Cmodel  = on ;
 par.Omodel  = off ;
 par.Simodel = off ;
-par.Cellmodel = on; % cellular trait model for phyto uptake stoichiometry
+par.Cellmodel = off; % cellular trait model for phyto uptake stoichiometry
 par.dynamicP = off ; % if on, cell model uses modeled DIP. if off, cell model uses WOA observed DIP field.
 
-par.LoadOpt = on ; % if load optimial par.
+par.LoadOpt = off ; % if load optimial par.
 par.pscale  = 0.0 ;
 par.cscale  = 0.25 ; % factor to weigh DOC in the objective function
 
 % to load parameter values from a run with a different name. need to delete or comment out for loadOpt to work normally
 % par.fxhatload = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK90/Tv4_PCCellv8_DOC0.25_DOP0_xhat.mat' ;
-par.fxhatload = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK90/ESS225_xhat.mat' ;
+%par.fxhatload = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK90/ESS225_xhat.mat' ;
 
 % P model parameters
 par.opt_sigma = off ;
@@ -72,7 +72,7 @@ par.opt_kdC   = on ;
 par.opt_R_Si  = off ;
 par.opt_rR    = on ;
 par.opt_cc    = off ; %always off if cell model on
-par.opt_dd    = off ; %always off if cell model on
+par.opt_dd    = on ; %always off if cell model on
 % O model parameters
 par.opt_O2C_T = off ;
 par.opt_rO2C  = on ;
@@ -122,8 +122,7 @@ elseif isunix
 
 	%output_dir = sprintf('/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/test%s/', datestr(now,'ddmmmyy'));
 	output_dir = sprintf('/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK%2d/', GridVer);
-    % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/COP4WWF/' ...
-                        % 'MSK%2d/'],GridVer);
+	%output_dir = sprintf('/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/C2P_paper/');
 end
 VER = strcat(output_dir,VerName,TRdivVer);
 catDOC = sprintf('_DOC%0.2g_DOP%0.2g',par.cscale,par.pscale); % used to add scale factors to file names
@@ -249,6 +248,8 @@ myfun = @(x) neglogpost(x, par);
 % 	%history.gradient = [history.gradient; optimValues.gradient'];
 % 	%save(par.fhistory,'history') %try making history an output of fminunc after exitflag, then only need to save once
 % end
+objfuntolerance = 5e-12;
+fprintf('objective function tolerance = %5.1e \n',objfuntolerance);
 options = optimoptions(@fminunc                  , ...
                        'Algorithm','trust-region', ...
                        'GradObj','on'            , ...
@@ -256,8 +257,8 @@ options = optimoptions(@fminunc                  , ...
                        'Display','iter'          , ...
                        'MaxFunEvals',2000        , ...
                        'MaxIter',2000            , ...
-					   'StepTolerance',5e-12      , ...
-                       'OptimalityTolerance',5e-12, ...
+					   'StepTolerance',objfuntolerance      , ...
+                       'OptimalityTolerance',objfuntolerance, ...
                        'DerivativeCheck','off'   , ...
                        'FinDiffType','central'   , ...
                        'PrecondBandWidth',Inf    , ...
@@ -308,9 +309,9 @@ else
 	if (par.optim)
 	    [xsol,fval,exitflag] = fminunc(myfun,x0,options);
 		fprintf('----fminunc complete----\n')
-	    [f,fx,fxx,data] = neglogpost(xsol,par);
+	    [f,fx,fxx,data,xhat] = neglogpost(xsol,par);
 		fprintf('----neglogpost solved for final parameter values----\n')
-	    load(fxhat,'xhat')
+	    %load(fxhat,'xhat')
 		xhat.pindx = par.pindx;
 	    xhat.f   = f   ;
 	    xhat.fx  = fx  ;

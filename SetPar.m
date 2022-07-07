@@ -24,6 +24,8 @@ function par = SetPar(par)
 	if par.LoadOpt ==on
 		if isfield(par,'fxhatload') & isfile(par.fxhatload)
 			load(par.fxhatload)
+			% keep all parameters the same, including those that were not optimized
+			xhat = xhat.allparams;
 		elseif isfile(par.fxhat)
 			load(par.fxhat)
 		end
@@ -63,9 +65,9 @@ function par = SetPar(par)
         par.alpha = xhat.alpha ;
     else
         %par.alpha = 3.37e-08   ;		% WeiLei's NPP scaling factor for DIP uptake rate (used until v9b)
-		%par.alpha = 1.0   ;		% NPP scaling factor for DIP uptake rate
+		par.alpha = 1.0   ;		% NPP scaling factor for DIP uptake rate
 		%par.alpha = 1.0e-08 ;
-		par.alpha = 8.07e-04;
+		%par.alpha = 8.07e-04;
     end
     if exist('xhat') & isfield(xhat,'beta')
         par.beta = xhat.beta ;
@@ -73,7 +75,8 @@ function par = SetPar(par)
         %par.beta = 1.65e-02  ;			% Weilei's NPP scaling exponent for DIP uptake rate (used until v9b)
 		%par.beta = 1.0 ;			% NPP scaling exponent for DIP uptake rate
 		%par.beta = 1.0e-03 ;
-		par.beta = 5.93e-01 ; 	% inbetween value to test. result of PCa1e-8b1e-3
+		%par.beta = 5.93e-01 ; 	% inbetween value to test. result of PCa1e-8b1e-3
+		par.beta = 0.5 ;
     end
 	% adding a new parameter for b, same for both P and C; incomplete
 	if exist('xhat') & isfield(xhat,'bPC')
@@ -124,8 +127,8 @@ function par = SetPar(par)
     else
         %par.cc = 7.51e-4 ;				% slope for P:C as a linear function of DIP (WeiLei's value)
 		%par.cc = 1.02e-7 ; 				% WeiLei's new value
-		par.cc = 6.9e-3 ; 				% value from Galbraith & Martiny 2015
-		%par.cc = 0.0 ;					% slope for P:C as a linear function of DIP. if cc is off, P:C is a constant
+		%par.cc = 6.9e-3 ; 				% value from Galbraith & Martiny 2015
+		par.cc = 0.0 ;					% slope for P:C as a linear function of DIP. if cc is off, P:C is a constant
 										% with cc initially set to 0.0, optimization doesn't work for this param. instead make it a very small value
     end
     if exist('xhat') & isfield(xhat,'dd')
@@ -244,6 +247,7 @@ function par = SetPar(par)
 
 % cell model parameters that don't change
 	if (par.Cellmodel==on)
+		%if exist('xhat') & isfield(xhat,'gammaLipid')
 		%par.BIO.gammaDNA 	= .016;		% DNA fraction of cell
 		par.BIO.gammaLipid 	= .173;		% structural Lipid (non-membrane or periplasm) fraction of cell
 		%par.BIO.lPCutoff 	= -7.252;	% log of max [P] for which Plipids will be substituted with Slipids

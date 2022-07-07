@@ -1,4 +1,4 @@
-function [f, fx, fxx, data] = neglogpost(x, par)
+function [f, fx, fxx, data, xhat] = neglogpost(x, par)
     global iter
     on = true; off = false;
 	current_time = string(datetime('now')) ; %for runtime diagnostic purposes
@@ -20,7 +20,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 	if iter>1 & iter<5
 		ibad = BadStep(x,par);
 		% replace resetPara with BadStep(x, par).  use the same stopping criteria, except instead of replacing parameter value, add the pindx to a vector ibad. then if ibad has length > 0, set f to a large number (f=1000); set fx to a vector of zeros the right length; and set fxx to a matrix of correct size. length(fx) = length(x)
-		% do this step before printpara, because print para updates the values saved in fxhat
+		% do this step before saving the Updated values in fxhat
 		if ~isempty(ibad)
 			load(par.fxhat);
 			f = 10000;
@@ -31,13 +31,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 			return
 		end
 	end
-	% save current set of parameter values to a file
-	% that is used to reset parameters
-	if (par.optim == on)
-		x0 = real(x) ;
-		save(par.fxhat, 'x0','xhat')
-		fprintf('saving x0 and xhat to %s  ...\n', par.fxhat)
-	end
+	% save xhat (moved to end of script)
 
 	f    = 0;  % initialize objective function value
 	%myobjfun = [];
@@ -181,11 +175,6 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 	% fprintf('number of non real values in C output: %i \n', length(find(C~=real(C))))
 	% fprintf('number of non real values in Cx output: %i \n', length(find(Cx~=real(Cx))))
 	% fprintf('number of non real values in Cxx output: %i \n', length(find(Cxx~=real(Cxx))))
-
-% debugging gradient --> fixed!
-%	[ibadx,ibady] = find(Cx ~= real(Cx));
-%	ibadparam = unique(ibady)
-%	keyboard;
     %%%%%%%%%%%%%%%%%%   End Solve C    %%%%%%%%%%%%%%%%%%%%
 
     %%%%%%%%%%%%%%%%%%   Solve O    %%%%%%%%%%%%%%%%%%%%%%%%
@@ -205,12 +194,71 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 		toc
     end
     %%%%%%%%%%%%%%%%%%   End Solve O    %%%%%%%%%%%%%%%%%%%%
-    fprintf('current objective function value is %3.3e \n\n',f)
-    if mod(iter, 10) == 0
-        save(par.fname, 'data')
-    end
-	%show f again just to check
-	%f
+
+	% --------- Save all parameter values inlcuding fixed values in xhat ------
+	% this is to make sure all parameter values are consistent when rerunning model
+	allparams.kappa_p 	= par.kappa_p;
+	allparams.kappa_g 	= par.kappa_g   ;
+	allparams.sigma 	= par.sigma     ;
+	allparams.kP_T		= par.kP_T      ;
+	allparams.kdP 		= par.kdP       ;
+	allparams.bP_T 		= par.bP_T      ;
+	allparams.bP 		= par.bP        ;
+	allparams.alpha 	= par.alpha    ;
+	allparams.beta 		= par.beta      ;
+	if (par.Cmodel == on)
+		allparams.kPIC = par.kPIC  ;
+		allparams.bC_T = par.bC_T  ;
+		allparams.bC = par.bC    ;
+		allparams.d = par.d   ;
+		allprams.kC_T = par.kC_T  ;
+		allparams.kdC = par.kdC   ;
+		allparams.R_Si = par.R_Si  ;
+		allparams.rR = par.rR    ;
+		allparams.cc = par.cc    ;
+		allparams.dd = par.dd    ;
+	end
+	if (par.Omodel == on)
+		allparams.O2C_T = par.O2C_T ;
+		allparams.rO2C = par.rO2C  ;
+		allparams.O2P_T = par.O2P_T ;
+		allparams.rO2P = par.rO2P  ;
+	end
+	if (par.Simodel==on)
+		allparams.dsi =  par.dsi   ;
+		allparams.at = par.at    ;
+		allparams.bt = par.bt    ;
+		allparams.iaa = par.iaa   ;
+		allparams.bb = par.bb  ;
+	end
+	if (par.Cellmodel==on)
+		%pull params from BIO substructure
+		%allparams.BIO = par.BIO;
+		BIOfnames = fieldnames(par.BIO);
+		for ii = 1:length(BIOfnames)
+			allparams.(BIOfnames{ii}) = par.BIO.(BIOfnames{ii});
+		end
+		clear BIOfnames
+	end
+	xhat.allparams = allparams;
+	% save current set of parameter values to a file
+	% this is used to reset parameters
+	% not needed if xhat is an output of the function
+	% if (par.optim == on)
+	% 	x0 = real(x) ;
+	% 	save(par.fxhat, 'x0','xhat')
+	% 	fprintf('saving x0 and xhat to %s  ...\n', par.fxhat)
+	% end
+
+	%------------------------------------------------------------
+	if mod(iter, 10) == 0
+		save(par.fname, 'data')
+		save(par.fxhat, 'xhat')
+		fprintf('saving xhat to %s  ...\n', par.fxhat)
+	end
+	%------------------------------------------------------------
+	fprintf('current objective function value is %3.3e \n\n',f)
+
     %% +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     % calculate gradient
     if (nargout > 1)
@@ -750,7 +798,8 @@ function [f, fx, fxx, data] = neglogpost(x, par)
         end
 
 		if (par.optim==on & iter < 5)
-			load(par.fxhat);
+			%load(par.fxhat);
+			x0 = real(x);
 			xhat.f = f;
 			xhat.fx = fx;
 			xhat.fxx  = fxx;
