@@ -308,13 +308,14 @@ par.PARobs = PAR;
 
 %------------------ prepare NPP for the model --------------------
 par.nzo = 2 ;
-par.p2c = 0.006+0.0069*po4obs ;
+% remove this P:C unit conversion. a constant stoichiometric scaling is impliciit in alpha
+% par.p2c = 0.006+0.0069*po4obs ;
 inan = find(isnan(npp(:)) | npp(:) < 0) ;
 npp(inan) = 0 ;
 
-par.npp   = npp/(12*spd) ;		% units: mmol C/m^2/s
-par.npp1  = (0.5*par.npp./grd.dzt(1)).*par.p2c(:,:,1) ; % units: mmol P/m^2/s
-par.npp2  = (0.5*par.npp./grd.dzt(2)).*par.p2c(:,:,2) ;
+par.npp   = npp/(12*spd) ;		% units: mmol C/m^2/s /(1 mmol C/m^2/s)
+par.npp1  = (0.5*par.npp./grd.dzt(1)) ; % units: mmol C/m^2/s
+par.npp2  = (0.5*par.npp./grd.dzt(2)) ;
 par.Lambda = M3d*0 ;
 par.Lambda(:,:,1) = 1./(1e-6+po4obs(:,:,1)) ;
 par.Lambda(:,:,2) = 1./(1e-6+po4obs(:,:,2)) ;
