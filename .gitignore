@@ -1,3 +1,6 @@
+temp+2
+temp-2
+FullTemp+2
 *.eps
 *.png
 *#
@@ -11,5 +14,12 @@ slurm.*
 *~
 OutputData90/
 OutputData91/
+Cexp/
 Figs90/
 Figs91/
+GHtest/
+MSK90/
+MSK91/
+MINMAX/
+PME4DICALK/
+Zscore/
