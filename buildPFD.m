@@ -38,6 +38,7 @@ function [PFdiv,Gout,Hout] = buildPFD(par,Ptype)
             bm = par.bC_T ;  % slope
         end
         b = bb + bm*T ;
+        
         % particle sinking velocity at the top of the grid cells.
         % mimic a Martin curve flux attenuation profile (see Kriest and
         % Oschelies 2008 in Biogeosciences)
@@ -235,3 +236,4 @@ function [DIV,IU,M,MSK,iwet] = mkOperators(M3d,grd);
     MSK = M3D.*M3D(:,:,[nz+1,1:nz]);
     M   = MSK.*ZW3d;
 end
+
