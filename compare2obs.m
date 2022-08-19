@@ -2,8 +2,9 @@ clc; clear all; close all
 spd  = 24*60^2 ; spa  = 365*spd ;
 on = true; off = false;
 %
-GridVer  = 91  ;
-operator = 'A' ;
+expFigs  = off ;
+GridVer  = 91 ;
+operator = 'A';
 
 par.optim   = off ; % on: do optimization
 par.Pmodel  = on ; % on: run P model ;
@@ -14,31 +15,31 @@ par.LoadOpt = off ; % on: load optimial parameters;
                     % factor to weigh DOP in the objective function
 par.pscale  = 0.0 ;
 % factor to weigh DOC in the objective function
-par.cscale  = 0.25 ; 
+par.cscale  = 1.0 ; 
 
 %-------------load data and set up parameters---------------------
 SetUp ;
 
 if ismac
-    input_dir = sprintf('~/Documents/CP-model/MSK%2d/',GridVer); 
+    input_dir = sprintf('../DATA/MSK%2d/',GridVer); 
 elseif isunix
-    % input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/Cexp/']);
-    input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
-                        'MSK%2d/PME4DICALK/'],GridVer);
-    % input_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/COP4WWF/' ...
-                        % 'MSK%2d/'],GridVer);
+    input_dir = sprintf('~/rDOC-OP/MSK%2d/',GridVer) ; 
 end
 VER = strcat(input_dir,TRdivVer);
+
 % Creat output file names based on which model(s) is(are) optimized
 if (par.Cmodel == off & par.Omodel == off & par.Simodel == off)
-    fname = strcat(VER,'_P');
+    fname = strcat(VER,'_Pv3');
 elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off)
-    base_name = strcat(VER,'_PCv2'); 
-    % catDOC = sprintf('_DOC%2.0e',par.cscale);
+    base_name = strcat(VER,'_PCv1'); 
     catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
     fname = strcat(base_name,catDOC);
 elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off)
-    base_name = strcat(VER,'_PCOv5');
+    % base_name = strcat(VER,'_PCO_Gamma1to3_POC2DIC_GM15_VGPM_aveTeu_diffSig_O2C_uniEta');
+    % base_name = strcat(VER,'_PCO_Gamma1to3_POC2DIC_GM15_VGPM_aveTeu_diffSig_O2C_uniEta');
+    base_name = strcat(VER,'_PCO_Gamma1to3_POC2DIC_GM15_CbPM_aveTeu_diffSig_O2C_uniEta');
+    % base_name = strcat(VER,'_PCO_Gamma1to3_POC2DIC_GM15_MODIS_CbPM_aveTeu_diffSig_O2C_uniEta');
+    % base_name = strcat(VER,'_PCO_Gamma1to3_POC2DIC_GM15_VGPM_aveTeu_diffSig_O2C_uniEta_noArcMed');
     catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
     fname = strcat(base_name,catDOC);
 elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on)
@@ -70,32 +71,33 @@ if (par.Pmodel == on)
     iDOP_IND = find(dopraw(iwet)>0 & IND(iwet)>0) ;
     iDOP_ARC = find(dopraw(iwet)>0 & ARC(iwet)>0) ;
     iDOP_MED = find(dopraw(iwet)>0 & MED(iwet)>0) ;
-    fprintf('R^2 for DIP is %3.3f \n',rsquare(dopraw(idop),DOP(idop)))
-    % nfig = nfig + 1;
-    % figure(nfig)
-    % plot(dopraw(iwet(iDOP_ATL)), DOP(iwet(iDOP_ATL)),'ro')
-    % hold on
-    % plot(dopraw(iwet(iDOP_PAC)), DOP(iwet(iDOP_PAC)),'ks')
-    % hold on
-    % plot(dopraw(iwet(iDOP_IND)), DOP(iwet(iDOP_IND)),'b^')
-    % hold on
-    % plot(dopraw(iwet(iDOP_ARC)), DOP(iwet(iDOP_ARC)),'g*')
-    % hold on
-    % plot(dopraw(iwet(iDOP_MED)), DOP(iwet(iDOP_MED)),'c>')
-    % hold on
-    % plot([0 0.75],[0 0.75],'r-','linewidth',3)
-    % xlim([0 0.75])
-    % ylim([0 0.75])
+    fprintf('R^2 for DOP is %3.3f \n',rsquare(dopraw(idop),DOP(idop)))
+    nfig = nfig + 1;
+    figure(nfig)
+    plot(dopraw(iwet(iDOP_ATL)), DOP(iwet(iDOP_ATL)),'ro')
+    hold on
+    plot(dopraw(iwet(iDOP_PAC)), DOP(iwet(iDOP_PAC)),'ks')
+    hold on
+    plot(dopraw(iwet(iDOP_IND)), DOP(iwet(iDOP_IND)),'b^')
+    hold on
+    plot(dopraw(iwet(iDOP_ARC)), DOP(iwet(iDOP_ARC)),'g*')
+    hold on
+    plot(dopraw(iwet(iDOP_MED)), DOP(iwet(iDOP_MED)),'c>')
+    hold on
+    plot([0 0.75],[0 0.75],'r-','linewidth',3)
+    xlim([0 0.75])
+    ylim([0 0.75])
 
     if ~exist('DIP')
         DIP = data.DIP ;
     end 
     nfig = nfig+1;
     figure(nfig)
-    ipo4 = find(DIP(iwet) > 0 & po4raw(iwet) > 0.02);
+    ipo4 = find(DIP(iwet) > 0 & po4raw(iwet) > 0.05);
+
     O = po4raw(iwet(ipo4));
     M = DIP(iwet(ipo4));
-    fprintf('R^2 for DIP is %3.3f \n',rsquare(O,M))
+
     OvsM = [O,M];
     W = (dVt(iwet(ipo4))./sum(dVt(iwet(ipo4))));
     [bandwidth,density,X,Y] = mykde2d(OvsM,100,[0 0],[4 4],W);
@@ -115,9 +117,15 @@ if (par.Pmodel == on)
     axis square
     xlabel('Observed DIP (mmol/m^3)');
     ylabel('Model DIP (mmol/m^3)');
+
     % title('model V.S. observation')
     plot([0 4],[0 4],'r--','linewidth',2);
-    
+    R2 = sprintf('%3.2f',rsquare(O,M));
+    fprintf('valid DIP data points %3.0d \n', length(O))
+    fprintf('R^2 for DIP is %3.3f \n',str2num(R2))
+    text('string',['N = ' num2str(length(O))],'units','normalized','position',[0.25,0.95],'fontsize',12)
+    text('string',['R^2 = ' R2],'units','normalized','position',[0.25,0.90],'fontsize',12)
+
     subplot('position',[0.82 0.2 0.05 0.6]);
     contourf([1 2],cr,[cr(:),cr(:)],cr); hold on
     contour([1 2],cr,[cr(:),cr(:)],cr);
@@ -127,9 +135,10 @@ if (par.Pmodel == on)
     set(gca,'YAxisLocation','right');
     set(gca,'TickLength',[0 0])
     ylabel('(percentile)')
-    % exportfig(gcf,'DIP_MvsO','fontmode','fixed','fontsize',12, ... 
-              % 'color','rgb','renderer','painters')
-end 
+    if expFigs == on 
+        exportfig(gcf,'mkFigs/SeaWiFS/DIP_MvsO_1to100','fontmode','fixed','fontsize',12,'color','rgb','renderer','painters')
+    end 
+end
 
 % -----------------------------------------------------
 if (par.Cmodel == on)
@@ -144,7 +153,6 @@ if (par.Cmodel == on)
     % M = DIC(iwet(iDIC)) ;
     % not include anthropogenic CO2
     M = DIC(iwet(iDIC))+par.dicant(iwet(iDIC)); 
-    fprintf('R^2 for DIC is %3.3f \n',rsquare(O,M))
     %
     OvsM = [O, M];
     W = (dVt(iwet(iDIC))./sum(dVt(iwet(iDIC))));
@@ -167,7 +175,12 @@ if (par.Cmodel == on)
     ylabel('Model DIC (mmol/m^3)');
     % title('model V.S. observation')
     plot([2000 2500],[2000 2500],'r--','linewidth',2);
-    
+    R2 = sprintf('%3.2f',rsquare(O,M));
+    fprintf('valid DIC data points %3.0d \n', length(O))
+    fprintf('R^2 for DIC is %3.3f \n',str2num(R2))
+    text('string',['N = ' num2str(length(O))],'units','normalized','position',[0.25,0.95],'fontsize',12)
+    text('string',['R^2 = ' R2],'units','normalized','position',[0.25,0.90],'fontsize',12)
+
     subplot('position',[0.82 0.2 0.05 0.6]);
     contourf([1 1.5],cr,[cr(:),cr(:)],cr); hold on
     contour([1 1.5],cr,[cr(:),cr(:)],cr);
@@ -177,9 +190,10 @@ if (par.Cmodel == on)
     set(gca,'YAxisLocation','right');
     set(gca,'TickLength',[0 0])
     ylabel('(percentile)')
-    % exportfig(gcf,'DIC_MvsO','fontmode','fixed','fontsize',12,...
-              % 'color','rgb','renderer','painters')
-
+    if expFigs == on 
+        exportfig(gcf,'mkFigs/SeaWiFS/DIC_MvsO_1to100','fontmode','fixed','fontsize',12,'color','rgb','renderer','painters')
+    end
+    
     if ~exist('ALK')
         ALK = data.ALK ;
     end
@@ -190,7 +204,6 @@ if (par.Cmodel == on)
     %
     O = par.alkraw(iwet(iALK));
     M = ALK(iwet(iALK)); % already including anthropogenic CO2 
-    fprintf('R^2 for ALK is %3.3f \n',rsquare(O,M))
     %
     OvsM = [O, M];
     W = (dVt(iwet(iALK))./sum(dVt(iwet(iALK))));
@@ -213,6 +226,11 @@ if (par.Cmodel == on)
     ylabel('Model ALK (mmol/m^3)');
     % title('model V.S. observation')
     plot([2300 2550],[2300 2550],'r--','linewidth',2);
+    R2 = sprintf('%3.2f',rsquare(O,M));
+    fprintf('valid ALK data points % 3.0d \n', length(O))
+    fprintf('R^2 for ALK is %3.3f \n',str2num(R2))
+    text('string',['N = ' num2str(length(O))],'units','normalized','position',[0.25,0.95],'fontsize',12)
+    text('string',['R^2 = ' R2],'units','normalized','position',[0.25,0.90],'fontsize',12)
     
     subplot('position',[0.82 0.2 0.05 0.6]);
     contourf([1 2],cr,[cr(:),cr(:)],cr); hold on
@@ -223,45 +241,53 @@ if (par.Cmodel == on)
     set(gca,'YAxisLocation','right');
     set(gca,'TickLength',[0 0])
     ylabel('(percentile)')
-    % exportfig(gcf,'ALK_MvsO','fontmode','fixed','fontsize',12,...
-    % 'color','rgb','renderer','painters')
-
+    if expFigs == on 
+        exportfig(gcf,'mkFigs/SeaWiFS/ALK_MvsO_1to100','fontmode','fixed','fontsize',12,'color','rgb','renderer','painters')
+    end
+    
     if isfield(data,'DOC') 
-        DOC = data.DOC  ;
+        DOC = data.DOC + data.DOCr ;%+ data.DOCl;
     end 
     
-    iDOC_ATL = find(DOCclean(iwet)>0 & ATL(iwet)>0) ;
-    iDOC_PAC = find(DOCclean(iwet)>0 & PAC(iwet)>0) ;
-    iDOC_IND = find(DOCclean(iwet)>0 & IND(iwet)>0) ;
-    iDOC_ARC = find(DOCclean(iwet)>0 & ARC(iwet)>0) ;
-    iDOC_MED = find(DOCclean(iwet)>0 & MED(iwet)>0) ;
+    iDOC_ATL = find(par.docraw(iwet)>0 & ATL(iwet)>0) ;
+    iDOC_PAC = find(par.docraw(iwet)>0 & PAC(iwet)>0) ;
+    iDOC_IND = find(par.docraw(iwet)>0 & IND(iwet)>0) ;
+    iDOC_ARC = find(par.docraw(iwet)>0 & ARC(iwet)>0) ;
+    iDOC_MED = find(par.docraw(iwet)>0 & MED(iwet)>0) ;
     
     nfig = nfig + 1;
     figure(nfig)
-    plot(DOCclean(iwet(iDOC_ATL)), DOC(iwet(iDOC_ATL)),'ro')
+    plot(par.docraw(iwet(iDOC_ATL)), DOC(iwet(iDOC_ATL)),'ro')
     hold on
-    plot(DOCclean(iwet(iDOC_PAC)), DOC(iwet(iDOC_PAC)),'ks')
+    plot(par.docraw(iwet(iDOC_PAC)), DOC(iwet(iDOC_PAC)),'ks')
     hold on
-    plot(DOCclean(iwet(iDOC_IND)), DOC(iwet(iDOC_IND)),'b^')
+    plot(par.docraw(iwet(iDOC_IND)), DOC(iwet(iDOC_IND)),'b^')
     hold on
-    plot(DOCclean(iwet(iDOC_ARC)), DOC(iwet(iDOC_ARC)),'g*')
+    % plot(par.docraw(iwet(iDOC_ARC)), DOC(iwet(iDOC_ARC)),'g*')
+    % hold on
+    % plot(par.docraw(iwet(iDOC_MED)), DOC(iwet(iDOC_MED)),'c>')
+    % hold on 
+    legend('ATL','PAC','IND','Location','northwest')
     hold on
-    plot(DOCclean(iwet(iDOC_MED)), DOC(iwet(iDOC_MED)),'c>')
-    hold on 
-    legend('ATL','PAC','IND','ARC','Location','northwest')
-    hold on
-    plot([0 60],[0 60],'r-','linewidth',3)
-    xlim([0 60])
-    ylim([0 60])
+    plot([30 90],[30 90],'r-','linewidth',3)
+
+    xlim([30 90])
+    ylim([30 90])
     hold off
     xlabel('Observed DOC (mmol/m^3)')
     ylabel('Model DOC (mmol/m^3)')
-    iDOC = find(DOCclean(iwet)>0 & DOC(iwet)>0) ;
-    O = DOCclean(iwet(iDOC)) ;
-    M = DOC(iwet(iDOC)) ; 
-    fprintf('R^2 for DOC is %3.3f \n',rsquare(O,M))
-    % OvsM = [O, M] ;
-    
+    iDOC = find(par.docraw(iwet)>0 & DOC(iwet)>0) ;
+    O = par.docraw(iwet(iDOC)) ;
+    M = DOC(iwet(iDOC)) ;
+    R2 = sprintf('%3.2f',rsquare(O,M));
+    fprintf('valid DOC data points %3.0d \n', length(O))
+    fprintf('R^2 for DOC is %3.2f \n', str2num(R2))
+    text('string',['N = ' num2str(length(O))],'units','normalized','position',[0.5,0.95],'fontsize',12)
+    text('string',['R^2 = ' R2],'units','normalized','position',[0.5,0.90],'fontsize',12)
+
+    if expFigs == on 
+        exportfig(gcf,'mkFigs/SeaWiFS/tDOC_MvsO_1to100','fontmode','fixed','fontsize',12,'color','rgb','renderer','painters')
+    end
     %%%%%%%% compare to sediment trap %%%%%%%%%%%%
     POC = data.POC ;
     par.kappa_p  = 1/(720*60^2) ;
@@ -274,7 +300,7 @@ if (par.Cmodel == on)
     end         
     
     [PFdiv,Gout] = buildPFD(par,'POC');
-    w = Gout.w(:,:,2:25) ;
+    w = Gout.w(:,:,1:24) ;
     fPOC = -w.*POC*spd*12 ;
     fPOC(iarc) = nan ;
     fPOC([1:15,75:end],:,:) = nan;
@@ -299,14 +325,18 @@ if (par.Cmodel == on)
     hold on
     plot([0.1 1000],[0.1 1000],'r','linewidth',2)
     hold off
+
     xlim([0.1 1000])
     ylim([0.1 1000])
     xlabel('Observed POC flux (mg/m^2/day)')
     ylabel('Model POC flux (mg/m^2/day)')
     %
     ikeep = find(POC_flux(:)>0 & fPOC(:)>0);
-    fprintf('R^2 for fPOC is %3.3f \n', ...
-            rsquare(log10(POC_flux(ikeep)),log10(fPOC(ikeep))))
+    R2 = sprintf('%3.2f',rsquare(log10(POC_flux(ikeep)),log10(fPOC(ikeep))));
+    fprintf('valid fPOC data points %3.0d \n', length(POC_flux(ikeep)))
+    fprintf('R^2 for fPOC is %3.2f \n', str2num(R2))
+    text('string',['N = ' num2str(length(fPOC(ikeep)))],'units','normalized','position',[0.5,0.95],'fontsize',12)
+    text('string',['R^2 = ' R2],'units','normalized','position',[0.5,0.90],'fontsize',12)
 
     PIC = data.PIC ;
     if isfield(xhat,'d')
@@ -314,17 +344,20 @@ if (par.Cmodel == on)
     end         
     par.tauPIC = 30*spd   ;
     [~,Gout] = buildPFD(par,'PIC') ;
-    w = Gout.w(:,:,2:25)  ;
+    w = Gout.w(:,:,1:24)  ;
     fPIC = -w.*PIC*spd*12 ;
-    % exportfig(gcf,'fPOC','fontmode','fixed','fontsize',12,'color','rgb','renderer','painters')
+    if expFigs == on 
+        exportfig(gcf,'mkFigs/SeaWiFS/fPOC_MvsO_1to100','fontmode','fixed','fontsize',12,'color','rgb','renderer','painters')
+    end
+    
     rRatio = fPOC./fPIC ;
     load RainRatio.mat rR
     rR([1:15,75:end],:,:) = nan ;
     irRatio_ATL = find(rR(iwet)>0 & rR(iwet)>0 & ATL(iwet)>0) ;
     irRatio_PAC = find(rR(iwet)>0 & rR(iwet)>0 & PAC(iwet)>0) ;
     irRatio_IND = find(rR(iwet)>0 & rR(iwet)>0 & IND(iwet)>0) ;
-    irRatio_ARC = find(rR(iwet)>0 & rR(iwet)>0 & ARC(iwet)>0) ;
-    irRatio_MED = find(rR(iwet)>0 & rR(iwet)>0 & MED(iwet)>0) ;
+    % irRatio_ARC = find(rR(iwet)>0 & rR(iwet)>0 & ARC(iwet)>0) ;
+    % irRatio_MED = find(rR(iwet)>0 & rR(iwet)>0 & MED(iwet)>0) ;
     
     nfig = nfig + 1;
     figure(nfig)
@@ -341,15 +374,22 @@ if (par.Cmodel == on)
     hold on
     plot([0.1 100],[0.1 100],'r','linewidth',2)
     hold off
+
     xlim([0.1 100])
     ylim([0.1 100])
     xlabel('Observed rain ratio')
     ylabel('Model rain ratio')
     ikp= find(rR(iwet)>0 & rR(iwet)<100);
-    fprintf('R^2 for rain ratio is %3.3f \n', ...
-            rsquare(log10(rR(iwet(ikp))),log10(rRatio(iwet(ikp)))))
-    % exportfig(gcf,'rRatio','fontmode','fixed','fontsize',12,'color','rgb','renderer','painters')
-end
+    R2 = sprintf('%3.2f',rsquare(log10(rR(iwet(ikp))),log10(rRatio(iwet(ikp)))));
+    fprintf('valid rRR data points %3.0d \n', length(rR(iwet(ikp))))
+    fprintf('R^2 for rain ratio is %3.3f \n', str2num(R2))
+    text('string',['N = ' num2str(length(rR(iwet(ikp))))],'units','normalized','position',[0.25,0.95],'fontsize',12)
+    text('string',['R^2 = ' R2],'units','normalized','position',[0.75,0.90],'fontsize',12)
+
+    if expFigs == on 
+        exportfig(gcf,'mkFigs/SeaWiFS/rRatio_MvsO_1to100','fontmode','fixed','fontsize',12,'color','rgb','renderer','painters')
+    end
+end 
 
 % ---------------------------------------------------
 if (par.Omodel == on)
@@ -364,7 +404,6 @@ if (par.Omodel == on)
     %
     M = O2(iwet(io2));
     O = o2obs(iwet(io2));
-    fprintf('R^2 for O2 is %3.3f \n',rsquare(O,M)) 
     OvsM = [O, M];
     %
     W = (dVt(iwet(io2))./sum(dVt(iwet(io2))));
@@ -387,6 +426,11 @@ if (par.Omodel == on)
     ylabel('Model O2 (mmol/m^3)');
     % title('model V.S. observation')
     plot([0 300],[0 300],'r--','linewidth',2);
+    R2 = sprintf('%3.2f',rsquare(O,M)) ;
+    fprintf('valid O2 data points %3.0d \n', length(O))
+    fprintf('R^2 for O2 is %3.3f \n',str2num(R2)) 
+    text('string',['N = ' num2str(length(O))],'units','normalized','position',[0.25,0.95],'fontsize',12)
+    text('string',['R^2 = ' R2],'units','normalized','position',[0.25,0.90],'fontsize',12)
     
     subplot('position',[0.82 0.2 0.05 0.6]);
     contourf([1 2],cr,[cr(:),cr(:)],cr); hold on
@@ -397,7 +441,9 @@ if (par.Omodel == on)
     set(gca,'YAxisLocation','right');
     set(gca,'TickLength',[0 0])
     ylabel('(percentile)')
-    % exportfig(gcf,'O2_MvsO','fontmode','fixed','fontsize',12,'color','rgb','renderer','painters')
+    if expFigs == on 
+        exportfig(gcf,'mkFigs/SeaWiFS/O2_MvsO_1to100','fontmode','fixed','fontsize',12,'color','rgb','renderer','painters')
+    end
 end 
 
 % -----------------------------------------------------
@@ -435,6 +481,8 @@ if (par.Simodel == on)
     ylabel('Model DSi (mmol/m^3)');
     % title('model V.S. observation')
     plot([0 200],[0 200],'r--','linewidth',2);
+    text('string',['R^2 = ' num2str(rsquare(O,M))],'units','normalized','position',[0.75,0.95],'fontsize',12)
+    text('string',['N = ' num2str(length(O))],'units','normalized','position',[0.25,0.85],'fontsize',12)
     
     subplot('position',[0.82 0.2 0.05 0.6]);
     contourf([1 2],cr,[cr(:),cr(:)],cr); hold on
@@ -445,5 +493,7 @@ if (par.Simodel == on)
     set(gca,'YAxisLocation','right');
     set(gca,'TickLength',[0 0])
     ylabel('(percentile)')
-    % exportfig(gcf,'DSi_MvsO','fontmode','fixed','fontsize',12,'color','rgb','renderer','painters')
-end 
+    if expFigs == on 
+        exportfig(gcf,'mkFigs/SeaWiFS/DSi_MvsO_1to100','fontmode','fixed','fontsize',12,'color','rgb','renderer','painters')
+    end 
+end

@@ -4,16 +4,17 @@ function [f, fx, fxx, data] = neglogpost(x, par)
     % print and save current parameter values to
     % a file that is used to reset parameters ;
     if iter == 0
-        PrintPara(x, par) ;
+        PrintPar(x, par) ;
     end
+    
     % reset parameters if optimization routine
     % suggests strange parameter values ;
-    if iter < 3
+    if iter < 10
         x = ResetPara(x, par) ;
     end
     % print current parameters 
     if iter > 0
-        PrintPara(x, par) ;    
+        PrintPar(x, par) ;    
     end
     fprintf('current iteration is %d \n',iter) ;
     iter = iter + 1  ;
@@ -26,7 +27,12 @@ function [f, fx, fxx, data] = neglogpost(x, par)
     %
     f    = 0 ;
     %%%%%%%%%%%%%%%%%%   Solve P    %%%%%%%%%%%%%%%%%%%%%%%%
-    idip = find(par.po4raw(iwet) > 0.02) ;
+    tic 
+    [par, P, Px, Pxx] = eqPcycle(x, par) ;
+    % Gradient and Hessian
+    par.Px    = Px ;  par.Pxx   = Pxx ;
+    %
+    idip = find(par.po4raw(iwet) > 0.05) ;
     Wp   = d0(dVt(iwet(idip))/sum(dVt(iwet(idip)))) ;
     mu   = sum(Wp*par.po4raw(iwet(idip)))/sum(diag(Wp)) ;
     var  = sum(Wp*(par.po4raw(iwet(idip))-mu).^2)/sum(diag(Wp)) ;
@@ -38,98 +44,116 @@ function [f, fx, fxx, data] = neglogpost(x, par)
     var  = sum(Wp*(par.dopraw(iwet(idop))-mu).^2)/sum(diag(Wp)) ;
     Wop  = par.pscale*Wp/var ;
     %
-    [par, P, Px, Pxx] = eqPcycle(x, par) ;
-    DIP = M3d+nan  ;  DIP(iwet) = P(1+0*nwet:1*nwet) ;
-    POP = M3d+nan  ;  POP(iwet) = P(1+1*nwet:2*nwet) ;
-    DOP = M3d+nan  ;  DOP(iwet) = P(1+2*nwet:3*nwet) ;
-    
-    par.Px   = Px  ;
-    par.Pxx  = Pxx ;
+    DIP  = M3d+nan  ;  DIP(iwet)  = P(1+0*nwet:1*nwet) ;
+    POP  = M3d+nan  ;  POP(iwet)  = P(1+1*nwet:2*nwet) ;
+    DOP  = M3d+nan  ;  DOP(iwet)  = P(1+2*nwet:3*nwet) ;
+    DOPl = M3d+nan  ;  DOPl(iwet) = P(1+2*nwet:3*nwet) ;
+
     par.DIP  = DIP(iwet) ;
-    data.DIP = DIP ; data.POP = POP ; data.DOP = DOP ;
+    data.DIP = DIP ; data.POP  = POP  ;
+    data.DOP = DOP ; data.DOPl = DOPl ;
     % DIP error
     eip = DIP(iwet(idip)) - par.po4raw(iwet(idip)) ;
     eop = DOP(iwet(idop)) - par.dopraw(iwet(idop)) ;
     f  = f + 0.5*(eip.'*Wip*eip) + 0.5*(eop.'*Wop*eop);
+    toc     
     %%%%%%%%%%%%%%%%%%   End Solve P    %%%%%%%%%%%%%%%%%%%%
     
     %%%%%%%%%%%%%%%%%%   Solve Si       %%%%%%%%%%%%%%%%%%%%
     if (par.Simodel == on)
+        tic
+        [par,Si,Six,Sixx] = eqSicycle(x, par) ;
         isil = find(par.sio4raw(iwet)>0) ;
         Ws   = d0(dVt(iwet(isil))/sum(dVt(iwet(isil)))) ;
         mu   = sum(Ws*par.sDSi(iwet(isil)))/sum(diag(Ws)) ;
         var  = sum(Ws*(par.sDSi(iwet(isil))-mu).^2)/sum(diag(Ws));
         Ws   = Ws/var ;
         %
-        [par,Si,Six,Sixx] = eqSicycle(x, par)   ;
         DSi = M3d+nan ;  DSi(iwet) = Si(1:nwet) ;
         bSi = M3d+nan ;  bSi(iwet) = Si(nwet+1:end) ;
         data.DSi = SI ;  data.bSi  = bSi ;  
         % SiO error
         es = DSi(iwet(isil)) - par.sio4raw(iwet(isil)) ;
         f  = f + 0.5*(es.'*Ws*es) ;
+        toc
     end
     %%%%%%%%%%%%%%%%%%   End Solve Si    %%%%%%%%%%%%%%%%%%%%
-
+    
     %%%%%%%%%%%%%%%%%%     Solve C   %%%%%%%%%%%%%%%%%%%%%%%%
     if (par.Cmodel == on)
+        tic 
+        [par, C, Cx, Cxx] = eqCcycle(x, par) ;
+        % Gradient and Hessian
+        par.Cx = Cx ;  par.Cxx = Cxx ;
+        %
         idic = find(par.dicraw(iwet) > 0) ;
         Wic  = d0(dVt(iwet(idic))/sum(dVt(iwet(idic)))) ;
         mu   = sum(Wic*par.dicraw(iwet(idic)))/sum(diag(Wic)) ;
         var  = sum(Wic*(par.dicraw(iwet(idic))-mu).^2)/sum(diag(Wic));
         Wic  = Wic/var  ;
         
-        ialk = find(par.alkraw(iwet)>0) ;
+        ialk = find(par.alkraw(iwet) > 0) ;
         Wlk  = d0(dVt(iwet(ialk))/sum(dVt(iwet(ialk)))) ;
         mu   = sum(Wlk*par.alkraw(iwet(ialk)))/sum(diag(Wlk)) ;
         var  = sum(Wlk*(par.alkraw(iwet(ialk))-mu).^2)/sum(diag(Wlk));
         Wlk  = Wlk/var  ;
-
-        idoc = find(par.docraw(iwet)>0) ;
+        
+        idoc = find(par.docraw(iwet) > 0) ;
         Woc  = d0(dVt(iwet(idoc))/sum(dVt(iwet(idoc)))) ;
         mu   = sum(Woc*par.docraw(iwet(idoc)))/sum(diag(Woc)) ;
         var  = sum(Woc*(par.docraw(iwet(idoc))-mu).^2)/sum(diag(Woc));
         Woc  = par.cscale*Woc/var ;
-        
-        [par, C, Cx, Cxx] = eqCcycle(x, par) ;
-        DIC = M3d+nan ;  DIC(iwet) = C(0*nwet+1:1*nwet) ;
-        POC = M3d+nan ;  POC(iwet) = C(1*nwet+1:2*nwet) ;
-        DOC = M3d+nan ;  DOC(iwet) = C(2*nwet+1:3*nwet) ;
-        PIC = M3d+nan ;  PIC(iwet) = C(3*nwet+1:4*nwet) ;
-        ALK = M3d+nan ;  ALK(iwet) = C(4*nwet+1:5*nwet) ;
+        %
+        DIC  = M3d+nan ;  DIC(iwet)  = C(0*nwet+1:1*nwet) ;
+        POC  = M3d+nan ;  POC(iwet)  = C(1*nwet+1:2*nwet) ;
+        DOC  = M3d+nan ;  DOC(iwet)  = C(2*nwet+1:3*nwet) ;
+        PIC  = M3d+nan ;  PIC(iwet)  = C(3*nwet+1:4*nwet) ;
+        ALK  = M3d+nan ;  ALK(iwet)  = C(4*nwet+1:5*nwet) ;
+        DOCl = M3d+nan ;  DOCl(iwet) = C(5*nwet+1:6*nwet) ;
+        DOCr = M3d+nan ;  DOCr(iwet) = C(6*nwet+1:7*nwet) ;
 
         par.DIC = DIC(iwet) ;
+        par.POC = POC(iwet) ;
         par.DOC = DOC(iwet) ;
+        par.DOCl = DOCl(iwet) ;
+        par.DOCr = DOCr(iwet) ;
         DIC = DIC + par.dicant  ;
-        par.Cx   = Cx  ;  par.Cxx  = Cxx ;
-        data.DIC = DIC ;  data.POC = POC ;
-        data.DOC = DOC ;  data.PIC = PIC ;
-        data.ALK = ALK ;
-        % DIC error
+
+        data.DIC  = DIC  ;  data.POC  = POC ;
+        data.DOC  = DOC  ;  data.PIC  = PIC ;
+        data.ALK  = ALK  ;  data.DOCr = DOCr ;
+        data.DOCl = DOCl ;
+        % error function
+        DOC = DOC + DOCr ; % sum of labile and refractory DOC ;
         eic = DIC(iwet(idic)) - par.dicraw(iwet(idic)) ;
         eoc = DOC(iwet(idoc)) - par.docraw(iwet(idoc)) ;
         elk = ALK(iwet(ialk)) - par.alkraw(iwet(ialk)) ;
         f   = f + 0.5*(eic.'*Wic*eic) + 0.5*(eoc.'*Woc*eoc) + ...
-              0.5*(elk.'*Wlk*elk);
+              0.5*(elk.'*Wlk*elk) ;
+        toc
     end
     %%%%%%%%%%%%%%%%%%   End Solve C    %%%%%%%%%%%%%%%%%%%%
-    
+
     %%%%%%%%%%%%%%%%%%   Solve O    %%%%%%%%%%%%%%%%%%%%%%%%
     if (par.Omodel == on)
+        tic 
+        [par, O, Ox, Oxx] = eqOcycle(x, par) ;
+        %
         io2 = find(par.o2raw(iwet)>0) ;
         Wo  = d0(dVt(iwet(io2))/sum(dVt(iwet(io2)))) ;
         mu  = sum(Wo*par.o2raw(iwet(io2)))/sum(diag(Wo)) ;
         var = sum(Wo*(par.o2raw(iwet(io2))-mu).^2)/sum(diag(Wo)) ;
         Wo  = Wo/var ;
         %
-        [par, O, Ox, Oxx] = eqOcycle(x, par) ;
         O2 = M3d+nan ;  O2(iwet) = O ;
         data.O2 = O2 ;
         eo = O2(iwet(io2)) - par.o2raw(iwet(io2)) ;
         f  = f + 0.5*(eo.'*Wo*eo)   ;
+        toc 
     end
     %%%%%%%%%%%%%%%%%%   End Solve O    %%%%%%%%%%%%%%%%%%%%
     fprintf('current objective function value is %3.3e \n\n',f) 
+
     if mod(iter, 10) == 0
         save(par.fname, 'data')
     end 
@@ -157,7 +181,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
         % ----------------------------------
         if (par.Cmodel == on & par.Simodel == off)
             icx = Cx(0*nwet+1 : 1*nwet, :) ;
-            ocx = Cx(2*nwet+1 : 3*nwet, :) ;
+            ocx = Cx(2*nwet+1 : 3*nwet, :) + Cx(6*nwet+1 : 7*nwet, :);
             lkx = Cx(4*nwet+1 : 5*nwet, :) ;
             ncx = par.ncx       ;
             % --------------------------
@@ -184,7 +208,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
             ncx = par.ncx ;
             nsx = par.nsx ;
             icx = Cx(0*nwet+1 : 1*nwet, :) ;
-            ocx = Cx(2*nwet+1 : 3*nwet, :) ;
+            ocx = Cx(2*nwet+1 : 3*nwet, :) + Cx(6*nwet+1 : 7*nwet, :);
             lkx = Cx(4*nwet+1 : 5*nwet, :) ;
             sx  = Six(1:nwet, :) ;
             % --------------------------
@@ -213,7 +237,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
             nox = par.nox ;
             nsx = par.nsx ;
             icx = Cx(0*nwet+1 : 1*nwet, :) ;
-            ocx = Cx(2*nwet+1 : 3*nwet, :) ;
+            ocx = Cx(2*nwet+1 : 3*nwet, :) + Cx(6*nwet+1 : 7*nwet, :);
             lkx = Cx(4*nwet+1 : 5*nwet, :) ;
             ox  = Ox(1:nwet,:) ;
             sx  = Six(1:nwet,:);
@@ -265,7 +289,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
                 % Cmodel
                 if par.Cmodel == on
                     icxx = Cxx(0*nwet+1 : 1*nwet, :) ;
-                    ocxx = Cxx(2*nwet+1 : 3*nwet, :) ;
+                    ocxx = Cxx(2*nwet+1 : 3*nwet, :) + Cxx(6*nwet+1 : 7*nwet, :);
                     lkxx = Cxx(4*nwet+1 : 5*nwet, :) ; 
                     fxx(ju,jo) = fxx(ju, jo) + ...
                         icx(idic,ju).'*Wic*icx(idic,jo) + eic.'*Wic*icxx(idic,kk) + ...
@@ -571,5 +595,4 @@ function [f, fx, fxx, data] = neglogpost(x, par)
         end
     end
 end
-
 

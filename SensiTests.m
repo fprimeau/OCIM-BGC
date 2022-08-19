@@ -17,37 +17,36 @@ operator = 'A' ;
 % H -> KiLOW_noHe; I -> KvHIGH_He; J -> KvHIGH_noHe; K -> KvHIGH_KiHIGH_noHe
 Gtest = off ;
 Htest = off ;
-par.optim   = on ; 
+par.optim   = off ; 
 par.Cmodel  = on ; 
 par.Omodel  = on ; 
 par.Simodel = off ;
-par.LoadOpt = off ; % if load optimial par. 
+par.LoadOpt = on ; % if load optimial par. 
 par.pscale  = 0.0 ;
-par.cscale  = 0.0 ; % factor to weigh DOC in the objective function
+par.cscale  = 0.25 ; % factor to weigh DOC in the objective function
 
 % P model parameters
-par.opt_sigma = on ; 
-par.opt_kP_T  = on ;
+par.opt_sigP  = on ; 
+par.opt_Q10P  = on ;
 par.opt_kdP   = on ;
 par.opt_bP_T  = on ; 
 par.opt_bP    = on ;
 par.opt_beta  = on ;
 par.opt_alpha = on ;
 % C model parameters
+par.opt_sigC  = on ; 
 par.opt_bC_T  = on ;
 par.opt_bC    = on ; 
 par.opt_d     = on ;
-par.opt_kC_T  = on ;
+par.opt_Q10C  = on ;
 par.opt_kdC   = on ; 
 par.opt_R_Si  = on ; 
 par.opt_rR    = on ; 
 par.opt_cc    = on ;
 par.opt_dd    = on ;
 % O model parameters
-par.opt_O2C_T = on ;
+par.opt_O2C_T = off ;
 par.opt_rO2C  = on ;
-par.opt_O2P_T = on ; 
-par.opt_rO2P  = on ; 
 % Si model parameters
 par.opt_dsi   = on  ;
 par.opt_at    = off ;
@@ -64,12 +63,7 @@ SetUp ;
 if ismac
     output_dir = sprintf('~/Documents/CP-model/MSK%2d/',GridVer); 
 elseif isunix
-    % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
-    % 'MSK%2d/'],GridVer);
-    output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
-                        'MSK%2d/PME4DICALK/'],GridVer);
-    % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/COP4WWF/' ...
-    % 'MSK%2d/'],GridVer);
+    output_dir = sprintf('~/Temp_OP/') ;
 end
 VER = strcat(output_dir,TRdivVer);
 % Creat output file names based on which model(s) is(are) optimized
@@ -83,7 +77,7 @@ elseif Gtest == off
         catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
         fname = strcat(base_name,catDOC);
     elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off)
-        base_name = strcat(VER,'_PCOv1');
+        base_name = strcat(VER,'_PCOv2');
         catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
         fname = strcat(base_name,catDOC);
     elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on)
@@ -114,23 +108,26 @@ if par.Omodel == on
     GO  = real(data.O2(iwet)) + 1e-9*randn(par.nwet,1);
 end 
 %--------------------- prepare parameters ------------------
-if par.optim == on 
-    % load optimal parameters from a file or set them to default values 
-    par = SetPar(par) ;
-    % pack parameters into an array, assign them corresponding indices.
-    par = PackPar(par) ;
-end 
+% load optimal parameters from a file or set them to default values 
+par = SetPar(par) ;
+% pack parameters into an array, assign them corresponding indices.
+par = PackPar(par) ;
 p0 = par.p0 ;
 % ---------------------perturbe temperature ---------------
+for ji = 1:24
+    t2d = par.Temp(:,:,ji); 
+    par.Temp(:,:,ji) = smoothit(grd,M3d,t2d,3,1e5);
+end 
+
 vT0  = par.Temp(iwet) ;
 vT1  = vT0 + 2        ;
-Tz1  = (vT1-min(vT0))/(max(vT0)-min(vT0));
-Tz0  = (vT0-min(vT0))/(max(vT0)-min(vT0));
+Tz1  = (vT1-min(vT0)+1.0)/(max(vT0)-min(vT0));
+Tz0  = (vT0-min(vT0)+1.0)/(max(vT0)-min(vT0));
 Tz3d = M3d + nan      ;
 Tz3d(iwet) = Tz1      ;
-par.aveT   = nanmean(Tz3d(:,:,1:3),3) ;
+par.aveT   = nanmean(Tz3d(:,:,1:2),3) ;
 par.Tz     = Tz1*1e-8 ;
-
+par.vT     = vT1 ;
 DIP = data.DIP ;
 POP = data.POP ;
 DOP = data.DOP ;
@@ -156,7 +153,7 @@ dDIP = pDIP - data.DIP ;
 % make a zonal cross section of the age
 contourf(grd.yt,-grd.zt,squeeze(dDIP(:,170,:))')
 set(gca,'color','black') 
-colormap(darkb2r(-0.015,0.025)), colorbar
+colormap(darkb2r(-0.025,0.05)), colorbar
 xlabel('latitude (deg)');
 ylabel('depth (m)')
 t = sprintf('DIP anomally x = %4.1f deg', 170);
@@ -168,23 +165,23 @@ figure(nfig)
 PAC = MSKS.PAC;
 PZA = squeeze(nansum(PAC.*dDIP.*dVt,2)./sum(PAC.*dVt,2))';
 subplot(2,1,1) ;
-contourf(grd.yt,-grd.zt(1:9),PZA(1:9,:),[-0.015:0.005:0.025]); 
+contourf(grd.yt,-grd.zt(1:9),PZA(1:9,:),[-0.15:0.03:0.15]); 
 set(gca,'color','black') 
-colormap(darkb2r(-0.015,0.025)), colorbar
+colormap(darkb2r(-0.15,0.15)), colorbar
 ylabel('depth (m)');
 title('Pacific zonal average DIP anomaly')
 %
 subplot(2,1,2) ;
-contourf(grd.yt,-grd.zt(10:end),PZA(10:end,:),[-0.015:0.005:0.025]);
+contourf(grd.yt,-grd.zt(10:end),PZA(10:end,:),[-0.15:0.03:0.15]);
 set(gca,'color','black') 
-colormap(darkb2r(-0.015,0.025)), colorbar
-caxis([-0.015 0.025])
+colormap(darkb2r(-0.15,0.15)), colorbar
+caxis([-0.15 0.15])
 colorbar
 xlabel('latitutde (deg)')
 ylabel('depth (m)')
 set(gcf, 'InvertHardcopy', 'off')
-exportfig(gcf,'Figs91/pza_dip','fontmode','fixed','fontsize',12, ...
-          'color','rgb','renderer','painters')
+% exportfig(gcf,'Figs91/pza_dip','fontmode','fixed','fontsize',12, ...
+          % 'color','rgb','renderer','painters')
 %
 nfig = nfig + 1 ;
 figure(nfig)
@@ -192,32 +189,32 @@ figure(nfig)
 ATL = MSKS.ATL;
 AZA = squeeze(nansum(ATL.*dDIP.*dVt,2)./sum(ATL.*dVt,2))';
 subplot(2,1,1) ;
-contourf(grd.yt,-grd.zt(1:9),AZA(1:9,:),[-0.015:0.005:0.025]); 
+contourf(grd.yt,-grd.zt(1:9),AZA(1:9,:),[-0.15:0.03:0.15]); 
 set(gca,'color','black') 
-colormap(darkb2r(-0.015,0.025)), colorbar
+colormap(darkb2r(-0.15,0.15)), colorbar
 ylabel('depth (m)') 
 title('Atlantic zonal average DIP anomaly')
 %
 subplot(2,1,2) ;
-contourf(grd.yt,-grd.zt(10:end),AZA(10:end,:),[-0.015:0.005:0.025]);
+contourf(grd.yt,-grd.zt(10:end),AZA(10:end,:),[-0.15:0.03:0.15]);
 set(gca,'color','black') 
-colormap(darkb2r(-0.015,0.025)), colorbar
+colormap(darkb2r(-0.15,0.15)), colorbar
 xlabel('latitutde (deg)')
 ylabel('depth (m)')
 set(gcf, 'InvertHardcopy', 'off')
-exportfig(gcf,'Figs91/aza_dip','fontmode','fixed','fontsize',12, ...
-          'color','rgb','renderer','painters')
+% exportfig(gcf,'Figs91/aza_dip','fontmode','fixed','fontsize',12, ...
+          % 'color','rgb','renderer','painters')
 
 nfig = nfig + 1 ;
 figure(nfig)
 pcolor(nanmean(dDIP(:,:,1:3),3));colorbar;shading flat
 set(gca,'color','black')
-colormap(darkb2r(-0.01, 0.05)), colorbar
+colormap(darkb2r(-0.05, 0.15)), colorbar
 set(gcf, 'InvertHardcopy', 'off')
-exportfig(gcf,'Figs91/surface_dip_anomaly','fontmode','fixed','fontsize',12, ...
-          'color','rgb','renderer','painters')
+% exportfig(gcf,'Figs91/surface_dip_anomaly','fontmode','fixed','fontsize',12, ...
+          % 'color','rgb','renderer','painters')
     
-if Cmodel == on 
+if par.Cmodel == on 
     if isfile(pfname)
         pDIC = pdata.DIC ;
         pDOC = pdata.DOC ;
@@ -245,7 +242,7 @@ if Cmodel == on
     % make a zonal cross section of the age
     contourf(grd.yt,-grd.zt,squeeze(dDIC(:,170,:))')
     set(gca,'color','black') 
-    colormap(darkb2r(-15, 15)), colorbar
+    colormap(darkb2r(-50, 50)), colorbar
     xlabel('latitude (deg)');
     ylabel('depth (m)')
     t = sprintf('DIC anomaly x = %4.1f deg', 170);
@@ -259,19 +256,19 @@ if Cmodel == on
     subplot(2,1,1) ;
     contourf(grd.yt,-grd.zt(1:9),PZA(1:9,:),[-15:2:15]);
     set(gca,'color','black') 
-    colormap(darkb2r(-15, 15)), colorbar
+    colormap(darkb2r(-50, 50)), colorbar
     ylabel('depth (m)');
     title('Pacific zonal average DIP anomaly')
     %
     subplot(2,1,2) ;
     contourf(grd.yt,-grd.zt(10:end),PZA(10:end,:),[-15:2:15]); 
     set(gca,'color','black') 
-    colormap(darkb2r(-15, 15)), colorbar
+    colormap(darkb2r(-50, 50)), colorbar
     xlabel('latitutde (deg)');
     ylabel('depth (m)');
     set(gcf, 'InvertHardcopy', 'off')
-    exportfig(gcf,'Figs91/pza_dic','fontmode','fixed','fontsize',12, ...
-              'color','rgb','renderer','painters')
+    % exportfig(gcf,'Figs91/pza_dic','fontmode','fixed','fontsize',12, ...
+              % 'color','rgb','renderer','painters')
 
     nfig = nfig + 1 ;
     figure(nfig)
@@ -281,9 +278,83 @@ if Cmodel == on
     subplot(2,1,1) ;
     contourf(grd.yt,-grd.zt(1:9),AZA(1:9,:),[-15:2:15]);
     set(gca,'color','black') 
-    colormap(darkb2r(-15, 15)), colorbar
+    colormap(darkb2r(-50, 50)), colorbar
     ylabel('depth (m)');
     title('Atlantic zonal average DIC anomaly')
+    %
+    subplot(2,1,2) ;
+    contourf(grd.yt,-grd.zt(10:end),AZA(10:end,:),[-15:2:15]); 
+    set(gca,'color','black') 
+    colormap(darkb2r(-50, 50)), colorbar
+    xlabel('latitutde (deg)');
+    ylabel('depth (m)');
+    set(gcf, 'InvertHardcopy', 'off')
+    % exportfig(gcf,'Figs91/aza_dic','fontmode','fixed','fontsize',12, ...
+              % 'color','rgb','renderer','painters')
+
+    nfig = nfig + 1 ;
+    figure(nfig)
+    pcolor(nanmean(dDIC(:,:,1:3),3));colorbar;shading flat
+    set(gca,'color','black')
+    colormap(darkb2r(-10, 40)), colorbar
+    set(gcf, 'InvertHardcopy', 'off')
+    % exportfig(gcf,'Figs91/surface_dic_anomaly','fontmode','fixed','fontsize',12, ...
+              % 'color','rgb','renderer','painters')
+
+end
+
+if par.Omodel == on 
+    O2 = data.O2 ;
+    GO = real(O2(iwet)) + 1e-9*randn(par.nwet,1) ;
+    par.G = d0( par.alpha*par.L*par.DIP ) ; 
+    [par, vO2] = eqOcycle(p0, par) ;
+    pO2 = M3d + nan ;
+    pO2(iwet) = vO2 ;
+    dO2 = pO2 - data.O2 ;
+    nfig = nfig + 1 ;
+    figure(nfig)
+    % make a zonal cross section of the age
+    contourf(grd.yt,-grd.zt,squeeze(dO2(:,170,:))')
+    set(gca,'color','black') 
+    colormap(darkb2r(-15, 15)), colorbar
+    xlabel('latitude (deg)');
+    ylabel('depth (m)')
+    t = sprintf('O2 anomaly x = %4.1f deg', 170);
+    title(t);
+
+    nfig = nfig + 1 ;
+    figure(nfig)
+    % make a zonal average of age for the Pacific basin
+    PAC = MSKS.PAC;
+    PZA = squeeze(nansum(PAC.*dO2.*dVt,2)./sum(PAC.*dVt,2))';
+    subplot(2,1,1) ;
+    contourf(grd.yt,-grd.zt(1:9),PZA(1:9,:),[-15:2:15]);
+    set(gca,'color','black') 
+    colormap(darkb2r(-15, 15)), colorbar
+    ylabel('depth (m)');
+    title('Pacific zonal average O2 anomaly')
+    %
+    subplot(2,1,2) ;
+    contourf(grd.yt,-grd.zt(10:end),PZA(10:end,:),[-15:2:15]); 
+    set(gca,'color','black') 
+    colormap(darkb2r(-15, 15)), colorbar
+    xlabel('latitutde (deg)');
+    ylabel('depth (m)');
+    set(gcf, 'InvertHardcopy', 'off')
+    % exportfig(gcf,'Figs91/pza_o2','fontmode','fixed','fontsize',12, ...
+              % 'color','rgb','renderer','painters')
+
+    nfig = nfig + 1 ;
+    figure(nfig)
+    % make a zonal average of age for the Pacific basin
+    ATL = MSKS.ATL;
+    AZA = squeeze(nansum(ATL.*dO2.*dVt,2)./sum(ATL.*dVt,2))';
+    subplot(2,1,1) ;
+    contourf(grd.yt,-grd.zt(1:9),AZA(1:9,:),[-15:2:15]);
+    set(gca,'color','black') 
+    colormap(darkb2r(-15, 15)), colorbar
+    ylabel('depth (m)');
+    title('Atlantic zonal average O2 anomaly')
     %
     subplot(2,1,2) ;
     contourf(grd.yt,-grd.zt(10:end),AZA(10:end,:),[-15:2:15]); 
@@ -292,24 +363,18 @@ if Cmodel == on
     xlabel('latitutde (deg)');
     ylabel('depth (m)');
     set(gcf, 'InvertHardcopy', 'off')
-    exportfig(gcf,'Figs91/aza_dic','fontmode','fixed','fontsize',12, ...
-              'color','rgb','renderer','painters')
+    % exportfig(gcf,'Figs91/aza_o2','fontmode','fixed','fontsize',12, ...
+              % 'color','rgb','renderer','painters')
 
     nfig = nfig + 1 ;
     figure(nfig)
-    pcolor(nanmean(dDIC(:,:,1:3),3));colorbar;shading flat
+    pcolor(nanmean(dO2(:,:,1:3),3));colorbar;shading flat
     set(gca,'color','black')
     colormap(darkb2r(-5, 20)), colorbar
     set(gcf, 'InvertHardcopy', 'off')
-    exportfig(gcf,'Figs91/surface_dic_anomaly','fontmode','fixed','fontsize',12, ...
-              'color','rgb','renderer','painters')
+    % exportfig(gcf,'Figs91/surface_o2_anomaly','fontmode','fixed','fontsize',12, ...
+              % 'color','rgb','renderer','painters')
 
-end
-
-if Omodel == on 
-    O2 = data.O2 ;
-    GO = real(O2(iwet)) + 1e-9*randn(par.nwet,1);
-    [par, O2] = eqOcycle(p0, par) ;
 end
     
 

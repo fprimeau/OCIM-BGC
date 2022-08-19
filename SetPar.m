@@ -1,11 +1,18 @@
 function par = SetPar(par)
-    on   = true    ;  off  = false   ;
-    spd  = 24*60^2 ;  spa  = 365*spd ;
+    on   = true    ;
+    off  = false   ;
+    sph  = 60^2    ;
+    spd  = 24*sph  ;
+    spa  = 365*spd ;
+
     % fixed parameters 
-    par.kappa_g  = 1/(1e6*spa)  ; % geological restoring time [1/s];
-    par.taup     = 720*60^2     ; % (s) pic dissolution time-scale
-    % par.tau_TA   = 1./par.taup  ;
-    par.kappa_p  = 1/(720*60^2) ;
+    par.kappa_g  = 1/(1e6*spa)  ; % geological restoring time [1/s] ;
+    par.kappa_l  = 1/(12*sph )  ; % labile DOM remi time [1/s]     ;
+    par.taup     = 30*spd     ; % (s) pic dissolution time-scale ;
+    par.kappa_p  = 1/par.taup ;
+
+    par.gamma = 1/3 ;
+    
     % PIC dissolution constant 0.38 day^-1 based on first-order
     % reaction kinetics according to Sarmiento
     % and Gruber book (p.271);
@@ -15,44 +22,69 @@ function par = SetPar(par)
     if isfile(par.fxhat) & par.LoadOpt == on 
         load(par.fxhat)
     end
-
-    if exist('xhat') & isfield(xhat,'sigma')
-        par.sigma = xhat.sigma ;
+    
+    if exist('xhat') & isfield(xhat,'sigP')
+        par.sigP = xhat.sigP ;
     else 
-        par.sigma = 1.0e-01 ;
+        par.sigP = 1.00e-1 ;
     end
-    if exist('xhat') & isfield(xhat,'kP_T')
-        par.kP_T = xhat.kP_T ;
+    if exist('xhat') & isfield(xhat,'Q10P')
+        par.Q10P = xhat.Q10P ;
     else 
-        par.kP_T = 0.00 ;
+        par.Q10P = 1 ; 
     end 
     if exist('xhat') & isfield(xhat,'kdP')
         par.kdP = xhat.kdP ;
     else 
-        par.kdP = 2.42e-08 ; 
+        par.kdP = 9.4e-08; % from N nature paper, same as kdP
     end 
     if exist('xhat') & isfield(xhat,'bP_T')
         par.bP_T = xhat.bP_T ;
     else 
-        par.bP_T = 0.00e+00 ;
+        par.bP_T = 0 ;
     end 
     if exist('xhat') & isfield(xhat,'bP')
         par.bP  = xhat.bP ;
     else 
-        par.bP  = 9.60e-01 ;
+        par.bP  = 1.16e+00 ;
     end 
     if exist('xhat') & isfield(xhat,'alpha')
         par.alpha = xhat.alpha ;
     else 
-        par.alpha = 3.37e-08   ;
+        par.alpha = 1.47e-08   ;
     end 
     if exist('xhat') & isfield(xhat,'beta')
         par.beta = xhat.beta ;
     else
-        par.beta = 1.65e-02  ;
+        par.beta = 1.00e+00  ;
     end 
 
-    % C model parameters                                      
+    % C model parameters
+    if exist('xhat') & isfield(xhat,'sigC')
+        par.sigC = xhat.sigC ;
+    else 
+        par.sigC = 1.00e-1 ;
+    end
+    if exist('xhat') & isfield(xhat,'kru')
+        par.kru = xhat.kru ;
+    else
+        par.kru = 4.04e-12 ; % corresponding to 2000 years.
+    end
+    if exist('xhat') & isfield(xhat,'krd')
+        par.krd = xhat.krd ;
+    else
+        par.krd = 4.04e-12 ; % corresponding to 2000 years.
+    end
+    if exist('xhat') & isfield(xhat,'etau')
+        par.etau = xhat.etau ;
+    else
+        par.etau = 0.9973 ; 
+    end 
+    if exist('xhat') & isfield(xhat,'etad')
+        par.etad = xhat.etad ;
+    else
+        par.etad = 0.99 ; 
+    end 
     if exist('xhat') & isfield(xhat,'bC_T')
         par.bC_T = xhat.bC_T ;
     else
@@ -61,22 +93,22 @@ function par = SetPar(par)
     if exist('xhat') & isfield(xhat,'bC')
         par.bC = xhat.bC ;
     else
-        par.bC = 9.38e-01    ;
+        par.bC = 9.94e-01    ;
     end
     if exist('xhat') & isfield(xhat,'d')
         par.d = xhat.d   ;
     else
-        par.d = 4.54e+03 ;
+        par.d = 4.56e+03 ;
     end 
-    if exist('xhat') & isfield(xhat,'kC_T')
-        par.kC_T = xhat.kC_T ;
+    if exist('xhat') & isfield(xhat,'Q10C')
+        par.Q10C = xhat.Q10C ;
     else 
-        par.kC_T = 0.00e+00 ;
+        par.Q10C = 1.00e+00 ;
     end 
     if exist('xhat') & isfield(xhat,'kdC')
         par.kdC = xhat.kdC ;
     else 
-        par.kdC = 7.35e-08 ;
+        par.kdC =  5.7e-08; % from N nature paper,same as kdN;
     end
     if exist('xhat') & isfield(xhat,'R_Si')
         par.R_Si = xhat.R_Si ;
@@ -86,17 +118,17 @@ function par = SetPar(par)
     if exist('xhat') & isfield(xhat,'rR')
         par.rR = xhat.rR  ;
     else
-        par.rR = 2.64e-02 ;
+        par.rR = 4.23e-02 ;
     end
     if exist('xhat') & isfield(xhat,'cc')
         par.cc = xhat.cc  ;
     else
-        par.cc = 7.51e-4 ;
+        par.cc = 6.9e-3 ;
     end 
     if exist('xhat') & isfield(xhat,'dd')
         par.dd = xhat.dd  ;
     else 
-        par.dd = 5.56e-03 ;
+        par.dd = 6.0e-03 ;
     end 
 
     % O model parameters
@@ -109,16 +141,6 @@ function par = SetPar(par)
         par.rO2C = xhat.rO2C ;
     else 
         par.rO2C = 1.10e+00 ;
-    end 
-    if exist('xhat') & isfield(xhat,'O2P_T')
-        par.O2P_T = xhat.O2P_T ;
-    else 
-        par.O2P_T = 0.00 ;
-    end 
-    if exist('xhat') & isfield(xhat,'rO2P')
-        par.rO2P = xhat.rO2P ;
-    else 
-        par.rO2P = 1.70e+02 ;
     end 
     %
     % Si model parameters

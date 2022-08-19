@@ -3,22 +3,23 @@ function par = PackPar(par)
     npx = 0; ncx = 0;
     nox = 0; nsx = 0;
     p0 = [];
-    % sigma
-    if (par.opt_sigma == on)
-        npx    = npx + 1;
-        sigma  = par.sigma      ;
-        lsigma = log(sigma)     ;
-        strt   = length(p0) + 1 ;
-        p0     = [p0; lsigma]   ;
-        par.pindx.lsigma = strt : length(p0);
+    % sigP
+    if (par.opt_sigP == on)
+        npx   = npx + 1;
+        sigP  = par.sigP      ;
+        lsigP = log(sigP)     ;
+        strt  = length(p0) + 1 ;
+        p0    = [p0; lsigP]   ;
+        par.pindx.lsigP = strt : length(p0);
     end 
-    % kP_T
-    if (par.opt_kP_T == on)
-        npx  = npx + 1        ;
-        kP_T = par.kP_T       ; 
-        strt = length(p0) + 1 ;
-        p0   = [p0; kP_T]     ;
-        par.pindx.kP_T = strt : length(p0);
+    % Q10P
+    if (par.opt_Q10P == on)
+        npx   = npx + 1        ;
+        Q10P  = par.Q10P       ; 
+        lQ10P = log(Q10P) ;
+        strt  = length(p0) + 1 ;
+        p0    = [p0; lQ10P]     ;
+        par.pindx.lQ10P = strt : length(p0);
     end
     % kdP 
     if (par.opt_kdP == on)
@@ -32,7 +33,7 @@ function par = PackPar(par)
     % bP_T
     if (par.opt_bP_T == on)
         npx  = npx + 1        ;
-        bP_T = par.bP_T       ;
+        bP_T  = par.bP_T      ;
         strt = length(p0) + 1 ;
         p0   = [p0; bP_T]     ;
         par.pindx.bP_T = strt : length(p0);
@@ -65,7 +66,58 @@ function par = PackPar(par)
         par.pindx.lbeta = strt : length(p0);
     end
     %
+        
     if (par.Cmodel == on)
+        % sigC
+        if (par.opt_sigC == on)
+            ncx   = ncx + 1       ;
+            sigC  = par.sigC      ;
+            lsigC = log(sigC)     ;
+            strt  = length(p0) + 1 ;
+            p0    = [p0; lsigC]   ;
+            par.pindx.lsigC = strt : length(p0);
+        end 
+        
+        % kru
+        if (par.opt_kru == on)
+            ncx  = ncx + 1        ;
+            kru = par.kru         ;
+            lkru = log(kru)       ;
+            strt = length(p0) + 1 ;
+            p0   = [p0; lkru]     ;
+            par.pindx.lkru = strt : length(p0);
+        end 
+
+        % krd
+        if (par.opt_krd == on)
+            ncx  = ncx + 1        ;
+            krd = par.krd         ;
+            lkrd = log(krd)       ;
+            strt = length(p0) + 1 ;
+            p0   = [p0; lkrd]     ;
+            par.pindx.lkrd = strt : length(p0);
+        end 
+
+        % etau
+        if (par.opt_etau == on)
+            ncx  = ncx + 1        ;
+            etau  = par.etau      ;
+            letau = log(etau)     ;
+            strt = length(p0) + 1 ;
+            p0   = [p0; letau]    ;
+            par.pindx.letau = strt : length(p0);
+        end 
+
+        % etad
+        if (par.opt_etad == on)
+            ncx  = ncx + 1        ;
+            etad  = par.etad      ;
+            letad = log(etad)     ;
+            strt = length(p0) + 1 ;
+            p0   = [p0; letad]    ;
+            par.pindx.letad = strt : length(p0);
+        end 
+
         % bC_T
         if (par.opt_bC_T == on)
             ncx  = ncx + 1        ;
@@ -92,13 +144,14 @@ function par = PackPar(par)
             p0   = [p0; ld]       ;
             par.pindx.ld = strt   : length(p0);
         end 
-        % kC_T
-        if (par.opt_kC_T == on)
-            ncx  = ncx + 1        ;
-            kC_T = par.kC_T       ;  
-            strt = length(p0) + 1 ;
-            p0   = [p0; kC_T]     ;
-            par.pindx.kC_T = strt : length(p0);
+        % Q10C
+        if (par.opt_Q10C == on)
+            ncx   = ncx + 1        ;
+            Q10C  = par.Q10C       ;
+            lQ10C = log(Q10C)      ;
+            strt  = length(p0) + 1 ;
+            p0    = [p0; lQ10C]    ;
+            par.pindx.lQ10C = strt : length(p0);
         end
         % kdC
         if (par.opt_kdC == on)
@@ -165,23 +218,6 @@ function par = PackPar(par)
             p0    = [p0; lrO2C]    ;
             par.pindx.lrO2C = strt : length(p0);
         end 
-        % O2P_T
-        if (par.opt_O2P_T == on)
-            nox   = nox + 1        ;
-            O2P_T = par.O2P_T      ; 
-            strt  = length(p0) + 1 ;
-            p0    = [p0; O2P_T]    ;
-            par.pindx.O2P_T = strt : length(p0);
-        end 
-        % rO2P
-        if (par.opt_rO2P == on)
-            nox   = nox + 1        ;
-            rO2P  = par.rO2P       ;
-            lrO2P = log(rO2P)      ;
-            strt  = length(p0) + 1 ;
-            p0    = [p0; lrO2P]    ;
-            par.pindx.lrO2P = strt : length(p0);
-        end
     end 
     if par.Simodel == on
         % dsi

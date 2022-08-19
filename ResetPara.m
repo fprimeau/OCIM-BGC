@@ -11,50 +11,49 @@ function  x = ResetPara(x, par);
     % parameter values
     pindx = par.pindx  ;
     
-    if (par.opt_sigma == on)
-        isigma = pindx.lsigma      ;
-        xnew   = exp(x(isigma))    ;
-        xold   = exp(x0(isigma))   ;
-        if (xnew > 1 | xnew < 0.1)
-            % x(isigma) = x0(isigma) ;
-            x(isigma) = log(0.3+rand*0.2) ;
+    if (par.opt_sigP == on)
+        isigP = pindx.lsigP      ;
+        xnew   = exp(x(isigP))    ;
+        xold   = exp(x0(isigP))   ;
+        if (xnew > 1-max(par.gamma(:) ))
+            x(isigP) = log( exp(x0(isigP)) + 0.1*rand ) ;
         end
     end
 
-    if (par.opt_kP_T == on & par.opt_kdP == off)
-        ikP_T = pindx.kP_T;
-        kP_T1 = x(ikP_T)  ;
-        kP_T0 = x0(ikP_T) ;
+    if (par.opt_Q10P == on & par.opt_kdP == off)
+        iQ10P = pindx.lQ10P;
+        Q10P1 = exp(x(iQ10P))  ;
+        Q10P0 = exp(x0(iQ10P)) ;
         %
-        kP1  = kP_T1*par.Tz + par.kdP ;
-        kP0  = kP_T0*par.Tz + par.kdP ;
+        kP1  = par.kdP * Q10P1.^((par.vT - 30)/10)  ;
+        kP0  = par.kdP * Q10P0.^((par.vT - 30)/10)  ;
         mkP1 = mean(kP1)  ;
         mkP0 = mean(kP0)  ; 
-        if any(kP1 < 0) | mkP1 > fb*mkP0 | mkP1 < fs*mkP0
-            x(ikP_T) = x0(ikP_T) + (0.1*rand + 0.95) ;
+        if mkP1 > fb*mkP0 | mkP1 < fs*mkP0
+            x(iQ10P) = log( exp(x0(iQ10P)) * (0.1*rand + 0.95) ) ;
         end
     end
 
-    if (par.opt_kP_T == on & par.opt_kdP == on)
-        ikP_T = pindx.kP_T   ;
-        kP_T1 = x(ikP_T)     ;
-        kP_T0 = x0(ikP_T)    ;
+    if (par.opt_Q10P == on & par.opt_kdP == on)
+        iQ10P = pindx.lQ10P     ;
+        Q10P1 = exp(x(iQ10P))  ;
+        Q10P0 = exp(x0(iQ10P)) ;
         %
         ikdP = pindx.lkdP    ;
         kdP1 = exp(x(ikdP))  ;
         kdP0 = exp(x0(ikdP)) ;
         %
-        kP1  = kP_T1*par.Tz + kdP1 ;
-        kP0  = kP_T0*par.Tz + kdP0 ;
+        kP1  = kdP1 * Q10P1.^((par.vT-30)/10) ;
+        kP0  = kdP0 * Q10P0.^((par.vT-30)/10) ;
         mkP1 = mean(kP1) ;
         mkP0 = mean(kP0) ; 
-        if any(kP1 < 0) | mkP1 > fb*mkP0 | mkP1 < fs*mkP0
-            x(ikP_T) = x0(ikP_T) + (0.02*rand - 0.01);
+        if mkP1 > fb*mkP0 | mkP1 < fs*mkP0
+            x(iQ10P) = log( exp(x0(iQ10P))*(0.1*rand + 0.95) );
             x(ikdP)  = log( exp(x0(ikdP))*(0.1*rand + 0.95) );
         end
     end
     
-    if (par.opt_kP_T == off & par.opt_kdP == on)
+    if (par.opt_Q10P == off & par.opt_kdP == on)
         ikdP = pindx.lkdP     ;
         xnew = exp(x(ikdP))   ;
         xold = exp(x0(ikdP))  ;
@@ -64,18 +63,17 @@ function  x = ResetPara(x, par);
     end
 
     if (par.opt_bP_T == on & par.opt_bP == off)
-        ibP_T = pindx.bP_T ;
-        bm1   = x(ibP_T)   ;
-        bm0   = x0(ibP_T)  ;
-        %
-        bb1   = par.bP     ; 
-        bP    = bm1*par.aveT + bb1 ;
-        if min(bP(:)) < 0.3 | max(bP(:)) > 3
-            x(ibP_T) = x0(ibP_T) + (0.02*rand - 0.01);
-        end
+            ibP_T = pindx.bP_T  ;
+            bm1   = x(ibP_T)    ;
+            bm0   = x0(ibP_T)   ;
+            %
+            bC   = bm1*par.aveT + par.bC ;
+            if mean(bC(:)) < 0.3 | mean(bC(:)) > 3
+                x(ibP_T) = x0(ibP_T) + (0.02*rand - 0.01);
+            end
     end
-
-    if (par.opt_bP_T == on & par.opt_bP == on)
+    
+    if (par.opt_bP_T == on  & par.opt_bP == on)
         ibP_T = pindx.bP_T  ;
         bm1   = x(ibP_T)    ;
         bm0   = x0(ibP_T)   ;
@@ -85,12 +83,12 @@ function  x = ResetPara(x, par);
         bb0  = exp(x0(ibP)) ;
         %
         bP   = bm1*par.aveT + bb1 ;
-        if min(bP(:)) < 0.3 | max(bP(:)) > 3
+        if nanmean(bP(:)) < 0.3 | nanmean(bP(:)) > 3
             x(ibP_T) = x0(ibP_T)  + (0.02*rand - 0.01);
             x(ibP)   = log( exp(x0(ibP))*(0.1*rand + 0.95) );
         end
     end
-
+    
     if (par.opt_bP_T == off & par.opt_bP == on)
         ibP  = pindx.lbP    ;
         xnew = exp(x(ibP))  ;
@@ -99,7 +97,7 @@ function  x = ResetPara(x, par);
             x(ibP) = log( exp(x0(ibP))*(0.1*rand + 0.95) );
         end
     end
-    
+        
     if (par.opt_alpha == on)
         ialpha = pindx.lalpha    ;
         xnew   = exp(x(ialpha))  ;
@@ -119,6 +117,51 @@ function  x = ResetPara(x, par);
     end
 
     if (par.Cmodel == on) 
+        if (par.opt_sigC == on)
+            isigC = pindx.lsigC      ;
+            xnew   = exp(x(isigC))    ;
+            xold   = exp(x0(isigC))   ;
+            if (xnew > 1-max(par.gamma(:)) )
+                x(isigC) = log( exp(x0(isigC)) + 0.1*rand ) ;
+            end
+        end
+
+        if (par.opt_kru == on)
+            ikru = pindx.lkru    ;
+            xnew   = exp(x(ikru))  ;
+            xold   = exp(x0(ikru)) ;
+            if (xnew > fb*xold | xnew < fs*xold);
+                x(ikru) = log( exp(x0(ikru))*(0.1*rand + 0.95) );
+            end
+        end
+
+        if (par.opt_krd == on)
+            ikrd = pindx.lkrd    ;
+            xnew   = exp(x(ikrd))  ;
+            xold   = exp(x0(ikrd)) ;
+            if (xnew > fb*xold | xnew < fs*xold);
+                x(ikrd) = log( exp(x0(ikrd))*(0.1*rand + 0.95) );
+            end
+        end
+
+        if (par.opt_etau == on)
+            ietau = pindx.letau    ;
+            xnew   = exp(x(ietau))  ;
+            xold   = exp(x0(ietau)) ;
+            if (xnew > 1);
+                x(ietau) = log( xold ) ;
+            end
+        end
+
+        if (par.opt_etad == on)
+            ietad = pindx.letad    ;
+            xnew   = exp(x(ietad))  ;
+            xold   = exp(x0(ietad)) ;
+            if ( xnew > 1 )
+                x(ietad) = log( xold ) ;
+            end
+        end
+
         if (par.opt_bC_T == on & par.opt_bC == off)
             ibC_T = pindx.bC_T  ;
             bm1   = x(ibC_T)    ;
@@ -164,40 +207,40 @@ function  x = ResetPara(x, par);
             end
         end
 
-        if (par.opt_kC_T == on & par.opt_kdC == off)
-            ikC_T = pindx.kC_T ;
-            kC_T1 = x(ikC_T)   ;
-            kC_T0 = x0(ikC_T)  ;
+        if (par.opt_Q10C == on & par.opt_kdC == off)
+            iQ10C = pindx.lQ10C ;
+            Q10C1 = exp(x(iQ10C))   ;
+            Q10C0 = exp(x0(iQ10C))  ;
             %
-            kC1 = kC_T1*par.Tz + par.kdC ;
-            kC0 = kC_T0*par.Tz + par.kdC ;
+            kC1 = par.kdC * Q10C1.^((par.vT - 30)/10)  ;
+            kC0 = par.kdC * Q10C0.^((par.vT - 30)/10)  ;
             mkC1 = mean(kC1) ;
             mkC0 = mean(kC0) ; 
             if any(kC1 < 0) | mkC1 > fb*mkC0 | mkC1 < fs*mkC0
-                x(ikC_T) = x0(ikC_T) + (0.02*rand - 0.01);
+                x(iQ10C) = log( exp(x0(iQ10C))*(0.1*rand + 0.95) );
             end
         end
 
-        if (par.opt_kC_T == on & par.opt_kdC == on)
-            ikC_T = pindx.kC_T ;
-            kC_T1 = x(ikC_T)   ;
-            kC_T0 = x0(ikC_T)  ;
+        if (par.opt_Q10C == on & par.opt_kdC == on)
+            iQ10C = pindx.lQ10C ;
+            Q10C1 = exp(x(iQ10C))  ;
+            Q10C0 = exp(x0(iQ10C)) ;
             %
             ikdC  = pindx.lkdC    ;
             kdC1  = exp(x(ikdC))  ;
             kdC0  = exp(x0(ikdC)) ;
             %
-            kC1 = kC_T1*par.Tz + kdC1 ;
-            kC0 = kC_T0*par.Tz + kdC0 ;
+            kC1 = par.kdC * Q10C1.^((par.vT - 30)/10)  ;
+            kC0 = par.kdC * Q10C0.^((par.vT - 30)/10)  ;
             mkC1 = mean(kC1) ;
             mkC0 = mean(kC0) ; 
             if any(kC1 < 0) | mkC1 > fb*mkC0 | mkC1 < fs*mkC0
-                x(ikC_T) = x0(ikC_T) + (0.02*rand - 0.01);
+                x(iQ10C) = log( exp(x0(iQ10C))*(0.1*rand + 0.95) );
                 x(ikdC)  = log( exp(x0(ikdC))*(0.1*rand + 0.95) );
             end
         end
 
-        if (par.opt_kC_T == off & par.opt_kdC == on)
+        if (par.opt_Q10C == off & par.opt_kdC == on)
             ikdC = pindx.lkdC ;
             xnew = exp(x(ikdC))  ;
             xold = exp(x0(ikdC)) ;
@@ -295,8 +338,9 @@ function  x = ResetPara(x, par);
             rO2C1 = exp(x(irO2C)) ;
             rO2C0 = exp(x0(irO2C));
             %
-            O2C = O2C_T1*par.Tz*1e8 + rO2C1 ;
-            if (min(O2C) < 0) 
+            O2C1 = O2C_T1*par.Tz*1e8 + rO2C1 ;
+            O2C0 = O2C_T0*par.Tz*1e8 + rO2C0 ;
+            if (mean(O2C1) < fs*mean(O2C0) | mean(O2C1) > fb*mean(O2C0)) 
                 x(irO2C)  = log( exp(x0(irO2C))*(0.1*rand + 0.95) );
                 x(iO2C_T) = x0(iO2C_T) + (0.02*rand - 0.01);
             end
@@ -308,24 +352,6 @@ function  x = ResetPara(x, par);
             xold  = exp(x0(irO2C)) ;
             if (xnew > fb*xold | xnew < fs*xold);
                 x(irO2C) = log( exp(x0(irO2C))*(0.1*rand + 0.95) );
-            end
-        end
-
-        if (par.opt_O2P_T == on)
-            iO2P_T = pindx.O2P_T        ;
-            xnew   = abs(x(iO2P_T))     ;
-            xold   = abs(x0(iO2P_T))    ;
-            if (xnew > 50 | xnew < -50) ;
-                x(iO2P_T) = x0(iO2P_T)  + (0.02*rand - 0.01) ;
-            end
-        end
-        
-        if (par.opt_rO2P == on)
-            irO2P = pindx.lrO2P       ;
-            xnew     = exp(x(irO2P))  ;
-            xold     = exp(x0(irO2P)) ;
-            if (xnew > fb*xold | xnew < fs*xold);
-                x(irO2P) = log( exp(x0(irO2P))*(0.1*rand + 0.95) );
             end
         end
     end

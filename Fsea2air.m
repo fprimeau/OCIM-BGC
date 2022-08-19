@@ -6,6 +6,7 @@ function vout = Fsea2air(par, Gtype)
     tmp  = M3d      ;
     tmp(:,:,2:end) = 0     ;
     isrf = find(tmp(iwet)) ;
+
     vSST = par.Temp(iwet(isrf)) ;
     vSSS = par.Salt(iwet(isrf)) ;
     
