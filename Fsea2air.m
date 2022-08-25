@@ -93,7 +93,9 @@ function vout = Fsea2air(par, Gtype)
         vout.JgDIC = tmp(iwet) ; % umole/kg/s to mmol/m^3/s
         
         % the equilibrium fractionation factor from aqueous CO2 to particulate organic carbon (POC) 
-        par.c13.alpha_dic2poc = −0.017*log(co2surf) + 1.0034; % check the unit of co2surf
+        par.c13.alpha_aq2poc = −0.017*log(co2surf) + 1.0034; % check the unit of co2surf
+        par.c13.alpha_dic2poc = par.c13.alpha_g2aq./par.c13.alpha_g2dic*par.c13.alpha_aq2poc; 
+
 
         % Gradient
         [co2surf,k0,Gout] = eqco2(vDICs,vALKs,co2syspar) ;
