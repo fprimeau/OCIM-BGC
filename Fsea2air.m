@@ -82,14 +82,18 @@ function vout = Fsea2air(par, Gtype)
         
         c13sat = k0*pc13atm ;             % c13 satuation concentration
         c13surf = vDIC13    ;             % ocean surface c13 concentration
-        tmp    = M3d*0         ;
-        tmp(iwet(isrf)) = KCO2.*(c13sat - c13surf)*par.permil ;
+        tmp    = M3d*0      ;
+        alpha_g2dic = par.c13.alpha_g2dic; % gaseous co2 to DIC frationation factor
+        alpha_k = par.c13.alpha_k;         % kinectic frationation factor
+        alpha_g2aq = par.c13.alpha_g2aq;   %isotopic fractionation factor from gaseous to aqueous CO2
+        % include fractionation factors in the bulk air-sea flux formula
+        % see eq (4) in  A. Schmittner et al. (2013) Biogeosciences
+        tmp(iwet(isrf)) = KCO2.*(c13sat - c13surf.*alpha_g2dic)*alpha_k*alpha_g2aq*par.permil ; 
         vout.JgDIC = tmp(iwet) ; % umole/kg/s to mmol/m^3/s
         
         % the equilibrium fractionation factor from aqueous CO2 to particulate organic carbon (POC) 
         par.c13.alpha_aq2poc = −0.017*log(co2surf) + 1.0034; % check the unit of co2surf
         par.c13.alpha_dic2poc = par.c13.alpha_g2aq./par.c13.alpha_g2dic*par.c13.alpha_aq2poc; 
-
 
         % Gradient
         [co2surf,k0,Gout] = eqco2(vDICs,vALKs,co2syspar) ;
