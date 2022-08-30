@@ -77,15 +77,14 @@ function vout = Fsea2air(par, Gtype)
         %tmp(iwet(isrf)) = KCO2.*(co2sat - co2surf)*par.permil ;
         %vout.JgDIC = tmp(iwet) ; % umole/kg/s to mmol/m^3/s
 
-        parc13atm  = par.pc13atm     ;    % convert delta c13 to c13 uatm;
-        vDIC13     = par.DIC13(isrf) ;    % ocean surface c13 concentration
-        
-        c13sat = k0*pc13atm ;             % c13 satuation concentration
-        c13surf = vDIC13    ;             % ocean surface c13 concentration
+        pc13atm  = par.pc13atm     ;    % convert delta c13 to c13 uatm;
+        c13surf  = par.DIC13(isrf) ;    % ocean surface c13 concentration  
+        c13sat = k0*pc13atm ;           % c13 satuation concentration
+      
         tmp    = M3d*0      ;
         alpha_g2dic = par.c13.alpha_g2dic; % gaseous co2 to DIC frationation factor
         alpha_k = par.c13.alpha_k;         % kinectic frationation factor
-        alpha_g2aq = par.c13.alpha_g2aq;   %isotopic fractionation factor from gaseous to aqueous CO2
+        alpha_g2aq = par.c13.alpha_g2aq;   % isotopic fractionation factor from gaseous to aqueous CO2
         % include fractionation factors in the bulk air-sea flux formula
         % see eq (4) in  A. Schmittner et al. (2013) Biogeosciences
         tmp(iwet(isrf)) = KCO2.*(c13sat - c13surf.*alpha_g2dic)*alpha_k*alpha_g2aq*par.permil ; 
@@ -97,6 +96,7 @@ function vout = Fsea2air(par, Gtype)
 
         % Gradient
         [co2surf,k0,Gout] = eqco2(vDICs,vALKs,co2syspar) ;
+        vout.co2surf = co2surf
         g_k0  = Gout.g_k0  ;
         g_co2 = Gout.g_co2 ;
         tmp             = M3d*0         ;
