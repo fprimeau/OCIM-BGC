@@ -197,19 +197,24 @@ function [F,FD,par,Cx,Cxx] = C13_eqn(X, par)
     % set up fractionation factors fro C13 and R13
     %  A. Schmittner et al.: Distribution of carbon isotope ratios (δ13C) in the ocean
     par.c13.R13a = 0.011; % air C13/C
-    par.c13.R13o = 0;     % DIC13/(DIC12+DIC13) to be determined
+    % R13o = DIC13./(DIC12+DIC13) to be determined
     par.c13.alpha_k = 0.99915; % kenetic fractionation factor 
     par.c13.alpha_g2aq = 0.998764; % gas to water fractionation factor
     % temperature (in C)-dependent equilibrium fractionation factor from gaseous CO2 to DIC.
     par.c13.alpha_g2dic = = 1.01051-1.05*1e-4*par.temp(isrf); 
     
     % Air-Sea gas exchange for total C
-    vout  = Fsea2air(par, 'CO2');
-    G_dic = vout.G_dic ;
-    G_alk = vout.G_alk ;
-    JgDIC = vout.JgDIC ;
+    vout    = Fsea2air(par, 'CO2');
+    G_dic   = vout.G_dic ;
+    G_alk   = vout.G_alk ;
+    JgDIC   = vout.JgDIC ;
+    co2surf = vout.co2surf;
     clear vout;
     
+    % the equilibrium fractionation factor from aqueous CO2 to particulate organic carbon (POC) 
+    par.c13.alpha_aq2poc = −0.017*log(co2surf) + 1.0034; % check the unit of co2surf
+    par.c13.alpha_dic2poc = ( par.c13.alpha_g2aq./par.c13.alpha_g2dic ) * par.c13.alpha_aq2poc; 
+	
     par.DIC13 = ??? ;  % ocean DIC13 concentration
     % Air-Sea gas exchange for C13
     vout  = Fsea2air(par, 'C13');
