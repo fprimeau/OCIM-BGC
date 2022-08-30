@@ -61,16 +61,6 @@ function vout = Fsea2air(par, Gtype)
     end
     %
     if strcmp(Gtype, 'C13')
-        
-        % set up fractionation factors fro C13 and R13
-        %  A. Schmittner et al.: Distribution of carbon isotope ratios (δ13C) in the ocean
-        par.c13.R13a = 0.011; % air C13/C
-        par.c13.R13o = 0;     % DIC13/(DIC12+DIC13) to be determined
-        par.c13.alpha_k = 0.99915; % kenetic fractionation factor 
-        par.c13.alpha_g2aq = 0.998764; % gas to water fractionation factor
-        % temperature (in C)-dependent equilibrium fractionation factor from gaseous CO2 to DIC.
-        par.c13.alpha_g2dic = = 1.01051-1.05*1e-4*par.temp(isrf); 
-        
         %
         pco2atm   = par.pco2atm      ;  % uatm
         vDICs     = par.DIC(isrf)    ;
@@ -84,18 +74,26 @@ function vout = Fsea2air(par, Gtype)
         % k0 unit mol/kg/atm
         [co2surf,k0] = eqco2(vDICs,vALKs,co2syspar) ;
         co2sat = k0*pco2atm    ; %mol/kg/atm -> umol/kg
-        c13sat = k0*pco2atm*par.c13.R13a; % c13 satuation concentration
-        c13surf = co2surf*par.c13.R13o;   % surface c13 concentration
-        tmp    = M3d*0         ;
         %tmp(iwet(isrf)) = KCO2.*(co2sat - co2surf)*par.permil ;
         %vout.JgDIC = tmp(iwet) ; % umole/kg/s to mmol/m^3/s
-        tmp(iwet(isrf)) = KCO2.*(c13sat - c13surf)*par.permil ;
+
+        parc13atm  = par.pc13atm     ;    % convert delta c13 to c13 uatm;
+        vDIC13     = par.DIC13(isrf) ;    % ocean surface c13 concentration
+        
+        c13sat = k0*pc13atm ;             % c13 satuation concentration
+        c13surf = vDIC13    ;             % ocean surface c13 concentration
+        tmp    = M3d*0      ;
+        alpha_g2dic = par.c13.alpha_g2dic; % gaseous co2 to DIC frationation factor
+        alpha_k = par.c13.alpha_k;         % kinectic frationation factor
+        alpha_g2aq = par.c13.alpha_g2aq;   %isotopic fractionation factor from gaseous to aqueous CO2
+        % include fractionation factors in the bulk air-sea flux formula
+        % see eq (4) in  A. Schmittner et al. (2013) Biogeosciences
+        tmp(iwet(isrf)) = KCO2.*(c13sat - c13surf.*alpha_g2dic)*alpha_k*alpha_g2aq*par.permil ; 
         vout.JgDIC = tmp(iwet) ; % umole/kg/s to mmol/m^3/s
         
         % the equilibrium fractionation factor from aqueous CO2 to particulate organic carbon (POC) 
         par.c13.alpha_aq2poc = −0.017*log(co2surf) + 1.0034; % check the unit of co2surf
         par.c13.alpha_dic2poc = par.c13.alpha_g2aq./par.c13.alpha_g2dic*par.c13.alpha_aq2poc; 
-
 
         % Gradient
         [co2surf,k0,Gout] = eqco2(vDICs,vALKs,co2syspar) ;
