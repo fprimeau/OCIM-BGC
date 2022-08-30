@@ -1,4 +1,4 @@
-global GC GO iter
+global GC GC13 GO iter
 iter = 0       ;
 spd  = 24*60^2 ;
 spa  = 365*spd ;
@@ -166,7 +166,7 @@ par.MSKS  = MSKS    ;
 par.I = speye(nwet) ;
 
 %------------------------  data  -----------------------
-% get rid of arctice o2 observations
+% get rid of Arctic o2 observations
 DOCobs(iarc)  = nan ;
 DOCobs(imed)  = nan ;
 alkraw(iarc)  = nan ;

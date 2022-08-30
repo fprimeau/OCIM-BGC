@@ -61,7 +61,8 @@ par.opt_bb    = on  ;
 %
 %-------------load data and set up parameters---------------------
 SetUp ;
-
+fprintf('Check Point 1\n');
+keyboard
 % save results 
 % ATTENTION: Change this direcrtory to where you wanna
 % save your output files

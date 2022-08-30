@@ -1,8 +1,8 @@
 function [par, C, Cx, Cxx] = eqCcycle(x, par);
 % ip is the mapping from x to parameter names (see switch below)
-% output: C is model prediction of DIP,POP,and DOP
-% output: F partial derivative of P model w.r.t. model parameters x
-% output: Fxx hessian matrix of P model w.r.t.  model parameters x
+% output: C is model prediction of DIC,POC,DOC, DOCl,DOCr,PIC, and ALK
+% output: Cx partial derivative of C state w.r.t. model parameters x
+% output: Cxx hessian matrix of C state w.r.t.  model parameters x
     global GC
     on = true; off = false;
     iwet = par.iwet;
