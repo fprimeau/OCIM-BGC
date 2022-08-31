@@ -197,7 +197,8 @@ function [F,FD,par,Cx,Cxx] = C13_eqn(X, par)
     % set up fractionation factors fro C13 and R13
     %  A. Schmittner et al.: Distribution of carbon isotope ratios (δ13C) in the ocean
     par.c13.R13a = 0.011; % air C13/C
-    % R13o = DIC13./(DIC12+DIC13) to be determined
+    par.c13.R13o = DIC13./(par.DIC); 
+    par.c13.dR13o = d0(1./par.DIC);
     par.c13.alpha_k = 0.99915; % kenetic fractionation factor 
     par.c13.alpha_g2aq = 0.998764; % gas to water fractionation factor
     % temperature (in C)-dependent equilibrium fractionation factor from gaseous CO2 to DIC.
@@ -215,7 +216,7 @@ function [F,FD,par,Cx,Cxx] = C13_eqn(X, par)
     co2 = M3d; 
     nz = size(M3d,3);
     co2(:,:,1) = co2surf; co2 = co2(:,:,ones(nz,1)); 
-    % we should resolve the CO2 system at  all the layers  where we have
+    % WARNING: we should resolve the CO2 system at  all the layers  where we have
     % biological production. For now we approximate the CO2 at all layers
     % using co2surf. 
     
@@ -224,8 +225,8 @@ function [F,FD,par,Cx,Cxx] = C13_eqn(X, par)
 	
     % Air-Sea gas exchange for C13
     vout  = Fsea2air(par, 'C13');
-    JgDIC13 = vout.JgDIC ;
-
+    JgDIC13 = vout.JgDIC13 ;
+    G_dic13 = vout.G_dic13;
     % biological DIC uptake operator
     G = uptake_C(par)  ; par.G = G ;
     
@@ -241,7 +242,9 @@ function [F,FD,par,Cx,Cxx] = C13_eqn(X, par)
     eta     = etau*WM ;
     % eta     = etau*UM + etad*DM ;
 
-    R13o = DIC13/par.DIC;
+    R13o = par.c13.R13o;
+    dR13o = par.c13.dR13o;
+
     eq1 = TRdiv*DIC13 ...                      % advective-diffusive transport
           + G*C2P*d0(alpha_dic2poc)*R13o ...   % removal of dic13 organic c13 production
           + (1-sigC-gamma)*RR*G*C2P*R13o + ... % removal of dic13 due to pic13 production
@@ -259,10 +262,6 @@ function [F,FD,par,Cx,Cxx] = C13_eqn(X, par)
 
     eq4 = (PFDa + kPIC*I)*PIC13 - (1-sigC-gamma)*RR*G*C2P*R13o ; % FPIC
 
-    % eq5 = TRdiv*ALK + 2*(1-sigC-gamma)*RR*G*C2P - 2*kPIC*PIC ...
-    %      - N2C*G*C2P + N2C*(eta*(kC*DOC) + kappa_r*DOCr + kappa_l*DOCl + kappa_p*POC) ...
-    %      + pme*sALKbar + kappa_g*(ALK - ALKbar) ;  % ALK 
-               
     eq5 = (TRdiv+kappa_l*I)*DOC13l - gamma*(G*C2P)*d0(alpha_dic2poc)*R13o ;  % DOCl 
 
     eq6 = (TRdiv+kappa_r)*DOC13r - kC*DOC13 + eta*kC*DOC13 ; % DOCr 
@@ -272,62 +271,51 @@ function [F,FD,par,Cx,Cxx] = C13_eqn(X, par)
     if nargout > 1
         % construct the LHS matrix for the offline model
         % disp('Preparing LHS and RHS matrix:')
-        % colum 1 dFdDIC
-        Jc{1,1} = TRdiv - G_dic ; 
-        Jc{2,1} = 0*I ;
-        Jc{3,1} = 0*I ;
-        Jc{4,1} = 0*I ;
-        Jc{5,1} = 0*I ;
+        % colum 1 dFdDIC13
+        Jc{1,1} = TRdiv + G*C2P*d0(alpha_dic2poc)*dR13o ...
+                  + (1-sigC-gamma)*RR*G*C2P*dR13o ...
+                  - G_dic13 ...
+                  + pme*sDICbar*dR13o; 
+        Jc{2,1} = - (1-sigC-gamma)*G*C2P*d0(alpha_dic2poc)*dR13o;
+        Jc{3,1} = - sigC*G*C2P*d0(alpha_dic2poc)*dR13o; 
+        Jc{4,1} = - (1-sigC-gamma)*RR*G*C2P*dR13o ;
+        Jc{5,1} = - gamma*(G*C2P)*d0(alpha_dic2poc)*dR13o ; 
         Jc{6,1} = 0*I ;
-        % Jc{7,1} = 0*I ;
-        % colum 2 dFdPOC
+        % colum 2 dFdPOC13
         Jc{1,2} = -kappa_p*I ;
         Jc{2,2} = PFDc + kappa_p*I ;
         Jc{3,2} = 0*I ;
         Jc{4,2} = 0*I ;
-        % Jc{5,2} = N2C*kappa_p*I ;
         Jc{5,2} = 0*I ;
         Jc{6,2} = 0*I ;
-        % colum 3 dFdDOC
+        % colum 3 dFdDOC13
         Jc{1,3} = -eta*kC ;
         Jc{2,3} = 0*I ;
         Jc{3,3} = TRdiv + kC ;
         Jc{4,3} = 0*I ;
-        % Jc{5,3} = eta*N2C*kC ;
         Jc{5,3} = 0*I ;
-        Jc{6,3} = -(I-eta)*kC ;
-        % colum 4 dFdPIC
+        Jc{6,3} = -kC*I + eta*KC*I;
+        % colum 4 dFdPIC13
         Jc{1,4} = -kPIC*I ;
         Jc{2,4} = 0*I ;
         Jc{3,4} = 0*I ;
         Jc{4,4} = PFDa + kPIC*I ;
-        % Jc{5,4} = -2*kPIC*I ;
         Jc{5,4} = 0*I ;
-        Jc{6,4} = 0*I ;
-        % column 5 dFdALK
-        Jc{1,5} = -G_alk ;
+        Jc{6,4} = 0*I;
+        % column 6 dFdDOC13l
+        Jc{1,5} = -kappa_l*I ;
         Jc{2,5} = 0*I ;
         Jc{3,5} = 0*I ;
         Jc{4,5} = 0*I ;
-        % Jc{5,5} = TRdiv + kappa_g*I ;
-        Jc{5,5} = 0*I ;
+        Jc{5,5} = TRdiv + kappa_l*I ;
         Jc{6,5} = 0*I ;
-        % column 6 dFdDOCl
-        Jc{1,6} = -kappa_l*I ;
+        % column 6 dFdDOC13r
+        Jc{1,6} = -kappa_r;
         Jc{2,6} = 0*I ;
         Jc{3,6} = 0*I ;
         Jc{4,6} = 0*I ;
-        % Jc{5,6} = N2C*kappa_l*I ;
-        Jc{5,6} = TRdiv + kappa_l*I ;
-        Jc{6,6} = 0*I ;
-        % column 7 dFdDOCr
-        Jc{1,7} = -kappa_r ;
-        Jc{2,7} = 0*I ;
-        Jc{3,7} = 0*I ;
-        Jc{4,7} = 0*I ;
-        % Jc{5,7} = N2C*kappa_r ;
-        Jc{5,7} = 0*I ;
-        Jc{6,7} = TRdiv + kappa_r ;
+        Jc{5,6} = 0*I ;
+        Jc{6,6} = TRdiv + kappa_r ;
         % factorize Jacobian matrix
         FD = mfactor(cell2mat(Jc)) ;
     end 

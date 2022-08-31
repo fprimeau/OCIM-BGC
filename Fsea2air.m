@@ -85,39 +85,18 @@ function vout = Fsea2air(par, Gtype)
         alpha_g2dic = par.c13.alpha_g2dic; % gaseous co2 to DIC frationation factor
         alpha_k = par.c13.alpha_k;         % kinectic frationation factor
         alpha_g2aq = par.c13.alpha_g2aq;   % isotopic fractionation factor from gaseous to aqueous CO2
-        % include fractionation factors in the bulk air-sea flux formula
-        % see eq (4) in  A. Schmittner et al. (2013) Biogeosciences
-        tmp(iwet(isrf)) = KCO2.*(c13sat - c13surf.*alpha_g2dic)*alpha_k*alpha_g2aq*par.permil ; 
-        vout.JgDIC = tmp(iwet) ; % umole/kg/s to mmol/m^3/s
+                                           % include fractionation factors in the bulk air-sea flux formula
+                                           % see eq (4) in  A. Schmittner et al. (2013) Biogeosciences
+        dR13o = par.c13.dR13o(isrf);
+        R13o = par.c13.R13o(isrf);
+        R13a = par.c13.R13a;
+        tmp(iwet(isrf)) = KCO2.*(c13sat.*R13a - (co2surf./alpha_g2dic).*R13o)*alpha_k*alpha_g2aq*par.permil ; 
+        vout.JgDIC13 = tmp(iwet) ; % umole/kg/s to mmol/m^3/s
         
-        % the equilibrium fractionation factor from aqueous CO2 to particulate organic carbon (POC) 
-        par.c13.alpha_aq2poc = −0.017*log(co2surf) + 1.0034; % check the unit of co2surf
-        par.c13.alpha_dic2poc = par.c13.alpha_g2aq./par.c13.alpha_g2dic*par.c13.alpha_aq2poc; 
-
         % Gradient
-        [co2surf,k0,Gout] = eqco2(vDICs,vALKs,co2syspar) ;
-        vout.co2surf = co2surf
-        g_k0  = Gout.g_k0  ;
-        g_co2 = Gout.g_co2 ;
         tmp             = M3d*0         ;
-        tmp(iwet(isrf)) = KCO2.*(g_k0.*pco2atm - g_co2)*par.permil ;
-        vout.G_dic      = d0(tmp(iwet)) ;
-
-        g_k0_alk  = Gout.g_k0_alk  ;
-        g_co2_alk = Gout.g_co2_alk ;
-        tmp             = M3d*0         ;
-        tmp(iwet(isrf)) = KCO2.*(g_k0_alk.*pco2atm - g_co2_alk)*par.permil ;
-        vout.G_alk      = d0(tmp(iwet)) ;
-
-        tmp             = M3d*0         ;
-        tmp(iwet(isrf)) = KCO2.*k0*par.permil ;
-        vout.G_atm      = tmp(iwet)     ;
-
-        % Hessian
-        % [co2surf,k0,Gout] = eqco2(vDICs,vALKs,co2syspar) ;
-        % tmp             = M3d*0         ;
-        % tmp(iwet(isrf)) = -KCO2.*gg_co2*par.permil ;
-        % vout.KGG        = tmp(iwet)     ;    
+        tmp(iwet(isrf)) = -KCO2.*(co2surf./alpha_g2dic).*dR13o*alpha_k*alpha_g2aq*par.permil;
+        vout.G_dic13 = d0(tmp(iwet));        
     end
     %
     if strcmp(Gtype, 'O2')
