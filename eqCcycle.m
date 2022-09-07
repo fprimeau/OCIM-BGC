@@ -120,6 +120,10 @@ function [par, C, Cx, Cxx] = eqCcycle(x, par);
         if nargout > 2
             [~,~,par,Cx,Cxx] = C_eqn(C, par);
         end 
+    else
+        if nargout > 2
+            [~,~,par,Cx,Cxx] = C_eqn(C, par);
+        end 
     end
 end
 

@@ -102,7 +102,7 @@ function [par, C, Cx, Cxx] = eqC13cycle(x, par);
     [C,ierr] = nsnew(X0,@(X) C13_eqn(X, par),options) ; % solve C13 equilibrium state
     par.Cfailure = off ;
     if (ierr ~= 0)
-        fprintf('eqCcycle did not converge.\n') ;
+        fprintf('eqC13cycle did not converge.\n') ;
         par.Cfailure = on;
         npx  = par.npx   ;
         ncx  = par.ncx   ;
@@ -197,12 +197,14 @@ function [F,FD,par,Cx,Cxx] = C13_eqn(X, par)
     % set up fractionation factors fro C13 and R13
     %  A. Schmittner et al.: Distribution of carbon isotope ratios (δ13C) in the ocean
     par.c13.R13a = 0.011; % air C13/C
+    par.pc13atm = par.pco2atm*par.c13.R13a;
     par.c13.R13o = DIC13./(par.DIC); 
     par.c13.dR13o = d0(1./par.DIC);
     par.c13.alpha_k = 0.99915; % kenetic fractionation factor 
     par.c13.alpha_g2aq = 0.998764; % gas to water fractionation factor
     % temperature (in C)-dependent equilibrium fractionation factor from gaseous CO2 to DIC.
-    par.c13.alpha_g2dic = = 1.01051-1.05*1e-4*par.temp(isrf); 
+    % par.c13.alpha_g2dic = 1.01051-1.05*1e-4*par.Temp(isrf); 
+    par.c13.alpha_g2dic = 1.01051-1.05*1e-4*par.Temp; 
     
     % Air-Sea gas exchange for total C
     vout    = Fsea2air(par, 'CO2');
@@ -215,13 +217,16 @@ function [F,FD,par,Cx,Cxx] = C13_eqn(X, par)
     % the equilibrium fractionation factor from aqueous CO2 to particulate organic carbon (POC) 
     co2 = M3d; 
     nz = size(M3d,3);
-    co2(:,:,1) = co2surf; co2 = co2(:,:,ones(nz,1)); 
+    % co2(:,:,1) = co2surf; co2 = co2(:,:,ones(nz,1)); 
+    co2((iwet(isrf))) = co2surf; co2 = co2(:,:,ones(nz,1)); 
     % WARNING: we should resolve the CO2 system at  all the layers  where we have
     % biological production. For now we approximate the CO2 at all layers
     % using co2surf. 
     
     alpha_aq2poc = 0.017*log(co2) + 1.0034; % check the unit of co2surf
-    alpha_dic2poc = ( alpha_g2aq ./ alpha_g2dic ) * alpha_aq2poc; 
+    % alpha_dic2poc = ( par.c13.alpha_g2aq ./ par.c13.alpha_g2dic ) .* alpha_aq2poc; 
+    alpha_tmp = ( par.c13.alpha_g2aq ./ par.c13.alpha_g2dic ) .* alpha_aq2poc; 
+    alpha_dic2poc = alpha_tmp(iwet);
 	
     % Air-Sea gas exchange for C13
     vout  = Fsea2air(par, 'C13');
@@ -244,6 +249,7 @@ function [F,FD,par,Cx,Cxx] = C13_eqn(X, par)
 
     R13o = par.c13.R13o;
     dR13o = par.c13.dR13o;
+    keyboard;
 
     eq1 = TRdiv*DIC13 ...                      % advective-diffusive transport
           + G*C2P*d0(alpha_dic2poc)*R13o ...   % removal of dic13 organic c13 production
