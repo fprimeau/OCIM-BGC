@@ -9,9 +9,9 @@ if ismac
     addpath('../myfunc/'  )
     addpath('../DATA/'    )
 elseif isunix
-    addpath('/public/storage/myfunc/'  )
-    addpath('/public/storage/DATA/'     )
-    addpath('/public/storage/DATA/OCIM' )
+    addpath('/DFS-L/DATA/primeau/oceandata/OCIM_BGC_DATA/myfunc/' )
+    addpath('/DFS-L/DATA/primeau/oceandata/OCIM_BGC_DATA/DATA/' )
+    addpath('/DFS-L/DATA/primeau/oceandata/OCIM_BGC_DATA/OCIM2/' )
 end
 
 if GridVer == 90

@@ -18,7 +18,7 @@ operator = 'A' ;
 
 Gtest = off ; 
 Htest = off ;
-par.optim   = on ; 
+par.optim   = off ; 
 par.Cmodel  = on ; 
 par.Omodel  = on ; 
 par.Simodel = off ;
@@ -69,7 +69,7 @@ keyboard
 if ismac
     output_dir = sprintf('../DATA/MSK%2d/',GridVer); 
 elseif isunix
-    output_dir = sprintf('~/rDOC-OP/MSK%2d/',GridVer) ;
+    output_dir = sprintf('/DFS-L/DATA/primeau/oceandata/OCIM_BGC_DATA/DATA/MSK%2d/',GridVer) ;
 end
 if ~isdir(output_dir)
     command = strcat('mkdir', " ", output_dir) ;
@@ -93,6 +93,8 @@ elseif Gtest == off
         % base_name = strcat(VER,'_PCO_Gamma1to3_POC2DIC_GM15_CbPM_aveTeu_diffSig_O2C_uniEta');
         catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
         fname = strcat(base_name,catDOC);
+        fprintf('Check point 2.\n');
+        keyboard
     elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on)
         base_name = strcat(VER,'_PCSi');
         catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
@@ -107,7 +109,8 @@ end
 par.fname = strcat(fname,'.mat') ; 
 fxhat     = strcat(fname,'_xhat.mat');
 par.fxhat = fxhat ; 
-
+fprintf('Check point 3\n');
+keyboard
 % -------------------update initial guesses --------------
 if isfile(par.fname)
     load(par.fname)
@@ -132,7 +135,7 @@ if par.optim == on
     % pack parameters into an array, assign them corresponding indices.
     par = PackPar(par) ;
 end 
-
+keyboard
 %-------------------set up fminunc -------------------------
 x0    = par.p0 ;
 myfun = @(x) neglogpost(x, par);
