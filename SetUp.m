@@ -11,7 +11,7 @@ if ismac
 elseif isunix
     addpath('/DFS-L/DATA/primeau/oceandata/OCIM_BGC_DATA/myfunc/'  )
     addpath('/DFS-L/DATA/primeau/oceandata/OCIM_BGC_DATA/DATA/'     )
-    addpath('/DFS-L/DATA/primeau/oceandata/OCIM_BGC_DATA/DATA/OCIM' )
+    % addpath('/DFS-L/DATA/primeau/oceandata/OCIM_BGC_DATA/DATA/OCIM' )
 end
 
 if GridVer == 90

@@ -20,7 +20,7 @@ Gtest = off ;
 Htest = off ;
 par.optim   = on ; 
 par.Cmodel  = on ; 
-par.Omodel  = on ; 
+par.Omodel  = off ; 
 par.Simodel = off ;
 par.LoadOpt = on  ; % if load optimial par. 
 par.pscale  = 0.0 ;
@@ -69,7 +69,7 @@ keyboard
 if ismac
     output_dir = sprintf('../DATA/MSK%2d/',GridVer); 
 elseif isunix
-    output_dir = sprintf('~/rDOC-OP/MSK%2d/',GridVer) ;
+    output_dir = sprintf('/DFS-L/DATA/moore/weiweif/TempSensi/MSK%2d/',GridVer) ;
 end
 if ~isdir(output_dir)
     command = strcat('mkdir', " ", output_dir) ;
@@ -132,7 +132,7 @@ if par.optim == on
     % pack parameters into an array, assign them corresponding indices.
     par = PackPar(par) ;
 end 
-
+keyboard;
 %-------------------set up fminunc -------------------------
 x0    = par.p0 ;
 myfun = @(x) neglogpost(x, par);
