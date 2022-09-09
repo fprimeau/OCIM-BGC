@@ -9,9 +9,9 @@ if ismac
     addpath('../myfunc/'  )
     addpath('../DATA/'    )
 elseif isunix
-    addpath('/DFS-L/DATA/primeau/oceandata/OCIM_BGC_DATA/myfunc/' )
-    addpath('/DFS-L/DATA/primeau/oceandata/OCIM_BGC_DATA/DATA/' )
-    addpath('/DFS-L/DATA/primeau/oceandata/OCIM_BGC_DATA/OCIM2/' )
+    addpath('/DFS-L/DATA/primeau/oceandata/OCIM_BGC_DATA/myfunc/'  )
+    addpath('/DFS-L/DATA/primeau/oceandata/OCIM_BGC_DATA/DATA/'     )
+    % addpath('/DFS-L/DATA/primeau/oceandata/OCIM_BGC_DATA/DATA/OCIM' )
 end
 
 if GridVer == 90

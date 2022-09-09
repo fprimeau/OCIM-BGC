@@ -1,5 +1,5 @@
 clc; clear all; close all 
-global iter 
+global iter GC GC13;
 iter = 0 ;
 on   = true  ;
 off  = false ;
@@ -18,13 +18,15 @@ operator = 'A' ;
 
 Gtest = off ; 
 Htest = off ;
-par.optim   = off ; 
-par.Cmodel  = on ; 
-par.Omodel  = off ; 
-par.Simodel = off ;
-par.LoadOpt = on  ; % if load optimial par. 
-par.pscale  = 0.0 ;
-par.cscale  = 1.0 ; % factor to weigh DOC in the objective function
+par.optim     = off ; 
+par.Pmodel    = on ; 
+par.Cmodel    = on ; 
+par.C13model  = on;
+par.Omodel    = off ; 
+par.Simodel   = off ;
+par.LoadOpt   = on  ; % if load optimial par. 
+par.pscale    = 0.0 ;
+par.cscale    = 1.0 ; % factor to weigh DOC in the objective function
 
 % P model parameters
 par.opt_sigP  = on ; 
@@ -61,16 +63,15 @@ par.opt_bb    = on  ;
 %
 %-------------load data and set up parameters---------------------
 SetUp ;
-fprintf('Check Point 1\n');
-keyboard
+fprintf('Check Setup: struct data,par,etc \n');
 % save results 
 % ATTENTION: Change this direcrtory to where you wanna
 % save your output files
 if ismac
     output_dir = sprintf('../DATA/MSK%2d/',GridVer); 
 elseif isunix
-    output_dir = sprintf('/DFS-L/DATA/primeau/oceandata/OCIM_BGC_DATA/DATA/MSK%2d/',GridVer) ;
-    %output_dir = sprintf('/DFS-L/DATA/moore/weiweif/TempSensi/MSK%2d/',GridVer) ;
+    output_dir = sprintf('/DFS-L/DATA/primeau/oceandata/OCIM_BGC_DATA/DATA/MSK%2d/',GridVer);
+%    output_dir = sprintf('/DFS-L/DATA/moore/weiweif/TempSensi/MSK%2d/',GridVer) ;
 end
 if ~isdir(output_dir)
     command = strcat('mkdir', " ", output_dir) ;
@@ -78,7 +79,7 @@ if ~isdir(output_dir)
 end
 
 VER = strcat(output_dir,TRdivVer);
-% Creat output file names based on which model(s) is(are) optimized
+% Create output file names based on which model(s) is(are) optimized
 if Gtest == on
     fname = strcat(VER,'_GHtest');
 elseif Gtest == off
@@ -94,8 +95,6 @@ elseif Gtest == off
         % base_name = strcat(VER,'_PCO_Gamma1to3_POC2DIC_GM15_CbPM_aveTeu_diffSig_O2C_uniEta');
         catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
         fname = strcat(base_name,catDOC);
-        fprintf('Check point 2.\n');
-        keyboard
     elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on)
         base_name = strcat(VER,'_PCSi');
         catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
@@ -110,14 +109,13 @@ end
 par.fname = strcat(fname,'.mat') ; 
 fxhat     = strcat(fname,'_xhat.mat');
 par.fxhat = fxhat ; 
-fprintf('Check point 3\n');
-keyboard
+
 % -------------------update initial guesses --------------
 if isfile(par.fname)
     load(par.fname)
 end 
 
-%---------------- inital guesses on C and O ---------------
+%---------------- inital guesses on C, C13 and O ---------------
 if par.Cmodel == on 
     DIC = data.DIC - par.dicant ;
     
@@ -125,67 +123,92 @@ if par.Cmodel == on
            data.DIC(iwet); data.POC(iwet); data.POC(iwet);];
     GC  = real(GC) + 1e-6*randn(7*nwet,1) ;
 end 
+
+if par.C13model == on
+  GC13 = zeros(6*length(iwet),1);
+end
+
 if par.Omodel == on 
     GO  = real(data.O2(iwet)) + 1e-9*randn(par.nwet,1);
 end 
 
 %--------------------- prepare parameters ------------------
-if par.optim == on 
-    % load optimal parameters from a file or set them to default values 
-    par = SetPar(par)  ;
-    % pack parameters into an array, assign them corresponding indices.
-    par = PackPar(par) ;
-end 
-keyboard
-%-------------------set up fminunc -------------------------
-x0    = par.p0 ;
-myfun = @(x) neglogpost(x, par);
-options = optimoptions(@fminunc                  , ...
-                       'Algorithm','trust-region', ...
-                       'GradObj','on'            , ...
-                       'Hessian','on'            , ...
-                       'Display','iter'          , ...
-                       'MaxFunEvals',2000        , ...
-                       'MaxIter',2000            , ...
-                       'TolX',1e-6               , ...
-                       'TolFun',1e-6             , ...
-                       'DerivativeCheck','off'   , ...
-                       'FinDiffType','central'   , ...
-                       'PrecondBandWidth',Inf)   ;
-%
-nip = length(x0);
-if(Gtest);
-    dx = sqrt(-1)*eps.^3*eye(nip);
-    for ii = 1 : nip 
-        x  = real(x0)+dx(:,ii);
-        if Htest == on
-            [f,fx,fxx] = neglogpost(x, par) ;
-            % print relative errors
-            diff = (real(fx(ii)) - imag(f)/eps.^3)/(imag(f)/eps.^3);
-            fprintf('%i % .3e  \n',ii,diff);
-            diffx = (real(fxx(:,ii))-imag(fx)/eps.^3)./(imag(fx)/eps.^3+eps.^3);
-            for jj = 1:length(fx)
-                fprintf('% .3e  ', diffx(jj));
-            end
-        else
-            [f,fx] = neglogpost(x, par) ;
-            diff = (real(fx(ii)) - imag(f)/eps.^3)/(imag(f)/eps.^3) ;
-            fprintf('%i % .3e  \n',ii,diff);
-            fprintf('\n');
-        end 
-        fprintf('\n');
-    end
-    keyboard 
+% load optimal parameters from a file or set them to default values 
+par = SetPar(par)  ;
+% pack parameters into an array, assign them corresponding indices.
+par = PackPar(par) ;
+
+x0    = par.p0 ; % set up parameters and assign it to x0
+skipit = 1
+if (skipit ~= 1)
+
+  %-------------------solve P model -------------------------
+  if par.Pmodel == on 
+    [par, P, Px, Pxx] = eqPcycle(x0, par) ;
+    % Gradient and Hessian
+    par.Px    = Px ;  par.Pxx   = Pxx ;
+    
+    DIP  = M3d+nan  ;  DIP(iwet)  = P(1+0*nwet:1*nwet) ;
+    POP  = M3d+nan  ;  POP(iwet)  = P(1+1*nwet:2*nwet) ;
+    DOP  = M3d+nan  ;  DOP(iwet)  = P(1+2*nwet:3*nwet) ;
+    DOPl = M3d+nan  ;  DOPl(iwet) = P(1+2*nwet:3*nwet) ;
+    
+    par.DIP  = DIP(iwet) ;
+    data.DIP = DIP ; data.POP  = POP  ;
+    data.DOP = DOP ; data.DOPl = DOPl ;
+  end
+  %-------------------solve C model -------------------------
+  if par.Cmodel == on 
+    [par, C, Cx, Cxx] = eqCcycle(x0, par) ;
+    % Gradient and Hessian
+    par.Cx = Cx ;  par.Cxx = Cxx ;
+    
+    DIC  = M3d+nan ;  DIC(iwet)  = C(0*nwet+1:1*nwet) ;
+    POC  = M3d+nan ;  POC(iwet)  = C(1*nwet+1:2*nwet) ;
+    DOC  = M3d+nan ;  DOC(iwet)  = C(2*nwet+1:3*nwet) ;
+    PIC  = M3d+nan ;  PIC(iwet)  = C(3*nwet+1:4*nwet) ;
+    ALK  = M3d+nan ;  ALK(iwet)  = C(4*nwet+1:5*nwet) ;
+    DOCl = M3d+nan ;  DOCl(iwet) = C(5*nwet+1:6*nwet) ;
+    DOCr = M3d+nan ;  DOCr(iwet) = C(6*nwet+1:7*nwet) ;
+    
+    par.DIC = DIC(iwet) ;
+    par.POC = POC(iwet) ;
+    par.DOC = DOC(iwet) ;
+    par.DOCl = DOCl(iwet) ;
+    par.DOCr = DOCr(iwet) ;
+    DIC = DIC + par.dicant  ;
+    
+    data.DIC  = DIC  ;  data.POC  = POC ;
+    data.DOC  = DOC  ;  data.PIC  = PIC ;
+    data.ALK  = ALK  ;  data.DOCr = DOCr ;
+    data.DOCl = DOCl ;
+  end
 else
-    [xhat,fval,exitflag] = fminunc(myfun,x0,options);
-    [f,fx,fxx,data] = neglogpost(xhat,par);
-    load(fxhat)
-    xhat.f   = f   ;
-    xhat.fx  = fx  ;
-    xhat.fxx = fxx ;
-    % save results 
-    save(fxhat, 'xhat')
-    save(par.fname, 'data')
+  load temp.mat
 end
-quit
-fprintf('-------------- end! ---------------\n');
+
+%-------------------solve C13 model -------------------------
+if par.C13model == on 
+  [par, C13, C13x, C13xx] = eqC13cycle(x0, par);
+  % Gradient and Hessian
+  par.C13x = C13x ;  par.C13xx = C13xx ;
+  
+  DIC13  = M3d+nan ;  DIC13(iwet)  = C13(0*nwet+1:1*nwet) ;
+  POC13  = M3d+nan ;  POC13(iwet)  = C13(1*nwet+1:2*nwet) ;
+  DOC13  = M3d+nan ;  DOC13(iwet)  = C13(2*nwet+1:3*nwet) ;
+  PIC13  = M3d+nan ;  PIC13(iwet)  = C13(3*nwet+1:4*nwet) ;
+  DOC13l = M3d+nan ;  DOC13l(iwet) = C13(4*nwet+1:5*nwet) ;
+  DOC13r = M3d+nan ;  DOC13r(iwet) = C13(5*nwet+1:6*nwet) ;
+
+  par.DIC13 = DIC13(iwet) ;
+  par.POC13 = POC13(iwet) ;
+  par.DOC13 = DOC13(iwet) ;
+  par.DOC13l = DOC13l(iwet) ;
+  par.DOC13r = DOC13r(iwet) ;
+  % DIC = DIC + par.dicant  ;
+
+  data.DIC13  = DIC13  ;  data.POC13  = POC13 ;
+  data.DOC13  = DOC13  ;  data.PIC13  = PIC13 ;
+  data.DOC13r = DOC13r ;  data.DOC13l = DOC13l ;
+end
+save(par.fname, 'data','par');

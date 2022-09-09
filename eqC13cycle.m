@@ -1,4 +1,4 @@
-function [par, C, Cx, Cxx] = eqC13cycle(x, par);
+function [par, C13, C13x, C13xx] = eqC13cycle(x, par);
 % ip is the mapping from x to parameter names (see switch below)
 % output: C is model prediction of DIC13,POC13, PIC13, DOC13, DOC13r, DOC13l
 % output: Cx partial derivative of C  w.r.t. model parameters x
@@ -97,33 +97,35 @@ function [par, C, Cx, Cxx] = eqC13cycle(x, par);
     options.atol = 1e-12 ;
     options.rtol = 1e-12 ;
     fprintf('Solving C13 model ...\n') ;
-
     X0  = GC13;
-    [C,ierr] = nsnew(X0,@(X) C13_eqn(X, par),options) ; % solve C13 equilibrium state
+    load xtest
+    X0 = xtest;
+    
+    [C13,ierr] = nsnew(X0,@(X) C13_eqn(X, par),options) ; % solve C13 equilibrium state
     par.Cfailure = off ;
     if (ierr ~= 0)
-        fprintf('eqCcycle did not converge.\n') ;
+        fprintf('eqC13cycle did not converge.\n') ;
         par.Cfailure = on;
         npx  = par.npx   ;
         ncx  = par.ncx   ;
         nx   = npx + ncx ;
-        C    = GC13 ;
-        Cx   = sparse(7*par.nwet, nx) ;
-        Cxx  = sparse(7*par.nwet, nchoosek(nx,2)+nx) ;
+        C13    = GC13 ;
+        C13x   = sparse(7*par.nwet, nx) ;
+        C13xx  = sparse(7*par.nwet, nchoosek(nx,2)+nx) ;
         [par.G,par.Gx,par.Gxx] = uptake_C(par) ;  % WARNING WARNING
-        [F,FD,par] = C13_eqn(C, par);
+        [F,FD,par] = C13_eqn(C13, par);
     elseif (ierr == 0 & par.optim == on)
         % reset the global variable for the next call eqCcycle
-        GC13 = real(C) + 1e-8*randn(7*nwet,1) ;
+        GC13 = real(C13) + 1e-8*randn(7*nwet,1) ;
         X0 = GC13;
         %
         if nargout > 2
-            [~,~,par,Cx,Cxx] = C13_eqn(C, par);
+            [~,~,par,C13x,C13xx] = C13_eqn(C13, par);
         end 
     end
 end
 
-function [F,FD,par,Cx,Cxx] = C13_eqn(X, par)    
+function [F,FD,par,C13x,C13xx] = C13_eqn(X, par)    
 % unpack some useful stuff
     on = true; off = false;
     grd   = par.grd   ;
@@ -197,12 +199,14 @@ function [F,FD,par,Cx,Cxx] = C13_eqn(X, par)
     % set up fractionation factors fro C13 and R13
     %  A. Schmittner et al.: Distribution of carbon isotope ratios (δ13C) in the ocean
     par.c13.R13a = 0.011; % air C13/C
+    par.pc13atm = par.pco2atm*par.c13.R13a;
     par.c13.R13o = DIC13./(par.DIC); 
     par.c13.dR13o = d0(1./par.DIC);
     par.c13.alpha_k = 0.99915; % kenetic fractionation factor 
     par.c13.alpha_g2aq = 0.998764; % gas to water fractionation factor
     % temperature (in C)-dependent equilibrium fractionation factor from gaseous CO2 to DIC.
-    par.c13.alpha_g2dic = = 1.01051-1.05*1e-4*par.temp(isrf); 
+    % par.c13.alpha_g2dic = 1.01051-1.05*1e-4*par.Temp(isrf); 
+    par.c13.alpha_g2dic = 1.01051-1.05*1e-4*par.Temp; 
     
     % Air-Sea gas exchange for total C
     vout    = Fsea2air(par, 'CO2');
@@ -215,13 +219,16 @@ function [F,FD,par,Cx,Cxx] = C13_eqn(X, par)
     % the equilibrium fractionation factor from aqueous CO2 to particulate organic carbon (POC) 
     co2 = M3d; 
     nz = size(M3d,3);
-    co2(:,:,1) = co2surf; co2 = co2(:,:,ones(nz,1)); 
+    % co2(:,:,1) = co2surf; co2 = co2(:,:,ones(nz,1)); 
+    co2((iwet(isrf))) = co2surf; co2 = co2(:,:,ones(nz,1)); 
     % WARNING: we should resolve the CO2 system at  all the layers  where we have
     % biological production. For now we approximate the CO2 at all layers
     % using co2surf. 
     
     alpha_aq2poc = 0.017*log(co2) + 1.0034; % check the unit of co2surf
-    alpha_dic2poc = ( alpha_g2aq ./ alpha_g2dic ) * alpha_aq2poc; 
+    % alpha_dic2poc = ( par.c13.alpha_g2aq ./ par.c13.alpha_g2dic ) .* alpha_aq2poc; 
+    alpha_tmp = ( par.c13.alpha_g2aq ./ par.c13.alpha_g2dic ) .* alpha_aq2poc; 
+    alpha_dic2poc = alpha_tmp(iwet);
 	
     % Air-Sea gas exchange for C13
     vout  = Fsea2air(par, 'C13');
@@ -246,23 +253,23 @@ function [F,FD,par,Cx,Cxx] = C13_eqn(X, par)
     dR13o = par.c13.dR13o;
 
     eq1 = TRdiv*DIC13 ...                      % advective-diffusive transport
-          + G*C2P*d0(alpha_dic2poc)*R13o ...   % removal of dic13 organic c13 production
-          + (1-sigC-gamma)*RR*G*C2P*R13o + ... % removal of dic13 due to pic13 production
+          + G*d0(C2P.*alpha_dic2poc)*R13o ...   % removal of dic13 organic c13 production
+          + (1-sigC-gamma)*RR*G*d0(C2P)*R13o + ... % removal of dic13 due to pic13 production
           - kPIC*PIC13 .... % dissolution of PIC13
           - JgDIC13 ... % air-sea gas exchange
-          + pme*sDICbar*R13o ... % concentration and dillution due to precip and evaporation
+          + sDICbar*d0(pme)*R13o ... % concentration and dillution due to precip and evaporation
           - eta*(kC*DOC13) ...   % respiration of DOC13
           - kappa_r*DOC13r ...   % respiration of DOC13r
           - kappa_l*DOC13l...    % respiration of DOC13l
           - kappa_p*POC13 ;      % respiration of PCO13
 
-    eq2 = (PFDc+kappa_p*I)*POC13 - (1-sigC-gamma)*G*C2P*d0(alpha_dic2poc)*R13o;   ; % FPOC
+    eq2 = (PFDc+kappa_p*I)*POC13 - (1-sigC-gamma)*G*d0(C2P.*alpha_dic2poc)*R13o;   ; % FPOC
 
-    eq3 = (TRdiv+kC)*DOC13 - sigC*G*C2P*d0(alpha_dic2poc)*R13o  ; % FDOC
+    eq3 = (TRdiv+kC)*DOC13 - sigC*G*d0(C2P.*alpha_dic2poc)*R13o  ; % FDOC
 
-    eq4 = (PFDa + kPIC*I)*PIC13 - (1-sigC-gamma)*RR*G*C2P*R13o ; % FPIC
+    eq4 = (PFDa + kPIC*I)*PIC13 - (1-sigC-gamma)*RR*G*d0(C2P)*R13o ; % FPIC
 
-    eq5 = (TRdiv+kappa_l*I)*DOC13l - gamma*(G*C2P)*d0(alpha_dic2poc)*R13o ;  % DOCl 
+    eq5 = (TRdiv+kappa_l*I)*DOC13l - gamma*G*d0(C2P.*alpha_dic2poc)*R13o ;  % DOCl 
 
     eq6 = (TRdiv+kappa_r)*DOC13r - kC*DOC13 + eta*kC*DOC13 ; % DOCr 
 
@@ -272,14 +279,14 @@ function [F,FD,par,Cx,Cxx] = C13_eqn(X, par)
         % construct the LHS matrix for the offline model
         % disp('Preparing LHS and RHS matrix:')
         % colum 1 dFdDIC13
-        Jc{1,1} = TRdiv + G*C2P*d0(alpha_dic2poc)*dR13o ...
-                  + (1-sigC-gamma)*RR*G*C2P*dR13o ...
+        Jc{1,1} = TRdiv + G*d0(C2P.*alpha_dic2poc)*dR13o ...
+                  + (1-sigC-gamma)*RR*G*d0(C2P)*dR13o ...
                   - G_dic13 ...
-                  + pme*sDICbar*dR13o; 
-        Jc{2,1} = - (1-sigC-gamma)*G*C2P*d0(alpha_dic2poc)*dR13o;
-        Jc{3,1} = - sigC*G*C2P*d0(alpha_dic2poc)*dR13o; 
-        Jc{4,1} = - (1-sigC-gamma)*RR*G*C2P*dR13o ;
-        Jc{5,1} = - gamma*(G*C2P)*d0(alpha_dic2poc)*dR13o ; 
+                  + sDICbar*d0(pme)*dR13o; 
+        Jc{2,1} = - (1-sigC-gamma)*G*d0(C2P.*alpha_dic2poc)*dR13o;
+        Jc{3,1} = - sigC*G*d0(C2P.*alpha_dic2poc)*dR13o; 
+        Jc{4,1} = - (1-sigC-gamma)*RR*G*d0(C2P)*dR13o ;
+        Jc{5,1} = - gamma*G*d0(C2P.*alpha_dic2poc)*dR13o ; 
         Jc{6,1} = 0*I ;
         % colum 2 dFdPOC13
         Jc{1,2} = -kappa_p*I ;
@@ -294,7 +301,7 @@ function [F,FD,par,Cx,Cxx] = C13_eqn(X, par)
         Jc{3,3} = TRdiv + kC ;
         Jc{4,3} = 0*I ;
         Jc{5,3} = 0*I ;
-        Jc{6,3} = -kC*I + eta*KC*I;
+        Jc{6,3} = -kC*I + eta*kC*I;
         % colum 4 dFdPIC13
         Jc{1,4} = -kPIC*I ;
         Jc{2,4} = 0*I ;
@@ -316,6 +323,7 @@ function [F,FD,par,Cx,Cxx] = C13_eqn(X, par)
         Jc{4,6} = 0*I ;
         Jc{5,6} = 0*I ;
         Jc{6,6} = TRdiv + kappa_r ;
+        keyboard
         % factorize Jacobian matrix
         FD = mfactor(cell2mat(Jc)) ;
     end 
