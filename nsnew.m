@@ -1,4 +1,4 @@
-function [sol, ierr, jac, it_hist, x_hist] = nsnew(x,f,options)
+function [sol, ierr, ijac, it_hist, x_hist] = nsnew(x,f,options)
 % NSNEW  Newton-Armijo nonlinear solver
 %
 % Compute Newton direction with backslash
@@ -104,7 +104,8 @@ end
 
 % check to see if initial iterate also final iterate
 if fnrm<=stop_tol
-    [f0,jac] = feval(f,x);
+    [f0,ijac] = feval(f,x); % ijac is the "inverse" i.e. the lu
+                            % factorization of jac
 end
    
 %
@@ -122,15 +123,15 @@ while(fnrm > stop_tol & itc < maxit)
     % isham iterates, or if the ratio of successive residual norm is too
     % large
     if(itc == 1 | rat > rsham | itsham == 0 | armflag == 1)
-      clear jac
+      clear ijac
       itsham = isham;
       jac_age = -1;
-      [fv,jac] = feval(f,x);
+      [fv,ijac] = feval(f,x);
     end
     itsham = itsham-1;
     
     % compute the Newton direcion
-    direction = mfactor(jac,-f0);
+    direction = mfactor(ijac,-f0);
     
     % Add one to the age of the Jacobian after the factors have been used
     % in a solve. A fresh Jacobian has an age of -1 at birth.

@@ -126,6 +126,10 @@ end
 
 if par.C13model == on
   GC13 = zeros(6*length(iwet),1);
+  % START DEBUG
+  %load xtest.mat
+  %GC13 = xtest;
+  % STOP DEBUG
 end
 
 if par.Omodel == on 
@@ -183,15 +187,16 @@ if (skipit ~= 1)
     data.ALK  = ALK  ;  data.DOCr = DOCr ;
     data.DOCl = DOCl ;
   end
+  save temp.mat data par
 else
   load temp.mat
 end
 
 %-------------------solve C13 model -------------------------
 if par.C13model == on 
-  [par, C13, C13x, C13xx] = eqC13cycle(x0, par);
+  [par, C13 ] = eqC13cycle(x0, par);
   % Gradient and Hessian
-  par.C13x = C13x ;  par.C13xx = C13xx ;
+  %par.C13x = C13x ;  par.C13xx = C13xx ;
   
   DIC13  = M3d+nan ;  DIC13(iwet)  = C13(0*nwet+1:1*nwet) ;
   POC13  = M3d+nan ;  POC13(iwet)  = C13(1*nwet+1:2*nwet) ;
