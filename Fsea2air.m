@@ -75,7 +75,7 @@ function vout = Fsea2air(par, Gtype)
         % co2surf unit umol/kg;
         % k0 unit mol/kg/atm
         [co2surf,k0] = eqco2(vDICs,vALKs,co2syspar) ;
-        co2sat = k0*pco2atm    ; %mol/kg/atm -> umol/kg
+        % co2sat = k0*pco2atm    ; %mol/kg/atm -> umol/kg
         %tmp(iwet(isrf)) = KCO2.*(co2sat - co2surf)*par.permil ;
         %vout.JgDIC = tmp(iwet) ; % umole/kg/s to mmol/m^3/s
 

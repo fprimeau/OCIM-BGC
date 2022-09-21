@@ -22,7 +22,7 @@ par.optim     = off ;
 par.Pmodel    = on ; 
 par.Cmodel    = on ; 
 par.C13model  = on;
-par.Omodel    = off ; 
+par.Omodel    = on ; 
 par.Simodel   = off ;
 par.LoadOpt   = on  ; % if load optimial par. 
 par.pscale    = 0.0 ;
@@ -71,7 +71,7 @@ if ismac
     output_dir = sprintf('../DATA/MSK%2d/',GridVer); 
 elseif isunix
     output_dir = sprintf('/DFS-L/DATA/primeau/oceandata/OCIM_BGC_DATA/DATA/MSK%2d/',GridVer);
-%    output_dir = sprintf('/DFS-L/DATA/moore/weiweif/TempSensi/MSK%2d/',GridVer) ;
+    output_dir = sprintf('/DFS-L/DATA/primeau/oceandata/ModelOutput/MSK%2d/',GridVer) ;
 end
 if ~isdir(output_dir)
     command = strcat('mkdir', " ", output_dir) ;
@@ -144,6 +144,7 @@ par = PackPar(par) ;
 
 x0    = par.p0 ; % set up parameters and assign it to x0
 skipit = 1
+PCsol = sprintf('%stemp.mat',output_dir);
 if (skipit ~= 1)
 
   %-------------------solve P model -------------------------
@@ -187,9 +188,9 @@ if (skipit ~= 1)
     data.ALK  = ALK  ;  data.DOCr = DOCr ;
     data.DOCl = DOCl ;
   end
-  save temp.mat data par
+  save(PCsol,'data','par','-v7.3');
 else
-  load temp.mat
+  load(PCsol);
 end
 
 %-------------------solve C13 model -------------------------
@@ -216,4 +217,5 @@ if par.C13model == on
   data.DOC13  = DOC13  ;  data.PIC13  = PIC13 ;
   data.DOC13r = DOC13r ;  data.DOC13l = DOC13l ;
 end
-save(par.fname, 'data','par');
+par.d13 = @(dic13,dic) (dic13./dic/1.12372*1e2-1)*1e3;
+save(par.fname, 'data','par','-v7.3');
