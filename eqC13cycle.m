@@ -102,13 +102,14 @@ function [par, C13, C13x, C13xx] = eqC13cycle(x, par);
     par.Cfailure = off ;
     if (ierr ~= 0)
         fprintf('eqC13cycle did not converge.\n') ;
+        keyboard;
         par.Cfailure = on;
         npx  = par.npx   ;
         ncx  = par.ncx   ;
         nx   = npx + ncx ;
         C13    = GC13 ;
-        C13x   = sparse(7*par.nwet, nx) ;
-        C13xx  = sparse(7*par.nwet, nchoosek(nx,2)+nx) ;
+        C13x   = sparse(6*par.nwet, nx) ;
+        C13xx  = sparse(6*par.nwet, nchoosek(nx,2)+nx) ;
         [par.G,par.Gx,par.Gxx] = uptake_C(par) ;  % WARNING WARNING
         [F,FD,par] = C13_eqn(C13, par);
     elseif (ierr == 0 & par.optim == on)
@@ -217,15 +218,14 @@ function [F,FD,par,C13x,C13xx] = C13_eqn(X, par)
     clear vout;
     
     % the equilibrium fractionation factor from aqueous CO2 to particulate organic carbon (POC) 
-    co2 = M3d; 
-    nz = size(M3d,3);
+    co2 = M3d; nz = size(M3d,3);
     % co2(:,:,1) = co2surf; co2 = co2(:,:,ones(nz,1)); 
     co2((iwet(isrf))) = co2surf; co2 = co2(:,:,ones(nz,1)); 
     % WARNING: we should resolve the CO2 system at  all the layers  where we have
     % biological production. For now we approximate the CO2 at all layers
     % using co2surf. 
     
-    alpha_aq2poc = 0.017*log(co2) + 1.0034; % check the unit of co2surf
+    alpha_aq2poc = -0.017*log(co2) + 1.0034; % check the unit of co2surf
     % alpha_dic2poc = ( par.c13.alpha_g2aq ./ par.c13.alpha_g2dic ) .* alpha_aq2poc; 
     alpha_tmp = ( par.c13.alpha_g2aq ./ par.c13.alpha_g2dic ) .* alpha_aq2poc; 
     alpha_dic2poc = alpha_tmp(iwet);
@@ -237,7 +237,7 @@ function [F,FD,par,C13x,C13xx] = C13_eqn(X, par)
     rhs13 = vout.rhs13;
     % biological DIC uptake operator
     G = uptake_C(par)  ; par.G = G ;
-    
+     
     kappa_g = par.kappa_g ;
     ALKbar  = par.ALKbar  ;
     sDICbar = par.sDICbar ;
@@ -247,19 +247,19 @@ function [F,FD,par,C13x,C13xx] = C13_eqn(X, par)
     DM = par.DM ;
     WM = par.WM ;
     kappa_r =  kru*UM +  krd*DM ;
-    eta     = etau*WM ;
+    eta     =  etau*WM ;
     % eta     = etau*UM + etad*DM ;
 
     eq1 = TRdiv*DIC13 ...                         % advective-diffusive transport
           + G*d0(C2P.*alpha_dic2poc)*R13o ...     % removal of dic13 organic c13 production
           + (1-sigC-gamma)*RR*G*d0(C2P)*R13o  ... % removal of dic13 due to pic13 production
-          - kPIC*PIC13 .... % dissolution of PIC13
-          - JgDIC13 ... % air-sea gas exchange
+          - kPIC*PIC13 ....          % dissolution of PIC13
+          - JgDIC13 ...              % air-sea gas exchange
           + sDICbar*d0(pme)*R13o ... % concentration and dillution due to precip and evaporation
-          - eta*(kC*DOC13) ...   % respiration of DOC13
-          - kappa_r*DOC13r ...   % respiration of DOC13r
-          - kappa_l*DOC13l...    % respiration of DOC13l
-          - kappa_p*POC13 ;      % respiration of PCO13
+          - eta*(kC*DOC13) ...       % respiration of DOC13
+          - kappa_r*DOC13r ...       % respiration of DOC13r
+          - kappa_l*DOC13l...        % respiration of DOC13l
+          - kappa_p*POC13 ;          % respiration of PCO13
 
     eq2 = (PFDc+kappa_p*I)*POC13 - (1-sigC-gamma)*G*d0(C2P.*alpha_dic2poc)*R13o;   ; % FPOC
 
