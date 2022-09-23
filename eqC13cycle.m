@@ -113,7 +113,7 @@ function [par, C13, C13x, C13xx] = eqC13cycle(x, par);
         [F,FD,par] = C13_eqn(C13, par);
     elseif (ierr == 0 & par.optim == on)
         % reset the global variable for the next call eqCcycle
-        GC13 = real(C13) + 1e-20*randn(7*nwet,1) ;
+        GC13 = real(C13) + 1e-20*randn(6*nwet,1) ;
         X0 = GC13;
         %
         if nargout > 2
@@ -250,9 +250,9 @@ function [F,FD,par,C13x,C13xx] = C13_eqn(X, par)
     eta     = etau*WM ;
     % eta     = etau*UM + etad*DM ;
 
-    eq1 = TRdiv*DIC13 ...                      % advective-diffusive transport
-          + G*d0(C2P.*alpha_dic2poc)*R13o ...   % removal of dic13 organic c13 production
-          + (1-sigC-gamma)*RR*G*d0(C2P)*R13o + ... % removal of dic13 due to pic13 production
+    eq1 = TRdiv*DIC13 ...                         % advective-diffusive transport
+          + G*d0(C2P.*alpha_dic2poc)*R13o ...     % removal of dic13 organic c13 production
+          + (1-sigC-gamma)*RR*G*d0(C2P)*R13o  ... % removal of dic13 due to pic13 production
           - kPIC*PIC13 .... % dissolution of PIC13
           - JgDIC13 ... % air-sea gas exchange
           + sDICbar*d0(pme)*R13o ... % concentration and dillution due to precip and evaporation
@@ -320,6 +320,8 @@ function [F,FD,par,C13x,C13xx] = C13_eqn(X, par)
     Jc{4,6} = 0*I ;
     Jc{5,6} = 0*I ;
     Jc{6,6} = TRdiv + kappa_r ;
+    fprintf('WTF?\n')
+    keyboard
     if nargout > 1
       % factorize Jacobian matrix
       FD = mfactor(cell2mat(Jc)) ;

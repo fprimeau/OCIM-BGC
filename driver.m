@@ -18,9 +18,9 @@ operator = 'A' ;
 
 Gtest = off ; 
 Htest = off ;
-par.optim   = off ; 
+par.optim   = on ; 
 par.Cmodel  = on ; 
-par.Omodel  = off ; 
+par.Omodel  = on ; 
 par.Simodel = off ;
 par.LoadOpt = on  ; % if load optimial par. 
 par.pscale  = 0.0 ;
@@ -130,6 +130,8 @@ if par.Omodel == on
 end 
 
 %--------------------- prepare parameters ------------------
+fprintf('prepare parameters\n');
+keyboard
 if par.optim == on 
     % load optimal parameters from a file or set them to default values 
     par = SetPar(par)  ;

@@ -18,11 +18,11 @@ operator = 'A' ;
 
 Gtest = off ; 
 Htest = off ;
-par.optim     = off ; 
+par.optim     = on ; 
 par.Pmodel    = on ; 
 par.Cmodel    = on ; 
 par.C13model  = on;
-par.Omodel    = off ; 
+par.Omodel    = on ; 
 par.Simodel   = off ;
 par.LoadOpt   = on  ; % if load optimial par. 
 par.pscale    = 0.0 ;
@@ -104,6 +104,9 @@ elseif Gtest == off
         catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
         fname = strcat(base_name,catDOC);
     end
+    if  ( par.C13model == on)
+      fname = strcat(base_name,'_C13')
+    end
 end
 % -------------------- Set up output files ---------------
 par.fname = strcat(fname,'.mat') ; 
@@ -126,10 +129,6 @@ end
 
 if par.C13model == on
   GC13 = zeros(6*length(iwet),1);
-  % START DEBUG
-  %load xtest.mat
-  %GC13 = xtest;
-  % STOP DEBUG
 end
 
 if par.Omodel == on 
@@ -178,6 +177,7 @@ if (skipit ~= 1)
     par.DIC = DIC(iwet) ;
     par.POC = POC(iwet) ;
     par.DOC = DOC(iwet) ;
+    par.PIC = PIC(iwet);
     par.DOCl = DOCl(iwet) ;
     par.DOCr = DOCr(iwet) ;
     DIC = DIC + par.dicant  ;
@@ -187,7 +187,7 @@ if (skipit ~= 1)
     data.ALK  = ALK  ;  data.DOCr = DOCr ;
     data.DOCl = DOCl ;
   end
-  save temp.mat data par
+  save -v7.3 temp.mat data par
 else
   load temp.mat
 end
@@ -216,4 +216,4 @@ if par.C13model == on
   data.DOC13  = DOC13  ;  data.PIC13  = PIC13 ;
   data.DOC13r = DOC13r ;  data.DOC13l = DOC13l ;
 end
-save(par.fname, 'data','par');
+save(par.fname, 'data','par','-v7.3');

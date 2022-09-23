@@ -19,8 +19,10 @@ function par = SetPar(par)
     par.tauPIC = 30*spd ; 
     par.kPIC   = 1/par.tauPIC ;
     % load optimal parameters if they exist
+    fprintf(' load optimal parameters if they exist.\n');
     if isfile(par.fxhat) & par.LoadOpt == on 
-        load(par.fxhat)
+      fprintf('Loading pre-optimized parameters.\n');
+      load(par.fxhat)    
     end
     
     if exist('xhat') & isfield(xhat,'sigP')
