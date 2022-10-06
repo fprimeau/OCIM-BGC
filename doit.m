@@ -143,9 +143,9 @@ par = SetPar(par)  ;
 par = PackPar(par) ;
 
 x0    = par.p0 ; % set up parameters and assign it to x0
-skipit = 1
+par.skipit = on;
 PCsol = sprintf('%stemp.mat',output_dir);
-if (skipit ~= 1)
+if ~par.skipit 
 
   %-------------------solve P model -------------------------
   if par.Pmodel == on 
@@ -195,6 +195,7 @@ end
 
 %-------------------solve C13 model -------------------------
 if par.C13model == on 
+  par.debug13 = on;
   [par, C13 ] = eqC13cycle(x0, par);
   % Gradient and Hessian
   %par.C13x = C13x ;  par.C13xx = C13xx ;
