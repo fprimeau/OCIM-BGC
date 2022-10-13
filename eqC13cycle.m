@@ -199,7 +199,7 @@ function [F,FD,par,C13x,C13xx] = C13_eqn(X, par)
     % define C13 fractionation factors and ratios in ocean and atmosphere
     % set up fractionation factors fro C13 and R13
     %  A. Schmittner et al.: Distribution of carbon isotope ratios (δ13C) in the ocean
-    par.c13.R13a = 0.011; % air C13/C
+    par.c13.R13a = 0.01118; % air C13/C
     par.pc13atm = par.pco2atm*par.c13.R13a;
     par.c13.R13o = R13o;
     par.c13.dR13o = dR13o;

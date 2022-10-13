@@ -114,6 +114,7 @@ par.fxhat = fxhat ;
 if isfile(par.fname)
   disp(sprintf('load optimized solution %s',par.fname));
   load(par.fname)
+  disp(sprintf('xhat file exist: %s',string(logical(isfile(par.fxhat)))));
 end 
 
 %---------------- inital guesses on C, C13 and O ---------------
@@ -182,6 +183,7 @@ if ~par.skipit
     par.DIC = DIC(iwet) ;
     par.POC = POC(iwet) ;
     par.DOC = DOC(iwet) ;
+    par.ALK = ALK(iwet) ;
     par.DOCl = DOCl(iwet) ;
     par.DOCr = DOCr(iwet) ;
     % DIC = DIC + par.dicant  ;
@@ -193,6 +195,7 @@ if ~par.skipit
   end
   save(PCsol,'data','par','-v7.3');
 else
+  disp(sprintf('loading P and C solution from %s',PCsol));
   load(PCsol);
 end
 
