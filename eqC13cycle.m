@@ -199,7 +199,7 @@ function [F,FD,par,C13x,C13xx] = C13_eqn(X, par)
     % define C13 fractionation factors and ratios in ocean and atmosphere
     % set up fractionation factors fro C13 and R13
     %  A. Schmittner et al.: Distribution of carbon isotope ratios (δ13C) in the ocean
-    par.c13.R13a = 0.011; % air C13/C
+    par.c13.R13a = 0.01118; % air C13/C
     par.pc13atm = par.pco2atm*par.c13.R13a;
     par.c13.R13o = R13o;
     par.c13.dR13o = dR13o;
@@ -229,6 +229,14 @@ function [F,FD,par,C13x,C13xx] = C13_eqn(X, par)
     % alpha_dic2poc = ( par.c13.alpha_g2aq ./ par.c13.alpha_g2dic ) .* alpha_aq2poc; 
     alpha_tmp = ( par.c13.alpha_g2aq ./ par.c13.alpha_g2dic ) .* alpha_aq2poc; 
     alpha_dic2poc = alpha_tmp(iwet);
+
+    if par.debug13
+      disp('Testing fractionation factors')
+      par.c13.alpha_k = 1;%0.99915; % kenetic fractionation factor 
+      par.c13.alpha_g2aq = 1;%0.998764; % gas to water fractionation factor
+      par.c13.alpha_g2dic = 1.01051*0 - 1.05*1e-4*par.Temp*0 + 1;
+      alpha_dic2poc = alpha_dic2poc*0 + 1.0; % debug
+    end
 	
     % Air-Sea gas exchange for C13
     vout  = Fsea2air(par, 'C13');

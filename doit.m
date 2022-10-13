@@ -115,7 +115,9 @@ par.fxhat = fxhat ;
 
 % -------------------update initial guesses --------------
 if isfile(par.fname)
-    load(par.fname)
+  disp(sprintf('load optimized solution %s',par.fname));
+  load(par.fname)
+  disp(sprintf('xhat file exist: %s',string(logical(isfile(par.fxhat)))));
 end 
 
 %---------------- inital guesses on C, C13 and O ---------------
@@ -142,15 +144,16 @@ par = SetPar(par)  ;
 par = PackPar(par) ;
 
 x0    = par.p0 ; % set up parameters and assign it to x0
-skipit = 1
+par.skipit = on;
 PCsol = sprintf('%stemp.mat',output_dir);
-if (skipit ~= 1)
+if ~par.skipit 
 
   %-------------------solve P model -------------------------
   if par.Pmodel == on 
-    [par, P, Px, Pxx] = eqPcycle(x0, par) ;
+    [par, P] = eqPcycle(x0, par) ;
+    % [par, P, Px, Pxx] = eqPcycle(x0, par) ;
     % Gradient and Hessian
-    par.Px    = Px ;  par.Pxx   = Pxx ;
+    % par.Px    = Px ;  par.Pxx   = Pxx ;
     
     DIP  = M3d+nan  ;  DIP(iwet)  = P(1+0*nwet:1*nwet) ;
     POP  = M3d+nan  ;  POP(iwet)  = P(1+1*nwet:2*nwet) ;
@@ -163,9 +166,10 @@ if (skipit ~= 1)
   end
   %-------------------solve C model -------------------------
   if par.Cmodel == on 
-    [par, C, Cx, Cxx] = eqCcycle(x0, par) ;
+    [par, C] = eqCcycle(x0, par) ;
+    % [par, C, Cx, Cxx] = eqCcycle(x0, par) ;
     % Gradient and Hessian
-    par.Cx = Cx ;  par.Cxx = Cxx ;
+    % par.Cx = Cx ;  par.Cxx = Cxx ;
     
     DIC  = M3d+nan ;  DIC(iwet)  = C(0*nwet+1:1*nwet) ;
     POC  = M3d+nan ;  POC(iwet)  = C(1*nwet+1:2*nwet) ;
@@ -179,26 +183,25 @@ if (skipit ~= 1)
     par.POC = POC(iwet) ;
     par.DOC = DOC(iwet) ;
     par.PIC = PIC(iwet);
+    par.ALK = ALK(iwet) ;
     par.DOCl = DOCl(iwet) ;
     par.DOCr = DOCr(iwet) ;
-    DIC = DIC + par.dicant  ;
+    % DIC = DIC + par.dicant  ;
     
     data.DIC  = DIC  ;  data.POC  = POC ;
     data.DOC  = DOC  ;  data.PIC  = PIC ;
     data.ALK  = ALK  ;  data.DOCr = DOCr ;
     data.DOCl = DOCl ;
   end
-<<<<<<< HEAD
-  save -v7.3 temp.mat data par
-=======
   save(PCsol,'data','par','-v7.3');
->>>>>>> fee1e04e80062a079652a5384893cbbc001776a3
 else
+  disp(sprintf('loading P and C solution from %s',PCsol));
   load(PCsol);
 end
 
 %-------------------solve C13 model -------------------------
 if par.C13model == on 
+  par.debug13 = off;
   [par, C13 ] = eqC13cycle(x0, par);
   % Gradient and Hessian
   %par.C13x = C13x ;  par.C13xx = C13xx ;
@@ -221,8 +224,5 @@ if par.C13model == on
   data.DOC13  = DOC13  ;  data.PIC13  = PIC13 ;
   data.DOC13r = DOC13r ;  data.DOC13l = DOC13l ;
 end
-<<<<<<< HEAD
-=======
 par.d13 = @(dic13,dic) (dic13./dic/1.12372*1e2-1)*1e3;
->>>>>>> fee1e04e80062a079652a5384893cbbc001776a3
 save(par.fname, 'data','par','-v7.3');
