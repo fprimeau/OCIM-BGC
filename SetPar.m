@@ -65,8 +65,8 @@ function par = SetPar(par)
         par.alpha = xhat.alpha ;
     else
         %par.alpha = 3.37e-08   ;		% WeiLei's NPP scaling factor for DIP uptake rate (used until v9b)
-		par.alpha = 1.0   ;		% NPP scaling factor for DIP uptake rate
-		%par.alpha = 1.0e-08 ;
+		%par.alpha = 1.0   ;		% NPP scaling factor for DIP uptake rate
+		par.alpha = 1.0e-06 ;
 		%par.alpha = 8.07e-04;
     end
     if exist('xhat') & isfield(xhat,'beta')
@@ -95,12 +95,14 @@ function par = SetPar(par)
         par.bC = xhat.bC ;
     else
         %par.bC = 9.38e-01    ;			% Martin exponent of POC solubilization (const term)
-		par.bC = 9.60e-01    ;			% set to match bP
+		%par.bC = 9.60e-01    ;			% set to match bP
+		par.bC = 9.26e-01	;			% set to soln of optC_GM15
     end
     if exist('xhat') & isfield(xhat,'d')
         par.d = xhat.d   ;
     else
-        par.d = 4.54e+03;    			% CaCO3 dissolution length scale [m]
+        %par.d = 4.54e+03;    			% CaCO3 dissolution length scale [m]
+		par.d = 5.12e+03;				% set to soln of optC_GM15
     end
     if exist('xhat') & isfield(xhat,'kC_T')
         par.kC_T = xhat.kC_T ;
@@ -110,7 +112,8 @@ function par = SetPar(par)
     if exist('xhat') & isfield(xhat,'kdC')
         par.kdC = xhat.kdC ;
     else
-        par.kdC = 7.35e-08 ;			% DOC remineralization constant (const. term) [s^-1]
+        %par.kdC = 7.35e-08 ;			% DOC remineralization constant (const. term) [s^-1]
+		par.kdC = 2.96e-08 ; 			% % set to soln of optC_GM15
     end
     if exist('xhat') & isfield(xhat,'R_Si')
         par.R_Si = xhat.R_Si ;
@@ -120,15 +123,16 @@ function par = SetPar(par)
     if exist('xhat') & isfield(xhat,'rR')
         par.rR = xhat.rR  ;
     else
-        par.rR = 2.64e-02 ;				% CaCO3 to POC production ratio (const. term)
+        %par.rR = 2.64e-02 ;				% CaCO3 to POC production ratio (const. term)
+		par.rR = 3.36e-02 ; 			% set to soln of optC_GM15
     end
     if exist('xhat') & isfield(xhat,'cc')
         par.cc = xhat.cc  ;
     else
         %par.cc = 7.51e-4 ;				% slope for P:C as a linear function of DIP (WeiLei's value)
 		%par.cc = 1.02e-7 ; 				% WeiLei's new value
-		%par.cc = 6.9e-3 ; 				% value from Galbraith & Martiny 2015
-		par.cc = 0.0 ;					% slope for P:C as a linear function of DIP. if cc is off, P:C is a constant
+		par.cc = 6.9e-3 ; 				% value from Galbraith & Martiny 2015
+		%par.cc = 0.0 ;					% slope for P:C as a linear function of DIP. if cc is off, P:C is a constant
 										% with cc initially set to 0.0, optimization doesn't work for this param. instead make it a very small value
     end
     if exist('xhat') & isfield(xhat,'dd')
@@ -192,19 +196,20 @@ function par = SetPar(par)
 	if exist('xhat') & isfield(xhat,'Q10Photo')
 		par.BIO.Q10Photo = real(xhat.Q10Photo);
 	else
-		par.BIO.Q10Photo = 2.0;		% Q10 of photosynthesis (default = 1.983)
+		%par.BIO.Q10Photo = 2.0;		% Q10 of photosynthesis (default = 1.983)
 		%par.BIO.Q10Photo = 1.88; 	% Eppley value (measured in natural communities)
-		%par.BIO.Q10Photo = 1.46; 	% Anderson et al. 2021 (median for all phytoplankton; compilation of culture studies)
+		par.BIO.Q10Photo = 1.46; 	% Anderson et al. 2021 (median for all phytoplankton; compilation of culture studies)
 	end
 	if exist('xhat') & isfield(xhat,'fStorage')
 		par.BIO.fStorage = real(xhat.fStorage);
 	else
-		par.BIO.fStorage = 0.7 %1; %exp(-.358);  % strength of luxury P storage [L/molC]
+		par.BIO.fStorage = 0.1; %0.7 %1; %exp(-.358);  % strength of luxury P storage [L/molC]
 	end
 	if exist('xhat') & isfield(xhat,'fRibE')
 		par.BIO.fRibE = real(xhat.fRibE);
 	else
-		par.BIO.fRibE = .618;           % ribosome fraction of biosynthetic apparatus
+		%par.BIO.fRibE = .618;           % ribosome fraction of biosynthetic apparatus
+		par.BIO.fRibE = .60;			% biosynthesis = 60% ribosome; 40% protein
 	end
 	if exist('xhat') & isfield(xhat,'kST0')
 		par.BIO.kST0 = real(xhat.kST0);
@@ -217,7 +222,7 @@ function par = SetPar(par)
 	else
 		%par.BIO.PLip_PCutoff = exp(-14.408);  % log of [P (mol/L)] below which more PLipids are substituted with Slipids
 											  % original default = exp(-14.408) = 5.5295e-07
-		par.BIO.PLip_PCutoff = 1.0e-07;
+		par.BIO.PLip_PCutoff = 1.0e-06;
 	end
 	if exist('xhat') & isfield(xhat,'PLip_scale')
 		par.BIO.PLip_scale = real(xhat.PLip_scale);
@@ -227,12 +232,12 @@ function par = SetPar(par)
 	if exist('xhat') & isfield(xhat,'PStor_rCutoff')
 		par.BIO.PStor_rCutoff = real(xhat.PStor_rCutoff);
 	else
-		par.BIO.PStor_rCutoff = 2.25;  % radius [um] above which cell stores luxury phosphorus?
+		par.BIO.PStor_rCutoff = 2.25; %2.25;  % radius [um] above which cell stores luxury phosphorus?
 	end
 	if exist('xhat') & isfield(xhat,'PStor_scale')
 		par.BIO.PStor_scale = real(xhat.PStor_scale);
 	else
-		par.BIO.PStor_scale = 3.00;  % scale factor for logistic function controlling luxury phosphorus storage (changed default from 1 to 3 to give sharper transition)
+		par.BIO.PStor_scale = 2.00; %3.00 % scale factor for logistic function controlling luxury phosphorus storage (changed default from 1 to 3 to give sharper transition)
 	end
 	if exist('xhat') & isfield(xhat,'alphaS')
 		par.BIO.alphaS = real(xhat.alphaS);

@@ -119,6 +119,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
            sparse(nwet,1)];
 
     fprintf('Solving P model ...\n') ;
+	%keyboard
     % dP/dt + Fp*P = RHS
     % factoring Jacobian matrix
     FFp = mfactor(cell2mat(Fp));

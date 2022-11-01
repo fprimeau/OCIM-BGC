@@ -13,6 +13,9 @@ slurm.*
 *.mat
 Pdebug*
 .remote-sync.json
+run_futureproj/*
+TEST_Cellinit/*
+TEST_compare2Tonly/*
 *~
 OutputData90/
 OutputData91/

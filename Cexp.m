@@ -6,27 +6,22 @@ off  = false ;
 format long
 
 %ver = datestr(now,'mmmdd');
-%RunVer = 'testPobs_Tv4_PCCella1b1_DOC0.25_DOP0'
+%RunVer = 'optGM15_CTL_He_PC_DOC0.25_DOP0'
 %RunVer = 'Tv4_PC_DOC0.25_DOP0v8'
-%RunVer = 'constC2P_Tv4_PCv8_DOC0.25_DOP0'
-%RunVer = 'SONT_Tv4_P'
-%RunVer = 'SONT_Tv4_PC_DOC0_DOP0'
-%RunVer = 'Tv4_PCv9_DOC0.25_DOP0'
-%RunVer = 'Tv4_PC_DOC0.25_DOP0v8_onlyC2P'
-%RunVer = 'testPobs_Tv4_PCCella8e-4b6e-1_DOC0.25_DOP0';
-RunVer = 'ESS225_Tv4_PCCell_DOC0.25_DOP0'
+%RunVer = 'testCellinit/q0f2k1r1g1_CTL_He_PCCell_DOC0.25_DOP0'
+%RunVer = 'optC_GM15_CTL_He_PC_DOC0.25_DOP0'
+RunVer = 'optC_Cellv2_CTL_He_PCCell_DOC0.25_DOP0'
 
-GridVer  = 90  ;
+GridVer  = 91  ;
 operator = 'A' ;
 
 %model output directory
-outputDir = sprintf('/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK%2d/', GridVer);
+%outputDir = sprintf('/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK%2d/', GridVer);
+outputDir = sprintf('/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/C2P_paper_optC/')
 %figDir = strcat(outputDir,'FIGS_PCv9_DOC0.25_DOP0/');
-%figDir = strcat(outputDir,'FIGS_testNPP_PC/a1e-8b1e-3_');
-%figDir = strcat(outputDir,'FIGS_PCCell_Pobs/a1b1_');
-%figDir = strcat(outputDir,'FIGS_PC_DOC0.25_DOP0v8/0203_');
-%figDir = strcat(outputDir,'FIGS_constC2P_PCv8_DOC0.25_DOP0/0203_');
-figDir = strcat(outputDir,'FIGS_ESS225/');
+%figDir = strcat(outputDir,'testCellinit/FIGS_testCellinit/q0f2k1r1g1_');
+%figDir = strcat(outputDir,'FIGS_optGM15/');
+figDir = strcat(outputDir,'FIGS_optC_Cell/');
 outPath = figDir;
 
 % load model output fields
@@ -38,6 +33,7 @@ model = data;
 % load optimal parameter values
 fxhat = strcat(outputDir, RunVer,'_xhat.mat');
 par.fxhat = fxhat;
+par.fxhatload = fxhat; % to make sure all non-optimized parameters are same as during the run.
 load(fxhat);
 
 par.Cmodel  = on ;
@@ -48,7 +44,7 @@ par.pscale  = 0.0 ;
 par.cscale  = 0.25 ; % factor to weigh DOC in the objective function
 %par.cscale  = 0.0 ;
 par.LoadOpt = on ; % if load optimial par.
-par.dynamicP = off ; 
+par.dynamicP = off ;
 
 
 %-------------load data and set up parameters---------------------
@@ -259,9 +255,13 @@ Int_CNPP = G(:,:,1:nn).*grd.DZT3d(:,:,1:nn).*C2P3D(:,:,1:nn)*12;
 
 PNPP = Int_PNPP*spa*1e-3 ; % convert to g P/m^2/yr
 CNPP = Int_CNPP*spa*1e-3 ; % convert production from mg C/m^3/s to gC/m^2/year;
+tem_PNPP = PNPP.*dAt(:,:,1:nn)*1e-15 ;
 tem_CNPP = CNPP.*dAt(:,:,1:nn)*1e-15 ;
 Sum_CNPP = nansum(tem_CNPP(:))    ;
+fprintf('Model NPP (P) is %3.3e Pg P/yr \n\n',nansum(tem_PNPP(:))) ; %Pg/yr
 fprintf('Model NPP is %3.3e Pg C/yr \n\n',Sum_CNPP) ; %Pg/yr
+
+clear tem_PNPP tem_CNPP
 
 
 % prod weighted C:P
@@ -392,6 +392,10 @@ Sum_Pexp = nansum(tem_Pexp(:))*365*1e-18;			% [Pg P/yr]
 fprintf('Model TOP export is %3.3e Pg P /yr   (Integrated to %4.1f m) \n',Sum_Pexp, sum(grd.dzt(1:nn)));
 TOPexp = sum(TOPexp3d,3,'omitnan');
 
+%convert export from mmol P/m^3/s to mol P/m^2/yr;
+EXPORT.TOPexp3d = P3d(:,:,1:nn).*grd.DZT3d(:,:,1:nn)*spa/1000; %[mol P/m^2/yr]
+EXPORT.TOPexp = sum(EXPORT.TOPexp3d,3); %sum(TOPexp3d,3,'omitnan');
+
 % POP export
 [~,Gout] = buildPFD(par,'POP') ;
 w = -Gout.w ;
@@ -442,6 +446,9 @@ if par.Cmodel ==on
 	fprintf('Model TOC export is %3.3e Pg C /yr   (Integrated to %4.1f m) \n',Sum_Cexp, sum(grd.dzt(1:nn)));
 	TOCexp = sum(TOCexp3d,3,'omitnan');
 
+	EXPORT.TOCexp3d = C3d(:,:,1:nn).*grd.DZT3d(:,:,1:nn)*spa/1000; %[mol P/m^2/yr]
+	EXPORT.TOCexp = sum(EXPORT.TOCexp3d,3); %sum(TOPexp3d,3,'omitnan');
+
 	% inegTOCexp = find(TOCexp<0);
 	% TOCexp(inegTOCexp) = nan;
 
@@ -468,6 +475,10 @@ if par.Cmodel ==on
 	fprintf('Model integrated DOC below the Euphotic zone is %3.3e Pg C /yr \n\n',Sum_DOCexpint);
 	DOCexpint = sum(DOCexpint,3,'omitnan');
 
+
+% Save export
+%% save
+save([outPath 'EXPORTopt.mat'],'EXPORT');
 
 
 %{

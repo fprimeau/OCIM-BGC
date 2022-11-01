@@ -2,21 +2,16 @@ clc; clear all; close all
 global iter
 %global fmin_history
 
-fprintf(['\n' 'NOTE: run model with Cell model C:P \n' ...
+fprintf(['\n' 'NOTE: optimize C cycle with Cell model for C:P \n' ...
+	'hold P cycle parameters fixed to values in optPonly \n'...
 	'sigma fixed at zero, \n'...
-	'beta fixed at 0.5 \n'...
-	'parameters initialized from result of optCell01 \n'...
-	'BGC parameters initialized from result of optGM15 \n'...
-	'fRibE fixed \n'...
-	'reset initial cell model parameters \n'...
-	'relaxed Pstore_scale to 1.0 \n'...
 	'dynamicP = off \n'])
 
 cd ..
 
 % set up parallel pool for cell model
 if isempty(gcp('nocreate'))
-	poolobj = parpool(16); % if running in parallel; comment out to run serial
+	poolobj = parpool(8); % if running in parallel; comment out to run serial
 	%to close the parallel pool: delete(poolobj)
 	poolobj.IdleTimeout = 120;
 end
@@ -37,9 +32,9 @@ operator = 'A' ;
 % E -> KvHIGH_KiLOW_He; F -> KvHIGH_KiLOW_noHe; G -> KiLOW_He;
 % H -> KiLOW_noHe; I -> KvHIGH_He; J -> KvHIGH_noHe; K -> KvHIGH_KiHIGH_noHe
 
-VerName = 'optCell_'; 		% optional version name. leave as an empty character array
+VerName = 'optC_Cellv2_'; 		% optional version name. leave as an empty character array
 					% or add a name ending with an underscore
-VerNum = '01b';		% optional version number
+VerNum = '';		% optional version number
 
 Gtest = off ;		% do gradient test
 Htest = off ;		% do hessian test
@@ -55,37 +50,33 @@ par.pscale  = 0.0 ;
 par.cscale  = 0.25 ; % factor to weigh DOC in the objective function
 
 % to load parameter values from a run with a different name. need to delete or comment out for loadOpt to work normally
-% par.fxhatload = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK90/Tv4_PCCellv8_DOC0.25_DOP0_xhat.mat' ;
-%par.fxhatload = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK90/ESS225_xhat.mat' ;
-%par.fxhatload = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/C2P_paper/optGM15_CTL_He_PC_DOC0.25_DOP0_xhat.mat';
-%par.fxhatload = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK91/testCellinit/a0q1f1k1r0g1_CTL_He_PCCell_DOC0.25_DOP0_xhat.mat';
-par.fxhatload = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/C2P_paper/optCell_CTL_He_PCCell01_DOC0.25_DOP0_xhat.mat';
+par.fxhatload = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/C2P_paper_optC/optPonly_CTL_He_P_xhat.mat';
 
 % P model parameters
 par.opt_sigma = off ;
 par.opt_kP_T  = off ;
-par.opt_kdP   = on ;
+par.opt_kdP   = off ; %
 par.opt_bP_T  = off ;
-par.opt_bP    = on ;
-par.opt_alpha = on ;
-par.opt_beta  = off ;
+par.opt_bP    = off ; %
+par.opt_alpha = off ; %
+par.opt_beta  = off ; %
 % C model parameters
 par.opt_bC_T  = off ;
-par.opt_bC    = on ;
+par.opt_bC    = on ; %
 par.opt_bPC	  = off; %new variable to optimize bP and bC with the same value.
 					 % no temperature dependence. must have opt_bP on and opt_bP_T, opt_bC, opt_bC_T off
-par.opt_d     = on ;
+par.opt_d     = on ; %
 par.opt_kC_T  = off ;
-par.opt_kdC   = on ;
+par.opt_kdC   = on ; %
 par.opt_R_Si  = off ;
-par.opt_rR    = on ;
+par.opt_rR    = on ; %
 par.opt_cc    = off ; %always off if cell model on
 par.opt_dd    = off ; %always off if cell model on
 % O model parameters
 par.opt_O2C_T = off ;
-par.opt_rO2C  = on ;
+par.opt_rO2C  = off ;
 par.opt_O2P_T = off ;
-par.opt_rO2P  = on ;
+par.opt_rO2P  = off ;
 % Si model parameters
 par.opt_dsi   = off  ;
 par.opt_at    = off ;
@@ -130,7 +121,7 @@ elseif isunix
 
 	%output_dir = sprintf('/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/test%s/', datestr(now,'ddmmmyy'));
 	%output_dir = sprintf('/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK%2d/', GridVer);
-	output_dir = sprintf('/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/C2P_paper/');
+	output_dir = sprintf('/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/C2P_paper_optC/');
 end
 VER = strcat(output_dir,VerName,TRdivVer);
 catDOC = sprintf('_DOC%0.2g_DOP%0.2g',par.cscale,par.pscale); % used to add scale factors to file names
@@ -215,14 +206,6 @@ end
     % load optimal parameters from a file or set them to default values
     par = SetPar(par) ;
 
-% run 1b. overwrite final value of PStor_rCutoff and scale
-par.BIO.PStor_rCutoff = 2.25;
-par.BIO.PStor_scale = 1.0;
-par.BIO.Q10Photo = 0.675; %1.0;
-par.BIO.alphaS = 0.972; %1.0 ;
-par.BIO.kST0 = 0.186 ;
-
-
     % pack parameters into an array, assign them corresponding indices.
     par = PackPar(par) ;
 % end
@@ -231,40 +214,7 @@ par.BIO.kST0 = 0.186 ;
 x0    = par.p0 ;
 myfun = @(x) neglogpost(x, par);
 
-%fmin_history = struct;
-% function stop = fminoutfun(x, optimValues, state)
-% 	%global iter
-% 	%global fmin_history
-% 	stop = false;
-% 	switch state
-%   		case 'init'
-% 			fmin_history = struct();
-% 		    % fmin_history.x = x;
-% 		    % fmin_history.optimValues = optimValues;
-% 		    % fmin_history.timerVal = tic;
-% 			fmin_history.x = zeros(100,length(x));
-% 			fmin_history.gradient = zeros(100,length(x));
-% 			fmin_history.fval = zeros(100,1);
-% 			fmin_history.timerVal = zeros(100,1);
-% 			fmin_history.timerStart = tic;
-% 			fprintf('iter value at init state = %i',iter)
-% 		case 'iter'
-% 			% ind = length(fmin_history)+1;
-% 		    % fmin_history(iter).x = x;
-% 		    % fmin_history(iter).optimValues = optimValues;
-% 		    % fmin_history(iter).timerVal = toc(fmin_history(1).timerVal);
-% 			fmin_history.x(iter,:) = x;
-% 			fmin_history.fval(iter) = optimValues.fval;
-% 			fmin_history.gradient(iter,:) = optimValues.gradient;
-% 			fmin_history.timerVal = toc(fmin_history.timerStart);
-% 		case 'done'
-% 			%
-%   	end
-% 	%history.x = [history.x; x];
-% 	%history.fval = [history.fval; optimValues.fval];
-% 	%history.gradient = [history.gradient; optimValues.gradient'];
-% 	%save(par.fhistory,'history') %try making history an output of fminunc after exitflag, then only need to save once
-% end
+
 objfuntolerance = 5e-12;
 options = optimoptions(@fminunc                  , ...
                        'Algorithm','trust-region', ...

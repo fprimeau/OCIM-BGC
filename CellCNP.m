@@ -304,6 +304,7 @@ function [out,M] = CellCNPcopy(par,x,P,N,T,Irr)
 
     rPLim = alphaS./(1-gammaS - CI.*EPLim); %1.0./( (1-gammaS)/alphaS-CI.*EPLim/alphaS);
     APLim = (1-gammaS -CI.*EPLim)./2; %should equal AMin;  APLim = alphaS/(2*rPLim)
+	%fProtAPLim = rPLim.^2.*kST.*EPLim.*(EPLim*PE+gammaDNA*PDNA)./aP; %always equals 1
     fProtAPLim = APLim.*0+1; % =1 (if purely P limited = invest as much as you can in uptake proteins)
 
 
@@ -927,7 +928,7 @@ muL = alphaI.*L./(1+PhiS);
 		aPi = aP(i);
         % polynomial coefficients
 		c3 = kSTi^2*NProt*PE + (aPi*aNi/alphaS^4)*CIi^3 - (aPi/alphaS^2)*kSTi*CIi*(NE+(CIi-1)*NL-0.5*CIi*NM);
-		% function to return all derivs of c3 wrt params
+		% create function to return all derivs of c3 wrt params?
 		c2 = kSTi^2*NProt*gammaS*PS - 3*(aPi*aNi/alphaS^4)*CIi^2*(1-gammaS) + (aPi/alphaS^2)*kSTi*(1-gammaS)*(NE+(CIi-1)*NL-0.5*CIi*NM) - (aPi/alphaS^2)*kSTi*CIi*(gammaS*NS+0.5*(1-gammaS)*NM);
 		c1 = 3*(aPi*aNi/alphaS^4)*CIi*(1-gammaS)^2 + (aPi/alphaS^2)*kSTi*(1-gammaS)*(gammaS*NS+0.5*(1-gammaS)*NM);
 		c0 = -(aPi*aNi/alphaS^4)*(1-gammaS)^3;

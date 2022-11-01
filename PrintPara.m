@@ -43,6 +43,7 @@ function xhat = PrintPara(x, par);
 		if (par.Cellmodel==on)
             fprintf('Q10Photo       is  % 3.2e \n', par.BIO.Q10Photo)   ;
 			fprintf('fStorage       is  % 3.2e \n', par.BIO.fStorage)   ;
+			fprintf('fRibE          is  % 3.2e \n', par.BIO.fRibE)      ;
 			fprintf('PLip_PCutoff   is  % 3.2e \n', par.BIO.PLip_PCutoff) ;
 			fprintf('PLip_scale     is  % 3.2e \n', par.BIO.PLip_scale)   ;
             fprintf('PStor_r0Cutoff is  % 3.2e \n', par.BIO.PStor_rCutoff);
@@ -56,7 +57,7 @@ function xhat = PrintPara(x, par);
 			fprintf('PhiS           is  % 3.2e \n', par.BIO.PhiS)  ;
 			fprintf('pDry           is  % 3.2e \n', par.BIO.pDry)  ;
 			fprintf('rho            is  % 3.2e \n', par.BIO.rho)   ;
-			fprintf('gammDNA        is  % 3.2e \n', par.BIO.gammaDNA)   ;
+			fprintf('gammaDNA        is  % 3.2e \n', par.BIO.gammaDNA)   ;
             fprintf('gammaLipid     is  % 3.2e \n', par.BIO.gammaLipid) ;
 			fprintf('fProtM         is  % 3.2e \n', par.BIO.fProtM)  ;
 			fprintf('fProtL         is  % 3.2e \n', par.BIO.fProtL)  ;

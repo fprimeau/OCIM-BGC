@@ -256,7 +256,7 @@ function  ibad = BadStep(x, par);
             end
         end
 
-        if (par.opt_cc == on)
+        if (par.opt_cc == on & par.opt_dd == off)
             icc  = pindx.lcc    ;
             xnew = exp(x(icc))  ;
             xold = exp(x0(icc)) ;
@@ -265,7 +265,7 @@ function  ibad = BadStep(x, par);
             end
         end
 
-        if (par.opt_dd == on)
+        if (par.opt_dd == on & par.opt_cc == off)
             idd  = pindx.ldd    ;
             xnew = exp(x(idd))  ;
             xold = exp(x0(idd)) ;
@@ -273,6 +273,27 @@ function  ibad = BadStep(x, par);
                 ibad = [ibad, idd];
             end
         end
+
+		if (par.opt_cc == on & par.opt_dd == on)
+            icc = pindx.lcc ;
+			cc1 = exp(x(icc))  ;
+            cc0 = exp(x0(icc)) ;
+            %
+            idd  = pindx.ldd    ;
+            dd1  = exp(x(idd))  ;
+            dd0  = exp(x0(idd)) ;
+            % 
+			iprod = find(par.M3d(:,:,1:2));
+            c2p1 = 1./(cc1*par.po4obs(iprod) + dd1) ;
+			c2p0 = 1./(cc0*par.po4obs(iprod) + dd0) ;
+            mc2p1 = mean(c2p1) ;
+            mc2p0 = mean(c2p0) ;
+            if any(c2p1 < 0) %| mc2p1 > fb*mc2p0 | mc2p1 < fs*mc2p0
+				ibad = [ibad, icc, idd];
+            end
+        end
+
+
     end
     % ------------------------------------------------------------
     if (par.Omodel == on)

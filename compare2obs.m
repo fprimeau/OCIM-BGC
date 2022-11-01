@@ -4,25 +4,21 @@ on = true; off = false;
 %
 set(groot,'defaultTextInterpreter','Tex');
 
-%RunVer = 'testNPP_Tv4_PCCella1e-8b1e-3_DOC0.25_DOP0';
-%RunVer = 'testPobs_CTL_He_PCCella1b1_DOC0.25_DOP0';
-%RunVer = 'Tv4_PCCellv9c_fixedQ10_DOC0.25_DOP0'
-%RunVer = 'Tv4_PC_DOC0.25_DOP0v8_onlyC2P'
-%RunVer ='constC2P_Tv4_PCv8_DOC0.25_DOP0'
-RunVer = 'ESS225_Tv4_PCCell_DOC0.25_DOP0'
-%RunVer = 'Tv4_PCv9_DOC0.25_DOP0'
-%RunVer = 'testPobs_Tv4_PCCella8e-4b6e-1_DOC0.25_DOP0';
+%RunVer = 'testNPP_CTL_He_PCconstC2Pfixb_DOC0.25_DOP0'
+%RunVer = 'optGM15_CTL_He_PC_DOC0.25_DOP0'
+%RunVer = 'optCell_CTL_He_PCCell01b_DOC0.25_DOP0'
+%RunVer = 'optPonly_CTL_He_P'
+%RunVer = 'testC2PTempP_CTL_He_PC_DOC0.25_DOP0'
+%RunVer = 'optC_GM15_CTL_He_PC_DOC0.25_DOP0'
+RunVer = 'optC_Cell_CTL_He_PCCell_DOC0.25_DOP0'
 
 %model output directory
-outputDir = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK90/';
-%figPath = strcat(outputDir,'FIGS_testPobs_PCCell/a1b1_');
-%figPath = strcat(outputDir,'FIGS_testNPP_PCCell/a1e-8b1e-3_');
-%figPath = strcat(outputDir,'FIGS_PCv9_DOC0.25_DOP0/');
+outputDir = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/C2P_paper_optC/';
+%outputDir = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK91/';
+figPath = strcat(outputDir,'FIGS_optC_Cell/');
+%figPath = strcat(outputDir,'FIGS_testC2PTempP/v1_lcc_');
 %figPath = strcat(outputDir,'FIGS_PCCellv9_DOC0.25_DOP0/v9c_fixedQ10_');
-%figPath = strcat(outputDir,'FIGS_PC_DOC0.25_DOP0v8/onlyC2P/');
-%figPath = strcat(outputDir,'FIGS_constC2P_PCv8_DOC0.25_DOP0/');
-figPath = strcat(outputDir,'FIGS_ESS225/');
-
+%figPath = strcat(outputDir,'FIGS_optPonly/');
 
 % load model output fields
 fname = strcat(outputDir, RunVer, '.mat');
@@ -39,7 +35,7 @@ load(fxhat);
 % 	xhat.(finames{ii}) = PCCellv8.xhat.(finames{ii});
 % end
 
-GridVer  = 90  ;
+GridVer  = 91  ;
 operator = 'A' ;
 par.Pmodel  = on ;
 par.Cmodel  = on ;
@@ -68,8 +64,8 @@ xhat
 
 %----------------surface indices---------------------------
 iprod = find(par.M3d(:,:,1:2));
-iprod1 = find(par.M3d(:,:,1)); % surface layer only
-iprod2 = find(par.M3d(:,:,2)); % second EZ depth layer
+%iprod1 = find(par.M3d(:,:,1)); % surface layer only
+%iprod2 = find(par.M3d(:,:,2)); % second EZ depth layer
 
 %%% PLOT ONLY SURFACE VALUES
 %iwet = iprod;
@@ -116,7 +112,8 @@ if (par.Pmodel == on)
 	xlabel('Observed DOP (mmol/m^3)');
     ylabel('Model DOP (mmol/m^3)');
 	figTitle = 'DOPcompare2obs';
-	print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
+	%print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
+	exportgraphics(gcf,[figPath 'FIG_' figTitle '.png']);
 
 %------ DIP ----------------
     nfig = nfig+1;
@@ -162,7 +159,8 @@ if (par.Pmodel == on)
     % exportfig(gcf,'DIP_MvsO','fontmode','fixed','fontsize',12, ...
               % 'color','rgb','renderer','painters')
 	figTitle = 'DIPcompare2obs';
-	print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
+	%print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
+	exportgraphics(gcf,[figPath 'FIG_' figTitle '.png']);
 
 	%%%%%%% surface only %%%%%%%%%%%%%
 	nfig = nfig+1;
@@ -213,7 +211,8 @@ if (par.Pmodel == on)
     % exportfig(gcf,'DIP_MvsO','fontmode','fixed','fontsize',12, ...
               % 'color','rgb','renderer','painters')
 	figTitle = 'DIPsurfcompare2obs';
-	print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
+	%print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
+	exportgraphics(gcf,[figPath 'FIG_' figTitle '.png']);
 
 
 	% simple scatter plot of surface DIP compare to obs
@@ -238,7 +237,8 @@ if (par.Pmodel == on)
     ylabel('Model DIP (mmol/m^3)');
     title('DIP: Surface 2 layers')
 	figTitle = 'DIPsurfcompare2obs_scatter';
-	print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
+	%print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
+	exportgraphics(gcf,[figPath 'FIG_' figTitle '.png']);
 
 % ------------ SURFACE MAPS ------------
 	% surface map of difference from obs
@@ -255,8 +255,9 @@ if (par.Pmodel == on)
 	ylabel('Latitude');
 	ylabel(cb,'DIP [mmol/m^3]');
 	axis tight;
-	figTitle = 'DIP_MvsO_surface_map';
-	print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
+	figTitle = 'DIP_MvsO_surface_map_compare2obs';
+	%print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
+	exportgraphics(gcf,[figPath 'FIG_' figTitle '.png']);
 
 	figure; hold on;
 	imAlpha = M3d(:,:,1);
@@ -271,8 +272,9 @@ if (par.Pmodel == on)
 	ylabel('Latitude');
 	ylabel(cb,'DIP relative error (model DIP - WOA obs)/(WOA obs)');
 	axis tight;
-	figTitle = 'DIP_MvsO_relerr_surface_map';
-	print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
+	figTitle = 'DIP_MvsO_relerr_surface_map_compare2obs';
+	%print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
+	exportgraphics(gcf,[figPath 'FIG_' figTitle '.png']);
 
 end
 
@@ -328,7 +330,8 @@ if (par.Cmodel == on)
     % exportfig(gcf,'DIC_MvsO','fontmode','fixed','fontsize',12,...
               % 'color','rgb','renderer','painters')
 	figTitle = 'DICcompare2obs';
-	print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
+	%print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
+	exportgraphics(gcf,[figPath 'FIG_' figTitle '.png']);
 
 	%----surface Only DIC
 	dim = [0.1199 0.695 0.1 0.2];
@@ -383,7 +386,8 @@ if (par.Cmodel == on)
 	    % exportfig(gcf,'DIC_MvsO','fontmode','fixed','fontsize',12,...
 	              % 'color','rgb','renderer','painters')
 		figTitle = 'DICsurfcompare2obs';
-		print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
+		%print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
+		exportgraphics(gcf,[figPath 'FIG_' figTitle '.png']);
 
 %---ALK----------------
 	ALK = model.ALK;
@@ -435,7 +439,8 @@ if (par.Cmodel == on)
     % exportfig(gcf,'ALK_MvsO','fontmode','fixed','fontsize',12,...
     % 'color','rgb','renderer','painters')
 	figTitle = 'ALKcompare2obs';
-	print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
+	%print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
+	exportgraphics(gcf,[figPath 'FIG_' figTitle '.png']);
 
     if isfield(model,'DOC')
         DOC = model.DOC  ;
@@ -476,7 +481,8 @@ if (par.Cmodel == on)
     % OvsM = [O, M] ;
 
 	figTitle = 'DOCcompare2obs';
-	print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
+	%print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
+	exportgraphics(gcf,[figPath 'FIG_' figTitle '.png']);
 
     %%%%%%%% compare to sediment trap %%%%%%%%%%%%
     %POC = data.POC ;
@@ -485,9 +491,12 @@ if (par.Cmodel == on)
     if isfield(xhat,'bC_T')
         par.bC   = xhat.bC   ;
         par.bC_T = xhat.bC_T ;
-    else
+    elseif isfield(xhat,'bC')
         par.bC   = xhat.bC ;
         par.bC_T = 0 ;
+	else
+		par.bC   = xhat.allparams.bC ;
+		par.bC_T = 0 ;
     end
 
     [PFdiv,Gout] = buildPFD(par,'POC');
@@ -525,9 +534,15 @@ if (par.Cmodel == on)
     fprintf('R^2 for fPOC is %3.4f \n', ...
             rsquare(log10(POC_flux(ikeep)),log10(fPOC(ikeep))))
 
+	figTitle = 'POCcompare2obs';
+	%print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
+	exportgraphics(gcf,[figPath 'FIG_' figTitle '.png']);
+
     PIC = model.PIC ;
     if isfield(xhat,'d')
         par.d   = xhat.d  ;
+	else
+		par.d = xhat.allparams.d ;
     end
     par.tauPIC = 30*spd   ;
     [~,Gout] = buildPFD(par,'PIC') ;
@@ -566,8 +581,9 @@ if (par.Cmodel == on)
     fprintf('R^2 for rain ratio is %3.4f \n', ...
             rsquare(log10(rR(iwet(ikp))),log10(rRatio(iwet(ikp)))))
     % exportfig(gcf,'rRatio','fontmode','fixed','fontsize',12,'color','rgb','renderer','painters')
-	figTitle = 'POCcompare2obs';
-	print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
+	figTitle = 'rRatiocompare2obs';
+	%print(gcf,[figPath 'FIG_' figTitle '.png'],'-dpng')
+	exportgraphics(gcf,[figPath 'FIG_' figTitle '.png']);
 end
 
 % ---------------------------------------------------

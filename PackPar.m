@@ -4,6 +4,7 @@ function par = PackPar(par)
     nox = 0; nsx = 0;
 	nbx = 0; %nbx for cell model (BIO)
     p0 = [];
+	par.pindx = struct;
     % sigma
     if (par.opt_sigma == on)
         npx    = npx + 1;

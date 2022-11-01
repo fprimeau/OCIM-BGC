@@ -7,18 +7,21 @@ off  = false ;
 %RunVer = 'testNPP_Tv4_PCCella1e-8b1e-3_DOC0.25_DOP0';
 %RunVer = 'testPobs_CTL_He_PCCella1b1_DOC0.25_DOP0';
 %RunVer = 'testPobs_Tv4_PCCella1b1_DOC0.25_DOP0'
-RunVer = 'ESS225_Tv4_PCCell_DOC0.25_DOP0'
+%RunVer = 'testNPP_CTL_He_PCCella1e-4bfix_DOC0.25_DOP0'
+RunVer = 'optC_Cellv2_CTL_He_PCCell_DOC0.25_DOP0'
 
-GridVer  = 90  ;
+GridVer  = 91  ;
 operator = 'A' ;
 
 %model output directory
 %outputDir = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK90/';
-outputDir = sprintf('/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK%2d/', GridVer);
+%outputDir = sprintf('/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK%2d/', GridVer);
+outputDir = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/C2P_paper_optC/';
+figDir = strcat(outputDir,'FIGS_optC_Cell/');
 %figDir = strcat(outputDir,'FIGS_PCCellv9_DOC0.25_DOP0/v9c_onlyPStor_');
 %figDir = strcat(outputDir,'FIGS_PCCell_Pobs/a1b1_');
 %figDir = strcat(outputDir,'FIGS_testPobs_PCCell/a1b1_');
-figDir = strcat(outputDir,'FIGS_ESS225/');
+%figDir = strcat(outputDir,'FIGS_testNPP_PCCellfixb/a1e-4_');
 outPath = figDir;
 
 % load model output fields
@@ -29,6 +32,7 @@ model = data;
 % load optimal parameter values
 fxhat = strcat(outputDir, RunVer,'_xhat.mat');
 par.fxhat = fxhat;
+par.fxhatload = fxhat;
 load(fxhat);
 
 par.Cmodel  = on ;
@@ -38,6 +42,7 @@ par.Cellmodel = on; % cellular trait model for phyto uptake stoichiometry
 par.pscale  = 0.0 ;
 par.cscale  = 0.25 ; % factor to weigh DOC in the objective function
 par.LoadOpt = on;
+par.dynamicP = off ;
 
 %-------------load data and set up parameters---------------------
 SetUp ;
@@ -157,6 +162,28 @@ end
 parstr
 
 nzo = par.nzo; % 2 eupotic layers
+
+
+%% ------ Limitation types --------
+iprod = find(M3d(:,:,1:2));
+uLimTypes = unique(model.CellOut.LimType(iprod));
+
+fprintf('# of N limited points : %d \n',length(find(LimType(iprod) ==0)));
+fprintf('# of P limited points : %d \n',length(find(LimType(iprod) ==1)));
+fprintf('# of Colimited2 points: %d \n',length(find(LimType(iprod) ==2)));
+fprintf('# of Colimited3 points: %d \n',length(find(LimType(iprod) ==3)));
+
+fprintf('range of C:P values is %6.1f to %6.1f \n',min(C2P(iprod)),max(C2P(iprod)))
+
+fprintf('mean of C:P is %6.1f \n',mean(C2P(iprod)))
+fprintf('std of C:P  is %6.1f \n\n',std(C2P(iprod)))
+
+fprintf('range of radius is      %6.2f to %6.2f um \n',min(radius(iprod)),max(radius(iprod)))
+
+fprintf('range of growth rate is %6.3f to %6.3f hr^-1 \n',min(mu(iprod)),max(mu(iprod)))
+fprintf('range of growth rate is %6.3f to %6.3f day^-1 \n',min(mu(iprod)*24),max(mu(iprod)*24))
+
+
 
 %% ---- average C2P  production weighted--------
 DIP  = model.DIP(iwet) ;
@@ -423,7 +450,7 @@ xlabel('Latitude')
 ylabel('C:P [molC:molP]')
 title('Zonal Average Cellular C:P')
 axis tight; grid on
-ylim([0 525])
+ylim([0 400])
 figTitle = 'C2P_lat_avg_basin';
 print(gcf,[outPath 'FIG_' figTitle '.png'],'-dpng')
 clear h;
@@ -565,25 +592,27 @@ figTitle = 'Muvsradius';
 print(gcf,[outPath 'FIG_' figTitle '.png'],'-dpng')
 clear h1 h2
 
-iNlim1 = find(LimType(:,:,1) == 0);
-iPlim1 = find(LimType(:,:,1) == 1);
-iColim1 = find(LimType(:,:,1) == 2 | LimType(:,:,1) == 3);
-r1 = radius(:,:,1);
-mu1 = mu(:,:,1);
-figure
-h2 = plot(r1(iColim1),mu1(iColim1),'.','Color',colors.aqua); hold on
-h0 = plot(r1(iNlim1),mu1(iNlim1),'.r'); hold on
-h1 = plot(r1(iPlim1),mu1(iPlim1),'.b');
-legend([h0(1) h1(1) h2(1)],{'N-limited','P-Limited','Co-Limited'},'Location','best')
-%legend([h0(1) h1(1)],{'N-limited','P-Limited'},'Location','best')
-xlabel('radius [$\mu m$]')
-ylabel('growth rate')
-title('optimal cellular growth rate vs cell radius for surface layer')
-grid on
-figTitle = 'Muvsradius_LimType';
-print(gcf,[outPath 'FIG_' figTitle '.png'],'-dpng')
-clear h0 h1 h2
-% would it be meaningful to multiply cell model's growth rate by biomass in the grid cell?
+if uLimTypes > 2
+	iNlim1 = find(LimType(:,:,1) == 0);
+	iPlim1 = find(LimType(:,:,1) == 1);
+	iColim1 = find(LimType(:,:,1) == 2 | LimType(:,:,1) == 3);
+	r1 = radius(:,:,1);
+	mu1 = mu(:,:,1);
+	figure
+	h2 = plot(r1(iColim1),mu1(iColim1),'.','Color',colors.aqua); hold on
+	h0 = plot(r1(iNlim1),mu1(iNlim1),'.r'); hold on
+	h1 = plot(r1(iPlim1),mu1(iPlim1),'.b');
+	legend([h0(1) h1(1) h2(1)],{'N-limited','P-Limited','Co-Limited'},'Location','best')
+	%legend([h0(1) h1(1)],{'N-limited','P-Limited'},'Location','best')
+	xlabel('radius [$\mu m$]')
+	ylabel('growth rate')
+	title('optimal cellular growth rate vs cell radius for surface layer')
+	grid on
+	figTitle = 'Muvsradius_LimType';
+	print(gcf,[outPath 'FIG_' figTitle '.png'],'-dpng')
+	clear h0 h1 h2
+	% would it be meaningful to multiply cell model's growth rate by biomass in the grid cell?
+end
 
 %%-----------------C2P vs cellular allocation -------------
 %% C2P vs PStor
@@ -838,14 +867,14 @@ Lim_cmap = [1, 0, 0; ...
     0, 1, 1; ...
     0, 1, 1];
 figure; hold on
-Llevs= [0,1,2,3];
+Clevs= [0,1,2,3]+1;
 %plt=pcolor(lon,lat,LimType(:,:,1));
 %set(plt,'EdgeColor','none');
 
 imAlpha = ones(size(LimType(:,:,1)));
 imAlpha(isnan(LimType(:,:,1))) =0;
-imagesc(lon,lat,LimType(:,:,1),'AlphaData',imAlpha)
-cb=colorbar('Ticks',[0,1,2,3],'TickLabels',{'N-Lim','P-Lim','Co-Lim','Co-Lim-alt'});
+image(lon,lat,LimType(:,:,1)+1,'AlphaData',imAlpha)
+cb=colorbar('Ticks',Clevs,'TickLabels',{'N-Lim','P-Lim','Co-Lim','Co-Lim-alt'});
 colormap(Lim_cmap);
 ylabel(cb,'Limitation Type');
 axis tight
@@ -866,8 +895,8 @@ print(gcf,[outPath 'FIG_' figTitle '.png'],'-dpng')
 
 imAlpha = ones(size(LimType(:,:,2)));
 imAlpha(isnan(LimType(:,:,2))) =0;
-imagesc(lon,lat,LimType(:,:,2),'AlphaData',imAlpha)
-cb=colorbar('Ticks',[0,1,2,3],'TickLabels',{'N-Lim','P-Lim','Co-Lim','Co-Lim-alt'});
+image(lon,lat,LimType(:,:,2)+1,'AlphaData',imAlpha)
+cb=colorbar('Ticks',Clevs,'TickLabels',{'N-Lim','P-Lim','Co-Lim','Co-Lim-alt'});
 colormap(Lim_cmap);
 ylabel(cb,'Limitation Type');
 axis tight

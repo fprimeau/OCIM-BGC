@@ -50,31 +50,34 @@ if par.Cmodel == on
     fprintf('------- C model is on ------ \n')
     fprintf('DOP scaling factor is %2.2e \n', par.pscale)
     fprintf('DOC scaling factor is %2.2e \n', par.cscale)
-	if ~isfield(par,'dynamicP')
-		par.dynamicP = off;
-		fprintf('--- default: P:C is a linear function of WOA observed phosphate ------ \n')
-	elseif par.dynamicP == on
-		fprintf('--- P:C is a linear function of modelled DIP ------ \n')
+
+	if par.Cellmodel == on
+	    fprintf('------ Cell stoichiometry model is on ------ \n')
+		if ~isfield(par,'dynamicP')
+			fprintf('--- default: Cell model depends on modelled DIP ------ \n')
+			par.dynamicP = on;
+		elseif par.dynamicP == on
+			fprintf('--- Cell model depends on modelled DIP ------ \n')
+		else
+			fprintf('--- Cell model depends on observed nutrient fields ------ \n')
+		end
 	else
-		fprintf('--- P:C is a linear function of WOA observed phosphate ------ \n')
+		if ~isfield(par,'dynamicP')
+			par.dynamicP = off;
+			fprintf('--- default: P:C is a linear function of WOA observed phosphate ------ \n')
+		elseif par.dynamicP == on
+			fprintf('--- P:C is a linear function of modelled DIP ------ \n')
+		else
+			fprintf('--- P:C is a linear function of WOA observed phosphate ------ \n')
+		end
 	end
 end
+
 if par.Omodel == on
     fprintf('------ O model is on ------- \n')
 end
 if par.Simodel == on
     fprintf('------ Si model is on ------ \n')
-end
-if par.Cellmodel == on
-    fprintf('------ Cell stoichiometry model is on ------ \n')
-	if ~isfield(par,'dynamicP')
-		fprintf('--- default: Cell model depends on modelled DIP ------ \n')
-		par.dynamicP = on;
-	elseif par.dynamicP == on
-		fprintf('--- Cell model depends on modelled DIP ------ \n')
-	else
-		fprintf('--- Cell model depends on observed nutrient fields ------ \n')
-	end
 end
 
 fprintf('\n')
@@ -271,7 +274,7 @@ PARsurf = inpaint_nans(PARobs);
 SURF = M3d(:,:,1);
 ilnd = find(SURF(:) == 0);
 PARsurf(ilnd) = NaN;
-PARsurf(PARsurf<=0) = min(PARobs(:));
+PARsurf(PARsurf<=0) = min(PARobs(PARobs>0));
 
 % convert PAR [Einstein m^-2 d^-1] into units of [umol photon m^-2 s^-1] for cell model
 PARsurf = PARsurf*10^6/spd; % PAR at surface
@@ -301,6 +304,9 @@ par.kI = 0.04;   % Light attenuation coefficient in seawater [m^-1]
 		PAR(:,:,ii) = PARsurf.*exp(-par.kI*grd.zt(ii)); %PAR at mid depth of grid box [ii]
 	end
 
+	% fprintf('resetting %d negative Light levels to zero \n',length(PAR(PAR<0)))
+	% PAR(PAR < 0)= 0;
+
 par.PARobs = PAR;
 		clear PAR
 	% average PAR from surface to bottom of grid box 1
@@ -313,6 +319,8 @@ par.nzo = 2 ;
 inan = find(isnan(npp(:)) | npp(:) < 0) ;
 npp(inan) = 0 ;
 
+% idea: convert npp to mol C/m^2/s (multiply by 1000).
+% this will make alpha 1000x larger, so its closer to the same order as other parameters.
 par.npp   = npp/(12*spd) ;		% units: mmol C/m^2/s /(1 mmol C/m^2/s)
 par.npp1  = (0.5*par.npp./grd.dzt(1)) ; % units: mmol C/m^2/s
 par.npp2  = (0.5*par.npp./grd.dzt(2)) ;

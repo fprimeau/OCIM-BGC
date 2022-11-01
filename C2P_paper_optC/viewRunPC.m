@@ -5,27 +5,22 @@ clc; clear all; close all
 on   = true  ;
 off  = false ;
 
-%ver = datestr(now,'mmmdd');
-%RunVer = 'Tv4_PCCellv8_DOC0.25_DOP0';
-%RunVer = 'Tv4_PC_DOC0.25_DOP0v8';
-%RunVer = 'Tv4_PCCellv9c_DOC0.25_DOP0'
-%RunVer = 'testNPP_CTL_He_PCfixb_DOC0.25_DOP0'
-%RunVer = 'testNPP_CTL_He_PCCella1e-4bfix_DOC0.25_DOP0'
-%RunVer = 'testCellinit/q0f2k1r1g1_CTL_He_PCCell_DOC0.25_DOP0'
-%RunVer = 'testPstor_CTL_He_PCCellf1e-1Pcut1e-6_DOC0.25_DOP0'
-%RunVer = 'testCellinit/q1f2k1r1g2_CTL_He_PCCell_DOC0.25_DOP0';
-RunVer = 'C2P_paper/optGM15_CTL_He_PC_DOC0.25_DOP0';
-RunVer = 'C2P_paper_optC/optPonly_CTL_He_P'
+%RunVer = 'a0q1f2k1r0g1s2_CTL_He_PCCell_DOC0.25_DOP0'
+%RunVer = 'optCell_CTL_He_PCCell01b_DOC0.25_DOP0'
+%RunVer = 'optC_GM15_CTL_He_PC_DOC0.25_DOP0'
+RunVer = 'optC_Cellv2_CTL_He_PCCell_DOC0.25_DOP0'
 
 %model output directory
-outputDir = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/';
-%figDir = strcat(outputDir,'FIGS_PCCellv10_DOC0.25_DOP0/');
+outputDir = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/C2P_paper_optC/';
+%figDir = strcat(outputDir,'FIGS_optCell01/v01b_');
+figDir = strcat(outputDir,'FIGS_optC_Cell/');
 %outPath = figDir;
 
 % load model output fields
 fname = strcat(outputDir, RunVer, '.mat');
 load(fname);
 model = data;
+clear data
 
 % load optimal parameter values
 fxhat = strcat(outputDir, RunVer,'_xhat.mat');
@@ -36,141 +31,39 @@ operator = 'A' ;
 par.Cmodel  = on ;
 par.Omodel  = off ;
 par.Simodel = off ;
-par.Cellmodel = off; % cellular trait model for phyto uptake stoichiometry
+par.Cellmodel = on; % cellular trait model for phyto uptake stoichiometry
 par.pscale  = 0.0 ;
 par.cscale  = 0.25 ; % factor to weigh DOC in the objective function
 par.dynamicP = off;
 
 %-------------load data and set up parameters---------------------
+
 SetUp ;
-xhat
+xhat;
 iwet = par.iwet;
+iprod = find(par.M3d(:,:,1:2));
+
 % need to turn on the opt_parmetername fields to use PackPar
 % but we will need pindx later in this code. saved pindx in xhat instead
 
-%{
-global iter
-iter = 0 ;
-on   = true  ;
-off  = false ;
-format long
-%
-GridVer  = 90  ;
-operator = 'A' ;
+%----------- display all parameters -----------------------
+fprintf('All Parameter Values: \n')
+params = xhat.allparams
 
-Gtest = off ;
-Htest = off ;
-par.optim   = on ;
-par.Cmodel  = on ;
-par.Omodel  = off ;
-par.Simodel = off ;
-par.Cellmodel = on; % cellular trait model for phyto uptake stoichiometry
-par.LoadOpt = on ; % if load optimial par.
-par.pscale  = 0.0 ;
-par.cscale  = 0.25 ; % factor to weigh DOC in the objective function
+% fnames= fieldnames(xhat.allparams);
+% for ii=1:length(fnames)
+%     paramname=fnames{ii};
+%     fprintf('%12s : %.5e \n', paramname, xhat.allparams.(paramname))
+% end
 
-% P model parameters
-par.opt_sigma = on ;
-par.opt_kP_T  = on ;
-par.opt_kdP   = on ;
-par.opt_bP_T  = on ;
-par.opt_bP    = on ;
-par.opt_alpha = on ;
-par.opt_beta  = on ;
-% C model parameters
-par.opt_bC_T  = on ;
-par.opt_bC    = on ;
-par.opt_d     = on ;
-par.opt_kC_T  = on ;
-par.opt_kdC   = on ;
-par.opt_R_Si  = on ;
-par.opt_rR    = on ;
-par.opt_cc    = off ; %always off if cell model on
-par.opt_dd    = off ; %always off if cell model on
-% O model parameters
-par.opt_O2C_T = off ;
-par.opt_rO2C  = on ;
-par.opt_O2P_T = off ;
-par.opt_rO2P  = on ;
-% Si model parameters
-par.opt_dsi   = off  ;
-par.opt_at    = off ;
-par.opt_bt    = off  ;
-par.opt_aa    = off  ;
-par.opt_bb    = off  ;
-%Trait Model parameters
-par.opt_Q10Photo     = on ;
-par.opt_fStorage     = on;
-par.opt_PLip_PCutoff = on;
-par.opt_PLip_scale   = off;
-par.opt_PStor_rCutoff = on;
-par.opt_PStor_scale  = off;
-par.opt_alphaS       = on;
-par.opt_fRibE 	     = on;
-par.opt_kST0 	     = off;
-%
-%-------------load data and set up parameters---------------------
-SetUp ;
-
-% save results
-% ATTENTION: Change this direcrtory to where you wanna
-% save your output files
-if ismac
-    output_dir = sprintf('~/Documents/CP-model/MSK%2d/',GridVer);
-elseif isunix
-	output_dir = sprintf('/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK%2d/', GridVer);
-	% output_dir = sprintf('/DFS-L/DATA/primeau/weilewang/Cexp/');
-    % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/TempSensi/' ...
-    % 'MSK%2d/PME4DICALK/'],GridVer);
-    % output_dir = sprintf(['/DFS-L/DATA/primeau/weilewang/COP4WWF/' ...
-                        % 'MSK%2d/'],GridVer);
+fprintf('\n')
+fprintf('Optimized Parameter Values: \n')
+pnames = fieldnames(xhat);
+for ii=1:length(xhat.fx)
+    fprintf('%16s : %.5e \n', pnames{ii}, xhat.(pnames{ii}));
 end
-VER = strcat(output_dir,TRdivVer);
-catDOC = sprintf('_DOC%0.2g_DOP%0.2g',par.cscale,par.pscale); % used to add scale factors to file names
-% Creat output file names based on which model(s) is(are) optimized
-if Gtest == on
-    fname = strcat(VER,'_GHtest');
-elseif Gtest == off
-    if (par.Cmodel == off & par.Omodel == off & par.Simodel == off & par.Cellmodel == off)
-        fname = strcat(VER,'_P');
-    elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off & par.Cellmodel == off)
-        base_name = strcat(VER,'_PC');
-        fname = strcat(base_name,catDOC);
-    elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off & par.Cellmodel == off)
-        base_name = strcat(VER,'_PCO');
-        fname = strcat(base_name,catDOC);
-    elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on & par.Cellmodel == off)
-        base_name = strcat(VER,'_PCSi');
-        fname = strcat(base_name,catDOC);
-    elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on & par.Cellmodel == off)
-        base_name = strcat(VER,'_PCOSi');
-        fname = strcat(base_name,catDOC);
-	elseif (par.Cmodel == off & par.Omodel == off & par.Simodel == off & par.Cellmodel == on) % cell model does nothing if C model is not on, so this case =Ponly
-        base_name = strcat(VER,'_PCell');
-        fname = strcat(base_name,catDOC);
-	elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off & par.Cellmodel == on)
-        base_name = strcat(VER,'_PCCellv3b');
-        fname = strcat(base_name,catDOC);
-	elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off & par.Cellmodel == on)
-		base_name = strcat(VER,'_PCOCell');
-		fname = strcat(base_name,catDOC);
-	elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on & par.Cellmodel == on)
-        base_name = strcat(VER,'_PCOSiCell');
-        fname = strcat(base_name,catDOC);
-    end
-end
-par.fname = strcat(fname,'.mat') ;
-% load optimal parameters if they exist
-par.fxhat = strcat(fname,'_xhat.mat');
-load(par.fxhat) ;
-load(par.fname) ;
-%}
-%--------------------- prepare parameters ------------------
-% load optimal parameters from a file or set them to default values
-%par = SetPar(par) ;
-% pack parameters into an array, assign them corresponding indices.
-%par = PackPar(par) ;
 
+%% ------- Calculate Error Bars--------------
 idip = find(par.po4raw(iwet)>0)  ;
 isil = find(par.sio4raw(iwet)>0) ;
 idic = find(par.dicraw(iwet)>0)  ;
@@ -279,6 +172,8 @@ if exist('xhat') & isfield(xhat,'alpha')
     R.xhat(nx)   = alpha    ;
     R.upbar(nx)  = alpha_up ;
     R.lowbar(nx) = alpha_lo ;
+	alpha_opt = alpha;
+	clear alpha
 end
 
 if exist('xhat') & isfield(xhat,'beta')
@@ -611,3 +506,145 @@ upbar  = R.upbar      ;
 lowbar = R.lowbar     ;
 name   = string(name) ;
 T = table(x_hat,upbar,lowbar,'RowNames',name)
+
+%------- Cell Output Stats -----------
+
+%%------------- Calculate C export ------------------
+% ----------------------------------------------
+nn = par.nzo ; %number fo verticle boxes in euphotic zone / export depth
+
+% -------------- C:P uptake ratio --------------------------------
+W = d0(dVt(iwet)) ;
+dVtwet = M3d*nan;
+dVtwet(iwet) = dVt(iwet);
+Wiprod = dVtwet(:,:,1:nn)/nansum(dVtwet(:,:,1:nn),'all');
+
+C2P3D = M3d + nan ;
+if par.Cellmodel==on
+	C2P3D(iwet) = model.CellOut.C2P(iwet); %zero beneath the surface  layers
+elseif par.Cmodel ==on
+	C2P3D(iwet) = 1./(params.cc*par.po4obs(iwet) + params.dd) ;  % DIP or PO4?
+	%C2P3D(iwet) = 1./(7e-4*PO4 + 5e-3); % WL
+	%C2P3D(iwet) = 1000./(6.6*PO4 + 5.3); %Qian
+else
+	C2P3D = M3d +nan;
+	C2P3D(iwet) = 106; 		% redfield C:P
+end
+
+% DIP assimilation
+LAM        = 0*M3d;
+LAM(:,:,1) = (par.npp1.^params.beta).*par.Lambda(:,:,1);
+LAM(:,:,2) = (par.npp2.^params.beta).*par.Lambda(:,:,2);
+L          = d0(LAM(iwet));  % PO4 assimilation rate [s^-1];
+
+%--------------- calculate primary production --------------------
+fprintf('----------- Cexp ------------- \n')
+G        = M3d*0        ;
+G(iwet)  = params.alpha*L*model.DIP(iwet)  ; % primary production [unit: mmol P/m^3/s]
+
+% inegG = find(G<0); % should negative production values be removed?
+% G(inegG)=nan;
+
+Int_PNPP = G(:,:,1:nn).*grd.DZT3d(:,:,1:nn)*31;
+Int_CNPP = G(:,:,1:nn).*grd.DZT3d(:,:,1:nn).*C2P3D(:,:,1:nn)*12;
+
+PNPP = Int_PNPP*spa*1e-3 ; % convert to g P/m^2/yr
+CNPP = Int_CNPP*spa*1e-3 ; % convert production from mg C/m^3/s to gC/m^2/year;
+tem_PNPP = PNPP.*dAt(:,:,1:nn)*1e-15 ;
+tem_CNPP = CNPP.*dAt(:,:,1:nn)*1e-15 ;
+Sum_CNPP = nansum(tem_CNPP(:))    ;
+fprintf('Model NPP (P) is %3.3e Pg P/yr \n',nansum(tem_PNPP(:))) ; %Pg/yr
+fprintf('Model NPP is %3.3e Pg C/yr \n\n',Sum_CNPP) ; %Pg/yr
+
+clear tem_PNPP tem_CNPP
+
+%----- C2P --------------
+C2Pavg = nansum(C2P3D(:,:,1:nn).*Wiprod,'all');
+fprintf('Average C:P uptake in Euphotic Layers is %4.2f \n',C2Pavg);
+
+% prod weighted C:P
+WeightNPP = CNPP.*dAt(:,:,1:nn)/nansum(CNPP.*dAt(:,:,1:nn),'all'); %gC/yr
+C2Pavg = nansum(C2P3D(:,:,1:nn).*WeightNPP,'all');
+fprintf('Average C:P uptake in Euphotic Layers (NPP weighted) is %4.2f \n\n',C2Pavg);
+
+
+% ------- P export -----
+%POP export: integrte POP beneath the euphotic zone
+POPexp = nansum(params.kappa_p*model.POP(:,:,3:end).*dVt(:,:,3:end),3)*31*spd;
+Sum_POPexp =nansum(POPexp(:))*365*1e-18;
+fprintf('Model POP export is %3.3e Pg P /yr  (beneath EZ) \n',Sum_POPexp);
+
+%integrated DOP remineralization below the euphotic zone. (should equal the TOP export calculated by the adjoint method)
+DOPexpint = params.kdP*model.DOP(:,:,3:end).*grd.DZT3d(:,:,3:end)*31*spd;
+tem_DOPexpint = nansum(DOPexpint.*dAt(:,:,3:end),3);
+Sum_DOPexpint =nansum(tem_DOPexpint(:))*365*1e-18;
+fprintf('Model TOP export (integrated DOP below the Euphotic zone) is %3.3f Pg P /yr \n\n',Sum_DOPexpint);
+DOPexpint = sum(DOPexpint,3,'omitnan');
+
+
+%----- C export ---------------
+%POC export: integrate POC beneath the euphotic zone ----------
+%POCexp = nansum(par.kappa_p*model.POC(:,:,3:end).*dVt(:,:,3:end),3)*12*spd;  % [1/s]*[mmol/m^3]*[m^3]*[mg/mmol]*[s/day] =  [mg/day]
+POCexp = params.kappa_p*model.POC(:,:,3:end).*grd.DZT3d(:,:,3:end)*12*spd;
+tem_POCexp = nansum(POCexp.*dAt(:,:,3:end),3);
+Sum_POCexp =nansum(tem_POCexp(:))*365*1e-18;
+fprintf('Model POC export is %3.3e Pg C /yr  (beneath EZ) \n',Sum_POCexp);
+POCexp = sum(POCexp,3,'omitnan');
+
+%integrated DOC remineralization below the euphotic zone. (should equal the TOC export calculated by the adjoint method)
+DOCexpint = params.kdC*model.DOC(:,:,3:end).*grd.DZT3d(:,:,3:end)*12*spd;
+tem_DOCexpint = nansum(DOCexpint.*dAt(:,:,3:end),3);
+Sum_DOCexpint =nansum(tem_DOCexpint(:))*365*1e-18;
+fprintf('Model TOC export (integrated DOC below the Euphotic zone) is %7.5f Pg C /yr \n\n',Sum_DOCexpint);
+DOCexpint = sum(DOCexpint,3,'omitnan');
+
+
+%%---------- compare to Obs ------------------
+fprintf('------- Compare to Obs ----------- \n')
+idop   = find(par.dopraw(iwet) > 0 & model.DOP(iwet)>0) ;
+fprintf('R^2 for DOP is %3.4f \n',rsquare(par.dopraw(iwet(idop)),model.DOP(iwet(idop))))
+
+ipo4 = find(model.DIP(iwet) > 0 & par.po4raw(iwet) > 0.02);
+O = par.po4raw(iwet(ipo4));
+M = model.DIP(iwet(ipo4));
+fprintf('R^2 for DIP is %3.4f \n',rsquare(O,M))
+
+% surface only DIP
+%ipo4 = find(DIP(iwetsurf) > 0 & po4raw(iwetsurf) > 0.02);
+ipo4 = find(model.DIP(iprod) & ~isnan(par.po4raw(iprod)) );
+O = par.po4raw(iprod(ipo4));
+M = model.DIP(iprod(ipo4));
+fprintf('R^2 for surface DIP is %3.4f \n',rsquare(O,M))
+
+DICmod = model.DIC - par.dicant;
+DICobs = par.dicraw ;
+iDIC = find(DICobs(iwet)>0);
+%
+O = DICobs(iwet(iDIC));
+% already including anthropogenic CO2
+% M = DIC(iwet(iDIC)) ;
+% not include anthropogenic CO2
+M = DICmod(iwet(iDIC))+par.dicant(iwet(iDIC));
+fprintf('R^2 for DIC is %3.4f \n',rsquare(O,M))
+
+% ---- surface only DIC -----
+iDIC = find(DICobs(iprod)>0);
+O = DICobs(iprod(iDIC));
+% already including anthropogenic CO2
+% M = DIC(iwet(iDIC)) ;
+% not include anthropogenic CO2
+M = DICmod(iprod(iDIC))+par.dicant(iprod(iDIC));
+fprintf('R^2 for surface DIC is %3.4f \n',rsquare(O,M))
+
+% -- ALK ----
+iALK = find(par.alkraw(iwet)>0);
+%
+O = par.alkraw(iwet(iALK));
+M = model.ALK(iwet(iALK)); % already including anthropogenic CO2
+fprintf('R^2 for ALK is %3.4f \n',rsquare(O,M))
+
+%---- DOC ---------
+iDOC = find(DOCclean(iwet)>0 & model.DOC(iwet)>0) ;
+O = DOCclean(iwet(iDOC)) ;
+M = model.DOC(iwet(iDOC)) ;
+fprintf('R^2 for DOC is %3.4f \n',rsquare(O,M))

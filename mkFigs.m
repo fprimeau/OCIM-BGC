@@ -3,15 +3,15 @@ on = true;      off = false;
 spd  = 24*60^2; spa  = 365*spd;
 
 %RunVer = 'Tv4_PCCellv8_DOC0.25_DOP0';
-%RunVer = 'Tv4_PC_DOC0.25_DOP0v8';
-%RunVer = 'Tv4_PCv9_DOC0.25_DOP0'
-%RunVer = 'Tv4_PC_DOC0.25_DOP0v8_onlyC2P'
-RunVer = 'testNPP_Tv4_PCa1b1_DOC0.25_DOP0';
+%RunVer = 'optGM15_CTL_He_PC_DOC0.25_DOP0'
+%RunVer = 'testC2PTempP_CTL_He_PC_DOC0.25_DOP0'
+RunVer = 'optC_GM15_CTL_He_PC_DOC0.25_DOP0' ;
 
 %model output directory
-outputDir = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK90/';
-%figDir = strcat(outputDir,'FIGS_PC_DOC0.25_DOP0v8/onlyC2P/');
-figDir = strcat(outputDir,'FIGS_testNPP_PC/a1b1_');
+outputDir = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/C2P_paper_optC/';
+%outputDir = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/MSK91/';
+%figDir = strcat(outputDir,'FIGS_testC2PTempP/v1_lcc_');
+figDir = strcat(outputDir,'FIGS_optC_GM15/');
 outPath = figDir;
 
 % load model output fields
@@ -23,7 +23,7 @@ model = data;
 fxhat = strcat(outputDir, RunVer,'_xhat.mat');
 load(fxhat);
 
-GridVer  = 90  ;
+GridVer  = 91  ;
 operator = 'A' ;
 par.Cmodel  = on ;
 par.Omodel  = off ;
@@ -31,6 +31,7 @@ par.Simodel = off ;
 par.Cellmodel = off; % cellular trait model for phyto uptake stoichiometry
 par.pscale  = 0.0 ;
 par.cscale  = 0.25 ; % factor to weigh DOC in the objective function
+par.dynamicP = off;
 
 %-------Define some colors ------
 colors.maroon 		= [128/255 0 0];
@@ -322,7 +323,8 @@ if par.Cmodel == on
         figure(nfig); hold on
         cc   = xhat.cc   ;
         dd   = xhat.dd   ;
-		DIP  = model.DIP(iwet) ;
+		%DIP  = model.DIP(iwet) ;
+		DIP = par.po4obs(iwet) ;
         C2P = M3d + nan  ;
         C2P(iwet)  = 1./(cc*DIP + dd) ;
 
@@ -338,7 +340,7 @@ if par.Cmodel == on
 		ylabel('Latitude');
 		ylabel(cb,'C:P [molC/molP]');
         title('Surface C:P uptake ratio')
-		figTitle = 'C2Pratio';
+		figTitle = 'C2Pratio_po4obs';
 		print(gcf,[figDir 'FIG_' figTitle '.png'],'-dpng')
         % saveas(gcf,'Figs91/CP ratio.png')
 
@@ -368,8 +370,8 @@ if par.Cmodel == on
 		ylabel(['C:P [molC:molP] = 1/(' num2str(cc) '*DIP + ' num2str(dd) ')'])
 		title('Zonal Average Biological C:P')
 		axis tight; grid on
-		%ylim([0 550])
-		figTitle = 'C2P_lat_avg';
+		ylim([0 400])
+		figTitle = 'C2P_lat_avg_po4obs';
 		print(gcf,[outPath 'FIG_' figTitle '.png'],'-dpng')
 		clear h;
 
@@ -421,8 +423,8 @@ if par.Cmodel == on
 		ylabel('C:P [molC:molP]')
 		title('Zonal Average C:P in EZ')
 		axis tight; grid on
-		%ylim([0 525])
-		figTitle = 'C2P_lat_avg_basin';
+		ylim([0 400])
+		figTitle = 'C2P_lat_avg_basin_po4obs';
 		print(gcf,[outPath 'FIG_' figTitle '.png'],'-dpng')
 		clear h;
 
