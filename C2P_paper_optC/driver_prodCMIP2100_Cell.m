@@ -3,17 +3,18 @@ global iter
 %global fmin_history
 
 fprintf([' NOTE: Phosphate and temperature from CMIP5 multimodel mean projection for 2090-2100; \n'...
-	'change in nutrients only decreases po4obs; no decline in modelled DIP; i.e. production does not change. \n'...
+	'change in nutrients uses projected po4 field for both po4obs and modelled DIP; so production will be affected, \n'...
+	'but P cycle is no longer balanced \n'...
 	])
 
 cd ..
 
 % set up parallel pool
-% if isempty(gcp('nocreate'))
-% 	poolobj = parpool(8); % if running in parallel; comment out to run serial
-% 	%to close the parallel pool: delete(poolobj)
-% 	poolobj.IdleTimeout = 120;
-% end
+if isempty(gcp('nocreate'))
+	poolobj = parpool(4); % if running in parallel; comment out to run serial
+	%to close the parallel pool: delete(poolobj)
+	poolobj.IdleTimeout = 120;
+end
 
 iter = 0 ;
 on   = true  ;
@@ -21,14 +22,16 @@ off  = false ;
 format long
 %
 
+FutureScenarioType = 'prodPT_projection';
+
 % filename to load parameter values from (output of steady state optimization)(different from future projection run name)
-%GM15
-par.fxhatload = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/C2P_paper_optC/optC_GM15_CTL_He_PC_DOC0.25_DOP0_xhat.mat';
-par.fmodelload = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/C2P_paper_optC/optC_GM15_CTL_He_PC_DOC0.25_DOP0.mat';
+%Cell model
+par.fxhatload = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/C2P_paper_optC/optC_Cellv2_CTL_He_PCCell_DOC0.25_DOP0_xhat.mat';
+par.fmodelload = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/C2P_paper_optC/optC_Cellv2_CTL_He_PCCell_DOC0.25_DOP0.mat';
 
 fprintf('load parameters from run: %s \n',par.fxhatload)
 
-VerName = 'CMIP2100_GM15_'; 		% optional version name. leave as an empty character array
+VerName = 'prodCMIP2100_Cell_'; 		% optional version name. leave as an empty character array
 					% or add a name ending with an underscore
 VerNum = '';		% optional version number
 
@@ -47,7 +50,7 @@ par.optim   = off ;
 par.Cmodel  = on ;
 par.Omodel  = off ;
 par.Simodel = off ;
-par.Cellmodel = off; % cellular trait model for phyto uptake stoichiometry
+par.Cellmodel = on; % cellular trait model for phyto uptake stoichiometry
 par.dynamicP = off ; % if on, cell model uses modeled DIP. if off, cell model uses WOA observed DIP field.
 par.useProjectionInputs = on;
 
@@ -94,8 +97,13 @@ SetUp ;
 
 % ----overwrite temperature obs from SetUp -----
 if GridVer == 90
-	fprintf('Error: need to regrid CMIP5mean_no3_thetao to 90x180x24 grid \n')
+	%load tempobs_90x180x24.mat
+    %load po4obs_90x180x24.mat       % WOA PO4 observation [units: umol/kg]
+	%load no3obs_90x180x24.mat		% WOA NO3 obs [units: umol/kg]
 elseif GridVer == 91
+	%load tempobs_91x180x24.mat
+    %load po4obs_91x180x24.mat % WOA PO4 observation
+	%load no3obs_91x180x24.mat % WOA NO3 obs
 	load('/DFS-L/DATA/primeau/meganrs/DATA/CMIP5/CMIP5mean_no3_thetao_91x180x24.mat')
 end
 iprod = find(M3d(:,:,1:2));
@@ -126,6 +134,8 @@ Tz3d = M3d + nan ;
 Tz3d(iwet) = Tz  ;
 par.Tz_proj     = Tz*1e-8 ;
 par.aveT_proj   = nanmean(Tz3d(:,:,1:2),3) ;
+
+
 
 
 % save results
@@ -265,7 +275,9 @@ nip = length(x0);
 
 		iprod = find(M3d(:,:,1:2));
 
-		%DIP(iprod) = DIP(iprod).*0.80;
+		if FutureScenarioType == 'prodPT_projection'
+			DIP = par.po4proj;
+		end
 		par.DIP  = DIP(iwet) ;
 	    model.DIP = DIP ; model.POP = POP ; model.DOP = DOP ;
 

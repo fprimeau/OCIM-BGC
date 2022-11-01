@@ -3,7 +3,8 @@ global iter
 %global fmin_history
 
 fprintf([' NOTE: Phosphate and temperature from CMIP5 multimodel mean projection for 2090-2100; \n'...
-	'change in nutrients only decreases po4obs; no decline in modelled DIP; i.e. production does not change. \n'...
+	'change in nutrients uses projected po4 field for both po4obs and modelled DIP; so production will be affected, \n'...
+	'but P cycle is no longer balanced \n'...
 	])
 
 cd ..
@@ -21,6 +22,8 @@ off  = false ;
 format long
 %
 
+FutureScenarioType = 'prodPT_projection';
+
 % filename to load parameter values from (output of steady state optimization)(different from future projection run name)
 %GM15
 par.fxhatload = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/C2P_paper_optC/optC_GM15_CTL_He_PC_DOC0.25_DOP0_xhat.mat';
@@ -28,7 +31,7 @@ par.fmodelload = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/C2P_paper_optC/opt
 
 fprintf('load parameters from run: %s \n',par.fxhatload)
 
-VerName = 'CMIP2100_GM15_'; 		% optional version name. leave as an empty character array
+VerName = 'prodCMIP2100_GM15_'; 		% optional version name. leave as an empty character array
 					% or add a name ending with an underscore
 VerNum = '';		% optional version number
 
@@ -265,7 +268,9 @@ nip = length(x0);
 
 		iprod = find(M3d(:,:,1:2));
 
-		%DIP(iprod) = DIP(iprod).*0.80;
+		if FutureScenarioType == 'prodPT_projection'
+			DIP = par.po4proj;
+		end
 		par.DIP  = DIP(iwet) ;
 	    model.DIP = DIP ; model.POP = POP ; model.DOP = DOP ;
 

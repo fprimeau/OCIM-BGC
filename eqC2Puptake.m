@@ -34,7 +34,7 @@ function [par, C2P, C2Px, C2Pxx, C2Ppxx] = eqC2Puptake(x, par, data)
 		if isfield(par,'useProjectionInputs')
 			if par.useProjectionInputs == on
 				T0 = par.Temp_proj(iprod);
-				%P0 = par.po4proj(iprod)./10^6;	% convert [mmol/m^3 --> mol/L]
+				P0 = par.po4proj(iprod)./10^6;	% convert [mmol/m^3 --> mol/L]
 			end
 		end
 

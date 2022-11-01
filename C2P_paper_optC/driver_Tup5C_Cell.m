@@ -122,6 +122,9 @@ Tz3d(iwet) = Tz  ;
 par.Tz_proj     = Tz*1e-8 ;
 par.aveT_proj   = nanmean(Tz3d(:,:,1:2),3) ;
 
+% keep same po4 field 
+par.po4proj = par.po4obs;
+
 
 % save results
 % ATTENTION: Change this direcrtory to where you wanna

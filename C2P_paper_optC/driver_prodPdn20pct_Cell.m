@@ -2,18 +2,18 @@ clc; clear all; close all
 global iter
 %global fmin_history
 
-fprintf([' NOTE: Phosphate and temperature from CMIP5 multimodel mean projection for 2090-2100; \n'...
-	'change in nutrients only decreases po4obs; no decline in modelled DIP; i.e. production does not change. \n'...
-	])
+fprintf([' NOTE: Phosphate decrease by 20 percent; \n'...
+	'in prodPdn20pct, decrease po4obs and modelled DIP; so production will be lower. \n'...
+	'but P cycle is no longer balanced \n'])
 
 cd ..
 
 % set up parallel pool
-% if isempty(gcp('nocreate'))
-% 	poolobj = parpool(8); % if running in parallel; comment out to run serial
-% 	%to close the parallel pool: delete(poolobj)
-% 	poolobj.IdleTimeout = 120;
-% end
+if isempty(gcp('nocreate'))
+	poolobj = parpool(4); % if running in parallel; comment out to run serial
+	%to close the parallel pool: delete(poolobj)
+	poolobj.IdleTimeout = 120;
+end
 
 iter = 0 ;
 on   = true  ;
@@ -21,14 +21,16 @@ off  = false ;
 format long
 %
 
+FutureScenarioType = 'prodPdn20pct';
+
 % filename to load parameter values from (output of steady state optimization)(different from future projection run name)
-%GM15
-par.fxhatload = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/C2P_paper_optC/optC_GM15_CTL_He_PC_DOC0.25_DOP0_xhat.mat';
-par.fmodelload = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/C2P_paper_optC/optC_GM15_CTL_He_PC_DOC0.25_DOP0.mat';
+%Cell model
+par.fxhatload = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/C2P_paper_optC/optC_Cellv2_CTL_He_PCCell_DOC0.25_DOP0_xhat.mat';
+par.fmodelload = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/C2P_paper_optC/optC_Cellv2_CTL_He_PCCell_DOC0.25_DOP0.mat';
 
 fprintf('load parameters from run: %s \n',par.fxhatload)
 
-VerName = 'CMIP2100_GM15_'; 		% optional version name. leave as an empty character array
+VerName = 'prodPdn20pct_Cell_'; 		% optional version name. leave as an empty character array
 					% or add a name ending with an underscore
 VerNum = '';		% optional version number
 
@@ -47,9 +49,8 @@ par.optim   = off ;
 par.Cmodel  = on ;
 par.Omodel  = off ;
 par.Simodel = off ;
-par.Cellmodel = off; % cellular trait model for phyto uptake stoichiometry
+par.Cellmodel = on; % cellular trait model for phyto uptake stoichiometry
 par.dynamicP = off ; % if on, cell model uses modeled DIP. if off, cell model uses WOA observed DIP field.
-par.useProjectionInputs = on;
 
 par.LoadOpt = on ; % if load optimial par.
 par.pscale  = 0.0 ;
@@ -94,38 +95,23 @@ SetUp ;
 
 % ----overwrite temperature obs from SetUp -----
 if GridVer == 90
-	fprintf('Error: need to regrid CMIP5mean_no3_thetao to 90x180x24 grid \n')
+	%load tempobs_90x180x24.mat
+    load po4obs_90x180x24.mat       % WOA PO4 observation [units: umol/kg]
+	%load no3obs_90x180x24.mat		% WOA NO3 obs [units: umol/kg]
 elseif GridVer == 91
-	load('/DFS-L/DATA/primeau/meganrs/DATA/CMIP5/CMIP5mean_no3_thetao_91x180x24.mat')
+	%load tempobs_91x180x24.mat
+    load po4obs_91x180x24.mat % WOA PO4 observation
+	%load no3obs_91x180x24.mat % WOA NO3 obs
 end
 iprod = find(M3d(:,:,1:2));
+po4obs(iprod) = po4obs(iprod).*0.8;
 
-% overwrite po4obs
-par.po4obs = PO4_CMIP5mean;
-par.po4proj  = PO4_CMIP5mean  ;
+% Uniform  20 percent Phosphate decrease in euphotic zone
+par.po4obs  = po4obs  ;
+par.po4proj = po4obs ;
 
+%load model solution for DIP
 
-% get original min and Max temperature for Normalization
-vT0 = par.Temp(iwet) ;
-vT0min = min(vT0);
-vT0max = max(vT0);
-
-% ----overwrite temperature obs from SetUp -----
-tempobs = T_CMIP5mean;
-tempobs(tempobs(:)<-2.0) = -2.0 ;
-% Uniform  +5 degree C temperature increase
-par.Temp_proj    = tempobs ;
-%-------------------- normalize temperature --------------------
-% for ji = 1:24
-%     t2d = par.Temp_proj(:,:,ji);
-%     par.Temp_proj(:,:,ji) = smoothit(grd,M3d,t2d,3,1e5);
-% end
-vT = par.Temp_proj(iwet) ;
-Tz = (vT - vT0min)./(vT0max - vT0min) ;
-Tz3d = M3d + nan ;
-Tz3d(iwet) = Tz  ;
-par.Tz_proj     = Tz*1e-8 ;
-par.aveT_proj   = nanmean(Tz3d(:,:,1:2),3) ;
 
 
 % save results
@@ -265,14 +251,16 @@ nip = length(x0);
 
 		iprod = find(M3d(:,:,1:2));
 
-		%DIP(iprod) = DIP(iprod).*0.80;
+		if FutureScenarioType == 'prodPdn20pct'
+			DIP(iprod) = DIP(iprod).*0.80;
+		end
 		par.DIP  = DIP(iwet) ;
 	    model.DIP = DIP ; model.POP = POP ; model.DOP = DOP ;
 
 
 		if (par.Cellmodel == on)
 			tic
-			[par, C2P] = eqC2Puptake(x0, par, model);
+			[par, C2P] = eqC2Puptake(x0, par, model); % this line replaces the rest of this section
 
 			%model.CellOut = par.CellOut;
 			model.CellOut.C2P =  par.CellOut.C2P;
