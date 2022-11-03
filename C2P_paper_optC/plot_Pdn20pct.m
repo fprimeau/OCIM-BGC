@@ -5,26 +5,26 @@ clc; clear all; close all
 on   = true  ;
 off  = false ;
 
-%RunVer = 'futureproj/prodCMIP2100_GM15_CTL_He_PC'
-%RunVer = 'futureproj/prodCMIP2100_Cell_CTL_He_PCCell'
-%RunVer = 'futureproj/CMIP2100_Cell_CTL_He_PCCell';
-RunVer = 'futureproj/CMIP2100_GM15_CTL_He_PC'
+%RunVer = 'futureproj/prodPdn20pct_GM15_CTL_He_PC'
+%RunVer = 'futureproj/prodPdn20pct_Cell_CTL_He_PCCell'
+RunVer = 'futureproj/Pdn20pct_Cell_CTL_He_PCCell';
+%RunVer = 'futureproj/Pdn20pct_GM15_CTL_He_PC'
 %'optC_Tz_CTL_He_PC_DOC0.25_DOP0'
 
-%FutureScenarioType = 'prodPT_projection';
+%FutureScenarioType = 'prodPdn20pct';
 
 outputDir = '/DFS-L/DATA/primeau/meganrs/OCIM_BGC_OUTPUT/C2P_paper_optC/';
-figDir = strcat(outputDir,'futureproj/FIGS_CMIP2100_GM15/1102_');
+figDir = strcat(outputDir,'futureproj/FIGS_Pdn20pct_Cell/Ponly_');
 outPath = figDir;
 
 % load optimal parameter values
-%fxhat = strcat(outputDir, 'optC_Cell_CTL_He_PCCell_DOC0.25_DOP0_xhat.mat');
-fxhat = strcat(outputDir, 'optC_GM15_CTL_He_PC_DOC0.25_DOP0_xhat.mat');
+fxhat = strcat(outputDir, 'optC_Cell_CTL_He_PCCell_DOC0.25_DOP0_xhat.mat');
+%fxhat = strcat(outputDir, 'optC_GM15_CTL_He_PC_DOC0.25_DOP0_xhat.mat');
 load(fxhat);
 
 % load model output fields
-%fname = strcat(outputDir, 'optC_Cell_CTL_He_PCCell_DOC0.25_DOP0.mat');
-fname = strcat(outputDir, 'optC_GM15_CTL_He_PC_DOC0.25_DOP0.mat');
+fname = strcat(outputDir, 'optC_Cell_CTL_He_PCCell_DOC0.25_DOP0.mat');
+%fname = strcat(outputDir, 'optC_GM15_CTL_He_PC_DOC0.25_DOP0.mat');
 load(fname);
 model = data;
 clear data
@@ -41,7 +41,7 @@ operator = 'A' ;
 par.Cmodel  = on ;
 par.Omodel  = off ;
 par.Simodel = off ;
-par.Cellmodel = off; % cellular trait model for phyto uptake stoichiometry
+par.Cellmodel = on; % cellular trait model for phyto uptake stoichiometry
 par.pscale  = 0.0 ;
 par.cscale  = 0.25 ; % factor to weigh DOC in the objective function
 par.dynamicP = off;
@@ -76,41 +76,23 @@ cd ../
 SetUp ;
 cd C2P_paper_optC/
 
-% get original min and Max temperature for Normalization
-vT0 = par.Temp(iwet) ;
-vT0min = min(vT0);
-vT0max = max(vT0);
-
 % ----overwrite temperature obs from SetUp -----
 if GridVer == 90
 	%load tempobs_90x180x24.mat
-    %load po4obs_90x180x24.mat       % WOA PO4 observation [units: umol/kg]
+    load po4obs_90x180x24.mat       % WOA PO4 observation [units: umol/kg]
 	%load no3obs_90x180x24.mat		% WOA NO3 obs [units: umol/kg]
 elseif GridVer == 91
-	load('/DFS-L/DATA/primeau/meganrs/DATA/CMIP5/CMIP5mean_no3_thetao_91x180x24.mat')
+	%load tempobs_91x180x24.mat
+    load po4obs_91x180x24.mat % WOA PO4 observation
+	%load no3obs_91x180x24.mat % WOA NO3 obs
 end
-%iprod = find(M3d(:,:,1:2));
+iprod = find(M3d(:,:,1:2));
+po4obs(iprod) = po4obs(iprod).*0.8;
 
-% overwrite po4obs
-%par.po4obs = PO4_CMIP5mean;
-par.po4proj  = PO4_CMIP5mean  ;
+% Uniform  20 percent Phosphate decrease in euphotic zone
+par.po4proj = po4obs  ; % this line does nothing. needed if I add a useProjectionInputs switch in eqCcycle
 
-% ----overwrite temperature obs from SetUp -----
-tempobs = T_CMIP5mean;
-tempobs(tempobs(:)<-2.0) = -2.0 ;
-
-par.Temp_proj    = tempobs ;
-%-------------------- normalize temperature --------------------
-% for ji = 1:24
-%     t2d = par.Temp_proj(:,:,ji);
-%     par.Temp_proj(:,:,ji) = smoothit(grd,M3d,t2d,3,1e5);
-% end
-vT = par.Temp_proj(iwet) ;
-Tz = (vT - vT0min)./(vT0max - vT0min) ;
-Tz3d = M3d + nan ;
-Tz3d(iwet) = Tz  ;
-par.Tz_proj     = Tz*1e-8 ;
-par.aveT_proj   = nanmean(Tz3d(:,:,1:2),3) ;
+par.Temp_proj = par.Temp;
 
 
 
@@ -160,7 +142,7 @@ if isfield(xhat,'cc')
 	ylabel('Latitude');
 	ylabel(cb,'C:P [molC/molP]');
 	title('Surface C:P uptake ratio')
-	figTitle = 'C2Pratio_CMIP2100';
+	figTitle = 'C2Pratio_Pdn20';
 	print(gcf,[figDir 'FIG_' figTitle '.png'],'-dpng')
 
 	%% C2P now vs future as a function of latitude
@@ -183,13 +165,13 @@ if isfield(xhat,'cc')
 	%plot(lat,C2P_latmedian1,'-.b','linewidth',2);
 	h(4) = plot(lat,C2P_latavg,'-mo');
 	%plot(lat,C2P_latmedian2,'-.m','linewidth',2);
-	legend(h([3 4]),'optimal','CMIP2100');
+	legend(h([3 4]),'optimal','Pdn20pct');
 	xlabel('Latitude')
 	ylabel(['C:P [molC:molP] = 1/(' num2str(cc) '*[PO4] + ' num2str(dd) ')'])
 	title('Zonal Average Biological C:P')
 	axis tight; grid on
 	%ylim([0 300])
-	figTitle = 'C2P_lat_avg_CMIP2100vopt';
+	figTitle = 'C2P_lat_avg_Pdn20pctvopt';
 	print(gcf,[outPath 'FIG_' figTitle '.png'],'-dpng')
 	clear h;
 
@@ -242,7 +224,7 @@ if isfield(xhat,'cc')
 	title('Zonal Average C:P in EZ')
 	axis tight; grid on
 	ylim([0 300])
-	figTitle = 'C2P_lat_avg_basin_CMIP2100';
+	figTitle = 'C2P_lat_avg_basin_Pdn20';
 	print(gcf,[outPath 'FIG_' figTitle '.png'],'-dpng')
 	clear h;
 
@@ -305,7 +287,7 @@ if par.Cellmodel == on
 	N2P_future(find(N2P_future==0)) = NaN;
 	%radius(find(radius==0)) = NaN;
 
-	fprintf('UNDER FUTURE CONDITIONS: CMIP5 2100 projection: \n')
+	fprintf('UNDER FUTURE CONDITIONS: [PO4]-20%%: \n')
 	fprintf('# of N limited points : %d \n',length(find(LimType_future(iprod) ==0)));
 	fprintf('# of P limited points : %d \n',length(find(LimType_future(iprod) ==1)));
 	fprintf('# of Colimited2 points: %d \n',length(find(LimType_future(iprod) ==2)));
@@ -337,24 +319,24 @@ end
 	imagesc(lon,lat,MOdiff,'AlphaData',imAlpha)
 	cb=colorbar;
 	cmocean('balance','pivot',0);
-	title('CMIP2100 Projected change in Surface DIP','Fontsize',18);
+	title('simulated change in Surface DIP','Fontsize',18);
 	xlabel('Longitude');
 	ylabel('Latitude');
-	ylabel(cb,'\Delta DIP [mmol/m^3] (CMIP2100 - optimal model)');
+	ylabel(cb,'\Delta DIP [mmol/m^3] (future - optimal model)');
 	axis tight;
-	figTitle = 'deltaDIP_surface_map_CMIP2100';
+	figTitle = 'deltaDIP_surface_map_Pdn20';
 	exportgraphics(gcf,[figDir 'FIG_' figTitle '.png']);
 
 	figure; hold on;
 	imAlpha = M3d(:,:,1);
 	imagesc(lon,lat,model_future.DIP(:,:,1),'AlphaData',imAlpha)
 	cb=colorbar;
-	title('CMIP2100 Projected Surface DIP','Fontsize',18);
+	title('Projected Future Surface DIP','Fontsize',18);
 	xlabel('Longitude');
 	ylabel('Latitude');
 	ylabel(cb,'DIP [mmol/m^3]');
 	axis tight;
-	figTitle = 'futureDIP_surface_map_CMIP2100';
+	figTitle = 'futureDIP_surface_map_Pdn20';
 	exportgraphics(gcf,[figDir 'FIG_' figTitle '.png']);
 
 
@@ -472,7 +454,7 @@ title('Future - Modern differece in Total Organic Carbon Export')
 xlabel('Longitude');
 ylabel('Latitude');
 ylabel(cb,'\Delta TOC export [mol C/m^2/yr]');
-figTitle = ['CMIP2100_deltaTOCexp'];
+figTitle = ['Pdn20_deltaTOCexp'];
 set(gca, 'color',[0.8 0.8 0.8])
 set(gcf,'InvertHardcopy','off','Color',[1 1 1])
 exportgraphics(gcf,[figDir 'FIG_' figTitle '.png']) %,'BackgroundColor','none','ContentType','vector')
@@ -563,7 +545,7 @@ if par.Cellmodel == on
 	title('Zonal Average Cellular C:P')
 	axis tight; grid on
 	%ylim([0 400])
-	figTitle = 'C2P_lat_avg_nowvCMIP2100';
+	figTitle = 'C2P_lat_avg_nowvPdn20';
 	print(gcf,[figDir 'FIG_' figTitle '.png'],'-dpng')
 	clear h;
 
@@ -583,8 +565,8 @@ if par.Cellmodel == on
 	%colormap(cmap)
 	%[CC,hh] = contour(lon,lat,C2P(:,:,1),[106 106],'k');
 	%clabel(CC,hh,'FontName','Times');
-	tstr = sprintf('Future Scenario: CMIP5 2100 projection \nCell Model C:P Change from Modern: Surface');
-	tstr = {'Future Scenario: CMIP5 2100 projection', 'Cell Model C:P Change from Modern: Surface'};
+	%tstr = sprintf('Future Scenario: CMIP5 2100 projection \nCell Model C:P Change from Modern: Surface');
+	tstr = {'Future Scenario: [PO4]-20\%', 'Cell Model C:P Change from Modern: Surface'};
 	title(tstr,'Fontsize',14);
 	xlabel('Longitude');
 	ylabel('Latitude');
@@ -593,7 +575,7 @@ if par.Cellmodel == on
 	annotation('textbox',dim,'String',parstr,'FitBoxToText','on','EdgeColor','none');
 	axis tight; grid off
 
-	figTitle = 'deltaC2Psurface_CMIP2100';
+	figTitle = 'deltaC2Psurface_Pdn20';
 	print(gcf,[figDir 'FIG_' figTitle '.png'],'-dpng')
 
 
@@ -707,8 +689,8 @@ if par.Cellmodel == on
 	ylabel(cb,'Structure [volume fraction of cell]');
 	axis xy; axis tight
 
-	title(tl,'Future Scenario: CMIP5 2100 projection')
-	figTitle = 'Allocations_CMIP2100';
+	title(tl,'Future Scenario: [PO4]-20%%')
+	figTitle = 'Allocations_Pdn20';
 	%print(gcf,[figDir 'FIG_' figTitle '.png'],'-dpng')
 	exportgraphics(gcf,[figDir 'FIG_' figTitle '.png']);
 end
