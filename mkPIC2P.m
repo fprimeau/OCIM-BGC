@@ -12,7 +12,7 @@ function vout = mkPIC2P(par)
     DSi  = par.DSi  ;
 
     smsk = par.M3d  ;
-    smsk(:,:,3:end) = 0 ;
+    smsk(:,:,par.nl+1:end) = 0 ;
     isrf = find(smsk(iwet))    ;
 
     Y = M3d(iwet)*0 ;

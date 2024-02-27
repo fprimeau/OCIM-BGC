@@ -9,7 +9,7 @@ function PrintPar(x, par);
         fprintf('kappa_g is  % 3.2e \n', par.kappa_g)   ;
         fprintf('kappa_l is  % 3.2e \n', par.kappa_l)   ;
         fprintf('sigP    is  % 3.2e \n', par.sigP)      ;
-        % fprintf('gamma   is  % 3.2e \n', par.gamma)     ;
+        fprintf('gamma   is  % 3.2e \n', par.gamma)     ;
         fprintf('Q10P    is  % 3.2e \n', par.Q10P)      ;
         fprintf('kdP     is  % 3.2e \n', par.kdP)       ;
         fprintf('bP_T    is  % 3.2e \n', par.bP_T)      ;
@@ -227,7 +227,7 @@ function PrintPar(x, par);
             xhat.bb = exp(x(ibb));
         end
     end
-    
+
     x0 = x ;
     if (par.optim == on)
         save(par.fxhat, 'x0','xhat')

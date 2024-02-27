@@ -1,4 +1,4 @@
-function [par,P,Px,Pxx] = eqPcycle(x, par)
+function [par,P] = eqPcycle_without_opt(x, par)
 % ip is the mapping from x to parameter names (see switch below)
 % output: P is model prediction of DIP,POP,and DOP
 % output: F partial derivative of P model w.r.t. model parameters x
@@ -8,7 +8,8 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
     TRdiv = par.TRdiv ; % addvection diffusion transporter;
     M3d   = par.M3d   ; % wet-dry mask;
     grd   = par.grd   ; % grid info.;
-    pindx = par.pindx ; % indices of parameters; 
+    %pindx = par.pindx ; % indices of parameters; no need when do no opt
+    %for all parameters?
     iwet  = par.iwet  ; % indices of wet points;
     nwet  = par.nwet  ; % number of wet points;
     I     = par.I     ; % make an identity matrix;
@@ -81,25 +82,38 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
     kappa_l = par.kappa_l ; % labile DOM remineralization rate [s^-1];
 
     npp     = par.npp ;     % net primary production
-    tf      = (vT - 30)/10 ;
-    kP      =  kdP * Q10P.^tf ;
+    tf     = (vT - 30)/10 ;
+    kP     =  kdP * Q10P.^tf ;
     % build part of the biological DIP uptake operator
     Lambda = par.Lambda;
     LAM    = 0*M3d;
 
-    % change NaN value to zero in npp and Lambda
-    % ---> it happens due to DIP_obs has nan values
-    % in Weilei's code, smoothit functon remove the nan values of PO4.
-
+    % 240221 edit: Lamda, npp field nan ----> 0. it happens due to DIP_Obs
+    % ---> In DIP_Obs, Land---> NaN.
     Lambda(isnan(Lambda(:))) = 0;
     npp(isnan(npp(:))) = 0;
+
 
     for ji = 1 : par.nl
         LAM(:,:,ji) = (npp(:,:,ji).^beta).*Lambda(:,:,ji) ;
     end 
+    
 
-    L      = d0(LAM(iwet));  % PO4 assimilation rate [s^-1];
-    par.L  = L;
+
+   L      = d0(LAM(iwet));  % PO4 assimilation rate [s^-1];
+   par.L  = L;
+
+
+
+    %Check the nan value (edit in 240209)
+    nan_elements = isnan(w(iwet));
+    has_nan      = any(nan_elements(:));
+    if has_nan
+        disp('There is at least 1 nan');
+    else
+        disp('There is no nan');
+    end
+   
    
     % particle flux
     PFD  = buildPFD_48layer(par,'POP');

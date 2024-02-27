@@ -20,7 +20,6 @@ function vout = Fsea2air(par, Gtype)
     if strcmp(Gtype, 'CO2')
         
         pco2atm   = par.pco2atm      ;  % uatm
-        %vDICs     = data.DIC(iwet(isrf));
         vDICs     = par.DIC(isrf)    ;
         vALKs     = par.ALK(isrf)    ;
         co2syspar = par.co2syspar    ;
@@ -35,7 +34,6 @@ function vout = Fsea2air(par, Gtype)
         tmp    = M3d*0         ;
         tmp(iwet(isrf)) = KCO2.*(co2sat - co2surf)*par.permil ;
         vout.JgDIC = tmp(iwet) ; % umole/kg/s to mmol/m^3/s
-        vout.co2surf = co2surf ;
         
         % Gradient
         [co2surf,k0,Gout] = eqco2(vDICs,vALKs,co2syspar) ;
@@ -44,7 +42,7 @@ function vout = Fsea2air(par, Gtype)
         tmp             = M3d*0         ;
         tmp(iwet(isrf)) = KCO2.*(g_k0.*pco2atm - g_co2)*par.permil ;
         vout.G_dic      = d0(tmp(iwet)) ;
-        
+
         g_k0_alk  = Gout.g_k0_alk  ;
         g_co2_alk = Gout.g_co2_alk ;
         tmp             = M3d*0         ;
@@ -60,54 +58,6 @@ function vout = Fsea2air(par, Gtype)
         % tmp             = M3d*0         ;
         % tmp(iwet(isrf)) = -KCO2.*gg_co2*par.permil ;
         % vout.KGG        = tmp(iwet)     ;    
-    end
-    %
-    if strcmp(Gtype, 'C13')
-        %
-        pco2atm   = par.pco2atm      ;  % uatm
-        vDICs     = par.DIC(isrf)    ;
-        vALKs     = par.ALK(isrf)    ;
-        co2syspar = par.co2syspar    ;
-        scco2 = 2073.1 - 125.62*vSST + 3.6276*vSST.^2 - 0.043219*vSST.^3;
-        kw    = kw.*sqrt(660./scco2) ;
-        KCO2  = kw/grd.dzt(1)        ;
-        %
-        % co2surf unit umol/kg;
-        % k0 unit mol/kg/atm
-        [co2surf,k0] = eqco2(vDICs,vALKs,co2syspar) ;
-        % co2sat = k0*pco2atm    ; %mol/kg/atm -> umol/kg
-        %tmp(iwet(isrf)) = KCO2.*(co2sat - co2surf)*par.permil ;
-        %vout.JgDIC = tmp(iwet) ; % umole/kg/s to mmol/m^3/s
-
-        pc13atm  = par.pc13atm     ;    % convert delta c13 to c13 uatm;
-        %c13surf  = par.DIC13(isrf) ;    % ocean surface c13 concentration  
-        c13sat = zeros(length(iwet),1);
-        c13sat(isrf) = k0*pc13atm ;           % c13 satuation concentration
-      
-        tmp    = zeros(length(iwet),1)  ;
-        tmp(isrf) = par.c13.alpha_g2dic(iwet(isrf)); % gaseous co2 to DIC frationation factor
-        alpha_g2dic = tmp;
-        
-        alpha_k = par.c13.alpha_k;         % kinectic frationation factor
-        alpha_g2aq = par.c13.alpha_g2aq;   % isotopic fractionation factor from gaseous to aqueous CO2
-                                           % include fractionation factors in the bulk air-sea flux formula
-                                           % see eq (4) in  A. Schmittner et al. (2013) Biogeosciences
-        dR13o = par.c13.dR13o;
-        R13o = par.c13.R13o;
-        R13a = par.c13.R13a;
-        
-        tmp = zeros(length(iwet),1);
-        tmp(isrf) = KCO2;
-        KCO2 = d0(alpha_k*alpha_g2aq*par.permil*tmp);  % umole/kg/s to mmol/m^3/s
-        CO2surf = zeros(length(iwet),1);
-        CO2surf(isrf) = co2surf./alpha_g2dic(isrf);
-        vout.JgDIC13 = KCO2*(c13sat-CO2surf.*R13o);
-        
-        % Gradient
-        vout.G_dic13 = KCO2 *d0(-CO2surf)*dR13o ;
-        
-        % nonhomogeneous part
-        vout.rhs13 = KCO2*c13sat;
     end
     %
     if strcmp(Gtype, 'O2')

@@ -16,6 +16,7 @@ function [kw,p] = kw(M3d,grd);
     tmp1 = ncread(fname,'FICE');
     tmp2 = ncread(fname,'XKW');
     tmp3 = ncread(fname,'P');
+
     for i = 1:12
         fice(:,:,i) = tmp1(:,:,i)';
         xkw(:,:,i) = tmp2(:,:,i)';
@@ -28,10 +29,10 @@ function [kw,p] = kw(M3d,grd);
     p = mean(p,3);
     p = [p(:,181:end),p(:,1:180)];
     
-    kw = (1-fice).*xkw;
+    kw = (1-fice).*xkw * 0.707; % 0.707 is obtained from 14C constraint
     ilnd = find(msk(:)==0);
     kw(ilnd) = NaN;
-    
+
     p = [p(:,end),p,p(:,1)];
     kw = [kw(:,end),kw,kw(:,1)];
     kw = inpaint_nans(kw);
