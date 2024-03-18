@@ -30,7 +30,7 @@ note = {C10005},
 }
 
 
-* TO do list
+* To do list
 *** (1) Parameterize the vertical structure of NPP
 *** (2) Do timestepping method for DICant after finishing first run for BGC inverse model to get optimized biogeochemical parameters. 
 
