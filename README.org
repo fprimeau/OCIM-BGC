@@ -1,95 +1,19 @@
-* TODO make a tree of file dependencies
+* OCIM-BGC-48layer model
 
-*** Notes: If you want to see the flow chart with the file dependencies
-    brew install graphviz
+*** Code_48layer: src, driver, results, and make_datafile
+- src: Source code for BGC modeling
+- driver: Main driver for BGC modeling
+- results: Model output (data, tunable parameters, other parameters)
+- make_datafile: Make the datafile for 48layer model (i.e., pme, NPP from satelite data...)
 
-    then put the following 3 lines of lisp code in your Emacs init.el 
-    
+*** DATA: Supporting data used to run the inverse model
 
+*** Observation_rawdata: Observational results from WOA, GLODAP, GEOTRACES, Satellite ... 
 
-(org-babel-do-load-languages 'org-babel-load-languages '((dot . t)
- (python . t) ) )
-
-
-*** The flow chart is defined here
-
-
-#+NAME: nodes
-| From   | To   | Weight |
-|--------+------+--------|
-| driver | data |      3 |
-| driver | C    |      2 |
-| data   | D    |      4 |
-| data   | E    |      5 |
-| C      | F    |     10 |
+*** Transport_Operator: Download TR operator (48L) from previous study and make new msks for 48layer
 
 
-#+name: example-node-table
-| *node*     | *label*        | *shape* | *fillcolor* |
-|------------+----------------+---------+-------------|
-| S_start    | start          | ellipse | green       |
-| S_fill     | fill form      |         |             |
-| S_send     | send form      |         |             |
-| S_complete | form complete? | diamond | yellow      |
-| S_do       | do task        |         | red         |
-| S_end      | end            | ellipse |             |
-
-#+name: example-graph
-| from       | to         | label |
-|------------+------------+-------|
-| S_start    | S_fill     |       |
-| S_fill     | S_send     |       |
-| S_send     | S_complete |       |
-| S_complete | S_fill     | N     |
-| S_complete | S_do       | Y     |
-| S_do       | S_end      |       |
-
-#+name: graph-from-tables
-#+HEADER: :var nodes=example-node-table graph=example-graph
-#+BEGIN_SRC emacs-lisp :file ~/example-diagram.png :colnames yes :exports results
-    (org-babel-execute:dot
-     (concat
-          "digraph {\n"
-          "//rankdir=LR;\n" ;; remove comment characters '//' for horizontal layout; add for vertical layout
-          (mapconcat
-           (lambda (x)
-             (format "%s [label=\"%s\" shape=%s style=\"filled\" fillcolor=\"%s\"]"
-                             (car x)
-                             (nth 1 x)
-                             (if (string= "" (nth 2 x)) "box" (nth 2 x))
-                             (if (string= "" (nth 3 x)) "none" (nth 3 x))
-                             )) nodes "\n")
-          "\n"
-          (mapconcat
-           (lambda (x)
-             (format "%s -> %s [taillabel=\"%s\"]"
-                             (car x) (nth 1 x) (nth 2 x))) graph "\n")
-          "}\n") )
-#+END_SRC
-
-
-#+BEGIN_SRC elisp :imagename test.png :results output raw :var nodes=nodes
-  (defun rowfun(x)
-    (format "%s -> %s [label=%s];" (nth 0 x) (nth 1 x) (nth 2 x)))
-  (defun dotgen(nodes)
-    (let ((dotbegin "digraph {\nnode [shape=circle]\n")
-          (dotend "\n}"))
-      (concat dotbegin
-              (mapconcat #'rowfun nodes "\n")
-              dotend)))
-  (let* ((params (nth 2 (org-babel-get-src-block-info)))
-         (imagename (cdr (assq :imagename params))))
-    (assq-delete-all :imagename params)
-    (push `(:file . ,imagename) params)
-    (org-babel-execute:dot (dotgen nodes) params) 
-    (princ (format "[[./%s]]" imagename)))
-#+END_SRC
-
-#+RESULTS:
-[[./test.png]]
-
-* TODO clean up the transient_co2.m code and add it to the repo
-** The file atmhist.txt is from the supplementary materials of the following article
+* The file atmhist.txt is from the supplementary materials of the following article
 article {JGRC:JGRC12521,
 author = {Graven, H. D. and Gruber, N. and Key, R. and Khatiwala, S. and Giraud, X.},
 title = {Changing controls on oceanic radiocarbon: New insights on shallow-to-deep ocean exchange and anthropogenic CO2 uptake},
@@ -104,7 +28,11 @@ keywords = {Oceans, Numerical modeling, Carbon cycling, Chemical tracers, Gases,
 year = {2012},
 note = {C10005},
 }
-* TODO make a table of optimizable parameters with descriptions, units, etc
+
+
+* To do list
+*** (1) Parameterize the vertical structure of NPP
+*** (2) Do timestepping method for DICant after finishing first run for BGC inverse model to get optimized biogeochemical parameters. 
 
 
 
