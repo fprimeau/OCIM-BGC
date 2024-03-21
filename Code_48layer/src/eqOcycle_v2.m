@@ -32,15 +32,10 @@ function [par, O2, Ox, Oxx] = eqOcycle_v2(x, par)
             Oxx = sparse(par.nwet, nchoosek(nx,2)+nx) ;
         else
             fprintf('Using the time stepping method for initial O2 ...\n')
-	          tic
-	         [O2tstep, O2integral, O2mean, par] = O2_tstep(X0, par) ;
-            par.O2tstep    = O2tstep;
-            par.O2integral = O2integral;
-            par.O2mean     = O2mean;
-	         toc
-	         nsteps = size(O2tstep, 2) ;
-            dsteps = 10 ;            % can adjust for choosing initial O2 results
-            %
+	         [~, ~, ~, ~, O2tstep] = O_eqn(X0, par) ;
+            nsteps = size(O2tstep, 2) ;
+            dsteps = 4 ;            % can adjust for choosing initial O2 results
+            
             for n = 1 : dsteps;
 		         current_step = round(nsteps*(n/dsteps)) ;
 		         fprintf('Used O2(:,:,:,%d) for initial O2 field of nsnew ...\n', current_step)
@@ -68,7 +63,7 @@ function [par, O2, Ox, Oxx] = eqOcycle_v2(x, par)
     end
 end
 
-function [F, FD, Ox, Oxx] = O_eqn(O2, par)
+function [F, FD, Ox, Oxx, O2tstep] = O_eqn(O2, par)
     on = true; off = false;
     pindx = par.pindx ;
     %
@@ -78,6 +73,9 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
     TRdiv = par.TRdiv ;
     I     = speye(nwet) ;
     PO4   = par.po4obs(iwet) ;
+    dVt   = par.dVt   ;
+    spa   = par.spa   ;
+
     % variables from C model
     POC  = par.POC    ;
     DOC  = par.DOC    ;
@@ -95,20 +93,21 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
     WM    = par.WM    ;
     cc    = par.cc    ;
     dd    = par.dd    ;
-    %
+    
     % tunable parameters;
     O2C_T = par.O2C_T ; 
     rO2C  = par.rO2C  ;
     kappa_l = par.kappa_l ;
     kappa_p = par.kappa_p ;
-    
+
     tf    = (par.vT - 30)/10 ;
     kC    = d0( kdC * Q10C .^ tf ) ;
-    %
+    
     % O2 saturation concentration
     vout  = Fsea2air(par,'O2') ;
     KO2   = vout.KO2   ;
     o2sat = vout.o2sat ;
+
     % rate of o2 production
     O2C = O2C_T*Tz + rO2C ; 
     C2P = par.C2P         ;
@@ -123,10 +122,12 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
     % rate of o2 utilization
     kappa_r = kru*UM + krd*DM ;
     eta     = etau*WM ;
+
     % eta    = etau*UM + etad*DM ;
-    LO2    = d0(eta*kC*DOC + kappa_r*DOCr + kappa_l*DOCl + kappa_p*POC)*O2C.*R  ;
-    dLdO   = d0(eta*kC*DOC + kappa_r*DOCr + kappa_l*DOCl + kappa_p*POC)*O2C.*dRdO ;
+    LO2    = d0(eta*kC*DOC + kappa_r*DOCr + kappa_l*DOCl + kappa_p*POC)*O2C.*R       ;
+    dLdO   = d0(eta*kC*DOC + kappa_r*DOCr + kappa_l*DOCl + kappa_p*POC)*O2C.*dRdO    ;
     d2LdO2 = d0(eta*kC*DOC + kappa_r*DOCr + kappa_l*DOCl + kappa_p*POC)*O2C.*d2RdO2  ;
+
     % O2 function
     F = TRdiv*O2 - PO2 + LO2 - KO2*(o2sat-O2) ;
     
@@ -136,8 +137,7 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
     if (nargout > 1)
         FD = mfactor(TRdiv + d0(dLdO) + KO2) ;
     end
-    
-    %
+
     %% ----------------- Gradient -------------------
     if (par.optim == off)
         Ox = [];
@@ -1163,5 +1163,49 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
             Oxx(:,kk) = mfactor(FD, -tmp) ;
         end 
     end
+
+    %%--------------------Time stepping method-------------------------------------
+    %  Using a semi-implicit scheme for time stepping method
+    % Trapezoide rule for all terms, except for Respiration (Euler Forward)
+    %
+    %  d
+    % -- O2 +TRdiv*O2(t) = PO2 - LO2 .*R(t) + KO2*(O2sat - O2(t))  
+    % dt
+    %
+
+    if nargout > 4
+    % time-step size schedule
+    %                  1 hr  1 day  1 month 1 year 4 years   10 years
+    dt_size = spa./[ 365*24   365       12     1     0.25       0.1 ];  
+    nsteps  =      [  100     100      100   200     200        300 ];  
+
+    %
+    O2tstep    = zeros(length(O2), length(nsteps));
+    j = 0; 
+    t = 0;
+    
+    %
+      for k = 1:length(dt_size) % loop over step size schedule
+           % set the step size
+         dt = dt_size(k);
+         % set the number of time steps
+         n = nsteps(k);
+         % trapezoid rule
+         A = I + (dt/2)*(TRdiv+KO2);
+         B = I - (dt/2)*(TRdiv+KO2);
+         FA = mfactor(A);
+       
+           fprintf('dt = %f nsteps = %i \n', dt, n);
+         for i = 1:n   % loop over time steps
+             O2dt = mfactor(FA, (B*O2 + dt*(-LO2.*R + PO2 +KO2*o2sat)));
+             t = t+dt;
+             j = j+1;
+             O2tstep(:,j)  = O2dt;
+             T(j) = t;
+             fprintf('.');
+         end
+         fprintf('\n');
+       end
+   end
 end
 
