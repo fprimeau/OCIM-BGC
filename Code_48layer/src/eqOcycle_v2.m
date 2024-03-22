@@ -158,7 +158,7 @@ function [F, FD, Ox, Oxx, O2tstep] = O_eqn(O2, par)
             tmp = d0( eta*kC*DOCx(:,jj) + kappa_r*DOCrx(:,jj) + ...
                       kappa_l*DOClx(:,jj) + kappa_p*POCx(:,jj))*O2C.*R ;
 
-            Ox(:,jj) = mfactor(FD, -tmp) ;
+            RHS(:,jj) = -tmp ;
         end 
 
         % C model only parameters
@@ -167,56 +167,56 @@ function [F, FD, Ox, Oxx, O2tstep] = O_eqn(O2, par)
                 tmp = d0( d0(kru*UM*DOCr)*O2C ) * R + ...
                       d0( eta*kC*DOCx(:,jj) + kappa_r*DOCrx(:,jj) + ...
                           kappa_l*DOClx(:,jj) + kappa_p*POCx(:,jj))*O2C.*R  ;
-                Ox(:,jj) = mfactor( FD, -tmp ) ;
+                RHS(:,jj) = -tmp ;
                 
             elseif ( par.opt_krd & jj == pindx.lkrd )
                 tmp = d0( d0(krd*DM*DOCr)*O2C ) * R + ...
                       d0( eta*kC*DOCx(:,jj) + kappa_r*DOCrx(:,jj) + ...
                           kappa_l*DOClx(:,jj) + kappa_p*POCx(:,jj))*O2C.*R  ;
-                Ox(:,jj) = mfactor( FD, -tmp ) ;
+                RHS(:,jj) = -tmp ;
                 
             elseif ( par.opt_kdC & jj == pindx.lkdC )
                 kC_kdC = par.kC_kdC ;
                 tmp = d0( d0(eta*kC_kdC*DOC)*O2C ) * R + ...
                       d0( eta*kC*DOCx(:,jj) + kappa_r*DOCrx(:,jj) + ...
                           kappa_l*DOClx(:,jj) + kappa_p*POCx(:,jj))*O2C.*R  ;
-                Ox(:,jj) = mfactor( FD, -tmp ) ;
+                RHS(:,jj) = -tmp ;
                 
             elseif ( par.opt_Q10C & jj == pindx.lQ10C )
                 kC_Q10C = par.kC_Q10C ; 
                 tmp = d0( d0( d0(eta*kC_Q10C)*DOC )*O2C ) * R + ...
                       d0( eta*kC*DOCx(:,jj) + kappa_r*DOCrx(:,jj) + ...
                           kappa_l*DOClx(:,jj) + kappa_p*POCx(:,jj))*O2C.*R  ;
-                Ox(:,jj) = mfactor( FD, -tmp ) ;
+                RHS(:,jj) = -tmp ;
 
             elseif ( par.opt_etau & jj == pindx.letau )
                 tmp = d0( etau*WM*(kC*DOC) )*O2C.*R + ...
                       d0( eta*kC*DOCx(:,jj) + kappa_r*DOCrx(:,jj) + ...
                           kappa_l*DOClx(:,jj) + kappa_p*POCx(:,jj))*O2C.*R  ;
-                Ox(:,jj) = mfactor( FD, -tmp ) ;
+                RHS(:,jj) = -tmp ;
 
             elseif ( par.opt_etad & jj == pindx.letad )
                 tmp = d0( etad*DM*(kC*DOC) )*O2C.*R + ...
                       d0( eta*kC*DOCx(:,jj) + kappa_r*DOCrx(:,jj) + ...
                           kappa_l*DOClx(:,jj) + kappa_p*POCx(:,jj))*O2C.*R  ;
-                Ox(:,jj) = mfactor( FD, -tmp ) ;
+                RHS(:,jj) = -tmp ;
 
             elseif ( par.opt_cc & jj == pindx.lcc )
                 C2P_cc = par.C2P_cc;
                 tmp = d0( eta*kC*DOCx(:,jj) + kappa_r*DOCrx(:,jj) + ...
                           kappa_l*DOClx(:,jj) + kappa_p*POCx(:,jj))*O2C.*R  ;
-                Ox(:,jj) = mfactor( FD, -tmp ) ;
+                RHS(:,jj) = -tmp ;
                 
             elseif ( par.opt_dd & jj == pindx.ldd )
                 C2P_dd = par.C2P_dd;
                 tmp = d0( eta*kC*DOCx(:,jj) + kappa_r*DOCrx(:,jj) + ...
                           kappa_l*DOClx(:,jj) + kappa_p*POCx(:,jj))*O2C.*R  ;
-                Ox(:,jj) = mfactor( FD, -tmp ) ;
+                RHS(:,jj) = -tmp ;
 
             else
                 tmp = d0( eta*kC*DOCx(:,jj) + kappa_r*DOCrx(:,jj) + ...
                           kappa_l*DOClx(:,jj) + kappa_p*POCx(:,jj))*O2C.*R  ;
-                Ox(:,jj) = mfactor( FD, -tmp ) ;
+                RHS(:,jj) = -tmp ;
             end 
         end
 
@@ -224,14 +224,15 @@ function [F, FD, Ox, Oxx, O2tstep] = O_eqn(O2, par)
         if (par.opt_O2C_T == on)
             O2C_O2C_T = d0(Tz) ; 
             tmp = d0(eta*kC*DOC + kappa_r*DOCr + kappa_l*DOCl + kappa_p*POC)*(O2C_O2C_T*R) ; 
-            Ox(:,pindx.O2C_T) = mfactor(FD, -tmp) ;
+            RHS(:,pindx.O2C_T) =  -tmp ;
         end
 
         if (par.opt_rO2C == on)
             O2C_rO2C = rO2C ; 
             tmp = d0(eta*kC*DOC + kappa_r*DOCr + kappa_l*DOCl + kappa_p*POC)*(O2C_rO2C*R) ; 
-            Ox(:,pindx.lrO2C) = mfactor(FD, -tmp) ;
-        end 
+            RHS(:,pindx.lrO2C) = -tmp ;
+        end
+        Ox = mfactor(FD, RHS); 
     end
 
     %% ------------------- Hessian -------------------------
@@ -259,7 +260,7 @@ function [F, FD, Ox, Oxx, O2tstep] = O_eqn(O2, par)
                          kappa_p*POCx(:,jo))*dRdO.*Ox(:,ju).*O2C + ...
                       Ox(:,ju).*d2LdO2.*Ox(:,jo) ;
 
-                Oxx(:,kk) = mfactor(FD, -tmp) ;                 
+                RHS(:,kk) = -tmp ;                 
             end 
         end
         %
@@ -363,7 +364,7 @@ function [F, FD, Ox, Oxx, O2tstep] = O_eqn(O2, par)
                           Ox(:,ju).*d2LdO2.*Ox(:,jo) ; 
 
                 end
-                Oxx(:,kk) = mfactor(FD, -tmp)    ;
+                RHS(:,kk) = -tmp    ;
             end
         end
         
@@ -830,7 +831,7 @@ function [F, FD, Ox, Oxx, O2tstep] = O_eqn(O2, par)
                           Ox(:,ju).*d2LdO2.*Ox(:,jo) ;
                     
                 end 
-                Oxx(:,kk) = mfactor(FD, -tmp)    ;
+                RHS(:,kk) = -tmp    ;
             end 
         end 
         
@@ -857,7 +858,7 @@ function [F, FD, Ox, Oxx, O2tstep] = O_eqn(O2, par)
                           Ox(:,ju).*d2LdO2.*Ox(:,jo) ;
 
                 end
-                Oxx(:,kk) = mfactor(FD, -tmp)    ;
+                RHS(:,kk) = -tmp    ;
             end 
         end
         
@@ -1125,7 +1126,7 @@ function [F, FD, Ox, Oxx, O2tstep] = O_eqn(O2, par)
                         
                     end 
                 end
-                Oxx(:,kk) = mfactor(FD, -tmp) ;
+                RHS(:,kk) = -tmp ;
             end 
         end 
         
@@ -1137,7 +1138,7 @@ function [F, FD, Ox, Oxx, O2tstep] = O_eqn(O2, par)
                      kappa_p*POC)*(O2C_O2C_T*(dRdO.*Ox(:,pindx.O2C_T)))*2 + ... 
                   Ox(:,pindx.O2C_T).*d2LdO2.*Ox(:,pindx.O2C_T) ;
 
-            Oxx(:,kk) = mfactor(FD, -tmp) ;
+            RHS(:,kk) = -tmp ;
         end             
         % O2C_T rO2C
         if (par.opt_O2C_T == on & par.opt_rO2C == on)
@@ -1148,7 +1149,7 @@ function [F, FD, Ox, Oxx, O2tstep] = O_eqn(O2, par)
                      kappa_p*POC)*(O2C_rO2C*dRdO.*Ox(:,pindx.O2C_T)) + ... 
                   Ox(:,pindx.O2C_T).*d2LdO2.*Ox(:,pindx.lrO2C) ;
 
-            Oxx(:,kk) = mfactor(FD, -tmp) ;
+            RHS(:,kk) = -tmp ;
         end             
 
         % rO2C rO2C
@@ -1160,8 +1161,9 @@ function [F, FD, Ox, Oxx, O2tstep] = O_eqn(O2, par)
                      kappa_p*POC)*(O2C_rO2C*dRdO.*Ox(:,pindx.lrO2C))*2 + ...
                   Ox(:,pindx.lrO2C).*d2LdO2.*Ox(:,pindx.lrO2C) ;
 
-            Oxx(:,kk) = mfactor(FD, -tmp) ;
-        end 
+            RHS(:,kk) = -tmp ;
+        end
+        Oxx = mfactor(FD, RHS); 
     end
 
     %%--------------------Time stepping method-------------------------------------
