@@ -65,6 +65,9 @@ function [F, FD, Fex, Fexx, Fetstep] = Fe_eqn(Fe, par)
     % tunable parameters
 
     % Fe function
+    % -> Frantz 처럼 tFe로만 할 것이냐?
+    % -> Roshan 처럼 FeOr과 FeOH로 나눌 것이냐?
+    % -> Roshan의 FeOH는 advection, PFD, Burial 다함...
     tFe = frFe + LFe ;
 
     TRdiv*tFe = Source + Biological uptake + Sink(Scavenging) ; 
