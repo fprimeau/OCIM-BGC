@@ -32,7 +32,9 @@ function [par, O2, Ox, Oxx] = eqOcycle_v2(x, par)
             Oxx = sparse(par.nwet, nchoosek(nx,2)+nx) ;
         else
             fprintf('Using the time stepping method for initial O2 ...\n')
+            tic
 	         [~, ~, ~, ~, O2tstep] = O_eqn(X0, par) ;
+            toc
             nsteps = size(O2tstep, 2) ;
             dsteps = 4 ;            % can adjust for choosing initial O2 results
             
@@ -43,9 +45,10 @@ function [par, O2, Ox, Oxx] = eqOcycle_v2(x, par)
                [O2, ierr] = nsnew(current_O2, @(X) O_eqn(X, par), options);
 		         %
 		         if (ierr == 0)
-	               % reset the global variable for the next call eqOcycle
-		            fprintf('Time stepping method works for estimating inital values and the O2 model converged.\n')
-	               GO = real(O2) + 1e-7*randn(par.nwet,1) ;
+	               fprintf('Time stepping method works for estimating inital values and the O2 model converged.\n')
+
+                  fprintf('reset the global variable for the next call eqOcycle. \n')
+                  GO = real(O2) + 1e-7*randn(par.nwet,1) ;
                   [F, FD, Ox, Oxx] = O_eqn(O2, par) ;
                   break;
                end
@@ -57,9 +60,11 @@ function [par, O2, Ox, Oxx] = eqOcycle_v2(x, par)
 	         end
 	      end 
     else
-        % reset the global variable for the next call eqOcycle
+        fprintf('reset the global variable for the next call eqOcycle. \n')
+        tic
         GO = real(O2) + 1e-7*randn(par.nwet,1) ;
         [F, FD, Ox, Oxx] = O_eqn(O2, par) ;
+        toc
     end
 end
 
@@ -77,10 +82,17 @@ function [F, FD, Ox, Oxx, O2tstep] = O_eqn(O2, par)
     spa   = par.spa   ;
 
     % variables from C model
-    POC  = par.POC    ;
-    DOC  = par.DOC    ;
-    DOCl = par.DOCl   ;
-    DOCr = par.DOCr   ;
+    if (par.Cisotope == on) ;
+      POC  = par.POC  + par.POC13   ;
+      DOC  = par.DOC  + par.DOC13   ;
+      DOCl = par.DOCl + par.DOC13l  ;
+      DOCr = par.DOCr + par.DOC13r  ;
+    else
+      POC  = par.POC    ;
+      DOC  = par.DOC    ;
+      DOCl = par.DOCl   ;
+      DOCr = par.DOCr   ;
+    end
     Tz   = par.Tz     ;
     Q10C  = par.Q10C  ;
     kdC   = par.kdC   ;

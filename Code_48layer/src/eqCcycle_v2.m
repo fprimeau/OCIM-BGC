@@ -114,19 +114,10 @@ function [par, C, Cx, Cxx] = eqCcycle_v2(x, par)
         Cxx  = sparse(7*par.nwet, nchoosek(nx,2)+nx) ;
         [par.G,par.Gx,par.Gxx] = uptake_C(par) ;
         [F,FD,par] = C_eqn(C, par);
-    elseif (ierr == 0 & par.optim == on)
-        % reset the global variable for the next call eqCcycle
+    else
+        fprintf('reset the global variable for the next call eqCycle. \n')
         GC = real(C) + 1e-8*randn(7*nwet,1) ;
-        X0 = GC;
-        F = C_eqn(C, par) ;
-        % test if norm of F small enough, if now rerun nsnew;
-        if (norm(F) > 1e-12)         
-            [C,ierr] = nsnew(X0,@(X) C_eqn(X, par),options);
-        end 
-        %
-        if nargout > 3
-            [F,FD,par,Cx,Cxx] = C_eqn(C, par);
-        end 
+        [F,FD,par,Cx,Cxx] = C_eqn(C, par);
     end
 end
 
@@ -298,8 +289,8 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
 	toc
     end 
     
-    %fprintf('Compute the gradient of the solution wrt parameters ...\n')
-    
+    fprintf('Compute the gradient of the solution wrt parameters ...\n')
+    tic
     if (par.optim == off)
         Cx = [];
     elseif (par.optim & nargout > 2)
@@ -569,10 +560,10 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
         end
         Cx = mfactor(FD, RHS);
     end
+    toc
 
-
-    %fprintf('Compute the hessian of the solution wrt the parameters ...\n')
-    
+    fprintf('Compute the hessian of the solution wrt the parameters ...\n')
+    tic
     if (par.optim == off)
         Cxx = [];
     elseif (par.optim & nargout > 3);
@@ -3723,7 +3714,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
         end
         Cxx = mfactor(FD, RHS);
     end
-    
+    toc
 end
 
 

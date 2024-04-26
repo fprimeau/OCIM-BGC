@@ -161,7 +161,8 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
         Px = [];
     elseif (par.optim & nargout > 2)
         %
-        % Compute the gradient of the solution wrt the parameters
+        fprintf('Compute the gradient of the solution wrt the parameters...\n')
+        tic
         %
         Z   = sparse(nwet,1);
         DIP = P(0*nwet+1:1*nwet);
@@ -239,12 +240,14 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
             RHS(:,pindx.lbeta) = -tmp;
         end
         Px = mfactor(FFp, RHS);
+        toc
     end
     %% ---------------------------------------------------------
     if (par.optim == off)
         Pxx = [];
     elseif (par.optim & nargout > 3) 
-        % Compute the hessian of the solution wrt the parameters
+        fprintf(' Compute the hessian of the solution wrt the parameters...\n')
+        tic
         DIPx  = Px(0*nwet+1:1*nwet, :) ;
         POPx  = Px(1*nwet+1:2*nwet, :) ;
         DOPx  = Px(2*nwet+1:3*nwet, :) ;
@@ -717,7 +720,8 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
             RHS(:,kk) = -tmp;
             kk = kk + 1;
         end
-        Pxx = mfactor(FFp, RHS)
+        Pxx = mfactor(FFp, RHS);
+        toc
     end
 end
 
