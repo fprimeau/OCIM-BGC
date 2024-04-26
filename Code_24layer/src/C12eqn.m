@@ -66,10 +66,9 @@ function [f,J,par] = C12eqn(X, par)
 
     % Air-Sea gas exchange
     vout  = Fsea2air(par, 'CO2');
+    G_dic = vout.G_dic ;
+    G_alk = vout.G_alk ;
     JgDIC = vout.JgDIC ;
-    par.JgDIC = JgDIC;
-    par.co2surf = vout.co2surf;
-    par.pco2    = vout.pco2;
     clear vout 
 
     % biological DIC uptake operator
@@ -77,14 +76,9 @@ function [f,J,par] = C12eqn(X, par)
     
     kappa_g = par.kappa_g ;
     ALKbar  = par.ALKbar  ;
+    sDICbar = par.sDICbar ;
     sALKbar = par.sALKbar ;
     
-    junk = M3d ;
-    junk(:,:,2:end) = 0 ;
-    isrf = find(junk(iwet)) ;
-    sDICbar = sum( DIC(isrf) .* dVt(iwet(isrf)) ) / sum( dVt(iwet(isrf)) );
-
-
     UM = par.UM ; 
     DM = par.DM ;
     WM = par.WM ;
@@ -92,9 +86,9 @@ function [f,J,par] = C12eqn(X, par)
     eta     = etau*WM ;
     % eta     = etau*UM + etad*DM ;
     
-    dDICdt  = TRdiv*DIC + (I+(1-sigC-gamma)*RR)*G*C2P - eta*(kC*DOC) ...
+    dDICdt  = TRdiv*DIC + (1-sigC-gamma)*RR*G*C2P - eta*(kC*DOC) ...
               - kPIC*PIC - JgDIC + pme*sDICbar - kappa_r*DOCr ...
-              - kappa_l*DOCl - kappa_p*POC ;  %FDIC
+              - kappa_l*DOCl - kappa_p*POC + par.Cnpp(iwet) ;  %FDIC
     
     dPOCdt  = (PFDc+kappa_p*I)*POC - (1-sigC-gamma)*G*C2P   ; % FPOC
     
@@ -103,30 +97,30 @@ function [f,J,par] = C12eqn(X, par)
     dPICdt  = (PFDa + kPIC*I)*PIC - (1-sigC-gamma)*RR*G*C2P ; % FPIC
     
     dALKdt  = TRdiv*ALK + 2*(1-sigC-gamma)*RR*G*C2P - 2*kPIC*PIC ...
-              - N2C*G*C2P + N2C*(eta*(kC*DOC) + kappa_r*DOCr + ...
+              - N2C*par.Cnpp(iwet) + N2C*(eta*(kC*DOC) + kappa_r*DOCr + ...
                                  kappa_l*DOCl + kappa_p*POC) ...
               + pme*sALKbar + kappa_g*(ALK - ALKbar) ;  % ALK 
     
-    dDOCldt = (TRdiv+kappa_l*I)*DOCl - gamma*(G*C2P) ;  % DOCl 
+    dDOCldt = (TRdiv+kappa_l*I)*DOCl - (par.Cnpp(iwet) - G*C2P) ;  % DOCl 
     
     dDOCrdt = (TRdiv+kappa_r)*DOCr - (I-eta)*(kC*DOC) ; % DOCr 
     
     zro = zeros(nwet,1);
     F   = [dDICdt; dPOCdt; dDOCdt; dPICdt; dALKdt; dDOCldt; dDOCrdt];
-    f   = [(I+(1-sigC-gamma)*RR)*G*C2P - JgDIC + pme*sDICbar;...
+    f   = [(1-sigC-gamma)*RR*G*C2P - JgDIC + pme*sDICbar + par.Cnpp(iwet) ;...
            - (1-sigC-gamma)*G*C2P; ...
            - sigC*G*C2P; ...
            - (1-sigC-gamma)*RR*G*C2P; ...
-           2*(1-sigC-gamma)*RR*G*C2P - N2C*G*C2P ...
+           2*(1-sigC-gamma)*RR*G*C2P - N2C*par.Cnpp(iwet) ...
                  + pme*sALKbar - kappa_g*ALKbar;...
-           - gamma*(G*C2P); ...
+           - (par.Cnpp(iwet) - G*C2P); ...
            zro];
     
 
     % construct the LHS matrix for the offline model
     % disp('Preparing LHS and RHS matrix:')
     % colum 1 dFdDIC
-    Jc{1,1} = TRdiv; 
+    Jc{1,1} = TRdiv - G_dic ; 
     Jc{2,1} = 0*I ;
     Jc{3,1} = 0*I ;
     Jc{4,1} = 0*I ;
@@ -158,7 +152,7 @@ function [f,J,par] = C12eqn(X, par)
     Jc{6,4} = 0*I ;
     Jc{7,4} = 0*I ;
     % column 5 dFdALK
-    Jc{1,5} = 0*I;
+    Jc{1,5} = -G_alk;
     Jc{2,5} = 0*I ;
     Jc{3,5} = 0*I ;
     Jc{4,5} = 0*I ;
@@ -181,6 +175,7 @@ function [f,J,par] = C12eqn(X, par)
     Jc{5,7} = N2C*kappa_r ;
     Jc{6,7} = 0*I ;
     Jc{7,7} = TRdiv + kappa_r ;
+    % Jacobian matrix
     J = cell2mat(Jc);
     % F = J*X + f;
 end

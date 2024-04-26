@@ -21,13 +21,15 @@ classdef solveM
     % par.ALK = data.ALK(iwet);
     % par.ALK(isrf) = par.co2syspar.alk;  % set GLODAP surface ALK for Fsea2air
     %---------------- inital guesses on C, C13 and O ---------------
-    DIC = data.DIC - par.dicant ;
+    % DIC = data.DIC - par.dicant ;
+    % DIC = data.DIC(iwet) ;
+
     % GC = [DIC(iwet); data.PIC(iwet);];
     % GC  = [DIC(iwet); data.POC(iwet); data.DOC(iwet); data.PIC(iwet); ...
     %        data.DIC(iwet); data.POC(iwet); data.POC(iwet);];
 
     % the number of C pools is adjustable with the following 
-    s2e = 'DIC(iwet);';
+    s2e = 'data.DIC(iwet);';
     for i = 2:length(Cpool)
       s2e = strcat(s2e,sprintf('data.%s(iwet);',Cpool{i}));
     end
@@ -38,7 +40,7 @@ classdef solveM
     GC  = real(GC) + 1e-6*randn(par.nC*nwet,1) ;
 
     %-------------------solve C model -------------------------
-    [par, C] = eqCcycle(x0, par) ;
+    [par, C] = eqCcycle_v2(x0, par) ;
     % [par, C, Cx, Cxx] = eqCcycle(x0, par) ;
     % Gradient and Hessian
     % par.Cx = Cx ;  par.Cxx = Cxx ;
@@ -60,7 +62,7 @@ classdef solveM
     GC13 = zeros(par.nC*length(iwet),1);
 
     par.debug13 = off;
-    [par, C13 ] = eqC13cycle(x0, par);
+    [par, C13 ] = eqC13cycle_v2(x0, par);
     
     % distribute C13 solution to par and ata
     [par,data] = dispSol(C13,par,data,Cpool);
@@ -77,7 +79,7 @@ classdef solveM
     GC14 = zeros(par.nC*length(iwet),1);
 
     par.debug14 = off;
-    [par, C14 ] = eqC14cycle(x0, par);
+    [par, C14 ] = eqC14cycle_v2(x0, par);
     
     % distribute C14 solution to par and ata
     [par,data] = dispSol(C14,par,data,Cpool);

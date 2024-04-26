@@ -219,13 +219,13 @@ function [F,FD,par,C13x,C13xx] = C13_eqn(X, par)
     alpha_dic2poc = (alpha_tmp(iwet)-1.0)*par.frpho + 1.0;
     
 
-    %if par.debug13
-     % disp('Testing fractionation factors')
-     % par.c13.alpha_k = 1;%0.99915; % kenetic fractionation factor 
-     % par.c13.alpha_g2aq = 1;%0.998764; % gas to water fractionation factor
-     % par.c13.alpha_g2dic = 1.01051*0 - 1.05*1e-4*par.Temp*0 + 1;
-     % alpha_dic2poc = alpha_dic2poc*0 + 1.0; % debug
-    %end
+    if par.debug13
+      disp('Testing fractionation factors')
+      par.c13.alpha_k = 1;%0.99915; % kenetic fractionation factor 
+      par.c13.alpha_g2aq = 1;%0.998764; % gas to water fractionation factor
+      par.c13.alpha_g2dic = 1.01051*0 - 1.05*1e-4*par.Temp*0 + 1;
+      alpha_dic2poc = alpha_dic2poc*0 + 1.0; % debug
+    end
 	
     % Air-Sea gas exchange for C13
     vout  = Fsea2air(par, 'C13');

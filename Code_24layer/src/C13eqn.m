@@ -164,7 +164,7 @@ function [f,J,par] = C13eqn(X, par)
     % F   = [eq1; eq2; eq3; eq4; eq5; eq6];
     
     % extract varying source sink terms (depend on DIC,..)
-    eq1 = G*d0(C2P.*alpha_dic2poc)*R13o ...     % removal of dic13 organic c13 production
+    eq1 = d0(par.Cnpp(iwet).*alpha_dic2poc)*R13o ...     % removal of dic13 organic c13 production
           + (1-sigC-gamma)*RR*G*d0(C2P)*R13o  ... % removal of dic13 due to pic13 production
           - JgDIC13 ...              % air-sea gas exchange
           + sDICbar*d0(pme)*R13o;  % concentration and dillution due to precip and evaporation
@@ -175,7 +175,7 @@ function [f,J,par] = C13eqn(X, par)
 
     eq4 = - (1-sigC-gamma)*RR*G*d0(C2P)*R13o ; % FPIC
 
-    eq5 = - gamma*G*d0(C2P.*alpha_dic2poc)*R13o ;  % DOCl 
+    eq5 = - d0((par.Cnpp(iwet)-G*C2P).*alpha_dic2poc)*R13o ;  % DOCl 
 
     eq6 = zeros(nwet,1) ; % DOCr 
 
