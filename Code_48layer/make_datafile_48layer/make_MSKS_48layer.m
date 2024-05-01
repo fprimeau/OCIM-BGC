@@ -3,8 +3,8 @@
 %  (Because horizontal msk is little bit different between 24layer model and 48layer model).
 
 clc; close all; clear all;
-addpath('../DATA/BGC_2023Nature/');
-addpath('../DATA/BGC_48layer/');
+addpath('../../DATA/BGC_2023Nature/');
+addpath('../../DATA/BGC_48layer/');
 
 load OCIM2_CTL_He.mat
 msk_24layer = output.M3d;
@@ -198,7 +198,7 @@ MSKS.MED_48layer = MED_48layer;
 
 %DATA file deirectory에 저장하기
 fileName = 'MSKS_48layer.mat'
-directory = '../DATA/BGC_48layer'
+directory = '../../DATA/BGC_48layer'
 filePath = fullfile(directory, fileName);
 save(filePath, 'MSKS');
 
