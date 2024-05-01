@@ -6,7 +6,7 @@
 % load optimized parameters and solutions from PCO model --> get steady state solutions for C13 and C14 --> do time stepping method.
 clc; clear all;
 addpath('../../DATA/BGC_48layer/')
-addpath('../src/MSK91/')
+addpath('../Results/')
 addpath('../src/')
 
 %
@@ -159,7 +159,7 @@ O2pool = {'O2'};
 toc
 
 % save all par and data before the transient run
-fileName  = 'SSdata_par_0.707xkw_fras=1_frpho=0.5_48layer_240426'
+fileName  = 'SSdata_par_0.707xkw_fras=1_frpho=0.5_48layer_240428'
 directory = '../Results'
 filePath  = fullfile(directory, fileName) ;
 save(filePath, 'par', 'data', '-v7.3')   ;
@@ -186,5 +186,5 @@ tic
 [Xout,Tout,par] = time_stepper(par,t0,t1,Xin,Ctype);
 toc
 
-
+save('Transient_fras=1_frpho=0.5_240428', 'Xout', 'Tout', '-v7.3')
 

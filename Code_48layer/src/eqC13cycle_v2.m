@@ -1,9 +1,9 @@
-function [par, C14, C14x, C14xx] = eqC14cycle(x, par);
+function [par, C13, C13x, C13xx] = eqC13cycle_v2(x, par);
 % ip is the mapping from x to parameter names (see switch below)
-% output: C is model prediction of DIC14,POC14, PIC14, DOC14, DOC14r, DOC14l
+% output: C is model prediction of DIC13,POC13, PIC13, DOC13, DOC13r, DOC13l
 % output: Cx partial derivative of C  w.r.t. model parameters x
 % output: Cxx hessian matrix of C w.r.t.  model parameters x
-    global GC GC14
+    global GC GC13
     on = true; off = false;
     iwet = par.iwet;
     nwet = par.nwet;
@@ -94,36 +94,31 @@ function [par, C14, C14x, C14xx] = eqC14cycle(x, par);
     end
     %
     options.iprint = 1   ; 
-    options.atol = 1e-25 ; %1e-12 ;
-    options.rtol = 1e-12 ;
-    fprintf('Solving C14 model ...\n') ;
-    X0  = GC14;
-    [C14,ierr] = nsnew(X0,@(X) C14_eqn(X, par),options) ; % solve C14 equilibrium state
+    options.atol = 1e-14 ;
+    options.rtol = 1e-13 ;
+    fprintf('Solving C13 model ...\n') ;
+    X0  = GC13;
+    [C13,ierr] = nsnew(X0,@(X) C13_eqn(X, par),options) ; % solve C13 equilibrium state
     par.Cfailure = off ;
     if (ierr ~= 0)
-        fprintf('eqC14cycle did not converge.\n') ;
-        keyboard;
+        fprintf('eqC13cycle did not converge.\n') ;
         par.Cfailure = on;
         npx  = par.npx   ;
         ncx  = par.ncx   ;
         nx   = npx + ncx ;
-        C14    = GC14 ;
-        C14x   = sparse(6*par.nwet, nx) ;
-        C14xx  = sparse(6*par.nwet, nchoosek(nx,2)+nx) ;
+        C13    = GC13 ;
+        C13x   = sparse(6*par.nwet, nx) ;
+        C13xx  = sparse(6*par.nwet, nchoosek(nx,2)+nx) ;
         [par.G,par.Gx,par.Gxx] = uptake_C(par) ;  % WARNING WARNING
-        [F,FD,par] = C14_eqn(C14, par);
-    elseif (ierr == 0 & par.optim == on)
-        % reset the global variable for the next call eqCcycle
-        GC14 = real(C14) + 1e-20*randn(6*nwet,1) ;
-        X0 = GC14;
-        %
-        if nargout > 2
-            [~,~,par,C14x,C14xx] = C14_eqn(C14, par);
-        end 
+        [F,FD,par] = C13_eqn(C13, par);
+    else
+        fprintf('reset the global variable for the next call eqCcycle. \n')
+        GC13 = real(C13) + 1e-10*randn(6*nwet,1) ;
+        [F,FD,par] = C13_eqn(C13,par) ;
     end
 end
 
-function [F,FD,par,C14x,C14xx] = C14_eqn(X, par)    
+function [F,FD,par,C13x,C13xx] = C13_eqn(X, par)    
 % unpack some useful stuff
     on = true; off = false;
     grd   = par.grd   ;
@@ -139,16 +134,18 @@ function [F,FD,par,C14x,C14xx] = C14_eqn(X, par)
     isrf = find(tmp(iwet)) ;
     
     Tz  = par.Tz ;
-    DIC14  = X(0*nwet+1:1*nwet) ; 
-    POC14  = X(1*nwet+1:2*nwet) ;
-    DOC14  = X(2*nwet+1:3*nwet) ;
-    PIC14  = X(3*nwet+1:4*nwet) ;
+    DIC13  = X(0*nwet+1:1*nwet) ; 
+    POC13  = X(1*nwet+1:2*nwet) ;
+    DOC13  = X(2*nwet+1:3*nwet) ;
+    PIC13  = X(3*nwet+1:4*nwet) ;
     % ALK  = X(4*nwet+1:5*nwet) ;
-    DOC14l = X(4*nwet+1:5*nwet) ;
-    DOC14r = X(5*nwet+1:6*nwet) ;
+    DOC13l = X(4*nwet+1:5*nwet) ;
+    DOC13r = X(5*nwet+1:6*nwet) ;
 
-    R14o = DIC14./(par.DIC); 
-    dR14o = d0(1./par.DIC);
+    R13o = DIC13./(par.DIC); 
+    dR13o = d0(1./par.DIC);
+    par.c13.R13o = R13o;
+    par.c13.dR13o = dR13o;
 
     PO4 = par.po4obs(iwet) ;
     % fixed parameters
@@ -189,31 +186,16 @@ function [F,FD,par,C14x,C14xx] = C14_eqn(X, par)
     par.C2P = C2P  ;
 
     % particle flux div_rergence [s^-1];
-    PFDa = buildPFD(par, 'PIC') ;
-    PFDc = buildPFD(par, 'POC') ;
+    PFDa = buildPFD_48layer(par, 'PIC') ;
+    PFDc = buildPFD_48layer(par, 'POC') ;
     par.PFDa = PFDa ;
     par.PFDc = PFDc ;
-    par.DIC14  = DIC14  ;
-    %par.ALK  = ALK  ;
-    
-    % define C14 fractionation factors and ratios in ocean and atmosphere
-    % set up fractionation factors fro C14 and R14
-    %  A. Schmittner et al.: Distribution of carbon isotope ratios (δ13C) in the ocean
-    % fc14 = 2.0;  %  The fractionation  for 14C is 2.3 times the fractionation for 13C
-    fc14 = par.fc14;
-    lambda14 = 1/par.spa*log(2)/5730; % radiocarbon decay rate (yr^(-1) to s^(-1))
-    % par.c14.R14a = 1.220805*1e-12; % air C14/C Roxa = 1.176*e-12
-    par.pc14atm = par.pco2atm*par.c14.R14a;
-    par.c14.R14o = R14o;
-    par.c14.dR14o = dR14o;
-    par.c14.fc14 = fc14;
-    par.c14.alpha_k = 1 - (1 - 0.99915)*fc14 ; % kenetic fractionation factor 
-    par.c14.alpha_g2aq = 1- (1 - 0.998764)*fc14 ; % gas to water fractionation factor
+    par.DIC13  = DIC13  ;
+        
     % temperature (in C)-dependent equilibrium fractionation factor from gaseous CO2 to DIC.
-    % par.c14.alpha_g2dic = 1.01051-1.05*1e-4*par.Temp(isrf); 
-    disp(sprintf('air-sea fractionation tuned by fras %4.2f and fc14 %4.2f',par.fras,fc14));
-    par.c14.alpha_g2dic = (1.01051-1.05*1e-4*par.Temp-1.0)*par.fras*fc14 + 1.0;
-    % par.c14.alpha_g2dic = (1.01051-1.05*1e-4*par.Temp - 1.0)*fc14 + 1.0; 
+    % par.c13.alpha_g2dic = 1.01051-1.05*1e-4*par.Temp(isrf); 
+    disp(sprintf('air-sea fractionation tuned by par.fras = %4.2f',par.fras));
+    par.c13.alpha_g2dic = (1.01051-1.05*1e-4*par.Temp-1.0)*par.fras + 1.0; 
     
     % Air-Sea gas exchange for total C
     vout    = Fsea2air(par, 'CO2');
@@ -231,27 +213,29 @@ function [F,FD,par,C14x,C14xx] = C14_eqn(X, par)
     % biological production. For now we approximate the CO2 at all layers
     % using co2surf. 
     
-    alpha_aq2poc = (-0.017*log(co2) + 1.0034 -1.0)*fc14 + 1.0; % check the unit of co2surf
-    % alpha_dic2poc = ( par.c14.alpha_g2aq ./ par.c14.alpha_g2dic ) .* alpha_aq2poc; 
-    alpha_tmp = ( par.c14.alpha_g2aq ./ par.c14.alpha_g2dic ) .* alpha_aq2poc; 
-    alpha_dic2poc = alpha_tmp(iwet);
-    % alpha_dic2poc = (alpha_tmp(iwet)-1.0)*0.60 + 1.0;
-    % disp(sprintf('photosynthesis fractionation tuned by %4.2f, fc14=%4.2f',par.frpho,par.fc14));
-    alpha_dic2poc = (alpha_tmp(iwet)-1.0)*par.frpho*fc14 + 1.0; 
+    alpha_aq2poc = -0.017*log(co2) + 1.0034; % check the unit of co2surf
+    alpha_tmp = ( par.c13.alpha_g2aq ./ par.c13.alpha_g2dic ) .* alpha_aq2poc; 
+    disp(sprintf('photosynthesis fractionation tuned by par.frpho = %4.2f',par.frpho));
+    alpha_dic2poc = (alpha_tmp(iwet)-1.0)*par.frpho + 1.0;
+    par.c13.alpha_aq2poc  = alpha_aq2poc   ;
+    par.c13.alpha_tmp     = alpha_tmp      ;
+    par.c13.alpha_dic2poc = alpha_dic2poc  ;
 
-    if par.debug14
+    if par.debug13
       disp('Testing fractionation factors')
-      par.c14.alpha_k = 1;%0.99915; % kenetic fractionation factor 
-      par.c14.alpha_g2aq = 1;%0.998764; % gas to water fractionation factor
-      par.c14.alpha_g2dic = 1.01051*0 - 1.05*1e-4*par.Temp*0 + 1;
+      par.c13.alpha_k = 1;%0.99915; % kenetic fractionation factor 
+      par.c13.alpha_g2aq = 1;%0.998764; % gas to water fractionation factor
+      par.c13.alpha_g2dic = 1.01051*0 - 1.05*1e-4*par.Temp*0 + 1;
       alpha_dic2poc = alpha_dic2poc*0 + 1.0; % debug
     end
 	
-    % Air-Sea gas exchange for C14
-    vout  = Fsea2air(par, 'C14');
-    JgDIC14 = vout.JgDIC14;
-    G_dic14 = vout.G_dic14;
-    rhs14 = vout.rhs14;
+    % Air-Sea gas exchange for C13
+    vout  = Fsea2air(par, 'C13');
+    JgDIC13 = vout.JgDIC13;
+    G_dic13 = vout.G_dic13;
+    rhs13 = vout.rhs13;
+    clear vout
+
     % biological DIC uptake operator
     G = uptake_C(par)  ; par.G = G ;
      
@@ -267,82 +251,82 @@ function [F,FD,par,C14x,C14xx] = C14_eqn(X, par)
     eta     =  etau*WM ;
     % eta     = etau*UM + etad*DM ;
 
-    eq1 = TRdiv*DIC14 ...                         % advective-diffusive transport
-          + G*d0(C2P.*alpha_dic2poc)*R14o ...     % removal of dic14 organic c14 production
-          + (1-sigC-gamma)*RR*G*d0(C2P)*R14o  ... % removal of dic14 due to pic14 production
-          - kPIC*PIC14 ....          % dissolution of PIC14
-          - JgDIC14 ...              % air-sea gas exchange
-          + sDICbar*d0(pme)*R14o ... % concentration and dillution due to precip and evaporation
-          - eta*(kC*DOC14) ...       % respiration of DOC14
-          - kappa_r*DOC14r ...       % respiration of DOC14r
-          - kappa_l*DOC14l...        % respiration of DOC14l
-          - kappa_p*POC14 ...        % respiration of POC14
-          + lambda14*DIC14 ;         % decay of DIC14
+    eq1 = TRdiv*DIC13 ...                         % advective-diffusive transport
+          + d0(par.Cnpp(iwet).*alpha_dic2poc)*R13o...     % removal of dic13 organic c13 production
+          + (1-sigC-gamma)*RR*G*d0(C2P)*R13o  ... % removal of dic13 due to pic13 production
+          - kPIC*PIC13 ....          % dissolution of PIC13
+          - JgDIC13 ...              % air-sea gas exchange
+          + sDICbar*d0(pme)*R13o ... % concentration and dillution due to precip and evaporation
+          - eta*(kC*DOC13) ...       % respiration of DOC13
+          - kappa_r*DOC13r ...       % respiration of DOC13r
+          - kappa_l*DOC13l...        % respiration of DOC13l
+          - kappa_p*POC13 ;          % respiration of PCO13
 
-    eq2 = (PFDc+kappa_p*I)*POC14 - (1-sigC-gamma)*G*d0(C2P.*alpha_dic2poc)*R14o + lambda14*POC14;   ; % FPOC
+    eq2 = (PFDc+kappa_p*I)*POC13 - (1-sigC-gamma)*G*d0(C2P.*alpha_dic2poc)*R13o;   ; % FPOC
 
-    eq3 = (TRdiv+kC)*DOC14 - sigC*G*d0(C2P.*alpha_dic2poc)*R14o + lambda14*DOC14 ; % FDOC
+    eq3 = (TRdiv+kC)*DOC13 - sigC*G*d0(C2P.*alpha_dic2poc)*R13o  ; % FDOC
 
-    eq4 = (PFDa + kPIC*I)*PIC14 - (1-sigC-gamma)*RR*G*d0(C2P)*R14o + lambda14*PIC14; % FPIC
+    eq4 = (PFDa + kPIC*I)*PIC13 - (1-sigC-gamma)*RR*G*d0(C2P)*R13o ; % FPIC
 
-    eq5 = (TRdiv+kappa_l*I)*DOC14l - gamma*G*d0(C2P.*alpha_dic2poc)*R14o + lambda14*DOC14l;  % DOCl 
+    eq5 = (TRdiv+kappa_l*I)*DOC13l - d0((par.Cnpp(iwet)-G*C2P).*alpha_dic2poc)*R13o ;  % DOCl 
 
-    eq6 = (TRdiv+kappa_r)*DOC14r - kC*DOC14 + eta*kC*DOC14 + lambda14*DOC14r; % DOCr 
+    eq6 = (TRdiv+kappa_r)*DOC13r - kC*DOC13 + eta*kC*DOC13 ; % DOCr 
 
     F   = [eq1; eq2; eq3; eq4; eq5; eq6];
     
     % construct the LHS matrix for the offline model
     % disp('Preparing LHS and RHS matrix:')
-    % colum 1 dFdDIC14
-    Jc{1,1} = TRdiv + G*d0(C2P.*alpha_dic2poc)*dR14o ...
-              + (1-sigC-gamma)*RR*G*d0(C2P)*dR14o ...
-              - G_dic14 ...
-              + sDICbar*d0(pme)*dR14o + lambda14*I; 
-    Jc{2,1} = - (1-sigC-gamma)*G*d0(C2P.*alpha_dic2poc)*dR14o;
-    Jc{3,1} = - sigC*G*d0(C2P.*alpha_dic2poc)*dR14o; 
-    Jc{4,1} = - (1-sigC-gamma)*RR*G*d0(C2P)*dR14o ;
-    Jc{5,1} = - gamma*G*d0(C2P.*alpha_dic2poc)*dR14o ; 
+    % colum 1 dFdDIC13
+    Jc{1,1} = TRdiv + d0(par.Cnpp(iwet).*alpha_dic2poc)*dR13o ...
+              + (1-sigC-gamma)*RR*G*d0(C2P)*dR13o ...
+              - G_dic13 ...
+              + sDICbar*d0(pme)*dR13o; 
+    Jc{2,1} = - (1-sigC-gamma)*G*d0(C2P.*alpha_dic2poc)*dR13o;
+    Jc{3,1} = - sigC*G*d0(C2P.*alpha_dic2poc)*dR13o; 
+    Jc{4,1} = - (1-sigC-gamma)*RR*G*d0(C2P)*dR13o ;
+    Jc{5,1} = - d0((par.Cnpp(iwet)-G*C2P).*alpha_dic2poc)*dR13o ; 
     Jc{6,1} = 0*I ;
-    % colum 2 dFdPOC14
+    % colum 2 dFdPOC13
     Jc{1,2} = -kappa_p*I ;
-    Jc{2,2} = PFDc + kappa_p*I + lambda14*I;
+    Jc{2,2} = PFDc + kappa_p*I ;
     Jc{3,2} = 0*I ;
     Jc{4,2} = 0*I ;
     Jc{5,2} = 0*I ;
     Jc{6,2} = 0*I ;
-    % colum 3 dFdDOC14
+    % colum 3 dFdDOC13
     Jc{1,3} = -eta*kC ;
     Jc{2,3} = 0*I ;
-    Jc{3,3} = TRdiv + kC + lambda14*I;
+    Jc{3,3} = TRdiv + kC ;
     Jc{4,3} = 0*I ;
     Jc{5,3} = 0*I ;
     Jc{6,3} = -kC*I + eta*kC*I;
-    % colum 4 dFdPIC14
+    % colum 4 dFdPIC13
     Jc{1,4} = -kPIC*I ;
     Jc{2,4} = 0*I ;
     Jc{3,4} = 0*I ;
-    Jc{4,4} = PFDa + kPIC*I + lambda14*I;
+    Jc{4,4} = PFDa + kPIC*I ;
     Jc{5,4} = 0*I ;
     Jc{6,4} = 0*I;
-    % column 5 dFdDOC14l
+    % column 6 dFdDOC13l
     Jc{1,5} = -kappa_l*I ;
     Jc{2,5} = 0*I ;
     Jc{3,5} = 0*I ;
     Jc{4,5} = 0*I ;
-    Jc{5,5} = TRdiv + kappa_l*I + lambda14*I;
+    Jc{5,5} = TRdiv + kappa_l*I ;
     Jc{6,5} = 0*I ;
-    % column 6 dFdDOC14r
+    % column 6 dFdDOC13r
     Jc{1,6} = -kappa_r;
     Jc{2,6} = 0*I ;
     Jc{3,6} = 0*I ;
     Jc{4,6} = 0*I ;
     Jc{5,6} = 0*I ;
-    Jc{6,6} = TRdiv + kappa_r + lambda14*I ;
+    Jc{6,6} = TRdiv + kappa_r ;
     if nargout > 1
       % factorize Jacobian matrix
       FD = mfactor(cell2mat(Jc)) ;
     end 
     
+    %%--------------gradient---------------
     if (par.optim == off)
         Cx = [];
     elseif (par.optim & nargout > 3)

@@ -10,7 +10,7 @@ classdef solveM
     % par.Px    = Px ;  par.Pxx   = Pxx ;
 
     % extract P model solution and pass it to par and data
-    [par,data] = dispSol(P,par,data,Ppool);
+    [par,data] = solveM.dispSol(P,par,data,Ppool);
   end
 
   function [par,data] = eqC(x0,par,data,Cpool)
@@ -45,7 +45,7 @@ classdef solveM
     % Gradient and Hessian
     % par.Cx = Cx ;  par.Cxx = Cxx ;
 
-    [par,data] = dispSol(C,par,data,Cpool);
+    [par,data] = solveM.dispSol(C,par,data,Cpool);
 
     % data.DIC = data.DIC + par.dicant  ;
     % save(PCsol,'data','par','-v7.3');
@@ -65,7 +65,7 @@ classdef solveM
     [par,C13] = eqC13cycle_v2(x0, par);
     
     % distribute C13 solution to par and ata
-    [par,data] = dispSol(C13,par,data,Cpool);
+    [par,data] = solveM.dispSol(C13,par,data,Cpool);
   end
 
   function [par,data] = eqC14(x0,par,data,Cpool)
@@ -82,7 +82,7 @@ classdef solveM
     [par,C14] = eqC14cycle_v2(x0, par);
     
     % distribute C14 solution to par and adta
-    [par,data] = dispSol(C14,par,data,Cpool);
+    [par,data] = solveM.dispSol(C14,par,data,Cpool);
   end
 
  %-------------------solve O2 model -------------------------
@@ -94,7 +94,7 @@ classdef solveM
     [par, O2] = eqOcycle_v2(x0, par) ;
      
     % distribute O2 solution to par and data
-    [par,data] = dispSol(O2,par,data,O2pool);
+    [par,data] = solveM.dispSol(O2,par,data,O2pool);
   end
 
   function [par,data] = dispSol(C,par,data,Cpool)

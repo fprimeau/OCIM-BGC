@@ -16,7 +16,25 @@ function par = SetPar(par)
     % and Gruber book (p.271);
     par.tauPIC = 30*spd ; 
     par.kPIC   = 1/par.tauPIC ;
-    % load optimal parameters if they exist
+
+%-------C13---------
+    % define C13 C14 fractionation factors and ratios in ocean and atmosphere
+    % set up fractionation factors fro C13 and R13
+    %  A. Schmittner et al.: Distribution of carbon isotope ratios (δ13C) in the ocean
+    % 기존 code에는 par.c13.R13a = 0.01116303448. 그러나 출처 모름.
+    % 아래는 -6.5 permil in 1859로 계산한 것. REF: A revised 1000 year atmospheric ı13C-CO2 record from Law Dome and South Pole, Antarctica. JGR Atmosphere, 2013, Rubino et al., doi:10.1002/jgrd.50668, 2013
+    par.c13.R13a = 0.011164158200000;
+    par.c13.alpha_k = 0.99915; % kenetic fractionation factor 
+    par.c13.alpha_g2aq = 0.998764; % gas to water fractionation factor. It negelcts the minor temperature dependency of the isotopic fractionation factor from gaseous to aqueous CO2 (5x10-6 oC). Thus, it is a constant value corresponding to a mean temperature of 15oC.
+
+    %------C14-----------
+    par.c14.fc14 = 1.9 ;  % The fractionation  for 14C is 1.9 times the fractionation for 13C. REF: Reassessment of the 13C/12C and 14C/12C isotopic fractionaion ratio and its impact on high-precision radiocarbon dating, GCA (It can also be tuned.)
+    par.lambda14 = 1/spa*log(2)/5730; % radiocarbon decay rate (yr^(-1) to s^(-1))
+    par.c14.R14a = 1.220805*1e-12 ; %REF 찾기.
+    par.c14.alpha_k    = 1 - (1 - 0.99915)*par.c14.fc14 ; % kenetic fractionation factor
+    par.c14.alpha_g2aq = 1- (1 - 0.998764)*par.c14.fc14 ; % gas to water fractionation factor
+
+        % load optimal parameters if they exist
     if isfile(par.fxhat) & par.LoadOpt == on 
         load(par.fxhat)
     end

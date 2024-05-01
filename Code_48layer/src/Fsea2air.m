@@ -224,14 +224,15 @@ end
 function [co2,k0,Gout] = eqco2(dic,alk,arg1)
 % unpack parameters for co2 system chemistry
     % alk  = arg1.alk   ;
-    salt = arg1.salt  ;
-    temp = arg1.temp  ;
-    pres = arg1.pres  ;
-    si   = arg1.si    ;
-    po4  = arg1.po4   ;
+    salt    = arg1.salt  ;
+    temp    = arg1.temp  ;
+    presin  = arg1.presin  ;
+    presout = arg1.presout ;
+    si      = arg1.si    ;
+    po4     = arg1.po4   ;
     
     % co2 system
-    a = CO2SYS(abs(alk),abs(dic),1,2,salt,temp,temp,pres,pres,si,po4,1,4,1) ;
+    a = CO2SYS(abs(alk),abs(dic),1,2,salt,temp,temp,presin,presout,si,po4,1,4,1) ;
     % concentration of co2 in umol/kg
     co2   = a(:,8)    ;
     % co2 solubility k0 
@@ -240,20 +241,20 @@ function [co2,k0,Gout] = eqco2(dic,alk,arg1)
     
     % gradient d_dic 
     ax = CO2SYS(abs(real(alk)),abs(real(dic))+sqrt(-1)*eps^3,1,2,salt, ...
-                temp,temp,pres,pres,si,po4,1,4,1) ;
+                temp,temp,presin,presout,si,po4,1,4,1) ;
     Gout.g_k0  = imag(ax(:,8)./ax(:,4))/eps^3 ;
     Gout.g_co2 = imag(ax(:,8))/eps^3 ;
     clear a ax 
     
     % d_alk
     ax = CO2SYS(abs(real(alk))+sqrt(-1)*eps^3,abs(real(dic)),1,2,salt, ...
-                temp,temp,pres,pres,si,po4,1,4,1) ;
+                temp,temp,presin,presout,si,po4,1,4,1) ;
     Gout.g_k0_alk  = imag(ax(:,8)./ax(:,4))/eps^3 ;
     Gout.g_co2_alk = imag(ax(:,8))/eps^3 ;
     
     if (nargout>3)
         a = CO2SYS(alk,abs(real(dic))+sqrt(-1)*eps^3,1,2,salt,temp, ...
-                   temp,pres,pres,si,po4,1,4,1);
+                   temp,presin,presout,si,po4,1,4,1);
         R      = a(:,14)     ;
         tmp    = R.*co2./dic ;
         gg_co2 = imag(tmp)./eps^3 ;

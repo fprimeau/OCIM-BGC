@@ -57,8 +57,8 @@ function [f,J,par] = C12eqn(X, par)
     par.C2P = C2P  ;
 
     % particle flux div_rergence [s^-1];
-    PFDa = buildPFD(par, 'PIC') ;
-    PFDc = buildPFD(par, 'POC') ;
+    PFDa = buildPFD_48layer(par, 'PIC') ;
+    PFDc = buildPFD_48layer(par, 'POC') ;
     par.PFDa = PFDa ;
     par.PFDc = PFDc ;
     par.DIC  = DIC  ;
