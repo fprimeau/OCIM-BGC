@@ -11,6 +11,7 @@ slurm.*
 *.log
 *.err
 *.mat
+*.hdf
 *~
 OutputData90/
 OutputData91/
