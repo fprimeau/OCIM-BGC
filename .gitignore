@@ -12,7 +12,6 @@ slurm.*
 *.err
 *.mat
 *~
-run_slurm.sh
 Observation_rawdata/
 Transport_Operator
 Code_48layer/debug_log/
@@ -26,3 +25,4 @@ Code_24layer/
 Code_Merge/
 *.xlsx
 *.out
+
