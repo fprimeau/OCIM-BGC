@@ -39,13 +39,13 @@ function [f, fx, fxx, data] = neglogpost(x, par)
     var  = sum(Wp*(par.dopraw(iwet(idop))-mu).^2)/sum(diag(Wp)) ;
     Wop  = par.dopscale*Wp/var ;
     %
-    tic 
+    %tic 
     [par, P, Px, Pxx] = eqPcycle(x, par) ;
     DIP  = M3d+nan  ;  DIP(iwet)  = P(1+0*nwet:1*nwet) ;
     POP  = M3d+nan  ;  POP(iwet)  = P(1+1*nwet:2*nwet) ;
     DOP  = M3d+nan  ;  DOP(iwet)  = P(1+2*nwet:3*nwet) ;
     DOPl = M3d+nan  ;  DOPl(iwet) = P(1+2*nwet:3*nwet) ;
-    toc 
+    %toc 
     par.Px   = Px  ;
     par.Pxx  = Pxx ;
     par.DIP  = DIP(iwet) ;
@@ -95,7 +95,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
         mu   = sum(Woc*par.docraw(iwet(idoc)))/sum(diag(Woc)) ;
         var  = sum(Woc*(par.docraw(iwet(idoc))-mu).^2)/sum(diag(Woc));
         Woc  = par.docscale*Woc/var ;
-        tic 
+        %tic 
         [par, C, Cx, Cxx] = eqCcycle_v2(x, par) ;
         DIC  = M3d+nan ;  DIC(iwet)  = C(0*nwet+1:1*nwet) ;
         POC  = M3d+nan ;  POC(iwet)  = C(1*nwet+1:2*nwet) ;
@@ -104,7 +104,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
         ALK  = M3d+nan ;  ALK(iwet)  = C(4*nwet+1:5*nwet) ;
         DOCl = M3d+nan ;  DOCl(iwet) = C(5*nwet+1:6*nwet) ;
         DOCr = M3d+nan ;  DOCr(iwet) = C(6*nwet+1:7*nwet) ;
-        toc
+       % toc
 
         par.DIC = DIC(iwet) ;
         par.POC = POC(iwet) ;
@@ -126,12 +126,7 @@ function [f, fx, fxx, data] = neglogpost(x, par)
               0.5*(elk.'*Wlk*elk);
     end
     %%%%%%%%%%%%%%%%%%   End Solve C    %%%%%%%%%%%%%%%%%%%
-    
-    if mod(iter, 1) == 0
-        save(par.fxCresults, 'data')
-	save(par.fxpar, 'par', '-v7.3')
-    end
-    
+      
     %%%%%%%%%%%%%%%%%%   Solve O    %%%%%%%%%%%%%%%%%%%%%%%%
     if (par.Omodel == on)
         io2 = find(par.o2raw(iwet)>0) ;
@@ -140,9 +135,9 @@ function [f, fx, fxx, data] = neglogpost(x, par)
         var = sum(Wo*(par.o2raw(iwet(io2))-mu).^2)/sum(diag(Wo)) ;
         Wo  = par.o2scale*Wo/var ;
         %
-        tic 
+       % tic 
         [par, O, Ox, Oxx] = eqOcycle_v2(x, par) ;
-        toc 
+       % toc 
         O2 = M3d+nan ;  O2(iwet) = O ;
         data.O2 = O2 ;
         eo = O2(iwet(io2)) - par.o2raw(iwet(io2)) ;

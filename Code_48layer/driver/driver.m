@@ -25,6 +25,7 @@ par.optim   = on ;
 par.Cmodel  = on ; 
 par.Omodel  = on ; 
 par.Simodel = off ;
+par.Cisotope  = on  ;
 par.LoadOpt = on ; % if load optimial par. 
 
 par.dopscale = 0.0 ;
@@ -110,11 +111,9 @@ end
 par.fname = strcat(fname,'.mat') ; 
 fxhat     = strcat(fname,'_xhat.mat');
 fxpar     = strcat(fname,'_par.mat');
-fxCresults = strcat(fname, '_C_results.mat');
 
 par.fxhat = fxhat ;
 par.fxpar = fxpar ;
-par.fxCresults = fxCresults; 
 
 % -------------------update initial guesses --------------
 if isfile(par.fname)

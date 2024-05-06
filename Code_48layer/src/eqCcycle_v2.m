@@ -114,19 +114,10 @@ function [par, C, Cx, Cxx] = eqCcycle_v2(x, par)
         Cxx  = sparse(7*par.nwet, nchoosek(nx,2)+nx) ;
         [par.G,par.Gx,par.Gxx] = uptake_C(par) ;
         [F,FD,par] = C_eqn(C, par);
-    elseif (ierr == 0 & par.optim == on)
-        % reset the global variable for the next call eqCcycle
+    else
+        fprintf('reset the global variable for the next call eqCycle. \n')
         GC = real(C) + 1e-8*randn(7*nwet,1) ;
-        X0 = GC;
-        F = C_eqn(C, par) ;
-        % test if norm of F small enough, if now rerun nsnew;
-        if (norm(F) > 1e-12)         
-            [C,ierr] = nsnew(X0,@(X) C_eqn(X, par),options);
-        end 
-        %
-        if nargout > 3
-            [F,FD,par,Cx,Cxx] = C_eqn(C, par);
-        end 
+        [F,FD,par,Cx,Cxx] = C_eqn(C, par);
     end
 end
 
@@ -298,8 +289,8 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
 	toc
     end 
     
-    %fprintf('Compute the gradient of the solution wrt parameters ...\n')
-    
+    fprintf('Compute the gradient of the solution wrt parameters ...\n')
+    tic
     if (par.optim == off)
         Cx = [];
     elseif (par.optim & nargout > 2)
@@ -323,7 +314,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    d0(-Gx(:,pindx.lsigP))*C2P; ...
                    Z] ;
             
-            Cx(:,pindx.lsigP) = mfactor(FD, tmp)  ;
+            RHS(:,pindx.lsigP) = tmp  ;
         end
 
         % Q10P
@@ -336,7 +327,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    d0(-Gx(:,pindx.lQ10P))*C2P; ...
                    Z];
             
-            Cx(:,pindx.lQ10P) = mfactor(FD, tmp);
+            RHS(:,pindx.lQ10P) =  tmp ;
         end
         
         % kdP
@@ -349,7 +340,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    -d0(Gx(:,pindx.lkdP))*C2P; ...
                    Z];
             
-            Cx(:,pindx.lkdP) = mfactor(FD, tmp);
+            RHS(:,pindx.lkdP) = tmp;
         end
         
         % bP_T
@@ -362,7 +353,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    -d0(Gx(:,pindx.bP_T))*C2P; ...
                    Z];
             
-            Cx(:,pindx.bP_T) = mfactor(FD, tmp);
+            RHS(:,pindx.bP_T) = tmp;
         end
         
         % bP
@@ -375,7 +366,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    -d0(Gx(:,pindx.lbP))*C2P; ...
                    Z];
             
-            Cx(:,pindx.lbP) = mfactor(FD, tmp);
+            RHS(:,pindx.lbP) = tmp;
         end
         
         % alpha
@@ -388,7 +379,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    -d0(Gx(:,pindx.lalpha))*C2P; ...
                    Z];
             
-            Cx(:,pindx.lalpha) = mfactor(FD, tmp);
+            RHS(:,pindx.lalpha) = tmp;
         end
         
         % beta
@@ -401,7 +392,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    -d0(Gx(:,pindx.lbeta))*C2P; ...
                    Z];
             
-            Cx(:,pindx.lbeta) = mfactor(FD, tmp);
+            RHS(:,pindx.lbeta) = tmp;
         end
         % -------------------- C parameters ------------------
         % sigC
@@ -414,20 +405,20 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z] ;
             
-            Cx(:,pindx.lsigC) = mfactor(FD, tmp);
+            RHS(:,pindx.lsigC) = tmp;
         end
         % kru 
         if (par.opt_kru == on)
             tmp = kru*[UM*DOCr; Z; Z; Z; -N2C*UM*DOCr; Z; -UM*DOCr];
             
-            Cx(:,pindx.lkru) = mfactor(FD, tmp);
+            RHS(:,pindx.lkru) = tmp;
         end
         
         % krd 
         if (par.opt_krd == on)
             tmp = krd*[DM*DOCr; Z; Z; Z; -N2C*DM*DOCr; Z; -DM*DOCr];
             
-            Cx(:,pindx.lkrd) = mfactor(FD, tmp);
+            RHS(:,pindx.lkrd) = tmp;
         end
 
         % etau 
@@ -440,7 +431,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -etau*WM*(kC*DOC)];
             
-            Cx(:,pindx.letau) = mfactor(FD, tmp);
+            RHS(:,pindx.letau) = tmp;
         end
 
         % etad 
@@ -453,7 +444,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -etad*DM*(kC*DOC)];
             
-            Cx(:,pindx.letad) = mfactor(FD, tmp);
+            RHS(:,pindx.letad) = tmp;
         end
 
         % bC_T
@@ -463,7 +454,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
             par.PFD_bm = PFD_bm;
             tmp = [Z; -PFD_bm*POC; Z;  Z; Z; Z; Z];
             
-            Cx(:,pindx.bC_T) = mfactor(FD, tmp);
+            RHS(:,pindx.bC_T) = tmp;
         end
         
         % bC
@@ -473,7 +464,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
             par.PFD_bb = PFD_bb;
             tmp = bC*[Z; -PFD_bb*POC; Z; Z; Z; Z; Z];
             
-            Cx(:,pindx.lbC) = mfactor(FD, tmp);
+            RHS(:,pindx.lbC) = tmp;
         end
 
         % d
@@ -483,7 +474,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
             par.PFD_d = PFD_d;
             tmp = d*[Z; Z; Z; -PFD_d*PIC; Z; Z; Z];
             
-            Cx(:,pindx.ld) = mfactor(FD, tmp);
+            RHS(:,pindx.ld) = tmp;
         end
 
         % Q10C
@@ -498,7 +489,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    (I-eta)*d0(kC_Q10C)*DOC];
             
-            Cx(:,pindx.lQ10C) = mfactor(FD, tmp);
+            RHS(:,pindx.lQ10C) = tmp;
         end
         
         % kdC
@@ -513,7 +504,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    (I-eta)*kC_kdC*DOC];
             
-            Cx(:,pindx.lkdC) = mfactor(FD, tmp);
+            RHS(:,pindx.lkdC) = tmp;
         end
 
         % R_Si
@@ -526,7 +517,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    Z ];
             
-            Cx(:,pindx.R_Si) = mfactor(FD, tmp);
+            RHS(:,pindx.R_Si) = tmp;
         end
         
         % rR
@@ -539,7 +530,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    Z];
             
-            Cx(:,pindx.lrR) = mfactor(FD, tmp);
+            RHS(:,pindx.lrR) = tmp;
         end
         
         % cc
@@ -552,7 +543,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                       -G*C2P_cc; ...
                       Z];
             
-            Cx(:,pindx.lcc) = mfactor(FD, tmp);
+            RHS(:,pindx.lcc) = tmp;
         end
         
         % dd
@@ -565,13 +556,14 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                       -G*C2P_dd; ...
                       Z];
             
-            Cx(:,pindx.ldd) = mfactor(FD, tmp);
+            RHS(:,pindx.ldd) = tmp;
         end
+        Cx = mfactor(FD, RHS);
     end
-    
+    toc
 
-    %fprintf('Compute the hessian of the solution wrt the parameters ...\n')
-    
+    fprintf('Compute the hessian of the solution wrt the parameters ...\n')
+    tic
     if (par.optim == off)
         Cxx = [];
     elseif (par.optim & nargout > 3);
@@ -606,7 +598,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                        -d0(Gxx(:,kk))*C2P; ...
                        Z];
                 
-                Cxx(:,kk) = mfactor(FD, tmp);
+                RHS(:,kk) = tmp;
             end 
         end
         
@@ -623,7 +615,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
 	           Z] ;
             
-	    Cxx(:,kk) = mfactor(FD, tmp);
+	    RHS(:,kk) = tmp;
         end
         
         % sigP kru
@@ -637,7 +629,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -kru*UM*DOCrx(:,pindx.lsigP)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % sigP krd
@@ -651,7 +643,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -krd*DM*DOCrx(:,pindx.lsigP)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % sigP etau
@@ -665,7 +657,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -etau*WM*kC*DOCx(:,pindx.lsigP)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % sigP etad
@@ -679,7 +671,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -etad*DM*kC*DOCx(:,pindx.lsigP)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % sigP bC_T
@@ -693,7 +685,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                     Z; ...
                     Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % sigP bC
@@ -707,7 +699,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                     Z ; ...
                     Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % sigP d
@@ -721,7 +713,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % sigP Q10C
@@ -735,7 +727,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    (I-eta)*d0(kC_Q10C)*DOCx(:,pindx.lsigP)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % sigP kdC
@@ -749,7 +741,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    (I-eta)*kC_kdC*DOCx(:,pindx.lsigP)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % sigP R_Si
@@ -763,7 +755,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % sigP rR
@@ -777,7 +769,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % sigP cc
@@ -791,7 +783,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                       -d0(Gx(:,pindx.lsigP))*C2P_cc; ...
                       Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % sigP dd
@@ -805,7 +797,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                       -d0(Gx(:,pindx.lsigP))*C2P_dd; ...
                       Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % Q10P sigC
@@ -819,7 +811,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % Q10P kru
@@ -833,7 +825,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -kru*UM*DOCrx(:,pindx.lQ10P)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % Q10P krd
@@ -847,7 +839,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -krd*DM*DOCrx(:,pindx.lQ10P)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % Q10P etau
@@ -861,7 +853,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -etau*WM*kC*DOCx(:,pindx.lQ10P)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % Q10P etad
@@ -875,7 +867,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -etad*DM*kC*DOCx(:,pindx.lQ10P)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % Q10P bC_T
@@ -889,7 +881,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % Q10P bC
@@ -903,7 +895,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z ];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % Q10P d
@@ -917,7 +909,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % Q10P Q10C
@@ -931,7 +923,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    (I-eta)*d0(kC_Q10C)*DOCx(:,pindx.lQ10P)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % Q10P kdC
@@ -945,7 +937,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    (I-eta)*kC_kdC*DOCx(:,pindx.lQ10P)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % Q10P R_Si
@@ -959,7 +951,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % Q10P RR_rR
@@ -973,7 +965,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % Q10P cc
@@ -987,7 +979,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                       -d0(Gx(:,pindx.lQ10P))*C2P_cc; ...
                       Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % Q10P dd
@@ -1001,7 +993,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                       -d0(Gx(:,pindx.lQ10P))*C2P_dd; ...
                       Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % kdP sigC
@@ -1015,7 +1007,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % kdP kru
@@ -1029,7 +1021,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -kru*UM*DOCrx(:,pindx.lkdP)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % kdP krd
@@ -1043,7 +1035,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -krd*DM*DOCrx(:,pindx.lkdP)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % kdP etau
@@ -1057,7 +1049,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -etau*WM*kC*DOCx(:,pindx.lkdP)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % kdP etad
@@ -1071,7 +1063,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -etad*DM*kC*DOCx(:,pindx.lkdP)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % kdP bC_T
@@ -1085,7 +1077,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                     Z ; ...
                     Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % kdP bC
@@ -1099,7 +1091,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % kdP d
@@ -1113,7 +1105,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % kdP Q10C
@@ -1127,7 +1119,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    (I-eta)*d0(kC_Q10C)*DOCx(:,pindx.lkdP)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % kdP kdC
@@ -1141,7 +1133,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    (I-eta)*kC_kdC*DOCx(:,pindx.lkdP)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % kdP R_Si
@@ -1155,7 +1147,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % kdP rR
@@ -1169,7 +1161,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % kdP cc
@@ -1183,7 +1175,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                       -d0(Gx(:,pindx.lkdP))*C2P_cc; ...
                       Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % kdP dd
@@ -1197,7 +1189,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                       -d0(Gx(:,pindx.lkdP))*C2P_dd; ...
                       Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % bP_T sigC
@@ -1211,7 +1203,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % bP_T kru
@@ -1225,7 +1217,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -kru*UM*DOCrx(:,pindx.bP_T)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % bP_T krd
@@ -1239,7 +1231,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -krd*DM*DOCrx(:,pindx.bP_T)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % bP_T etau
@@ -1253,7 +1245,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -etau*WM*kC*DOCx(:,pindx.bP_T)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % bP_T etad
@@ -1267,7 +1259,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -etad*DM*kC*DOCx(:,pindx.bP_T)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % bP_T bC_T
@@ -1281,7 +1273,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % bP_T bC
@@ -1295,7 +1287,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % bP_T d
@@ -1309,7 +1301,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % bP_T Q10C
@@ -1323,7 +1315,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    (I-eta)*d0(kC_Q10C)*DOCx(:,pindx.bP_T)];
                    
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % bP_T kdC
@@ -1337,7 +1329,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    (I-eta)*kC_kdC*DOCx(:,pindx.bP_T)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % bP_T R_Si
@@ -1351,7 +1343,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % bP_T rR
@@ -1365,7 +1357,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % bP_T cc
@@ -1379,7 +1371,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                       -d0(Gx(:,pindx.bP_T))*C2P_cc; ...
                       Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % bP_T dd
@@ -1393,7 +1385,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                       -d0(Gx(:,pindx.bP_T))*C2P_dd; ...
                       Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % bP sigC
@@ -1407,7 +1399,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % bP kru
@@ -1421,7 +1413,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -kru*UM*DOCrx(:,pindx.lbP)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % bP krd
@@ -1435,7 +1427,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -krd*DM*DOCrx(:,pindx.lbP)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % bP etau
@@ -1449,7 +1441,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -etau*WM*kC*DOCx(:,pindx.lbP)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % bP etad
@@ -1463,7 +1455,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -etad*DM*kC*DOCx(:,pindx.lbP)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % bP bC_T
@@ -1477,7 +1469,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % bP bC
@@ -1491,7 +1483,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % bP d
@@ -1505,7 +1497,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % bP Q10C
@@ -1519,7 +1511,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    (I-eta)*d0(kC_Q10C)*DOCx(:,pindx.lbP)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % bP kdC
@@ -1533,7 +1525,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    (I-eta)*kC_kdC*DOCx(:,pindx.lbP)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % bP R_Si
@@ -1547,7 +1539,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % bP rR
@@ -1561,7 +1553,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % bP cc
@@ -1575,7 +1567,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                       -d0(Gx(:,pindx.lbP))*C2P_cc;...
                       Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % bP dd
@@ -1589,7 +1581,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                       -d0(Gx(:,pindx.lbP))*C2P_dd;...
                       Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % alpha sigC
@@ -1603,7 +1595,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
           
         % alpha kru
@@ -1617,7 +1609,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -kru*UM*DOCrx(:,pindx.lalpha)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % alpha krd
@@ -1631,7 +1623,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -krd*DM*DOCrx(:,pindx.lalpha)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % alpha etau
@@ -1645,7 +1637,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -etau*WM*kC*DOCx(:,pindx.lalpha)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % alpha etad
@@ -1659,7 +1651,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -etad*DM*kC*DOCx(:,pindx.lalpha)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % alpha bC_T
@@ -1673,7 +1665,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % alpha bC
@@ -1687,7 +1679,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % alpha d
@@ -1701,7 +1693,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % alpha Q10C
@@ -1715,7 +1707,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    (I-eta)*d0(kC_Q10C)*DOCx(:,pindx.lalpha)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % alpha kdC
@@ -1729,7 +1721,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    (I-eta)*kC_kdC*DOCx(:,pindx.lalpha);];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % alpha R_Si
@@ -1743,7 +1735,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % alpha rR
@@ -1757,7 +1749,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % alpha cc
@@ -1771,7 +1763,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                       -d0(Gx(:,pindx.lalpha))*C2P_cc; ...
                       Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % alpha dd
@@ -1785,7 +1777,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                       -d0(Gx(:,pindx.lalpha))*C2P_dd; ...
                       Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % beta sigC
@@ -1799,7 +1791,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % beta kru
@@ -1813,7 +1805,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -kru*UM*DOCrx(:,pindx.lbeta)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % beta krd
@@ -1827,7 +1819,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -krd*DM*DOCrx(:,pindx.lbeta)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % beta etau
@@ -1841,7 +1833,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -etau*WM*kC*DOCx(:,pindx.lbeta)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % beta etad
@@ -1855,7 +1847,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -etad*DM*kC*DOCx(:,pindx.lbeta)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % beta bC_T
@@ -1869,7 +1861,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % beta bC
@@ -1883,7 +1875,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % beta d
@@ -1897,7 +1889,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % beta Q10C
@@ -1911,7 +1903,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    (I-eta)*d0(kC_Q10C)*DOCx(:,pindx.lbeta)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % beta kdC
@@ -1925,7 +1917,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    (I-eta)*kC_kdC*DOCx(:,pindx.lbeta)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % beta R_Si
@@ -1939,7 +1931,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % beta rR
@@ -1953,7 +1945,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % beta cc
@@ -1967,7 +1959,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                       -d0(Gx(:,pindx.lbeta))*C2P_cc; ...
                       Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % beta dd
@@ -1981,7 +1973,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                       -d0(Gx(:,pindx.lbeta))*C2P_dd; ...
                       Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % C model only parameters
@@ -1996,7 +1988,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % sigC kru
@@ -2010,7 +2002,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                        Z; ...
                        -UM*DOCrx(:,pindx.lsigC)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % sigC krd
@@ -2024,7 +2016,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                        Z; ...
                        -DM*DOCrx(:,pindx.lsigC)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % sigC etau
@@ -2038,7 +2030,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -etau*WM*(kC*DOCx(:,pindx.lsigC))];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % sigC etad
@@ -2052,7 +2044,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -etad*DM*(kC*DOCx(:,pindx.lsigC))];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % sigC bC_T
@@ -2060,7 +2052,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
             kk = kk + 1;
             tmp = [Z; -PFD_bm*POCx(:,pindx.lsigC); Z;  Z; Z; Z; Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % sigC bC
@@ -2068,7 +2060,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
             kk = kk + 1;
             tmp = bC*[Z; -PFD_bb*POCx(:,pindx.lsigC); Z;  Z; Z; Z; Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % sigC d
@@ -2076,7 +2068,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
             kk = kk + 1;
             tmp = d*[Z; Z; Z; -PFD_d*PICx(:,pindx.lsigC); Z; Z; Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end 
         % sigC Q10C
         if (par.opt_sigC & par.opt_Q10C == on)
@@ -2089,7 +2081,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    (I-eta)*d0(kC_Q10C)*DOCx(:,pindx.lsigC)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % sigC kdC
@@ -2103,7 +2095,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    (I-eta)*kC_kdC*DOCx(:,pindx.lsigC)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % sigC R_Si
@@ -2117,7 +2109,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    Z ];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % sigC rR
@@ -2131,7 +2123,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % sigC cc
@@ -2145,7 +2137,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                       Z ; ...
                       Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % sigC dd
@@ -2159,7 +2151,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                       Z ; ...
                       Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % kru kru
@@ -2180,7 +2172,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    -2*kru*UM*DOCrx(:,pindx.lkru)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % kru krd
@@ -2201,7 +2193,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    -krd*DM*DOCrx(:,pindx.lkru)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % kru etau
@@ -2222,7 +2214,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -etau*WM*kC*DOCx(:,pindx.lkru)] ; 
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % kru etad
@@ -2243,7 +2235,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -etad*DM*kC*DOCx(:,pindx.lkru)] ; 
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % kru bC_T
@@ -2264,7 +2256,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z ] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % kru bC
@@ -2285,7 +2277,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z ] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % kru d
@@ -2306,7 +2298,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z ] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % kru Q10C
@@ -2327,7 +2319,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    (I-eta)*d0(kC_Q10C)*DOCx(:,pindx.lkru)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % kru kdC
@@ -2348,7 +2340,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    (I-eta)*kC_kdC*DOCx(:,pindx.lkru)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % kru R_Si
@@ -2362,7 +2354,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    -kru*UM*DOCrx(:,pindx.R_Si)] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % kru rR
@@ -2376,7 +2368,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    -kru*UM*DOCrx(:,pindx.lrR)] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % kru cc
@@ -2390,7 +2382,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    -kru*UM*DOCrx(:,pindx.lcc)] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % kru dd 
@@ -2404,7 +2396,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    -kru*UM*DOCrx(:,pindx.ldd)] ;
 
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % krd krd
@@ -2425,7 +2417,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    -2*krd*DM*DOCrx(:,pindx.lkrd)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % krd etau
@@ -2446,7 +2438,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -etau*WM*kC*DOCx(:,pindx.lkrd)] ; 
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % krd etad
@@ -2467,7 +2459,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    -etad*DM*kC*DOCx(:,pindx.lkrd)] ; 
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % krd bC_T
@@ -2488,7 +2480,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z ] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % krd bC
@@ -2509,7 +2501,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z ] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % krd d
@@ -2530,7 +2522,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z ] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % krd Q10C
@@ -2551,7 +2543,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    (I-eta)*d0(kC_Q10C)*DOCx(:,pindx.lkrd)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % krd kdC
@@ -2572,7 +2564,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z; ...
                    (I-eta)*kC_kdC*DOCx(:,pindx.lkrd)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % krd R_Si
@@ -2586,7 +2578,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    -krd*DM*DOCrx(:,pindx.R_Si)] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % krd rR
@@ -2600,7 +2592,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    -krd*DM*DOCrx(:,pindx.lrR)] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % krd cc
@@ -2614,7 +2606,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    -krd*DM*DOCrx(:,pindx.lcc)] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % krd dd 
@@ -2628,7 +2620,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    -krd*DM*DOCrx(:,pindx.ldd)] ;
 
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         %%%%%%
@@ -2650,7 +2642,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    2*etau*WM*kC*DOCx(:,pindx.letau)];;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % etau etad
@@ -2671,7 +2663,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    etad*DM*kC*DOCx(:,pindx.letau)];;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % etau bC_T
@@ -2692,7 +2684,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z ] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % etau bC
@@ -2713,7 +2705,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z ] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % etau d
@@ -2734,7 +2726,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z ] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % etau Q10C
@@ -2762,7 +2754,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    (I-eta)*d0(kC_Q10C)*DOCx(:,pindx.letau)] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % etau kdC
@@ -2790,7 +2782,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    (I-eta)*kC_kdC*DOCx(:,pindx.letau)] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % etau R_Si
@@ -2804,7 +2796,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    -etau*WM*kC*DOCx(:,pindx.R_Si)] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % etau rR
@@ -2818,7 +2810,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    -etau*WM*kC*DOCx(:,pindx.lrR)] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % etau cc
@@ -2832,7 +2824,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    -etau*WM*kC*DOCx(:,pindx.lcc)] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % etau dd 
@@ -2846,7 +2838,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    -etau*WM*kC*DOCx(:,pindx.ldd)] ;
 
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         %%%%%%
@@ -2868,7 +2860,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    2*etad*DM*kC*DOCx(:,pindx.letad)];;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % etad bC_T
@@ -2889,7 +2881,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z ] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % etad bC
@@ -2910,7 +2902,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z ] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % etad d
@@ -2931,7 +2923,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z ] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % etad Q10C
@@ -2959,7 +2951,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    (I-eta)*d0(kC_Q10C)*DOCx(:,pindx.letad)] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % etad kdC
@@ -2987,7 +2979,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    (I-eta)*kC_kdC*DOCx(:,pindx.letad)] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % etad R_Si
@@ -3001,7 +2993,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    -etad*DM*kC*DOCx(:,pindx.R_Si)] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % etad rR
@@ -3015,7 +3007,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    -etad*DM*kC*DOCx(:,pindx.lrR)] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % etad cc
@@ -3029,7 +3021,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    -etad*DM*kC*DOCx(:,pindx.lcc)] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % etad dd 
@@ -3043,7 +3035,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    -etad*DM*kC*DOCx(:,pindx.ldd)] ;
 
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         %%%%%%
@@ -3061,7 +3053,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % bC_T bC
@@ -3080,7 +3072,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                     Z ; ...
                     Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % bC_T d
@@ -3094,7 +3086,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % bC_T Q10C
@@ -3108,7 +3100,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    (I-eta)*d0(kC_Q10C)*DOCx(:,pindx.bC_T)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % bC_T kdC
@@ -3122,7 +3114,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ;
                    (I-eta)*kC_kdC*DOCx(:,pindx.bC_T)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % bC_T R_Si
@@ -3136,7 +3128,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % bC_T rR
@@ -3150,7 +3142,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % bC_T cc
@@ -3164,7 +3156,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % bC_T dd
@@ -3178,7 +3170,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         %%%%%%
@@ -3197,7 +3189,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                       Z ; ...
                       Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % bC d
@@ -3211,7 +3203,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % bC Q10C
@@ -3225,7 +3217,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    (I-eta)*d0(kC_Q10C)*DOCx(:,pindx.lbC)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % bC kdC
@@ -3239,7 +3231,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    (I-eta)*kC_kdC*DOCx(:,pindx.lbC)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % bC R_Si
@@ -3253,7 +3245,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                       Z ; ...
                       Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % bC rR
@@ -3267,7 +3259,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                       Z ; ...
                       Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % bC cc
@@ -3281,7 +3273,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                       Z ; ...
                       Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end 
         
         % bC dd
@@ -3295,7 +3287,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                       Z ; ...
                       Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         %%%%%%
@@ -3314,7 +3306,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                      Z ; ...
                      Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % d Q10C
@@ -3328,7 +3320,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                        Z ; ...
                        (I-eta)*d0(kC_Q10C)*DOCx(:,pindx.ld)];
                     
-                Cxx(:,kk) = mfactor(FD, tmp);
+                RHS(:,kk) = tmp;
         end
         
         % d kdC
@@ -3342,7 +3334,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    (I-eta)*kC_kdC*DOCx(:,pindx.ld)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % d R_Si
@@ -3356,7 +3348,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % d rR
@@ -3370,7 +3362,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % d cc
@@ -3384,7 +3376,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % d dd
@@ -3398,7 +3390,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         %%%%%%
@@ -3422,7 +3414,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    (I-eta)*d0(kC_Q10C_Q10C)*DOC];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % Q10C kdC
@@ -3452,7 +3444,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    (I-eta)*d0(kC_kdC_Q10C)*DOC];
 
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % Q10C R_Si
@@ -3466,7 +3458,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    (I-eta)*d0(kC_Q10C)*DOCx(:,pindx.R_Si)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % Q10C rR
@@ -3480,7 +3472,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    (I-eta)*d0(kC_Q10C)*DOCx(:,pindx.lrR)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % Q10C cc
@@ -3494,7 +3486,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    (I-eta)*d0(kC_Q10C)*DOCx(:,pindx.lcc)] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % Q10C dd
@@ -3508,7 +3500,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    (I-eta)*d0(kC_Q10C)*DOCx(:,pindx.ldd)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         %%%%%%
@@ -3532,7 +3524,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    2*(I-eta)*kC_kdC*DOCx(:,pindx.lkdC)];;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % kdC R_Si
@@ -3546,7 +3538,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    (I-eta)*kC_kdC*DOCx(:,pindx.R_Si)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % kdC rR
@@ -3560,7 +3552,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    (I-eta)*kC_kdC*DOCx(:,pindx.lrR)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % kdC cc
@@ -3574,7 +3566,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    (I-eta)*kC_kdC*DOCx(:,pindx.lcc)] ;
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % kdC dd
@@ -3588,7 +3580,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    (I-eta)*kC_kdC*DOCx(:,pindx.ldd)];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         %%%%%%
@@ -3597,7 +3589,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
             kk = kk + 1;
             tmp = [Z ; Z ; Z ; Z ; Z; Z; Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
 
         % R_Si rR
@@ -3605,7 +3597,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
             kk = kk + 1;
             tmp = [Z; Z; Z; Z; Z; Z; Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % R_Si cc
@@ -3619,7 +3611,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % R_Si dd
@@ -3633,7 +3625,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % rR rR
@@ -3647,7 +3639,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % rR cc
@@ -3661,7 +3653,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % rR dd
@@ -3675,7 +3667,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                    Z ; ...
                    Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         %%%%%%%
@@ -3690,7 +3682,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                       -G*(C2P_cc+cc*C2P_cc_cc); ...
                       Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % cc dd
@@ -3704,7 +3696,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                          -G*C2P_cc_dd; ...
                          Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
         
         % dd dd
@@ -3718,10 +3710,11 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
                       -G*(C2P_dd+dd*C2P_dd_dd); ...
                       Z];
             
-            Cxx(:,kk) = mfactor(FD, tmp);
+            RHS(:,kk) = tmp;
         end
+        Cxx = mfactor(FD, RHS);
     end
-    
+    toc
 end
 
 

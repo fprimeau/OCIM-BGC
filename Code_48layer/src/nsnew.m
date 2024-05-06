@@ -155,6 +155,7 @@ while(fnrm > stop_tol & itc < maxit)
             end
             sol = xold;
             ierr = 2;
+            disp('Failure in the line search. Too many steplength reductions are taken.');
             return
         end
     end
@@ -173,6 +174,7 @@ sol = x;
 % on failure, set the error flag
 if (fnrm>stop_tol|isnan(fnrm))
     ierr = 1;
+    disp('Termination criterion is not satsified (do not decreased to tolerance)');
 end
 
 function [step,iarm,xp,fp,armflag] = armijo(direction,x,f0,f,maxarm)

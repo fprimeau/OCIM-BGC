@@ -32,15 +32,12 @@ function [par, O2, Ox, Oxx] = eqOcycle_v2(x, par)
             Oxx = sparse(par.nwet, nchoosek(nx,2)+nx) ;
         else
             fprintf('Using the time stepping method for initial O2 ...\n')
-	          tic
-	         [O2tstep, O2integral, O2mean, par] = O2_tstep(X0, par) ;
-            par.O2tstep    = O2tstep;
-            par.O2integral = O2integral;
-            par.O2mean     = O2mean;
-	         toc
-	         nsteps = size(O2tstep, 2) ;
-            dsteps = 10 ;            % can adjust for choosing initial O2 results
-            %
+            tic
+	         [~, ~, ~, ~, O2tstep] = O_eqn(X0, par) ;
+            toc
+            nsteps = size(O2tstep, 2) ;
+            dsteps = 4 ;            % can adjust for choosing initial O2 results
+            
             for n = 1 : dsteps;
 		         current_step = round(nsteps*(n/dsteps)) ;
 		         fprintf('Used O2(:,:,:,%d) for initial O2 field of nsnew ...\n', current_step)
@@ -48,9 +45,10 @@ function [par, O2, Ox, Oxx] = eqOcycle_v2(x, par)
                [O2, ierr] = nsnew(current_O2, @(X) O_eqn(X, par), options);
 		         %
 		         if (ierr == 0)
-	               % reset the global variable for the next call eqOcycle
-		            fprintf('Time stepping method works for estimating inital values and the O2 model converged.\n')
-	               GO = real(O2) + 1e-7*randn(par.nwet,1) ;
+	               fprintf('Time stepping method works for estimating inital values and the O2 model converged.\n')
+
+                  fprintf('reset the global variable for the next call eqOcycle. \n')
+                  GO = real(O2) + 1e-7*randn(par.nwet,1) ;
                   [F, FD, Ox, Oxx] = O_eqn(O2, par) ;
                   break;
                end
@@ -62,13 +60,15 @@ function [par, O2, Ox, Oxx] = eqOcycle_v2(x, par)
 	         end
 	      end 
     else
-        % reset the global variable for the next call eqOcycle
+        fprintf('reset the global variable for the next call eqOcycle. \n')
+        tic
         GO = real(O2) + 1e-7*randn(par.nwet,1) ;
         [F, FD, Ox, Oxx] = O_eqn(O2, par) ;
+        toc
     end
 end
 
-function [F, FD, Ox, Oxx] = O_eqn(O2, par)
+function [F, FD, Ox, Oxx, O2tstep] = O_eqn(O2, par)
     on = true; off = false;
     pindx = par.pindx ;
     %
@@ -78,11 +78,21 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
     TRdiv = par.TRdiv ;
     I     = speye(nwet) ;
     PO4   = par.po4obs(iwet) ;
+    dVt   = par.dVt   ;
+    spa   = par.spa   ;
+
     % variables from C model
-    POC  = par.POC    ;
-    DOC  = par.DOC    ;
-    DOCl = par.DOCl   ;
-    DOCr = par.DOCr   ;
+    if (par.Cisotope == on) ;
+      POC  = par.POC  + par.POC13   ;
+      DOC  = par.DOC  + par.DOC13   ;
+      DOCl = par.DOCl + par.DOC13l  ;
+      DOCr = par.DOCr + par.DOC13r  ;
+    else
+      POC  = par.POC    ;
+      DOC  = par.DOC    ;
+      DOCl = par.DOCl   ;
+      DOCr = par.DOCr   ;
+    end
     Tz   = par.Tz     ;
     Q10C  = par.Q10C  ;
     kdC   = par.kdC   ;
@@ -95,20 +105,21 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
     WM    = par.WM    ;
     cc    = par.cc    ;
     dd    = par.dd    ;
-    %
+    
     % tunable parameters;
     O2C_T = par.O2C_T ; 
     rO2C  = par.rO2C  ;
     kappa_l = par.kappa_l ;
     kappa_p = par.kappa_p ;
-    
+
     tf    = (par.vT - 30)/10 ;
     kC    = d0( kdC * Q10C .^ tf ) ;
-    %
+    
     % O2 saturation concentration
     vout  = Fsea2air(par,'O2') ;
     KO2   = vout.KO2   ;
     o2sat = vout.o2sat ;
+
     % rate of o2 production
     O2C = O2C_T*Tz + rO2C ; 
     C2P = par.C2P         ;
@@ -123,10 +134,12 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
     % rate of o2 utilization
     kappa_r = kru*UM + krd*DM ;
     eta     = etau*WM ;
+
     % eta    = etau*UM + etad*DM ;
-    LO2    = d0(eta*kC*DOC + kappa_r*DOCr + kappa_l*DOCl + kappa_p*POC)*O2C.*R  ;
-    dLdO   = d0(eta*kC*DOC + kappa_r*DOCr + kappa_l*DOCl + kappa_p*POC)*O2C.*dRdO ;
+    LO2    = d0(eta*kC*DOC + kappa_r*DOCr + kappa_l*DOCl + kappa_p*POC)*O2C.*R       ;
+    dLdO   = d0(eta*kC*DOC + kappa_r*DOCr + kappa_l*DOCl + kappa_p*POC)*O2C.*dRdO    ;
     d2LdO2 = d0(eta*kC*DOC + kappa_r*DOCr + kappa_l*DOCl + kappa_p*POC)*O2C.*d2RdO2  ;
+
     % O2 function
     F = TRdiv*O2 - PO2 + LO2 - KO2*(o2sat-O2) ;
     
@@ -136,8 +149,7 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
     if (nargout > 1)
         FD = mfactor(TRdiv + d0(dLdO) + KO2) ;
     end
-    
-    %
+
     %% ----------------- Gradient -------------------
     if (par.optim == off)
         Ox = [];
@@ -158,7 +170,7 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
             tmp = d0( eta*kC*DOCx(:,jj) + kappa_r*DOCrx(:,jj) + ...
                       kappa_l*DOClx(:,jj) + kappa_p*POCx(:,jj))*O2C.*R ;
 
-            Ox(:,jj) = mfactor(FD, -tmp) ;
+            RHS(:,jj) = -tmp ;
         end 
 
         % C model only parameters
@@ -167,56 +179,56 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
                 tmp = d0( d0(kru*UM*DOCr)*O2C ) * R + ...
                       d0( eta*kC*DOCx(:,jj) + kappa_r*DOCrx(:,jj) + ...
                           kappa_l*DOClx(:,jj) + kappa_p*POCx(:,jj))*O2C.*R  ;
-                Ox(:,jj) = mfactor( FD, -tmp ) ;
+                RHS(:,jj) = -tmp ;
                 
             elseif ( par.opt_krd & jj == pindx.lkrd )
                 tmp = d0( d0(krd*DM*DOCr)*O2C ) * R + ...
                       d0( eta*kC*DOCx(:,jj) + kappa_r*DOCrx(:,jj) + ...
                           kappa_l*DOClx(:,jj) + kappa_p*POCx(:,jj))*O2C.*R  ;
-                Ox(:,jj) = mfactor( FD, -tmp ) ;
+                RHS(:,jj) = -tmp ;
                 
             elseif ( par.opt_kdC & jj == pindx.lkdC )
                 kC_kdC = par.kC_kdC ;
                 tmp = d0( d0(eta*kC_kdC*DOC)*O2C ) * R + ...
                       d0( eta*kC*DOCx(:,jj) + kappa_r*DOCrx(:,jj) + ...
                           kappa_l*DOClx(:,jj) + kappa_p*POCx(:,jj))*O2C.*R  ;
-                Ox(:,jj) = mfactor( FD, -tmp ) ;
+                RHS(:,jj) = -tmp ;
                 
             elseif ( par.opt_Q10C & jj == pindx.lQ10C )
                 kC_Q10C = par.kC_Q10C ; 
                 tmp = d0( d0( d0(eta*kC_Q10C)*DOC )*O2C ) * R + ...
                       d0( eta*kC*DOCx(:,jj) + kappa_r*DOCrx(:,jj) + ...
                           kappa_l*DOClx(:,jj) + kappa_p*POCx(:,jj))*O2C.*R  ;
-                Ox(:,jj) = mfactor( FD, -tmp ) ;
+                RHS(:,jj) = -tmp ;
 
             elseif ( par.opt_etau & jj == pindx.letau )
                 tmp = d0( etau*WM*(kC*DOC) )*O2C.*R + ...
                       d0( eta*kC*DOCx(:,jj) + kappa_r*DOCrx(:,jj) + ...
                           kappa_l*DOClx(:,jj) + kappa_p*POCx(:,jj))*O2C.*R  ;
-                Ox(:,jj) = mfactor( FD, -tmp ) ;
+                RHS(:,jj) = -tmp ;
 
             elseif ( par.opt_etad & jj == pindx.letad )
                 tmp = d0( etad*DM*(kC*DOC) )*O2C.*R + ...
                       d0( eta*kC*DOCx(:,jj) + kappa_r*DOCrx(:,jj) + ...
                           kappa_l*DOClx(:,jj) + kappa_p*POCx(:,jj))*O2C.*R  ;
-                Ox(:,jj) = mfactor( FD, -tmp ) ;
+                RHS(:,jj) = -tmp ;
 
             elseif ( par.opt_cc & jj == pindx.lcc )
                 C2P_cc = par.C2P_cc;
                 tmp = d0( eta*kC*DOCx(:,jj) + kappa_r*DOCrx(:,jj) + ...
                           kappa_l*DOClx(:,jj) + kappa_p*POCx(:,jj))*O2C.*R  ;
-                Ox(:,jj) = mfactor( FD, -tmp ) ;
+                RHS(:,jj) = -tmp ;
                 
             elseif ( par.opt_dd & jj == pindx.ldd )
                 C2P_dd = par.C2P_dd;
                 tmp = d0( eta*kC*DOCx(:,jj) + kappa_r*DOCrx(:,jj) + ...
                           kappa_l*DOClx(:,jj) + kappa_p*POCx(:,jj))*O2C.*R  ;
-                Ox(:,jj) = mfactor( FD, -tmp ) ;
+                RHS(:,jj) = -tmp ;
 
             else
                 tmp = d0( eta*kC*DOCx(:,jj) + kappa_r*DOCrx(:,jj) + ...
                           kappa_l*DOClx(:,jj) + kappa_p*POCx(:,jj))*O2C.*R  ;
-                Ox(:,jj) = mfactor( FD, -tmp ) ;
+                RHS(:,jj) = -tmp ;
             end 
         end
 
@@ -224,14 +236,15 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
         if (par.opt_O2C_T == on)
             O2C_O2C_T = d0(Tz) ; 
             tmp = d0(eta*kC*DOC + kappa_r*DOCr + kappa_l*DOCl + kappa_p*POC)*(O2C_O2C_T*R) ; 
-            Ox(:,pindx.O2C_T) = mfactor(FD, -tmp) ;
+            RHS(:,pindx.O2C_T) =  -tmp ;
         end
 
         if (par.opt_rO2C == on)
             O2C_rO2C = rO2C ; 
             tmp = d0(eta*kC*DOC + kappa_r*DOCr + kappa_l*DOCl + kappa_p*POC)*(O2C_rO2C*R) ; 
-            Ox(:,pindx.lrO2C) = mfactor(FD, -tmp) ;
-        end 
+            RHS(:,pindx.lrO2C) = -tmp ;
+        end
+        Ox = mfactor(FD, RHS); 
     end
 
     %% ------------------- Hessian -------------------------
@@ -259,7 +272,7 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
                          kappa_p*POCx(:,jo))*dRdO.*Ox(:,ju).*O2C + ...
                       Ox(:,ju).*d2LdO2.*Ox(:,jo) ;
 
-                Oxx(:,kk) = mfactor(FD, -tmp) ;                 
+                RHS(:,kk) = -tmp ;                 
             end 
         end
         %
@@ -363,7 +376,7 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
                           Ox(:,ju).*d2LdO2.*Ox(:,jo) ; 
 
                 end
-                Oxx(:,kk) = mfactor(FD, -tmp)    ;
+                RHS(:,kk) = -tmp    ;
             end
         end
         
@@ -830,7 +843,7 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
                           Ox(:,ju).*d2LdO2.*Ox(:,jo) ;
                     
                 end 
-                Oxx(:,kk) = mfactor(FD, -tmp)    ;
+                RHS(:,kk) = -tmp    ;
             end 
         end 
         
@@ -857,7 +870,7 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
                           Ox(:,ju).*d2LdO2.*Ox(:,jo) ;
 
                 end
-                Oxx(:,kk) = mfactor(FD, -tmp)    ;
+                RHS(:,kk) = -tmp    ;
             end 
         end
         
@@ -1125,7 +1138,7 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
                         
                     end 
                 end
-                Oxx(:,kk) = mfactor(FD, -tmp) ;
+                RHS(:,kk) = -tmp ;
             end 
         end 
         
@@ -1137,7 +1150,7 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
                      kappa_p*POC)*(O2C_O2C_T*(dRdO.*Ox(:,pindx.O2C_T)))*2 + ... 
                   Ox(:,pindx.O2C_T).*d2LdO2.*Ox(:,pindx.O2C_T) ;
 
-            Oxx(:,kk) = mfactor(FD, -tmp) ;
+            RHS(:,kk) = -tmp ;
         end             
         % O2C_T rO2C
         if (par.opt_O2C_T == on & par.opt_rO2C == on)
@@ -1148,7 +1161,7 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
                      kappa_p*POC)*(O2C_rO2C*dRdO.*Ox(:,pindx.O2C_T)) + ... 
                   Ox(:,pindx.O2C_T).*d2LdO2.*Ox(:,pindx.lrO2C) ;
 
-            Oxx(:,kk) = mfactor(FD, -tmp) ;
+            RHS(:,kk) = -tmp ;
         end             
 
         % rO2C rO2C
@@ -1160,8 +1173,53 @@ function [F, FD, Ox, Oxx] = O_eqn(O2, par)
                      kappa_p*POC)*(O2C_rO2C*dRdO.*Ox(:,pindx.lrO2C))*2 + ...
                   Ox(:,pindx.lrO2C).*d2LdO2.*Ox(:,pindx.lrO2C) ;
 
-            Oxx(:,kk) = mfactor(FD, -tmp) ;
-        end 
+            RHS(:,kk) = -tmp ;
+        end
+        Oxx = mfactor(FD, RHS); 
     end
+
+    %%--------------------Time stepping method-------------------------------------
+    %  Using a semi-implicit scheme for time stepping method
+    % Trapezoide rule for all terms, except for Respiration (Euler Forward)
+    %
+    %  d
+    % -- O2 +TRdiv*O2(t) = PO2 - LO2 .*R(t) + KO2*(O2sat - O2(t))  
+    % dt
+    %
+
+    if nargout > 4
+    % time-step size schedule
+    %                  1 hr  1 day  1 month 1 year 4 years   10 years
+    dt_size = spa./[ 365*24   365       12     1     0.25       0.1 ];  
+    nsteps  =      [  100     100      100   200     200        300 ];  
+
+    %
+    O2tstep    = zeros(length(O2), length(nsteps));
+    j = 0; 
+    t = 0;
+    
+    %
+      for k = 1:length(dt_size) % loop over step size schedule
+           % set the step size
+         dt = dt_size(k);
+         % set the number of time steps
+         n = nsteps(k);
+         % trapezoid rule
+         A = I + (dt/2)*(TRdiv+KO2);
+         B = I - (dt/2)*(TRdiv+KO2);
+         FA = mfactor(A);
+       
+           fprintf('dt = %f nsteps = %i \n', dt, n);
+         for i = 1:n   % loop over time steps
+             O2dt = mfactor(FA, (B*O2 + dt*(-LO2.*R + PO2 +KO2*o2sat)));
+             t = t+dt;
+             j = j+1;
+             O2tstep(:,j)  = O2dt;
+             T(j) = t;
+             fprintf('.');
+         end
+         fprintf('\n');
+       end
+   end
 end
 

@@ -161,7 +161,8 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
         Px = [];
     elseif (par.optim & nargout > 2)
         %
-        % Compute the gradient of the solution wrt the parameters
+        fprintf('Compute the gradient of the solution wrt the parameters...\n')
+        tic
         %
         Z   = sparse(nwet,1);
         DIP = P(0*nwet+1:1*nwet);
@@ -171,7 +172,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
         % sigP
         if (par.opt_sigP == on)
             tmp = sigP*[Z; alpha*L*DIP; -alpha*L*DIP; Z];
-            Px(:,pindx.lsigP) = mfactor(FFp, -tmp);
+            RHS(:,pindx.lsigP) = -tmp;
         end
         
         % Q10P
@@ -181,14 +182,14 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                    Z; ...
                    d0(kP_Q10P)*DOP; ...
                    Z];
-            Px(:,pindx.lQ10P) = mfactor(FFp, -tmp);
+            RHS(:,pindx.lQ10P) = -tmp;
         end
         
         % kdP
         if (par.opt_kdP == on)
             kP_kdP = kdP * d0(Q10P.^tf) ;
             tmp = [-kP_kdP*DOP; Z; kP_kdP*DOP; Z];
-            Px(:,pindx.lkdP) = mfactor(FFp, -tmp);
+            RHS(:,pindx.lkdP) = -tmp;
         end
 
         % bP_T
@@ -196,7 +197,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
             [~,Gout] = buildPFD_48layer(par,'POP');
             PFD_bm = Gout.PFD_bm;
             tmp =  [Z; PFD_bm*POP; Z; Z];
-            Px(:,pindx.bP_T) = mfactor(FFp, -tmp);
+            RHS(:,pindx.bP_T) = -tmp;
         end
 
         % bP
@@ -204,7 +205,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
             [~,Gout] = buildPFD_48layer(par,'POP');
             PFD_bb = Gout.PFD_bb;
             tmp = bP*[Z; PFD_bb*POP;  Z; Z];
-            Px(:,pindx.lbP) = mfactor(FFp, -tmp);
+            RHS(:,pindx.lbP) = -tmp;
         end
         
         % alpha
@@ -213,7 +214,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                          -(1-sigP-gamma)*L*DIP; ...
                          -sigP*L*DIP; ...
                          -gamma*L*DIP];
-            Px(:,pindx.lalpha) = mfactor(FFp, -tmp);
+            RHS(:,pindx.lalpha) = -tmp;
         end
         
         %beta
@@ -236,14 +237,17 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
             % biogeochemical cycles
             par.L = L;
             par.dLdbeta = dLdbeta;
-            Px(:,pindx.lbeta) = mfactor(FFp, -tmp);
+            RHS(:,pindx.lbeta) = -tmp;
         end
+        Px = mfactor(FFp, RHS);
+        toc
     end
     %% ---------------------------------------------------------
     if (par.optim == off)
         Pxx = [];
     elseif (par.optim & nargout > 3) 
-        % Compute the hessian of the solution wrt the parameters
+        fprintf(' Compute the hessian of the solution wrt the parameters...\n')
+        tic
         DIPx  = Px(0*nwet+1:1*nwet, :) ;
         POPx  = Px(1*nwet+1:2*nwet, :) ;
         DOPx  = Px(2*nwet+1:3*nwet, :) ;
@@ -260,7 +264,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                      -sigP*alpha*L*DIPx(:,pindx.lsigP);
                      Z];
 
-            Pxx(:,kk) = mfactor(FFp, -tmp);
+            RHS(:,kk) = -tmp;
             kk = kk + 1;
         end
 
@@ -275,7 +279,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                    d0(kP_Q10P)*DOPx(:,pindx.lsigP); ...
                    Z];
 
-            Pxx(:,kk) = mfactor(FFp, -tmp);
+            RHS(:,kk) = -tmp;
             kk = kk + 1;
         end
 
@@ -290,7 +294,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                    kP_kdP*DOPx(:,pindx.lsigP); ...
                    Z];
 
-            Pxx(:,kk) = mfactor(FFp, -tmp);
+            RHS(:,kk) = -tmp;
             kk = kk + 1;
         end
 
@@ -305,7 +309,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                    Z;...
                    Z];
             
-            Pxx(:,kk) = mfactor(FFp, -tmp);
+            RHS(:,kk) = -tmp;
             kk = kk + 1;
         end
 
@@ -320,7 +324,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                    Z; ...
                    Z]; 
             
-            Pxx(:,kk) = mfactor(FFp, -tmp);
+            RHS(:,kk) = -tmp;
             kk = kk + 1;
         end
 
@@ -339,7 +343,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                    -sigP*alpha*L*DIPx(:,pindx.lsigP) ;
                    -gamma*alpha*L*DIPx(:,pindx.lsigP)];
             
-            Pxx(:,kk) = mfactor(FFp, -tmp);
+            RHS(:,kk) = -tmp;
             kk = kk + 1;
         end
 
@@ -358,7 +362,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                    -sigP*alpha*beta*dLdbeta*DIPx(:,pindx.lsigP) ;
                    -gamma*alpha*beta*dLdbeta*DIPx(:,pindx.lsigP)];
             
-            Pxx(:,kk) = mfactor(FFp, -tmp);
+            RHS(:,kk) = -tmp;
             kk = kk + 1;
         end
         
@@ -374,7 +378,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                    d0(kP_Q10P_Q10P)*DOP; ...
                    Z];
             
-            Pxx(:,kk) = mfactor(FFp, -tmp);
+            RHS(:,kk) = -tmp;
             kk = kk + 1;
         end
 
@@ -394,7 +398,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                    d0(kP_kdP_Q10P)*DOP ; ...
                    Z]; 
             
-            Pxx(:, kk) = mfactor(FFp, -tmp);
+            RHS(:, kk) = -tmp;
             kk = kk + 1;
         end
         
@@ -409,7 +413,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                    Z; ...
                    Z]; 
             
-            Pxx(:,kk) = mfactor(FFp, -tmp);
+            RHS(:,kk) = -tmp;
             kk = kk + 1;
         end
 
@@ -424,7 +428,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                    Z; ...
                    Z]; 
             
-            Pxx(:,kk) = mfactor(FFp, -tmp);
+            RHS(:,kk) = -tmp;
             kk = kk + 1;
         end
 
@@ -439,7 +443,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                          -sigP*L*DIPx(:,pindx.lQ10P); ...
                          -gamma*L*DIPx(:,pindx.lQ10P)];
             
-            Pxx(:,kk) = mfactor(FFp, -tmp);
+            RHS(:,kk) = -tmp;
             kk = kk + 1;
         end
 
@@ -454,7 +458,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                         -sigP*alpha*dLdbeta*DIPx(:,pindx.lQ10P); ...
                         -gamma*alpha*dLdbeta*DIPx(:,pindx.lQ10P)];
             
-            Pxx(:,kk) = mfactor(FFp, -tmp);
+            RHS(:,kk) = -tmp;
             kk = kk + 1;
         end
         
@@ -470,7 +474,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                      kP_kdP*DOPx(:,pindx.lkdP); ...
                      Z];
             
-            Pxx(:,kk) = mfactor(FFp, -tmp);
+            RHS(:,kk) = -tmp;
             kk = kk + 1;
         end
 
@@ -485,7 +489,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                    Z; ...
                    Z]; 
             
-            Pxx(:,kk) = mfactor(FFp, -tmp);
+            RHS(:,kk) = -tmp;
             kk = kk + 1;
         end
 
@@ -500,7 +504,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                    Z; ...
                    Z]; 
             
-            Pxx(:,kk) = mfactor(FFp, -tmp);
+            RHS(:,kk) = -tmp;
             kk = kk + 1;
         end
 
@@ -515,7 +519,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                          -sigP*L*DIPx(:,pindx.lkdP); ...
                          -gamma*L*DIPx(:,pindx.lkdP)];
             
-            Pxx(:,kk) = mfactor(FFp, -tmp);
+            RHS(:,kk) = -tmp;
             kk = kk + 1;
         end
 
@@ -530,7 +534,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                         -sigP*alpha*dLdbeta*DIPx(:,pindx.lkdP); ...
                         -gamma*alpha*dLdbeta*DIPx(:,pindx.lkdP)];
             
-            Pxx(:,kk) = mfactor(FFp, -tmp);
+            RHS(:,kk) = -tmp;
             kk = kk + 1;
         end
 
@@ -547,7 +551,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                    Z; ...
                    Z];% dJdslopedPslope
             
-            Pxx(:,kk) = mfactor(FFp, -tmp);
+            RHS(:,kk) = -tmp;
             kk = kk + 1;
         end
         
@@ -568,7 +572,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                    Z; ...
                    Z]; 
             
-            Pxx(:,kk) = mfactor(FFp, -tmp);
+            RHS(:,kk) = -tmp;
             kk = kk + 1;
         end
         
@@ -583,7 +587,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                    -sigP*alpha*L*DIPx(:,pindx.bP_T); ...
                    -gamma*alpha*L*DIPx(:,pindx.bP_T)];
             
-            Pxx(:,kk) = mfactor(FFp, -tmp);
+            RHS(:,kk) = -tmp;
             kk = kk + 1;
         end
         
@@ -598,7 +602,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                    -sigP*alpha*beta*dLdbeta*DIPx(:,pindx.bP_T); ...
                    -gamma*alpha*beta*dLdbeta*DIPx(:,pindx.bP_T)];
             
-            Pxx(:,kk) = mfactor(FFp, -tmp);
+            RHS(:,kk) = -tmp;
             kk = kk + 1;
         end
         
@@ -619,7 +623,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                    Z; ...
                    Z];
             
-            Pxx(:,kk) = mfactor(FFp, -tmp);
+            RHS(:,kk) = -tmp;
             kk = kk + 1;
         end    
 
@@ -634,7 +638,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                    -sigP*alpha*L*DIPx(:,pindx.lbP); ...
                    -gamma*alpha*L*DIPx(:,pindx.lbP)];  
             
-            Pxx(:,kk) = mfactor(FFp, -tmp);
+            RHS(:,kk) = -tmp;
             kk = kk + 1;
         end
 
@@ -649,7 +653,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                         -sigP*alpha*dLdbeta*DIPx(:,pindx.lbP); ...
                         -gamma*alpha*dLdbeta*DIPx(:,pindx.lbP)];
             
-            Pxx(:,kk) = mfactor(FFp, -tmp);
+            RHS(:,kk) = -tmp;
             kk = kk + 1;
         end
         
@@ -664,7 +668,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                      -sigP*alpha*L*DIPx(:,pindx.lalpha); ...
                      -gamma*alpha*L*DIPx(:,pindx.lalpha)];
 
-            Pxx(:,kk) = mfactor(FFp, -tmp);
+            RHS(:,kk) = -tmp;
             kk = kk + 1;
         end
 
@@ -683,7 +687,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                         -sigP*alpha*dLdbeta*DIPx(:,pindx.lalpha); ...
                         -gamma*alpha*dLdbeta*DIPx(:,pindx.lalpha)];
 
-            Pxx(:,kk) = mfactor(FFp, -tmp);
+            RHS(:,kk) = -tmp;
             kk = kk + 1;
         end
         
@@ -713,9 +717,11 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
                       -sigP*alpha*beta*dLdbeta*DIPx(:,pindx.lbeta); ...
                       -gamma*alpha*beta*dLdbeta*DIPx(:,pindx.lbeta)];
             
-            Pxx(:,kk) = mfactor(FFp, -tmp);
+            RHS(:,kk) = -tmp;
             kk = kk + 1;
         end
+        Pxx = mfactor(FFp, RHS);
+        toc
     end
 end
 
