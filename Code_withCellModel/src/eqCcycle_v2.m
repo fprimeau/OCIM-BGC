@@ -140,7 +140,8 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
     DOCl = X(5*nwet+1:6*nwet) ;
     DOCr = X(6*nwet+1:7*nwet) ;
 
-    PO4 = par.po4obs(iwet) ;
+    PO4 = par.po4obs(iwet) ;    % phosphate obs
+    Tz = par.Tz;                % temperature obs scaled between zero and 1.
     % fixed parameters
     kappa_p = par.kappa_p;
     kappa_l = par.kappa_l;
@@ -177,7 +178,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
 		%N2C = 1./par.CellOut.C2N(iwet);
 	elseif (par.C2P_Tzmodel)
         %Tz01 = par.Tz.*1.0e8 ; % par.Tz has been modified to be temperature scaled between zero and 1. rescaling is no longer needed.
-		C2P = 1./(ccT*par.Tz + ddT);
+		C2P = 1./(ccT*Tz + ddT);
 	else
 		C2P = 1./(cc*PO4 + dd);
 	end
@@ -313,14 +314,34 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
     elseif (par.optim & nargout > 2)
         pindx = par.pindx ;
         Z = sparse(nwet,1);
-        C2P_cc = -PO4./(cc*PO4 + dd).^2;
-        C2P_dd = -1./(cc*PO4 + dd).^2;
-        par.C2P_cc = C2P_cc;
-        par.C2P_dd = C2P_dd;
+        if par.opt_cc==on | par.opt_dd==on
+            C2P_cc = -PO4./(cc*PO4 + dd).^2;
+            C2P_dd = -1./(cc*PO4 + dd).^2;
+            par.C2P_cc = C2P_cc;
+            par.C2P_dd = C2P_dd;
+        end
+        if (par.opt_ccT ==on | par.opt_ddT==on)
+			C2P_ccT = -Tz./(ccT*Tz + ddT).^2;
+        	C2P_ddT = -1./(ccT*Tz + ddT).^2;
+        	par.C2P_ccT = C2P_ccT;
+        	par.C2P_ddT = C2P_ddT;
+		end
+        if par.Cellmodel == on  %(using eqC2Puptake)
+			C2Px   = par.C2Px;
+		end
         [~,Gx] = uptake_C(par);
         par.Gx = Gx;
         npx    = par.npx;
-        % P model parameters
+        % ----------------- P model  parameters ------------------
+        % DEV NOTE: If you want to use model DIP as the input to the 
+        % cell model, then when the cell model is on, C2P is a 
+        % function of not just the cell model parameters, but also all 
+        % of the P model parameters. This will affect all of the 
+        % derivatives w.r.t. P model parameters.Thi functionality is 
+        % not currently built into this version of the carbon cycle model. 
+        % (it was included in the version of eqCcycle.m published with 
+        % Sullivan et al., 2024., but is not necessary for the current project.)
+        % ---------------
         % sigP
         if (par.opt_sigP == on)
             tmp = [-d0((1-sigC-gamma)*RR*Gx(:,pindx.lsigP))*C2P; ...
@@ -411,7 +432,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
             
             RHS(:,pindx.lbeta) = tmp;
         end
-        % -------------------- C parameters ------------------
+        % ----------------- C model parameters ------------------
         % sigC
         if (par.opt_sigC == on)
             tmp = [sigC*RR*G*C2P  ; ...
@@ -575,6 +596,129 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
             
             RHS(:,pindx.ldd) = tmp;
         end
+
+        % other C2P model options
+        if par.C2P_Tzmodel
+            % ccT
+            if (par.opt_ccT == on)
+                % note: no log transform
+                tmp = [-((1-sigC-gamma)*RR)*(G*C2P_ccT); ...
+                    (1-sigC-gamma)*G*C2P_ccT; ...
+                    sigC*G*C2P_ccT; ...
+                    (1-sigC-gamma)*RR*(G*C2P_ccT); ...
+                    -2*(1-sigC-gamma)*RR*(G*C2P_ccT); ...
+                    -G*C2P_ccT; ...
+                    Z];
+          
+                RHS(:,pindx.ccT) = tmp;
+            end
+
+            % ddT
+            if (par.opt_ddT == on)
+                tmp = ddT*[-((1-sigC-gamma)*RR)*(G*C2P_ddT); ...
+                        (1-sigC-gamma)*G*C2P_ddT; ...
+                        sigC*G*C2P_ddT; ...
+                        (1-sigC-gamma)*RR*(G*C2P_ddT); ...
+                        -2*(1-sigC-gamma)*RR*(G*C2P_ddT); ...
+                        -G*C2P_ddT; ...
+                        Z];
+                
+                RHS(:,pindx.lddT) = tmp;
+            end
+        end
+
+        % ---------------- Cell model parameters ------------------
+        % NOTE: C2Px(:,par.pindx.parameterName) contains derivatives w.r.t. value of x (for most, this is w.r.t the log of parameter value); 
+        % already applied chain rule multiplication by d(Parameter)/d(logParameter) in eqC2Puptake.m
+        if (par.Cellmodel == on)
+            % Q10Photo
+            if (par.opt_Q10Photo == on)
+                C2P_lQ10 = C2Px(:,par.pindx.lQ10Photo);
+                tmp = [-((1-sigC-gamma)*RR)*(G*C2P_lQ10); ...
+                    (1-sigC-gamma)*G*C2P_lQ10; ...
+                    sigC*G*C2P_lQ10; ...
+                    (1-sigC-gamma)*RR*(G*C2P_lQ10); ...
+                    -2*(1-sigC-gamma)*RR*(G*C2P_lQ10); ...
+                    -G*C2P_lQ10; ...
+                    Z];
+          
+                RHS(:,pindx.lQ10Photo) = tmp;
+            end
+
+            %  fStorage
+            if (par.opt_fStorage == on) 
+                C2P_lfStor = C2Px(:,par.pindx.lfStorage);
+                tmp = [-((1-sigC-gamma)*RR)*(G*C2P_lfStor); ...
+                    (1-sigC-gamma)*G*C2P_lfStor; ...
+                    sigC*G*C2P_lfStor; ...
+                    (1-sigC-gamma)*RR*(G*C2P_lfStor); ...
+                    -2*(1-sigC-gamma)*RR*(G*C2P_lfStor); ...
+                    -G*C2P_lfStor; ...
+                    Z];
+          
+                RHS(:,pindx.lfStorage) = tmp;
+            end
+
+            %  SKIP: fRibE
+            if (par.opt_fRibE == on) 
+                C2P_tfRibE = C2Px(:,par.pindx.tfRibE);
+                tmp = [-((1-sigC-gamma)*RR)*(G*C2P_tfRibE); ...
+                    (1-sigC-gamma)*G*C2P_tfRibE; ...
+                    sigC*G*C2P_tfRibE; ...
+                    (1-sigC-gamma)*RR*(G*C2P_tfRibE); ...
+                    -2*(1-sigC-gamma)*RR*(G*C2P_tfRibE); ...
+                    -G*C2P_tfRibE; ...
+                    Z];
+          
+                RHS(:,pindx.tfRibE) = tmp;
+            end
+
+            %  kST0
+            if (par.opt_kST0 == on) 
+                C2P_lkST0 = C2Px(:,par.pindx.lkST0);
+                tmp = [-((1-sigC-gamma)*RR)*(G*C2P_lkST0); ...
+                    (1-sigC-gamma)*G*C2P_lkST0; ...
+                    sigC*G*C2P_lkST0; ...
+                    (1-sigC-gamma)*RR*(G*C2P_lkST0); ...
+                    -2*(1-sigC-gamma)*RR*(G*C2P_lkST0); ...
+                    -G*C2P_lkST0; ...
+                    Z];
+          
+                RHS(:,pindx.lkST0) = tmp;
+            end
+            %  SKIP: PLip_PCutoff
+            %  SKIP: PLip_scale
+            %  PStor_rCutoff
+            if (par.opt_PStor_rCutoff == on) 
+                C2P_lrCutoff = C2Px(:,par.pindx.lPStor_rCutoff);
+                tmp = [-((1-sigC-gamma)*RR)*(G*C2P_lrCutoff); ...
+                    (1-sigC-gamma)*G*C2P_lrCutoff; ...
+                    sigC*G*C2P_lrCutoff; ...
+                    (1-sigC-gamma)*RR*(G*C2P_lrCutoff); ...
+                    -2*(1-sigC-gamma)*RR*(G*C2P_lrCutoff); ...
+                    -G*C2P_lrCutoff; ...
+                    Z];
+          
+                RHS(:,pindx.lPStor_rCutoff) = tmp;
+            end
+            % SKIP: PStor_scale
+            % alphaS
+            if (par.opt_alphaS == on) 
+                C2P_lalphaS = C2Px(:,par.pindx.lalphaS);
+                tmp = [-((1-sigC-gamma)*RR)*(G*C2P_lalphaS); ...
+                    (1-sigC-gamma)*G*C2P_lalphaS; ...
+                    sigC*G*C2P_lalphaS; ...
+                    (1-sigC-gamma)*RR*(G*C2P_lalphaS); ...
+                    -2*(1-sigC-gamma)*RR*(G*C2P_lalphaS); ...
+                    -G*C2P_lalphaS; ...
+                    Z];
+          
+                RHS(:,pindx.lalphaS) = tmp;
+            end
+
+            % SKIP: gamma_DNA
+        end
+        % solve
         Cx = mfactor(FD, RHS);
     end
     toc
