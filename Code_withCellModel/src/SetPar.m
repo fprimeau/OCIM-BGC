@@ -34,9 +34,21 @@ function par = SetPar(par)
     par.c14.alpha_k    = 1 - (1 - 0.99915)*par.c14.fc14 ; % kenetic fractionation factor
     par.c14.alpha_g2aq = 1- (1 - 0.998764)*par.c14.fc14 ; % gas to water fractionation factor
 
-        % load optimal parameters if they exist
-    if isfile(par.fxhat) & par.LoadOpt == on 
-        load(par.fxhat)
+    % load optimal parameters if they exist
+    if par.LoadOpt ==on
+		if isfield(par,'fxhatload') & isfile(par.fxhatload) 
+            % load parameters from any previous run
+			load(par.fxhatload)
+            if isfield(xhat,'allparams')
+                % load all parameters, including those that were not optimized
+			    xhat = xhat.allparams;  
+            end
+		elseif isfile(par.fxhat)    
+            % load from run with same name (e.g. continuing optimization after timeout)
+			load(par.fxhat)
+        else
+            fprintf('Warning (SetPar.m): LoadOpt File not found. Using default parameter values instead. \n')
+		end
     end
     
     if exist('xhat') & isfield(xhat,'sigP')
