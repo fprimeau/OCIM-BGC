@@ -336,8 +336,17 @@ function PrintPar(x, par);
 	end %end cell model params
 	% ------------------------------------------------------------
 
-    x0 = x ;
-    if (par.optim == on)
-        save(par.fxhat, 'x0','xhat')
-    end 
+    % Ensure only real part of parameter gets saved to avoid issues with
+	% complex step derivatives
+	nx = length(x);
+	fnames = fieldnames(xhat);
+	for ii = 1:nx
+		xhat.(fnames{ii}) = real(xhat.(fnames{ii}));
+	end
+
+    % Save in neglogpost instead
+    % x0 = x ;
+    % if (par.optim == on)
+    %     save(par.fxhat, 'x0','xhat')
+    % end 
 end
