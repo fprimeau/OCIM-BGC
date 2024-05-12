@@ -158,6 +158,10 @@ function [F, FD, Ox, Oxx, O2tstep] = O_eqn(O2, par)
         ncx  = par.ncx ;
         nox  = par.nox ;
         nx   = npx + ncx + nox  ;
+        if (par.Cellmodel == on)
+            nbx = par.nbx; 
+            nx = npx + ncx + nbx + nox  ;
+        end
         Ox   = sparse(nwet, nx) ;
         Gx   = par.Gx ;
         DICx  = par.Cx(0*nwet+1:1*nwet,:) ;
@@ -230,6 +234,16 @@ function [F, FD, Ox, Oxx, O2tstep] = O_eqn(O2, par)
                           kappa_l*DOClx(:,jj) + kappa_p*POCx(:,jj))*O2C.*R  ;
                 RHS(:,jj) = -tmp ;
             end 
+        end
+
+        % Cell model only parameters
+        if par.Cellmodel == on
+            for jj = (npx+ncx+1) : (npx+ncx+nbx)
+               % Assuming O2C is not a function of the cell model parameters
+               tmp = d0( eta*kC*DOCx(:,jj) + kappa_r*DOCrx(:,jj) + ...
+                          kappa_l*DOClx(:,jj) + kappa_p*POCx(:,jj))*O2C.*R  ;
+               RHS(:,jj) = -tmp ;
+            end
         end
 
         % O model only parameters
