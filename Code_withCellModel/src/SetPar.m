@@ -185,5 +185,95 @@ function par = SetPar(par)
     else 
         par.bb = 0.968     ;
     end 
+
+    % Cell model parameters
+	if exist('xhat') & isfield(xhat,'Q10Photo')
+        % Q10 of photosynthesis
+		par.BIO.Q10Photo = real(xhat.Q10Photo);
+    else
+		par.BIO.Q10Photo = 1.46; 	% Anderson et al. 2021 (median for all phytoplankton; compilation of culture studies)
+	end
+	if exist('xhat') & isfield(xhat,'fStorage')
+        % strength of luxury P storage [L/molC]
+		par.BIO.fStorage = real(xhat.fStorage);
+	else
+		par.BIO.fStorage = 0.1;  
+	end
+	if exist('xhat') & isfield(xhat,'fRibE')
+        % ribosome fraction of biosynthetic apparatus
+		par.BIO.fRibE = real(xhat.fRibE);
+    else
+		par.BIO.fRibE = .60;			% biosynthesis = 60% ribosome; 40% protein
+	end
+	if exist('xhat') & isfield(xhat,'kST0')
+        % specific synthesis rate of synthetic apparatus at 25degC [1/hr]
+		par.BIO.kST0 = real(xhat.kST0);
+	else
+		par.BIO.kST0 =0.185;            % empirically derived specific efficiency: 0.168 hr^-1 (shuter 1979)								
+	end
+	if exist('xhat') & isfield(xhat,'PLip_PCutoff')
+        % [P (mol/L)] below which more PLipids are substituted with Slipids (the x value of the logistic function sigmoid midpoint)
+		par.BIO.PLip_PCutoff = real(xhat.PLip_PCutoff);
+    else
+		par.BIO.PLip_PCutoff = 1.0e-06;		
+	end
+	if exist('xhat') & isfield(xhat,'PLip_scale')
+        % logistic growth rate or steepness of the curve for logistic function controlling phospholipid quota)
+		par.BIO.PLip_scale = real(xhat.PLip_scale);
+	else
+		par.BIO.PLip_scale = 3.0e6;  
+	end
+	if exist('xhat') & isfield(xhat,'PStor_rCutoff')
+         % radius [um] above which cell stores luxury phosphorus? (the x value of the logistic function sigmoid midpoint)
+		par.BIO.PStor_rCutoff = real(xhat.PStor_rCutoff);
+	else
+		par.BIO.PStor_rCutoff = 2.25;
+	end
+	if exist('xhat') & isfield(xhat,'PStor_scale')
+        % logistic growth rate or steepness of the curve for logistic function controlling luxury phosphorus storage
+		par.BIO.PStor_scale = real(xhat.PStor_scale);
+	else
+		par.BIO.PStor_scale = 2.00; 
+	end
+	if exist('xhat') & isfield(xhat,'alphaS')
+        % radius at which cell is all periplasm and membrane [um]
+		par.BIO.alphaS = real(xhat.alphaS);
+	else
+		par.BIO.alphaS = 0.225;          
+	end
+	if exist('xhat') & isfield(xhat,'gammaDNA')
+        % DNA Fraction of cell dry mass
+		par.BIO.gammaDNA = real(xhat.gammaDNA);
+	else
+		par.BIO.gammaDNA = 0.016;          
+	end
+
+% fixed cell model parameters
+	if (par.Cellmodel==on)
+        par.BIO.alphaPLip 	= 0.12;		% scale factor for maximum phospholipid quota
+		par.BIO.gammaLipid 	= .173;		% structural Lipid (non-membrane or periplasm) fraction of cell
+		par.BIO.DNT0 		= 1e-12*3.6e2*3600;    % Diffusivity of Nitrate at 25degC [m^2/hr]
+		par.BIO.DPT0 		= 1e-12*3.6e2*3600;    % Diffusivity of Phosphate at 25degC [m^2/hr]
+		par.BIO.Q10Diffusivity = 1.5;	% Q10 temperature dependence of diffusivity
+		par.BIO.Q10Bio 		= 2.0;		% Q10 temperature dependence of biosynthesis
+		par.BIO.AMin 		= .05;		% minimal fraction of cell dry mass that is nutrient uptake proteins
+		par.BIO.PhiS 		= .67;		% specific carbon cost of synthesis [gC/gC] (the cost of synthesizing functional organic material (taken to be 60% protein, 40% lipid) from glucose and nitrate; from Shuter, 1979)
+		par.BIO.pDry 		= .47;		% Dry mass fraction of the cell
+		par.BIO.rho 		= 1e-12;	% cell density [g/um^3]
+		par.BIO.fProtM 		= 0.25;		% protein fraction of cell membranes
+		par.BIO.fProtL 		= .7;		% protein fraction of light harvesting apparatus
+		par.BIO.PDNA 		= .095;		% phosphorus mass fraction in DNA [gP/g]
+		par.BIO.PRib 		= 0.047;	% phosphorus mass fraction in ribosomes [gP/g]
+		par.BIO.PPhospholipid = 0.042;	% phosphorus mass fraction in phospholipids [gP/g]
+		par.BIO.NProt 		= .16;		% nitrogen mass fraction in proteins [gN/g]
+		par.BIO.NDNA 		= .16;		% nitrogen mass fraction in DNA [gN/g]
+		par.BIO.NRib 		= .16;		% nitrogen mass fraction in Ribosomes [gN/g]
+		%par.BIO.NPhospholipid = 0.008;	% nitrogen mass fraction in phospholipids [gP/g] (0.008 from Geider and La Roche 2002)
+		par.BIO.CProt 		= .53;		% carbon mass fraction in proteins [gC/g]
+		par.BIO.CDNA 		= .36;		% carbon mass fraction in DNA [gC/g]
+		par.BIO.CPhospholipid = .65;	% carbon mass fraction in phospholipids [gC/g]
+		par.BIO.CLipid 		= .76;		% carbon mass fraction in other lipids (that are not phospholipids) [gC/g]
+		par.BIO.CRib 		= .419;		% carbon mass fraction in ribosomes [gC/g] (technically, only correct for eukaryotes)		
+	end
 end
 
