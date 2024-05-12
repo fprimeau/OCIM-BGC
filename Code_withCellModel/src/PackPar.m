@@ -2,6 +2,7 @@ function par = PackPar(par)
     on = true ; off = false ; 
     npx = 0; ncx = 0;
     nox = 0; nsx = 0;
+    nbx = 0; %nbx for cell model (BIO)
     p0 = [];
     % sigP
     if (par.opt_sigP == on)
@@ -197,6 +198,23 @@ function par = PackPar(par)
             p0   = [p0; ldd]      ;
             par.pindx.ldd = strt  : length(p0);
         end
+        % ccT
+        if (par.opt_ccT == on)
+            ncx  = ncx + 1        ;
+            ccT   = par.ccT         ;
+            strt = length(p0) + 1 ;
+            p0   = [p0; ccT]      ;
+            par.pindx.ccT = strt  : length(p0);
+        end
+        % ddT
+        if (par.opt_ddT == on)
+            ncx  = ncx + 1        ;
+            ddT   = par.ddT         ;
+            lddT  = log(ddT)        ;
+            strt = length(p0) + 1 ;
+            p0   = [p0; lddT]      ;
+            par.pindx.lddT = strt  : length(p0);
+        end
         par.ncx = ncx;
     end
     %
@@ -265,8 +283,84 @@ function par = PackPar(par)
             par.pindx.lbb = strt  : length(p0);
         end
     end
+    if par.Cellmodel == on
+		% Q10Photo
+		if (par.opt_Q10Photo == on)
+			nbx  = nbx + 1        		;
+			Q10Photo = par.BIO.Q10Photo ;
+			lQ10Photo = log(par.BIO.Q10Photo);
+			strt = length(p0) + 1		;
+			p0 = [p0; lQ10Photo]		;
+			par.pindx.lQ10Photo = strt : length(p0);
+		end
+		if (par.opt_fStorage == on)
+			nbx  = nbx + 1        		;
+			lfStorage =log(par.BIO.fStorage);
+			strt = length(p0) + 1		;
+			p0 = [p0; lfStorage]		;
+			par.pindx.lfStorage = strt : length(p0);
+		end
+		if (par.opt_fRibE == on)
+			nbx  = nbx + 1        		;
+			tfRibE = atanh(2*par.BIO.fRibE-1);  % fRibE must be between 0 and 1
+			%fRibE = 0.5*(1+tanh(x(par.pindx.tfRibE))); 
+			strt = length(p0) + 1		;
+			p0 = [p0; tfRibE]			;
+			par.pindx.tfRibE = strt : length(p0);
+		end
+		if (par.opt_kST0 == on);
+			nbx  = nbx + 1        		;
+			lkST0 = log(par.BIO.kST0)	;
+			strt = length(p0) + 1		;
+			p0 = [p0; lkST0]			;
+			par.pindx.lkST0 = strt : length(p0);
+		end
+		if (par.opt_PLip_PCutoff == on);
+			nbx  = nbx + 1        		;
+			lPLip_PCutoff = log(par.BIO.PLip_PCutoff)	;
+			strt = length(p0) + 1		;
+			p0 = [p0; lPLip_PCutoff]			;
+			par.pindx.lPLip_PCutoff = strt : length(p0);
+		end
+		if (par.opt_PLip_scale == on);
+			nbx  = nbx + 1        		;
+			lPLip_scale = log(par.BIO.PLip_scale)	;
+			strt = length(p0) + 1		;
+			p0 = [p0; lPLip_scale]			;
+			par.pindx.lPLip_scale = strt : length(p0);
+		end
+		if (par.opt_PStor_rCutoff == on);
+			nbx  = nbx + 1        		;
+			lPStor_rCutoff = log(par.BIO.PStor_rCutoff)	;
+			strt = length(p0) + 1		;
+			p0 = [p0; lPStor_rCutoff]			;
+			par.pindx.lPStor_rCutoff = strt : length(p0);
+		end
+		if (par.opt_PStor_scale == on);
+			nbx  = nbx + 1        		;
+			lPStor_scale = log(par.BIO.PStor_scale)	;
+			strt = length(p0) + 1		;
+			p0 = [p0; lPStor_scale]			;
+			par.pindx.lPStor_scale = strt : length(p0);
+		end
+		if (par.opt_alphaS == on)
+			nbx  = nbx + 1        		;
+			lalphaS = log(par.BIO.alphaS)	;
+			strt = length(p0) + 1		;
+			p0 = [p0; lalphaS]			;
+			par.pindx.lalphaS = strt : length(p0);
+		end
+        if (par.opt_gammaDNA == on)
+            nbx  = nbx + 1        		;
+            tgammaDNA = atanh(2*par.BIO.gammaDNA-1); % gammaDNA must be between 0 and 1
+            strt = length(p0) + 1		;
+            p0 = [p0; tgammaDNA]			;
+            par.pindx.tgammaDNA = strt : length(p0);
+        end
+	end
     par.p0  = p0  ;
-    par.npx = npx ; par.ncx = ncx ;
+    par.npx = npx ; par.ncx = ncx ; 
     par.nox = nox ; par.nsx = nsx ;
+    par.nbx = nbx;
 end
 

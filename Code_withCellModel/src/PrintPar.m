@@ -33,6 +33,46 @@ function PrintPar(x, par);
             fprintf('cc      is  % 3.2e \n', par.cc)    ;
             fprintf('dd      is  % 3.2e \n', par.dd)    ;
         end 
+        if (par.Cellmodel==on)
+            fprintf('Q10Photo       is  % 3.2e \n', par.BIO.Q10Photo)   ;
+			fprintf('fStorage       is  % 3.2e \n', par.BIO.fStorage)   ;
+			fprintf('fRibE          is  % 3.2e \n', par.BIO.fRibE)      ;
+			fprintf('PLip_PCutoff   is  % 3.2e \n', par.BIO.PLip_PCutoff) ;
+			fprintf('PLip_scale     is  % 3.2e \n', par.BIO.PLip_scale)   ;
+            fprintf('PStor_r0Cutoff is  % 3.2e \n', par.BIO.PStor_rCutoff);
+			fprintf('PStor_scale    is  % 3.2e \n', par.BIO.PStor_scale)  ;
+			fprintf('alphaS         is  % 3.2e \n', par.BIO.alphaS)     ;
+			fprintf('alphaPLip      is  % 3.2e \n', par.BIO.alphaPLip)  ;
+            fprintf('Q10Diffusivity is  % 3.2e \n', par.BIO.Q10Diffusivity) ;
+			fprintf('Q10Bio         is  % 3.2e \n', par.BIO.Q10Bio)  ;
+			fprintf('DNT0           is  % 3.2e \n', par.BIO.DNT0)  ;
+			fprintf('DPT0           is  % 3.2e \n', par.BIO.DPT0)  ;
+			fprintf('AMin           is  % 3.2e \n', par.BIO.AMin)  ;
+			fprintf('PhiS           is  % 3.2e \n', par.BIO.PhiS)  ;
+			fprintf('pDry           is  % 3.2e \n', par.BIO.pDry)  ;
+			fprintf('rho            is  % 3.2e \n', par.BIO.rho)   ;
+			fprintf('gammaDNA       is  % 3.2e \n', par.BIO.gammaDNA)   ;
+            fprintf('gammaLipid     is  % 3.2e \n', par.BIO.gammaLipid) ;
+			fprintf('fProtM         is  % 3.2e \n', par.BIO.fProtM)  ;
+			fprintf('fProtL         is  % 3.2e \n', par.BIO.fProtL)  ;
+			fprintf('PDNA           is  % 3.2e \n', par.BIO.PDNA)    ;
+			fprintf('PRib           is  % 3.2e \n', par.BIO.PRib)    ;
+			fprintf('PPhospholipid  is  % 3.2e \n', par.BIO.PPhospholipid) ;
+			fprintf('NProt          is  % 3.2e \n', par.BIO.NProt)  ;
+			fprintf('NDNA           is  % 3.2e \n', par.BIO.NDNA)  ;
+			fprintf('NRib           is  % 3.2e \n', par.BIO.NRib)  ;
+			fprintf('CProt          is  % 3.2e \n', par.BIO.CProt)  ;
+			fprintf('CDNA           is  % 3.2e \n', par.BIO.CDNA)  ;
+			fprintf('CPhospholipid  is  % 3.2e \n', par.BIO.CPhospholipid )  ;
+			fprintf('CLipid         is  % 3.2e \n', par.BIO.CLipid)  ;
+			fprintf('CRib           is  % 3.2e \n\n', par.BIO.CRib)  ;
+		elseif (par.C2P_Tzmodel ==on)
+			fprintf('ccT     is  % 3.2e \n', par.ccT)   ;
+			fprintf('ddT     is  % 3.2e \n', par.ddT)   ;
+		else
+			fprintf('cc      is  % 3.2e \n', par.cc)    ;
+            fprintf('dd      is  % 3.2e \n', par.dd)    ;
+        end
         if (par.Omodel == on)
             fprintf('O2C_T   is  % 3.2e \n', par.O2C_T) ;
             fprintf('rO2C    is  % 3.2e \n', par.rO2C)  ;
@@ -175,6 +215,18 @@ function PrintPar(x, par);
             fprintf('current dd      is  % 3.2e \n', exp(x(idd)));
             xhat.dd = exp(x(idd));
         end
+
+        % Temperature dependent C:P model
+        if (par.opt_ccT == on)
+            icc = par.pindx.ccT;
+            fprintf('current ccT     is  % 3.2e \n', x(icc));
+            xhat.ccT = x(icc);
+        end
+        if (par.opt_ddT == on)
+            idd = par.pindx.lddT;
+            fprintf('current ddT     is  % 3.2e \n', exp(x(idd)));
+            xhat.ddT = exp(x(idd));
+        end
     end 
     % ------------------------------------------------------------
     if (par.Omodel == on)
@@ -227,6 +279,62 @@ function PrintPar(x, par);
             xhat.bb = exp(x(ibb));
         end
     end
+
+    % ------------------------------------------------------------
+    % Cell model
+    if (par.Cellmodel==on)
+        if (par.opt_Q10Photo == on)
+            iQ10Photo = par.pindx.lQ10Photo;
+            fprintf('current Q10Photo       is  % 3.2e \n', exp(x(iQ10Photo)));
+            xhat.Q10Photo = exp(x(iQ10Photo));
+        end
+		if (par.opt_fStorage == on)
+            ifStorage = par.pindx.lfStorage;
+            fprintf('current fStorage       is  % 3.2e \n', exp(x(ifStorage)));
+            xhat.fStorage = exp(x(ifStorage));
+        end
+		if (par.opt_fRibE == on)
+            ifRibE = par.pindx.tfRibE;
+            fprintf('current fRibE          is  % 3.2e \n', 0.5*(1+tanh(x(ifRibE))) ); %fRibE = 0.5*(1+tanh(x(ifRibE)))
+            xhat.fRibE = 0.5*(1+tanh(x(ifRibE)));
+        end
+		if (par.opt_kST0 == on)
+            ikST0 = par.pindx.lkST0;
+            fprintf('current kST0           is  % 3.2e \n', exp(x(ikST0)));
+            xhat.kST0 = exp(x(ikST0));
+        end
+		if (par.opt_PLip_PCutoff == on)
+            iPLip_PCutoff = par.pindx.lPLip_PCutoff;
+            fprintf('current PLip_PCutoff   is  % 3.2e \n', exp(x(iPLip_PCutoff)));
+            xhat.PLip_PCutoff = exp(x(iPLip_PCutoff));
+        end
+		if (par.opt_PLip_scale == on)
+            iPLip_scale = par.pindx.lPLip_scale;
+            fprintf('current PLip_scale     is  % 3.2e \n', exp(x(iPLip_scale)));
+            xhat.PLip_scale = exp(x(iPLip_scale));
+        end
+		if (par.opt_PStor_rCutoff == on)
+            iPStor_rCutoff = par.pindx.lPStor_rCutoff;
+            fprintf('current PStor_rCutoff  is  % 3.2e \n', exp(x(iPStor_rCutoff)));
+            xhat.PStor_rCutoff = exp(x(iPStor_rCutoff));
+        end
+		if (par.opt_PStor_scale == on)
+            iPStor_scale = par.pindx.lPStor_scale;
+            fprintf('current PStor_scale    is  % 3.2e \n', exp(x(iPStor_scale)));
+            xhat.PStor_scale = exp(x(iPStor_scale));
+        end
+		if (par.opt_alphaS == on)
+            ialphaS = par.pindx.lalphaS;
+            fprintf('current alphaS         is  % 3.2e \n', exp(x(ialphaS)));
+            xhat.alphaS = exp(x(ialphaS));
+        end
+		if (par.opt_gammaDNA == on)
+            igammaDNA = par.pindx.tgammaDNA;
+            fprintf('current gammaDNA       is  % 3.2e \n', 0.5*(1+tanh(x(igammaDNA))));
+            xhat.gammaDNA = 0.5*(1+tanh(x(igammaDNA)));
+        end
+	end %end cell model params
+	% ------------------------------------------------------------
 
     x0 = x ;
     if (par.optim == on)
