@@ -148,16 +148,34 @@ function par = SetPar(par)
     else
         par.rR = 2.34e-02 ;
     end
-    if exist('xhat') & isfield(xhat,'cc')
-        par.cc = xhat.cc  ;
-    else
-        par.cc = 8.38e-4 ;
-    end 
-    if exist('xhat') & isfield(xhat,'dd')
-        par.dd = xhat.dd  ;
-    else 
-        par.dd = 8.83e-03 ;
-    end 
+    % C:P function options
+    if (par.C2P_Tzmodel)
+		if exist('xhat') & isfield(xhat,'ccT')
+	        par.ccT = xhat.ccT  ;
+	    else
+			par.ccT = -9.58e-03;	% slope for P:C as a linear function of Temperature
+	    end
+	    if exist('xhat') & isfield(xhat,'ddT')
+	        par.ddT = xhat.ddT  ;
+        else
+			par.ddT = 1.67e-02; 	% intercept for P:C as a linear function of Temperature
+	    end
+	else
+        if exist('xhat') & isfield(xhat,'cc')
+            par.cc = xhat.cc  ;
+        elseif (par.C2P_constant)
+			par.cc = 0.0 ;		    % slope for P:C as a linear function of DIP. when cc=0, P:C is a constant
+        else
+            par.cc = 8.38e-4 ;      % slope for P:C as a linear function of DIP (Galbraith & Martiny(2015) value = 6.9e-3)
+        end 
+        if exist('xhat') & isfield(xhat,'dd')
+            par.dd = xhat.dd  ;
+        elseif (par.C2P_constant)
+			par.dd = 1/106 ;		% intercept for P:C as a linear function of DIP (Redfield)
+        else 
+            par.dd = 8.83e-03 ;     % intercept for P:C as a linear function of DIP (Galbraith & Martiny(2015) value = 6.0e-3)
+        end 
+    end
 
     % O model parameters
     if exist('xhat') & isfield(xhat,'O2C_T')
