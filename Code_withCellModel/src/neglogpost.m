@@ -9,10 +9,27 @@ function [f, fx, fxx, data] = neglogpost(x, par)
 
     % reset parameters if optimization routine
     % suggests strange parameter values ;
-    if iter < 10
-        x = ResetPar(x, par) ;
+    if iter>0 & iter < 10
+        [x, ibad] = ResetPar(x, par) ;
+        if ~isempty(ibad)
+            fprintf('solver suggested unrealistic parameter values. Reset x for pindx = ')
+            fprintf('%d ... ',ibad)
+            fprintf('\n')
+        end
+        % SUGGEST CHANGE:
+        % Do not execute code if solver suggests very bad values
+        % instead of replacing parameter value and solving,
+		% if ~isempty(ibad)
+		% 	load(par.fxhat); % do this step before saving the reset values in fxhat
+		% 	f = 10000;
+		% 	fx = xhat.fx;
+		% 	fxx = xhat.fxx;
+		% 	data = struct;
+		% 	fprintf('solver suggested unrealistic parameter values. exiting neglogpost... \n')
+		% 	return
+		% end
     end
-    % print current parameters 
+    % print and save current parameters to a file par.fxhat
     if iter > 0
         PrintPar(x, par) ;    
     end

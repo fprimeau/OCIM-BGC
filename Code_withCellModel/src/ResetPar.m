@@ -1,4 +1,12 @@
 function  [x, ibad] = ResetPar(x, par);
+    % identify when solver suggests very bad parameter values
+	% when the suggested parameter value is outside the range of possible values, 
+    %   1. Reset the value in x to the previous iteration value +/- a small random perturbation
+	%   2. add the parameter's indx (par.pindx) to the vector ibad
+	%       in neglogpost, if ibad has length > 0, 
+    %       set f to a large number (f=1000); 
+    %       set fx to a vector of zeros length(fx) = length(x); 
+    %       set fxx to a matrix of zeros.
     global iter
     on = true; off = false;
     load(par.fxhat,'x0')
@@ -11,8 +19,6 @@ function  [x, ibad] = ResetPar(x, par);
     % parameter values
     pindx = par.pindx  ;
 
-    % when the suggested parameter value is outside the range of possible values, 
-    % add the parameter's indx (par.pindx) to a vector 
     ibad =[];
     
     if (par.opt_sigP == on)
