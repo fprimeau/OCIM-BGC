@@ -176,6 +176,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
     N2C   = 18/106 ; %16/117 ; 
     if isfield(par,'CellOut')
 		C2P = par.CellOut.C2P(iwet); % note: size(par.CellOut.C2P) = [90 , 180 , 24]
+        %C2P = par.C2P; % C2P is already saved in par (vector length nwet) in neglogpost
 		%N2C = 1./par.CellOut.C2N(iwet);
 	elseif (par.C2P_Tzmodel)
         %Tz01 = par.Tz.*1.0e8 ; % par.Tz has been modified to be temperature scaled between zero and 1. rescaling is no longer needed.
