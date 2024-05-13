@@ -344,9 +344,9 @@ function PrintPar(x, par);
 		xhat.(fnames{ii}) = real(xhat.(fnames{ii}));
 	end
 
-    % Save in neglogpost instead
-    % x0 = x ;
-    % if (par.optim == on)
-    %     save(par.fxhat, 'x0','xhat')
-    % end 
+    % Save in neglogpost instead?
+    x0 = x ;
+    if (par.optim == on)
+        save(par.fxhat, 'x0','xhat')
+    end 
 end
