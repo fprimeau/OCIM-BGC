@@ -74,6 +74,39 @@ function [f, fx, fxx, data] = neglogpost(x, par)
     f  = f + 0.5*(eip.'*Wip*eip) + 0.5*(eop.'*Wop*eop); 
     
     %%%%%%%%%%%%%%%%%%   End Solve P    %%%%%%%%%%%%%%%%%%%%
+
+    %%%%%%%%%%%%%%     Solve for C2P with Cell model   %%%%%%%%%%%%%%%%%%%%%
+	if (par.Cellmodel == on)
+		tic
+		[par, C2P, C2Px, C2Pxx, C2Ppxx] = eqC2Puptake(x, par, data);
+        par.C2P = C2P ; % vector length nwet
+		par.C2Px = C2Px;
+		par.C2Pxx = C2Pxx;
+		par.C2Ppxx = C2Ppxx;
+
+		%save derivative for sensitivity tests
+		data.C2Px = C2Px;
+
+        % save additional cell model fields for analysis
+		%data.CellOut = par.CellOut;
+		data.CellOut.C2P =  par.CellOut.C2P;
+		data.CellOut.N2P = par.CellOut.N2P;
+		data.CellOut.C2N = par.CellOut.C2N;
+		data.CellOut.LimType = par.CellOut.LimType;
+		data.CellOut.r = par.CellOut.r;
+		data.CellOut.mu = par.CellOut.mu;
+		data.CellOut.E = par.CellOut.E;
+		data.CellOut.L = par.CellOut.L;
+		data.CellOut.A = par.CellOut.A; % M=A
+		data.CellOut.PLip = par.CellOut.PLip;
+		data.CellOut.PStor = par.CellOut.PStor;
+		data.CellOut.QP = par.CellOut.QP;
+		data.CellOut.QC = par.CellOut.QC;
+		data.CellOut.dC2P_dDIP = par.CellOut.dC2P_dDIP;
+
+		toc
+		fprintf('All of Cell model solved \n ')
+	end
        
     %%%%%%%%%%%%%%%%%%   Solve Si       %%%%%%%%%%%%%%%%%%%%
     if (par.Simodel == on)
