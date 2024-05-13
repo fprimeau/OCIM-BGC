@@ -1,4 +1,4 @@
-function [f, fx, fxx, data] = neglogpost(x, par)
+function [f, fx, fxx, data, xhat] = neglogpost(x, par)
     global iter
     on = true; off = false;
     % print and save current parameter values to
@@ -194,11 +194,71 @@ function [f, fx, fxx, data] = neglogpost(x, par)
         f  = f + 0.5*(eo.'*Wo*eo)   ;
     end
     %%%%%%%%%%%%%%%%%%   End Solve O    %%%%%%%%%%%%%%%%%%%%
+    % --------- Save all parameter values inlcuding fixed values in xhat ------
+	% this is to make sure all parameter values are consistent when rerunning model
+    % parameter_names_P = {'sigP', 'Q10P', 'kdP','bP_T', 'bP','alpha','beta'};
+    % parameter_names_Cell = {'Q10Photo','fRibE','fStorage','kST0','PStor_rCutoff','PStor_scale','PLip_PCutoff','PLip_scale','alphaS','gammaDNA'};
+    % parameter_names_C = {'sigC', 'kru', 'krd', 'etau', 'etad', 'bC_T', 'bC', 'd', 'Q10C', 'kdC', 'R_Si', 'rR', 'cc', 'dd'};
+    % parameter_names_O = {'O2C_T', 'rO2C'};
+    % optimizable_parameter_list = [parameter_names_P, parameter_names_Cell, parameter_names_C, parameter_names_O];
+
+    % fixed parameters
+	allparams.kPIC      = par.kPIC  ;
+    allparams.kappa_p 	= par.kappa_p;
+	allparams.kappa_g 	= par.kappa_g   ;
+    % P model parameters
+	allparams.sigP 	    = par.sigP     ;
+	allparams.Q10P		= par.Q10P      ;
+	allparams.kdP 		= par.kdP       ;
+	allparams.bP_T 		= par.bP_T      ;
+	allparams.bP 		= par.bP        ;
+	allparams.alpha 	= par.alpha    ;
+	allparams.beta 		= par.beta      ;
+	if (par.Cmodel == on)
+        parameter_names_C = {'sigC', 'kru', 'krd', 'etau', 'etad', 'bC_T', 'bC', 'd', 'Q10C', 'kdC', 'R_Si', 'rR'}; %excluding cc and dd
+        for ii = 1:length(parameter_names_C)
+            allparams.(parameter_names_C{ii}) = par.(parameter_names_C{ii});
+        end
+        %C2P model params
+        if par.C2P_Tzmodel
+            allparams.ccT = par.ccT; 
+            allparams.ddT = par.ddT;
+        else
+            allparams.cc = par.cc; 
+            allparams.dd = par.dd;
+        end
+	end
+	if (par.Omodel == on)
+		allparams.O2C_T = par.O2C_T ;
+		allparams.rO2C = par.rO2C  ;
+	end
+	if (par.Simodel==on)
+		allparams.dsi =  par.dsi   ;
+		allparams.at = par.at    ;
+		allparams.bt = par.bt    ;
+		allparams.iaa = par.iaa   ;
+		allparams.bb = par.bb  ;
+	end
+	if (par.Cellmodel==on)
+		%pull params from BIO substructure
+		%allparams.BIO = par.BIO;
+		BIOfnames = fieldnames(par.BIO);
+		for ii = 1:length(BIOfnames)
+			allparams.(BIOfnames{ii}) = par.BIO.(BIOfnames{ii});
+		end
+		clear BIOfnames
+	end
+	xhat.allparams = allparams;
+    %--------------------------------------------------------
     fprintf('current objective function value is %3.3e \n\n',f) 
 
-    if mod(iter, 1) == 0        
+    if mod(iter, 1) == 0       
+        fprintf('saving data to %s  ...\n', par.fname) 
         save(par.fname, 'data')
-	save(par.fxpar, 'par' , '-v7.3')
+        fprintf('saving xhat to %s  ...\n', par.fxhat)
+        save(par.fxhat, 'xhat')
+		
+	    % save(par.fxpar, 'par' , '-v7.3')
     end 
     %% +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     % calculate gradient
