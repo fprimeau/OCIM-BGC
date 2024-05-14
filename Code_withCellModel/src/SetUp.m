@@ -5,7 +5,12 @@ spa  = 365*spd ;
 on   = true    ;
 off  = false   ;
 % addpath according to opterating system
-addpath('../../DATA/BGC_48layer/')
+if GridVer_z ==48
+  addpath('../../DATA/BGC_48layer/')
+else
+  %addpath('../../DATA/BGC_24layer/')
+  addpath('../../DATA/BGC_2023Nature/')
+end
 
 if GridVer == 91 
     switch(operator)
@@ -45,7 +50,97 @@ if par.Cmodel == on
     fprintf('DOC scaling factor is %2.2e \n', par.docscale)
     fprintf('ALK scaling factor is %2.2e \n', par.alkscale)
     fprintf('O2 scaling factor is %2.2e \n', par.o2scale)
-end
+
+  % set C2P function Type
+  fprintf('------- Stoichiometry function ------------- \n')
+  switch(par.C2Pfunctiontype)
+    case 'P'
+      par.C2P_PO4model = on;
+      par.C2P_Tzmodel = off;
+      par.Cellmodel = off;
+      par.C2P_constant = off;
+    case 'C'
+      par.Cellmodel = on;
+      par.C2P_PO4model = off;
+      par.C2P_Tzmodel = off;
+      par.C2P_constant = off;
+    case 'T'
+      par.C2P_Tzmodel = on;
+      par.C2P_PO4model = off;
+      par.Cellmodel = off;
+      par.C2P_constant = off;
+    case 'R'
+      par.C2P_constant = on;
+      par.C2P_Tzmodel = off;
+      par.C2P_PO4model = off;
+      par.Cellmodel = off;
+  end
+
+  if par.Cellmodel == on
+    fprintf('-- Cell stoichiometry model is on  \n')
+    if ~isfield(par,'dynamicP')
+      fprintf('   -- default: Cell model depends on observed nutrient fields \n')
+      par.dynamicP = off;
+    elseif par.dynamicP == on
+      fprintf('   -- Cell model depends on modelled DIP \n')
+    else
+      fprintf('   -- Cell model depends on observed nutrient fields \n')
+    end
+    % check C:P parameter flags
+    if any([par.opt_cc, par.opt_dd, par.opt_ccT, par.opt_ddT])
+      fprintf('Resetting opt_ccT, opt_ddT, opt_cc, and opt_dd to off ; cannot optimize linear C2P function parameters when cell model is on \n')
+      par.opt_ccT = off;
+      par.opt_ddT = off;
+      par.opt_cc = off;
+      par.opt_dd = off;
+    end
+
+  elseif par.C2P_Tzmodel == on
+    fprintf('-- P:C is a linear function of WOA observed Temperature (normalized) \n')
+    % check C:P parameter flags
+    if any([par.opt_cc, par.opt_dd])
+      fprintf('Resetting opt_cc and opt_dd to off ; cannot optimize cc and dd when C2P is a function of temperature \n')
+      par.opt_cc = off;
+      par.opt_dd = off;
+    end
+
+  elseif par.C2P_constant == on 
+    fprintf('--- P:C is a constant value globally  \n')
+    % check C:P parameter flags
+    if any([par.opt_ccT, par.opt_ddT, par.opt_cc])
+      fprintf('Resetting opt_cc, opt_ccT and opt_ddT to off ; only use opt_dd optimize a constant C2P value \n')
+      par.opt_ccT = off;
+      par.opt_ddT = off;
+      par.opt_cc  = off;
+    end
+
+  else
+    if ~isfield(par,'dynamicP')
+      par.dynamicP = off;
+      fprintf('-- P:C is a linear function of WOA observed phosphate  \n')
+    elseif par.dynamicP == on
+      fprintf('-- P:C is a linear function of modelled DIP  \n')
+    else
+      fprintf('-- P:C is a linear function of WOA observed phosphate \n')
+    end
+    % check C:P parameter flags
+    if any([par.opt_ccT, par.opt_ddT])
+      fprintf('Resetting opt_ccT and opt_ddT to off ; cannot optimize ccT and ddT when C2P is a function of phosphate \n')
+      par.opt_ccT = off;
+      par.opt_ddT = off;
+    end
+  end
+
+else
+  fprintf('--- Carbon cycle model is OFF ------ \n')
+  par.C2P_constant = off;
+  par.C2P_Tzmodel = off;
+  par.C2P_PO4model = off;
+  par.Cellmodel = off;
+end  % end Cmodel
+fprintf('\n')
+
+
 if par.Omodel == on
     fprintf('-------- O model is on -------- \n')
 end 
@@ -55,7 +150,7 @@ end
 fprintf('\n')
 
 %
-if GridVer == 91
+if GridVer_z == 48
     OperName = sprintf('OCIM2_%s',TRdivVer);
     load(OperName,'output', 'TR') ;          % TR: convergence & yr-1
     %
@@ -78,6 +173,37 @@ if GridVer == 91
     M3d = output.M3d;
     grd = output.grid;
     TR  = TR/spa;           % yr-1   -------> s-1
+
+else
+    OperName = sprintf('OCIM2_%s',TRdivVer);
+    load(OperName,'output') ;
+    %
+    fname = 'biopump_model_output_Nowicki.nc';
+    NPP = ncread(fname,'NPP'); % 1 = CbPM; 2 = CAFE
+    npp = NPP(:,:,1); % mmol/m2/yr 
+    load M3d91x180x24.mat MSKS
+    % WOA13 data
+      % load Sobs_91x180x24.mat Sobs    % Salinity obs for PME and Fsea2air
+      % load po4obs_91x180x24.mat       % WOA PO4 climatological obs [units: umol/kg]
+      % load no3obs_91x180x24.mat       % WOA NO3 clim obs [units: umol/kg]
+      % load tempobs_91x180x24.mat
+      % load Siobs_91x180x24.mat Siobs  % not needed for cell model
+    % WOA18 data
+    load TS_WOA_91x180x24.mat tempobs salobs % WOA temperature & salinity
+    load O2_Nut_WOA_91x180x24.mat  O2_obs Si_obs DIN_obs DIP_obs % WOA O2 Si DIN DIP observations
+
+    load PME_TS_91x180x24.mat  pme % calculated from transport operator and salt fields (alternate to running pme.m) 
+    load DICant_91x180x24.mat
+    load GLODAPv2_91x180x24raw.mat alkraw po4raw o2raw sio4raw % GLODAP Nutrient units = [umol/kg]
+    load co2syspar91.mat co2syspar
+    load DOMobs_91x180x24.mat DOPobs
+    load DOCobs_clean_91x180x24.mat
+    load PARobs_processed_91x180x24.mat PARobs
+    load initCO_91x180x24.mat data %initial guess for C&O
+    load splco2_mod_monthly             % monthly CO2 data fir transient run
+    load GLODAPv2_DIC_remove_cant.mat gc12new
+    dic_initial = nanmean(gc12new,4);
+
 end
    
 %---------------------- constants -------------------
@@ -99,11 +225,11 @@ iwet = find(M3d(:))         ;
 nwet = length(iwet)         ;
 dAt  = output.grid.dAt      ;
 dVt  = output.grid.dVt      ;
-ARC  = MSKS.ARC_48layer     ;
-MED  = MSKS.MED_48layer     ;
-PAC  = MSKS.PAC_48layer     ;
-ATL  = MSKS.ATL_48layer     ;
-IND  = MSKS.IND_48layer     ;
+ARC  = MSKS.ARC     ;
+MED  = MSKS.MED     ;
+PAC  = MSKS.PAC     ;
+ATL  = MSKS.ATL     ;
+IND  = MSKS.IND     ;
 iarc = find(ARC(:))         ;
 imed = find(MED(:))         ;
 ipac = find(PAC(:))         ;
