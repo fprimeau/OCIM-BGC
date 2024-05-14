@@ -1,14 +1,15 @@
 clc; clear all; close all
 
 % 
-% Downloaded the data from Holzer, M., DeVries T., and de Laverne, C (2021). 
+% Downloaded the originial transport operator data from Holzer, M., DeVries T., and de Laverne, C (2021). 
 % Diffusion controls the ventilation of a Pacific Shadow Zone above abyssal overturning, 
 % Nature Communications. See opensource in here.
 % Dimensions: 91 by 180 by 48
 % CFC11 time = 70 years, CFC12 time = 70 years
 
 
-load OCIM2_48L_base_transport.mat %TR: Convergence & yr-1
+load OCIM2_48L_base_transport.mat 
+%TR: Convergence & yr-1
 
 % All variables
 output.M3d = ncread('OCIM2_48L_base_Data.nc', 'ocnmask'); % only 'wet'box == 1
@@ -51,6 +52,6 @@ output.grid.dzt  =  dzt;
 
 %------------------------------------------------
 fileName  = 'OCIM2_CTL_He_48layer.mat'
-directory = '../DATA/BGC_48layer'
+directory = '../../DATA/BGC_48layer'
 filePath  = fullfile(directory, fileName);
 save(filePath, 'output', 'TR');

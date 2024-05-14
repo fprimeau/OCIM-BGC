@@ -24,6 +24,8 @@ function [f,J,par] = C13eqn(X, par)
 
     R13o = DIC13./(par.DIC); 
     dR13o = d0(1./par.DIC);
+    par.c13.R13o = R13o;
+    par.c13.dR13o = dR13o;
 
     PO4 = par.po4obs(iwet) ;
     % fixed parameters
@@ -69,23 +71,11 @@ function [f,J,par] = C13eqn(X, par)
     par.PFDa = PFDa ;
     par.PFDc = PFDc ;
     par.DIC13  = DIC13  ;
-    %par.ALK  = ALK  ;
-    
-    % define C13 fractionation factors and ratios in ocean and atmosphere
-    % set up fractionation factors fro C13 and R13
-    %  A. Schmittner et al.: Distribution of carbon isotope ratios (δ13C) in the ocean
-    % par.c13.R13a = 0.01116303448;%0.01118; % air C13/C 0.01116303448 at 1850
-    par.pc13atm = par.pco2atm*par.c13.R13a;
-    par.c13.R13o = R13o;
-    par.c13.dR13o = dR13o;
-    par.c13.alpha_k = 0.99915; % kenetic fractionation factor 
-    par.c13.alpha_g2aq = 0.998764; % gas to water fractionation factor
+       
     % temperature (in C)-dependent equilibrium fractionation factor from gaseous CO2 to DIC.
-    % par.c13.alpha_g2dic = 1.01051-1.05*1e-4*par.Temp(isrf); 
     disp(sprintf('air-sea fractionation tuned by %4.2f',par.fras));
     par.c13.alpha_g2dic = (1.01051-1.05*1e-4*par.Temp-1.0)*par.fras + 1.0;
-    % par.c13.alpha_g2dic = 1.01051-1.05*1e-4*par.Temp; 
-    
+       
     % Air-Sea gas exchange for total C
     vout    = Fsea2air(par, 'CO2');
     G_dic   = vout.G_dic ;
@@ -104,6 +94,7 @@ function [f,J,par] = C13eqn(X, par)
     
     alpha_aq2poc = -0.017*log(co2) + 1.0034; % check the unit of co2surf
     alpha_tmp = ( par.c13.alpha_g2aq ./ par.c13.alpha_g2dic ) .* alpha_aq2poc; 
+    disp(sprintf('photosynthesis fractionation tuned by par.frpho = %4.2f',par.frpho));
     alpha_dic2poc = (alpha_tmp(iwet)-1.0)*par.frpho + 1.0;
     par.c13.alpha_aq2poc  = alpha_aq2poc   ;
     par.c13.alpha_tmp     = alpha_tmp      ;
@@ -122,6 +113,7 @@ function [f,J,par] = C13eqn(X, par)
     JgDIC13 = vout.JgDIC13;
     G_dic13 = vout.G_dic13;
     rhs13 = vout.rhs13;
+
     % biological DIC uptake operator
     G = uptake_C(par)  ; par.G = G ;
      
@@ -226,10 +218,6 @@ function [f,J,par] = C13eqn(X, par)
     Jc{5,6} = 0*I ;
     Jc{6,6} = TRdiv + kappa_r ;
     J = cell2mat(Jc);
-    % if nargout > 1
-    %   % factorize Jacobian matrix
-    %   FD = mfactor(cell2mat(Jc)) ;
-    % end 
-    
+       
 end
 
