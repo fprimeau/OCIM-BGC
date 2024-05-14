@@ -9,11 +9,9 @@ function [Cratio] = get_atmC_ratio(varargin)
   
   fprintf('read Graven 2017 data...');
   fname = '/DFS-L/DATA/primeau/oceandata/DATA/D14C/Graven2017/TableS1_wfu.csv';
-  % fname = '/export/nfs0home/weiweif/Research/CYCLOCIM/DATA/D14C/Graven2017/TableS1_wfu.csv';
   atmdata = csvread(fname,5,0);
-  % disp(sprintf('[%5.1f %5.2f %5.3f %5.2f %5.3f];      ...\n',atmdata));
-
-  fprintf('get ratios from \x03b4 value...\n');
+ 
+  %fprintf('get ratios from \x03b4 value...\n');
   R13a = d2r13(atmdata(:,5)); % 
   R14aN = D2r14(atmdata(:,2),R13a);
   R14aT = D2r14(atmdata(:,3),R13a);

@@ -115,7 +115,7 @@ function [par, C14, C14x, C14xx] = eqC14cycle_v2(x, par);
     else
         fprintf('reset the global variable for the next call eqCcycle. \n')
         GC14 = real(C14) + 1e-20*randn(6*nwet,1) ;
-        [F,FD,par] = C14_eqn(C14,par) ;
+        F = C14_eqn(C14,par) ;
     end
 end
 
@@ -196,7 +196,7 @@ function [F,FD,par,C14x,C14xx] = C14_eqn(X, par)
     %par.ALK  = ALK  ;
     
     lambda14 = par.lambda14 ;
-    fc14     = par.c14.fc14 ; 
+    fc14     = par.fc14 ; 
     % temperature (in C)-dependent equilibrium fractionation factor from gaseous CO2 to DIC.
     disp(sprintf('air-sea fractionation tuned by fras=%4.2f and fc14=%4.2f',par.fras,fc14));
     par.c14.alpha_g2dic = (1.01051-1.05*1e-4*par.Temp-1.0)*par.fras*fc14 + 1.0;

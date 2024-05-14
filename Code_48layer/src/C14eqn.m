@@ -24,6 +24,8 @@ function [f,J,par] = C14eqn(X, par)
 
     R14o = DIC14./(par.DIC); 
     dR14o = d0(1./par.DIC);
+    par.c14.R14o = R14o;
+    par.c14.dR14o = dR14o;
 
     PO4 = par.po4obs(iwet) ;
     % fixed parameters
@@ -70,26 +72,12 @@ function [f,J,par] = C14eqn(X, par)
     par.PFDc = PFDc ;
     par.DIC14  = DIC14  ;
     
-    % define C14 fractionation factors and ratios in ocean and atmosphere
-    % set up fractionation factors fro C14 and R14
-    %  A. Schmittner et al.: Distribution of carbon isotope ratios (δ13C) in the ocean
-    % fc14 = 2.0;  %  The fractionation  for 14C is 2.3 times the fractionation for 13C
-    fc14 = par.fc14;
-    lambda14 = 1/par.spa*log(2)/5730; % radiocarbon decay rate (yr^(-1) to s^(-1))
-    % R14a is changing with time and passed in in par.c14
-    % par.c14.R14a = 1.220805*1e-12; % air C14/C Roxa = 1.176*e-12
-    par.pc14atm = par.pco2atm*par.c14.R14a;
-    par.c14.R14o = R14o;
-    par.c14.dR14o = dR14o;
-    par.c14.fc14 = fc14;
-    par.c14.alpha_k = 1 - (1 - 0.99915)*fc14 ; % kenetic fractionation factor 
-    par.c14.alpha_g2aq = 1- (1 - 0.998764)*fc14 ; % gas to water fractionation factor
+    lambda14 = par.lambda14 ;
+    fc14     = par.fc14 ;
     % temperature (in C)-dependent equilibrium fractionation factor from gaseous CO2 to DIC.
-    % par.c14.alpha_g2dic = 1.01051-1.05*1e-4*par.Temp(isrf); 
     disp(sprintf('air-sea fractionation tuned by fras %4.2f and fc14 %4.2f',par.fras,fc14));
     par.c14.alpha_g2dic = (1.01051-1.05*1e-4*par.Temp-1.0)*par.fras*fc14 + 1.0;
-    % par.c14.alpha_g2dic = (1.01051-1.05*1e-4*par.Temp - 1.0)*fc14 + 1.0; 
-    
+        
     % Air-Sea gas exchange for total C
     vout    = Fsea2air(par, 'CO2');
     G_dic   = vout.G_dic ;
@@ -128,6 +116,7 @@ function [f,J,par] = C14eqn(X, par)
     JgDIC14 = vout.JgDIC14;
     G_dic14 = vout.G_dic14;
     rhs14 = vout.rhs14;
+
     % biological DIC uptake operator
     G = uptake_C(par)  ; par.G = G ;
      
@@ -233,8 +222,5 @@ function [f,J,par] = C14eqn(X, par)
     Jc{5,6} = 0*I ;
     Jc{6,6} = TRdiv + kappa_r + lambda14*I ;
     J = cell2mat(Jc);
-    % if nargout > 1
-    %   % factorize Jacobian matrix
-    %   FD = mfactor(cell2mat(Jc)) ;
-    % end 
+    
   end
