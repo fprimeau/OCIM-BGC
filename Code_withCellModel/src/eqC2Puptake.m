@@ -60,10 +60,12 @@ function [par, C2P, C2Px, C2Pxx, C2Ppxx] = eqC2Puptake(x, par, data)
 		par.CellOut.C2P = M3d*0;
 		par.CellOut.N2P = M3d*0;
 		par.CellOut.C2N = M3d*0;
+		par.CellOut.O2C = M3d*0;
 
 		par.CellOut.C2P(iprod) = CellOut.CP;
 		par.CellOut.N2P(iprod) = CellOut.NP;
 		par.CellOut.C2N(iprod) = CellOut.CN;
+		par.CellOut.O2C(iprod) = CellOut.RQtotalO2toC;
 
 		par.CellOut.C2P(isnan(par.CellOut.C2P)) = 0; %remove NaNs
 
