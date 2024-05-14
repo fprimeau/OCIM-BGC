@@ -19,6 +19,8 @@ operator = 'L' ;
 % H -> KiLOW_noHe; I -> KvHIGH_He; J -> KvHIGH_noHe; K -> KvHIGH_KiHIGH_noHe
 % L -> CTL_He_48layer
 
+par.nl = 2;
+
 Gtest = off ; 
 Htest = off ;
 par.optim   = on ; 

@@ -196,13 +196,23 @@ else
     load DICant_91x180x24.mat
     load GLODAPv2_91x180x24raw.mat alkraw po4raw o2raw sio4raw % GLODAP Nutrient units = [umol/kg]
     load co2syspar91.mat co2syspar
-    load DOMobs_91x180x24.mat DOPobs
-    load DOCobs_clean_91x180x24.mat
-    load PARobs_processed_91x180x24.mat PARobs
+
+    %load DOMobs_91x180x24.mat DOPobs   % old data file
+    %load DOCobs_clean_91x180x24.mat    % old data file with refractory component and outlier removed
+    load DOPobs_91x180x24.mat DOPobs
+    load DOCobs_Feb2022_91x180x24.mat
+    dopraw = DOPobs; 
+    docraw = DOCobs;
+    
     load initCO_91x180x24.mat data %initial guess for C&O
-    load splco2_mod_monthly             % monthly CO2 data fir transient run
+    load splco2_mod_monthly.mat             % monthly CO2 data fir transient run
     load GLODAPv2_DIC_remove_cant.mat gc12new
     dic_initial = nanmean(gc12new,4);
+
+    load PARobs_processed_91x180x24.mat PARobs
+    % PARobs = load('annual_PAR_91x180.mat'); %PAR data in units of [Einstein m-2 d-1] (units converted for cell model later in SetUp)
+	  % PARobs.par = PARobs.PAR;
+	  % load Kd490_MODIS_91x180.mat		% diffuse attenuation [m^-1]
 
 end
    
@@ -279,9 +289,9 @@ docraw = rmOutliers(docraw, M3d) ;
 % alkraw = rmOutliers(alkraw, M3d) ;
 % o2raw  = rmOutliers(o2raw, M3d)  ;
 
-tempobs(tempobs(:)<-2.0) = -2.0   ;
+tempobs(tempobs(:)<-2.0) = -2.0   ; % Reset extreme cold temps to a minimum temperature threshold of -2C (seawater freezing point) 
 DIP_obs(DIP_obs(:)<0.05) = 0.05   ;
-po4raw(po4raw(:)<0.05)   = nan    ; 
+po4raw(po4raw(:)<0.05)   = nan    ; % Remove DIP data below detection limit; 
 
 %for ji = 1:24
 %    p2d = po4obs(:,:,ji);
@@ -300,6 +310,7 @@ par.dicraw   = dicraw        ;
 par.alkraw   = alkraw*permil ;
 par.dopraw   = dopraw - 0.05 ;    %less refractory DOP  ---> 0.05를 왜 빼주지..?
 par.docraw   = docraw ;
+par.PARobs = PARobs;
 %-------------------- prepare virtual flux -------------------
 % PME part;
 % [modT,modS,pme] = pme(par) ; 
@@ -338,113 +349,124 @@ par.aveT   = nanmean(Tz3d(:,:,1:3),3) ;                    % tsnanmean하고 큰
 % Tz: aveT에 쓰일때말고는 모르겠음. 1e-8을 왜하는지? ---> eqOcycle에서는 다시 10^8 곱해서 사용.
                                                          
 
-%-------------------- correct o2 concentration --------------------
-%----------> 내가 받은 O2_obs WOA는 이미 correction 되어 있음. 여긴 일단 넘어가기.
-% o2obs_c = M3d*0;
-% o2obs(iwet) = o2obs(iwet).*44.661;        % convert unit form [ml/l] to [umol/l].
-% o2obs_c(iwet) = o2obs(iwet).*1.009-2.523; % o2 correction based on Bianchi et al.(2012) [umol/l] .
-% ineg = find(o2obs_c(:)<0);                % find out negative values and set them to zero.
-% o2obs_c(ineg) = 0.1 ;
-% par.o2obs = o2obs_c ;
+%-------------------- correct WOA o2 concentration --------------------
+o2obs_c = M3d*0;
+O2_obs(iwet) = O2_obs(iwet).*44.661;        % convert unit form [ml/l] to [umol/l].
+o2obs_c(iwet) = O2_obs(iwet).*1.009-2.523; % o2 correction based on Bianchi et al.(2012) [umol/l] .
+ineg = find(o2obs_c(:)<0);                % find out negative values and set them to zero.
+o2obs_c(ineg) = 0.1 ;
+par.o2obs = o2obs_c ;
 
 %---------------------- prepare for restoring -----------------------
 % calculating global mean DIP, ALK, and DSi concentraions for
 % restoring 
 idip = find(par.po4raw(iwet) > 0) ;
 ialk = find(par.alkraw(iwet) > 0) ;
+%isil = find(par.sio4raw(iwet)>0) ;
 
 par.DIPbar = sum(par.po4raw(iwet(idip)).*dVt(iwet(idip)))/sum(dVt(iwet(idip))) ;
 par.ALKbar = sum(par.alkraw(iwet(ialk)).*dVt(iwet(ialk)))/sum(dVt(iwet(ialk))) ;
+%par.DSibar = sum(par.sio4raw(iwet(isil)).*dVt(iwet(isil)))/sum(dVt(iwet(isil)));
 
+%for DIC (only needed for runs with Atmosphere box)
+idic = find(par.dicraw(iwet)>0) ;
+par.DICbar = sum(par.dicraw(iwet(idic)).*dVt(iwet(idic)))/sum(dVt(iwet(idic))) ;
+
+% %------------------ Prepare Light field the model --------------------
+% MOVED to cleanPARobs.m
+% % par.nl = 2;
+% PARobs = PARobs.par;
+
+% % fill in missing values along coastlines
+% PARsurf = inpaint_nans(PARobs);
+% SURF = M3d(:,:,1);
+% ilnd = find(SURF(:) == 0);
+% PARsurf(ilnd) = NaN;
+% PARsurf(PARsurf<=0) = min(PARobs(PARobs>0));
+
+% % convert PAR [Einstein m^-2 d^-1] into units of [umol photon m^-2 s^-1] for cell model
+% PARsurf = PARsurf*10^6/spd; % PAR at surface
+% clear PARobs
+
+% % extrapolate light to bottom of euphotic zone
+% par.kI = 0.04;   % Light attenuation coefficient in seawater [m^-1]
+% % Alternate:
+%   % kI = 0.09*CHL.^0.4 ; % [m^-1]
+%       % CESM light attenuation: average K for par wavelengths, plus absorbtion due to water; as a function of chlorophyll
+%       % CHL = [mg/m^3]
+
+%   %	kI = Kd490 * 73/2; % sum(grd.dzt(1:nl)) 
+%       % CbPM model uses Satellite diffuse attenuation coefficient
+%       %	 median mixed layer light level = surface irradiance * exp (-k490 * MLD/2)
+% 	PAR        = 0*M3d;
+% 	for ii=1:par.nl % only needed in euphotic zone for cell growth
+% 		PAR(:,:,ii) = PARsurf.*exp(-par.kI*grd.zt(ii)); %PAR at mid depth of grid box [ii]
+% 	end
+  
+%   par.PARobs = PAR;
+% 	clear PAR
 
 %-------------------- prepare NPP for the model ----------------------
-par.p2c = 0.006 + 0.0069*DIP_obs ;         
-%par.p2c = (1/117) * M3d ;                % 이건 아마 redfield ratio인듯?
+% remove this P:C unit conversion. a constant stoichiometric scaling is implicit in alpha
+% par.p2c = 0.006 + 0.0069*DIP_obs ;         
+par.p2c = (1/117) * M3d ;                % 이건 아마 redfield ratio인듯?
 inan = find(isnan(npp(:)) | npp(:) < 0) ;
 npp(inan)  = 0  ;
-par.nl = 8 ;                              % nl이 뭐지? NPP 발생하는 layer를 의미하나?
+
+par.nl = 2 ;                              % nl이 뭐지? NPP 발생하는 layer를 의미하나?
 par.Lambda = M3d*0 ;
 par.nppMSK = M3d*0 ;
 
 % create mask for upper and lower ocean.
 UMSK = M3d * 0 ;
 DMSK = M3d * 0 ;
-par.npp = repmat(npp, [1,1,par.nl]) * 0; %npp 91x180 ----> 91x180xeuphotic zone(~100m)
+par.npp = repmat(npp, [1,1,par.nl]) * 0;
 [nx,ny,nz] = size(M3d) ;
 for jj = 1 : nx
     for ii = 1 : ny
-        tmp = squeeze(M3d(jj, ii, :)) ;  %----> tmp는 각 91 by 180 field에서의 깊이 (24*1) 벡터
-        idp = length(find(tmp) == 1)  ;
+        tmp = squeeze(M3d(jj, ii, :)) ;
+        idp = length(find(tmp) == 1) ; %is this right?
 
-        if ( idp <= 49 )
-            UMSK(jj,ii,1:8) = 1 ;
-            DMSK(jj,ii,9:end) = 1;
-            par.nppMSK(jj,ii,1) = 8 ;
-            par.nppMSK(jj,ii,2) = 8 ;
-            par.nppMSK(jj,ii,3) = 8 ;
-            par.nppMSK(jj,ii,4) = 8 ;
-            par.nppMSK(jj,ii,5) = 8 ;
-            par.nppMSK(jj,ii,6) = 8 ;
-            par.nppMSK(jj,ii,7) = 8 ;
-            par.nppMSK(jj,ii,8) = 8 ;
+        % if ( idp <= 12 )
+        if ( idp <= 25 )
+            UMSK(jj,ii,1:2) = 1 ;
+            DMSK(jj,ii,3:end) = 1;
+            par.nppMSK(jj,ii,1) = 2 ;
+            par.nppMSK(jj,ii,2) = 2 ;
 
-            par.npp(jj,ii,1)  = (1/8) * npp(jj,ii) / grd.dzt(1) * par.p2c(jj,ii,1);
-            par.npp(jj,ii,2)  = (1/8) * npp(jj,ii) / grd.dzt(2) * par.p2c(jj,ii,2);
-            par.npp(jj,ii,3)  = (1/8) * npp(jj,ii) / grd.dzt(3) * par.p2c(jj,ii,3);
-            par.npp(jj,ii,4)  = (1/8) * npp(jj,ii) / grd.dzt(4) * par.p2c(jj,ii,4);
-            par.npp(jj,ii,5)  = (1/8) * npp(jj,ii) / grd.dzt(5) * par.p2c(jj,ii,5);
-            par.npp(jj,ii,6)  = (1/8) * npp(jj,ii) / grd.dzt(6) * par.p2c(jj,ii,6);
-            par.npp(jj,ii,7)  = (1/8) * npp(jj,ii) / grd.dzt(7) * par.p2c(jj,ii,7);
-            par.npp(jj,ii,8)  = (1/8) * npp(jj,ii) / grd.dzt(8) * par.p2c(jj,ii,8);
+            par.npp(jj,ii,1)  = (1/2) * npp(jj,ii) / grd.dzt(1) * par.p2c(jj,ii,1);
+            par.npp(jj,ii,2)  = (1/2) * npp(jj,ii) / grd.dzt(2) * par.p2c(jj,ii,2);
 
-            Pnpp(jj,ii,1)  = par.npp(jj,ii,1) / spa ;   
+            Pnpp(jj,ii,1)  = par.npp(jj,ii,1) / spa ;
             Pnpp(jj,ii,2)  = par.npp(jj,ii,2) / spa ;
-            Pnpp(jj,ii,3)  = par.npp(jj,ii,3) / spa ;   
-            Pnpp(jj,ii,4)  = par.npp(jj,ii,4) / spa ;
-            Pnpp(jj,ii,5)  = par.npp(jj,ii,5) / spa ;   
-            Pnpp(jj,ii,6)  = par.npp(jj,ii,6) / spa ;
-            Pnpp(jj,ii,7)  = par.npp(jj,ii,7) / spa ;   
-            Pnpp(jj,ii,8)  = par.npp(jj,ii,8) / spa ;
 
-            Cnpp(jj,ii,1)  = (1/8) * npp(jj,ii) / grd.dzt(1) / spa ;
-            Cnpp(jj,ii,2)  = (1/8) * npp(jj,ii) / grd.dzt(2) / spa ;
-            Cnpp(jj,ii,3)  = (1/8) * npp(jj,ii) / grd.dzt(3) / spa ;
-            Cnpp(jj,ii,4)  = (1/8) * npp(jj,ii) / grd.dzt(4) / spa ;
-            Cnpp(jj,ii,5)  = (1/8) * npp(jj,ii) / grd.dzt(5) / spa ;
-            Cnpp(jj,ii,6)  = (1/8) * npp(jj,ii) / grd.dzt(6) / spa ;
-            Cnpp(jj,ii,7)  = (1/8) * npp(jj,ii) / grd.dzt(7) / spa ;
-            Cnpp(jj,ii,8)  = (1/8) * npp(jj,ii) / grd.dzt(8) / spa ;
+            Cnpp(jj,ii,1)  = (1/2) * npp(jj,ii) / grd.dzt(1) / spa ;
+            Cnpp(jj,ii,2)  = (1/2) * npp(jj,ii) / grd.dzt(2) / spa ;
                         
             par.Lambda(jj,ii,1) = 1./(1e-6+DIP_obs(jj,ii,1)) ;
             par.Lambda(jj,ii,2) = 1./(1e-6+DIP_obs(jj,ii,2)) ;
-            par.Lambda(jj,ii,3) = 1./(1e-6+DIP_obs(jj,ii,3)) ;
-            par.Lambda(jj,ii,4) = 1./(1e-6+DIP_obs(jj,ii,4)) ;
-            par.Lambda(jj,ii,5) = 1./(1e-6+DIP_obs(jj,ii,5)) ;
-            par.Lambda(jj,ii,6) = 1./(1e-6+DIP_obs(jj,ii,6)) ;
-            par.Lambda(jj,ii,7) = 1./(1e-6+DIP_obs(jj,ii,7)) ;
-            par.Lambda(jj,ii,8) = 1./(1e-6+DIP_obs(jj,ii,8)) ;
-        %else 
-            %UMSK(jj,ii,1:3) = 1 ;               %여기 고쳐야 함
-            %DMSK(jj,ii,4:end) = 1;              %nppMSK 필요...?
-            %par.nppMSK(jj,ii,1) = 3 ;
-            %par.nppMSK(jj,ii,2) = 3 ;
-            %par.nppMSK(jj,ii,3) = 3 ;
+        else 
+            UMSK(jj,ii,1:3) = 1 ;
+            DMSK(jj,ii,4:end) = 1;
+            par.nppMSK(jj,ii,1) = 3 ;
+            par.nppMSK(jj,ii,2) = 3 ;
+            par.nppMSK(jj,ii,3) = 3 ;
 
-            %par.npp(jj,ii,1)  = (1/3) .* npp(jj,ii) / grd.dzt(1) * par.p2c(jj,ii,1);
-            %par.npp(jj,ii,2)  = (1/3) .* npp(jj,ii) / grd.dzt(2) * par.p2c(jj,ii,2);
-            %par.npp(jj,ii,3)  = (1/3) .* npp(jj,ii) / grd.dzt(3) * par.p2c(jj,ii,3);%
+            par.npp(jj,ii,1)  = (1/3) .* npp(jj,ii) / grd.dzt(1) * par.p2c(jj,ii,1);
+            par.npp(jj,ii,2)  = (1/3) .* npp(jj,ii) / grd.dzt(2) * par.p2c(jj,ii,2);
+            par.npp(jj,ii,3)  = (1/3) .* npp(jj,ii) / grd.dzt(3) * par.p2c(jj,ii,3);
 
-            %Pnpp(jj,ii,1)  = par.npp(jj,ii,1) / spa ;
-            %Pnpp(jj,ii,2)  = par.npp(jj,ii,2) / spa ;
-            %Pnpp(jj,ii,3)  = par.npp(jj,ii,3) / spa ;
+            Pnpp(jj,ii,1)  = par.npp(jj,ii,1) / spa ;
+            Pnpp(jj,ii,2)  = par.npp(jj,ii,2) / spa ;
+            Pnpp(jj,ii,3)  = par.npp(jj,ii,3) / spa ;
 
-            %Cnpp(jj,ii,1)  = (1/3) * npp(jj,ii) / grd.dzt(1) / spa ;
-            %Cnpp(jj,ii,2)  = (1/3) * npp(jj,ii) / grd.dzt(2) / spa ;
-            %Cnpp(jj,ii,3)  = (1/3) * npp(jj,ii) / grd.dzt(3) / spa ;
+            Cnpp(jj,ii,1)  = (1/3) * npp(jj,ii) / grd.dzt(1) / spa ;
+            Cnpp(jj,ii,2)  = (1/3) * npp(jj,ii) / grd.dzt(2) / spa ;
+            Cnpp(jj,ii,3)  = (1/3) * npp(jj,ii) / grd.dzt(3) / spa ;
             
-            %par.Lambda(jj,ii,1) = 1./(1e-6+po4obs(jj,ii,1)) ; 
-            %par.Lambda(jj,ii,2) = 1./(1e-6+po4obs(jj,ii,2)) ;
-            %par.Lambda(jj,ii,3) = 1./(1e-6+po4obs(jj,ii,3)) ;
+            par.Lambda(jj,ii,1) = 1./(1e-6+DIP_obs(jj,ii,1)) ; 
+            par.Lambda(jj,ii,2) = 1./(1e-6+DIP_obs(jj,ii,2)) ;
+            par.Lambda(jj,ii,3) = 1./(1e-6+DIP_obs(jj,ii,3)) ;
         end 
     end
 end
