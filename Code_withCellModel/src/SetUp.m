@@ -248,21 +248,32 @@ par.I = speye(nwet) ;
 
 %------------------------  data  -----------------------
 dicraw = dic_initial;           % ---> Transient run 통해 다시 re-optimized 필요
-% get rid of arctice o2 observations
-% docraw(iarc)  = nan ;            % 기존 weilei 모델에서는 arc med자료 뺐음. 이번에는 다 포함시켜 보자.
-% docraw(imed)  = nan ;
+% get rid of mediterranean observations 
+%     Med is disconnected from the ocean in the model because of course model resolution 
+        % 기존 weilei 모델에서는 arc med자료 뺐음. 이번에는 다 포함시켜 보자.
+docraw(imed)  = nan ;
+alkraw(imed)  = nan ; 
+dicraw(imed)  = nan ;
+po4raw(imed)  = nan ; 
+o2raw(imed)   = nan ;
+% keep arctic observations
+% docraw(iarc)  = nan ;    
 % alkraw(iarc)  = nan ;
-% alkraw(imed)  = nan ; 
 % dicraw(iarc)  = nan ;
-% dicraw(imed)  = nan ;
 % po4raw(iarc)  = nan ;
-% po4raw(imed)  = nan ; 
 % o2raw(iarc)   = nan ;
-% o2raw(imed)   = nan ;
 
-
-% remove outlayers of DOC obs    ----> 여기서는 모두 포함해보자.
-% docraw = rmOutliers(docraw, M3d) ;
+% Remove outliers from DOC observations
+%   GLODAP climatologies tend to be less noisy, so outlier removal might be unnecessary
+%   However, since parameter optimization is highly sensitive to outliers,
+%   excluding extremes helps achieve the best fit to the majority of the data,
+%   without undue influence from outliers
+%   Note: Since rmOutliers removes a percentage of data, it removes a lot more 
+%   data points from the GLODAP than DOC datasets
+%
+%   idea: we may want to remove outliers from minimization, but then keep all data 
+%   when assessing how well the model fits the obs
+docraw = rmOutliers(docraw, M3d) ;
 % po4raw = rmOutliers(po4raw, M3d) ;
 % dicraw = rmOutliers(dicraw, M3d) ;
 % alkraw = rmOutliers(alkraw, M3d) ;
@@ -282,7 +293,7 @@ par.Salt     = salobs        ;
 par.DSi      = Si_obs        ;
 par.po4obs   = DIP_obs       ;
 par.o2raw    = o2raw         ;
-par.o2obs    = O2_obs        ;     %WOA O2가 어디에 쓰이는지는 모르겠음.
+par.o2obs    = O2_obs        ;     %WOA O2 where is this used?
 par.po4raw   = po4raw        ;
 par.DOCobs   = docraw        ;
 par.dicraw   = dicraw        ; 
