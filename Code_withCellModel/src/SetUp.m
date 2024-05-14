@@ -5,12 +5,12 @@ spa  = 365*spd ;
 on   = true    ;
 off  = false   ;
 % addpath according to opterating system
-if GridVer_z ==48
-  addpath('../../DATA/BGC_48layer/')
-else
-  %addpath('../../DATA/BGC_24layer/')
-  addpath('../../DATA/BGC_2023Nature/')
-end
+% if GridVer_z ==48
+%   addpath('../../DATA/BGC_48layer/')
+% else
+    addpath('../../DATA/BGC_24layer/')
+%   addpath('../../DATA/BGC_2023Nature/')
+% end
 
 if GridVer == 91 
     switch(operator)
@@ -149,32 +149,7 @@ if par.Simodel == on
 end 
 fprintf('\n')
 
-%
-if GridVer_z == 48
-    OperName = sprintf('OCIM2_%s',TRdivVer);
-    load(OperName,'output', 'TR') ;          % TR: convergence & yr-1
-    %
-    fname = 'biopump_model_output_Nowicki.nc';
-    load NPP_climatology.mat NPP_48layer % mmol/m2/yr
-    npp = NPP_48layer(:,:,1); % 1:CbPM_SW; 2:CAFE_SW; 3:CbPM_MODIS; 4:CAFE_MODIS
-    %
-    load MSKS_48layer.mat
-    load TS_WOA_91x180x48.mat   % WOA temperature & salinity
-    load O2_Nut_WOA_91x180x48.mat   % WOA O2 Si DIN DIP observations
-    load GLODAPv2_2023_91x180x48.mat alkraw o2raw po4raw %GLODAP alk, o2, DIP(po4), Si
-    load docraw_91x180x48.mat % DOC observation data
-    load dopraw_91x180x48.mat % DOP observation data
-    load pme_91x180_48layer.mat
-    load dic_initial_91x180x48.mat      %gc12new 이용 interpolation. 추후 다시 re-update and opimization 해야함
-    load splco2_mod_monthly % monthly CO2 data ---> 1765 ~ 1999까지.
-    load co2syspar_48layer.mat
-    load Initial_COfield_91x180x48.mat % initial guess for C and O fileds  
-    
-    M3d = output.M3d;
-    grd = output.grid;
-    TR  = TR/spa;           % yr-1   -------> s-1
-
-else
+% ----- Load 24 layer Data -----
     OperName = sprintf('OCIM2_%s',TRdivVer);
     load(OperName,'output') ;
     %
@@ -214,7 +189,6 @@ else
 	  % PARobs.par = PARobs.PAR;
 	  % load Kd490_MODIS_91x180.mat		% diffuse attenuation [m^-1]
 
-end
    
 %---------------------- constants -------------------
 par.spd = spd ;
@@ -314,7 +288,7 @@ par.PARobs = PARobs;
 %-------------------- prepare virtual flux -------------------
 % PME part;
 % [modT,modS,pme] = pme(par) ; 
-par.pme = pme_new(iwet) ;   
+par.pme = pme(iwet); %pme_new(iwet) ;   
 junk = M3d ;
 junk(:,:,2:end) = 0 ;
 isrf = find(junk(iwet)) ;
