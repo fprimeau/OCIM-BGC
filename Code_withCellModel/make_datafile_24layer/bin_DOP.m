@@ -1,5 +1,5 @@
 % Editing the bin_glodap.m in Myfunction directory
-% Using observed DON from Liang et al. 2022 to OCIM2 48layer grid
+% Using observed DOM from Liang et al. 2022 to OCIM2 48layer grid
 % Ref: A global ocean dissolved organic phosphorus concentration database
 % (DOPv2021)
 % Data: https://www.bco-dmo.org/dataset/855139
@@ -7,7 +7,7 @@ clc; close all; clear all;
 
 addpath('../src')
 addpath('../../Observation_rawdata')
-addpath('../../DATA/BGC_48layer/')
+addpath('../../DATA/BGC_24layer/')
 
 dataTable = readtable('dopv2021v4-1_raw.csv');
 dataTable(1,:) = [];
@@ -16,7 +16,7 @@ latitude   = table2array(dataTable(:,6)); %-90 to 90
 depth      = table2array(dataTable(:,8)); 
 dop        = table2array(dataTable(:,13)); %umol kg-1
 
-load OCIM2_CTL_He_48layer.mat
+load OCIM2_CTL_He.mat output
 M3d = output.M3d  ;
 grd = output.grid ; % grid >> XT3d, YT3d, ZT3d. 3d array (91 by 180 by 48)
 
@@ -39,7 +39,7 @@ dopraw(dopraw(:)==-9.999)=NaN;
 dopraw(M3d(:)==0)=NaN;
 
 %DATA file deirectory에 저장하기
-fileName = 'dopraw_91x180x48.mat'
-directory = '../../DATA/BGC_48layer'
+fileName = 'dopraw_91x180x24.mat'
+directory = '../../DATA/BGC_24layer'
 filePath = fullfile(directory, fileName);
 save(filePath, 'dopraw');

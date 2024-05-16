@@ -1,15 +1,20 @@
 % make pme from 48layer using auxiliary data from Tim's paper (48layer model)
-
+% (Precipitation Minus Evaportation)
+% Salinity virtual flux
+%
+% TODO: Check if this is the same as BGC_2023Nature/PME_TS_91x180x24.mat
+% ----------
 clc; clear all; close all
 
 
-addpath('../../DATA/BGC_48layer/');
-load OCIM2_CTL_He_48layer.mat           % Convergence & yr-1
+addpath('../../DATA/BGC_24layer/');
+load OCIM2_CTL_He.mat           % Convergence & yr-1
 
 XT3d     = output.grid.XT3d;
 YT3d     = output.grid.YT3d;
-Smod     = output.salt;                 % psu [10-3 g/g] = [mg/g]
-Sflux    = output.saltflux;             % positive into the ocean, [mg/m^2/s]
+Smod     = output.S; 
+%Smod     = output.salt;                 % psu [10-3 g/g] = [mg/g]
+%Sflux    = output.saltflux;             % positive into the ocean, [mg/m^2/s]
 dVt      = output.grid.dVt;                  % [m^3]
 dAt      = output.grid.dAt;
 msk = output.M3d;
@@ -46,9 +51,9 @@ constant_pme     = sum(dAt(isrf).*pme(isrf))/sum(msk_sfc(isrf).*dAt(isrf));
 pme_new(isrf)    = pme(isrf) - constant_pme;
 pme_new_integral = sum(dAt(isrf).*pme_new(isrf));
                                             
-
+pme = pme_new; 
 %Save pme file in DATA directory
-fileName = 'pme_91x180_48layer.mat'
-directory = '../../DATA/BGC_48layer'
+fileName = 'pme_91x180x24.mat'
+directory = '../../DATA/BGC_24layer'
 filePath = fullfile(directory, fileName);
-save(filePath, 'pme_new');
+save(filePath, 'pme');

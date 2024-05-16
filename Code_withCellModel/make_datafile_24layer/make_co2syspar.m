@@ -1,17 +1,17 @@
 %
 %
-% build co2syspar for CO2SYS in the OCIM2 48layer model. 
+% build co2syspar for CO2SYS in the OCIM2 24layer model. 
 % Input pres: grd.zt(1) Output pres in CO2SYS (in the eqCcycle): 0 m
 % 
 clc; clear all; close all
-addpath('../../DATA/BGC_48layer')
+addpath('../../DATA/BGC_24layer')
 %
-load OCIM2_CTL_He_48layer.mat output
-load TS_WOA_91x180x48.mat
-load O2_Nut_WOA_91x180x48.mat Si_obs DIP_obs
+load OCIM2_CTL_He.mat output
+load TS_WOA_91x180x24.mat
+load O2_Nut_WOA_91x180x24.mat Si_obs DIP_obs
 grd = output.grid;
 M3d = output.M3d;
-presin = grd.ZT3d(:,:,1);
+presin = grd.ZT3d(:,:,1);  %should this be pressure instead of depth?
 presout = zeros(size(M3d(:,:,1)));
 %
 tmp = M3d;
@@ -27,7 +27,7 @@ co2syspar.salt    = salobs(isrf);
 
 
 %Save pme file in DATA directory
-fileName  = 'co2syspar_48layer.mat'
-directory = '../../DATA/BGC_48layer/'
+fileName  = 'co2syspar_91x180x24.mat'
+directory = '../../DATA/BGC_24layer/'
 filePath  = fullfile(directory, fileName);
 save(filePath, 'co2syspar');

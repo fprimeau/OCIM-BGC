@@ -2,9 +2,9 @@
 %
 clc; close all; clear all;
 
-addpath('../src')
+addpath('../utils')
 addpath('../../Observation_rawdata')
-addpath('../../DATA/BGC_48layer')
+addpath('../../DATA/BGC_24layer')
 
 dataTable = readtable('DOM_Merged_Hansell_2022_edit.xlsx', 'Sheet', 'MergedBasins_V5', 'VariableNamingRule', 'preserve');
 %https://www.ncei.noaa.gov/access/ocean-carbon-acidification-data-system/oceans/ndp_109/ndp109.html
@@ -17,11 +17,8 @@ latitude   = table2array(dataTable(:,2));
 depth      = table2array(dataTable(:,5)); %In rawdata: CTD pressure (dbar) ----> depth로 바꾸긴 해야함.
 doc        = table2array(dataTable(:,8)); %umol kg-1
 
-load OCIM2_CTL_He_48layer.mat
-%Holzer, M., DeVries T., and de Laverne, C (2021). 
-%Diffusion controls the ventilation of a Pacific Shadow Zone above abyssal overturning
-%Make new mfile including Transport operator and Grid intormation
-%>>> in /Transport_Operator/48layer/ directory 
+% load OCIM grid
+load OCIM2_CTL_He.mat output
 
 M3d = output.M3d  ;
 grd = output.grid ; % grid >> XT3d, YT3d, ZT3d. 3d array (91 by 180 by 48)
@@ -45,7 +42,7 @@ docraw(docraw(:)==-9.999)=NaN;
 docraw(M3d(:)==0)=NaN;
 
 %DATA file deirectory에 저장하기
-fileName = 'docraw_91x180x48.mat'
-directory = '../../DATA/BGC_48layer'
+fileName = 'docraw_91x180x24.mat'
+directory = '../../DATA/BGC_24layer'
 filePath = fullfile(directory, fileName);
 save(filePath, 'docraw');

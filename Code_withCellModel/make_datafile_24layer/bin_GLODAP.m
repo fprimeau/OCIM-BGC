@@ -1,21 +1,17 @@
 % Editing the bin_glodap.m in Myfunction directory
-% Using observed DIP, DIC, O2, ALK from GLODAPv2.2023 to OCIM2 48layer grid
+% Using observed DIP, DIC, O2, ALK from GLODAPv2.2023 to OCIM2 91x180x24 grid
 
 clc; close all; clear all;
 
 addpath('../src')
 addpath('../../Observation_rawdata/GLODAP')
-addpath('../../DATA/BGC_48layer/')
+addpath('../../DATA/BGC_24layer/')
 load GLODAPv2_2023_Merged_Master_File.mat 
 %https://glodap.info/index.php/merged-and-adjusted-data-product-v2-2023/
 %Download GLODAPv2.2023 data from above link
 
-
-load OCIM2_CTL_He_48layer.mat
-%Holzer, M., DeVries T., and de Laverne, C (2021). 
-%Diffusion controls the ventilation of a Pacific Shadow Zone above abyssal overturning
-%Make new mfile including Transport operator and Grid intormation
-%>>> in /Transport_Operator/48layer/ directory 
+% load OCIM grid
+load OCIM2_CTL_He.mat output
 
 M3d = output.M3d  ;
 grd = output.grid ; % grid >> XT3d, YT3d, ZT3d. 3d array (91 by 180 by 48)
@@ -87,8 +83,8 @@ siraw (M3d(:)==0)=NaN;
 
 
 %DATA file deirectory에 저장하기
-fileName = 'GLODAPv2_2023_91x180x48.mat'
-directory = '../../DATA/BGC_48layer'
+fileName = 'GLODAPv2_2023_91x180x24.mat'
+directory = '../../DATA/BGC_24layer'
 filePath = fullfile(directory, fileName);
 save(filePath, 'o2raw', 'po4raw', 'dicraw', 'alkraw', 'siraw');
 
