@@ -11,7 +11,6 @@ slurm.*
 *.txt
 *.log
 *.err
-*.mat
 *~
 Observation_rawdata/
 Transport_Operator
