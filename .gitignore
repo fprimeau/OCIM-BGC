@@ -20,7 +20,7 @@ DATA/BGC_2023Nature/biopump_model_output_Nowicki.nc
 DATA/BGC_48layer/.Initial_COfield_91x180x48.mat.swp
 DATA/BGC_48layer/NPP_climatology.mat
 DATA/BGC_48layer/OCIM2_CTL_He_48layer.mat
-DATA/BGC_2023Nature/OCIM2_CTL_He.mat
+*OCIM2_CTL_He.mat
 Code_24layer/
 Code_Merge/
 *.xlsx
