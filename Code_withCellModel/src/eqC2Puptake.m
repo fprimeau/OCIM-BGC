@@ -138,14 +138,14 @@ C2Pxx = [];
 
 		if par.npx > 0
 	        DIPx = par.Px(1:nwet,:);
-			% define C2Px(:,pindx.sigma) [for all P model parameters]
-			%Then in eqCcycle: +dDIC_dC2P* C2Px(:,pindx.sigma)  ;where dDIC_dC2P = -(I+(1-sigma)*RR)*G)
+			% define C2Px(:,pindx.sigP) [for all P model parameters]
+			%Then in eqCcycle: +dDIC_dC2P* C2Px(:,pindx.sigP)  ;where dDIC_dC2P = -(I+(1-sigP)*RR)*G)
 
 			%--------- P Model Parameters ----------------
 			if par.dynamicP == on
 				% C2P is a function of p model parameters through the DIP term
-				if (par.opt_sigma == on)
-					C2Px(:,par.pindx.lsigma) = d0(dC2P_dDIP(iwet))*DIPx(:,par.pindx.lsigma) ;
+				if (par.opt_sigP == on)
+					C2Px(:,par.pindx.lsigP) = d0(dC2P_dDIP(iwet))*DIPx(:,par.pindx.lsigP) ;
 				end
 				if (par.opt_kP_T == on)
 			        C2Px(:,par.pindx.kP_T) = d0(dC2P_dDIP(iwet))*DIPx(:,par.pindx.kP_T) ;
@@ -168,8 +168,8 @@ C2Pxx = [];
 			else
 				% cell model uses observed PO4, so DIP is not a function of the P model parameters.
 				dC2P_dPparam = M3d*0;
-				if (par.opt_sigma == on)
-					C2Px(:,par.pindx.lsigma) = dC2P_dPparam(iwet) ;
+				if (par.opt_sigP == on)
+					C2Px(:,par.pindx.lsigP) = dC2P_dPparam(iwet) ;
 				end
 				if (par.opt_kP_T == on)
 			        C2Px(:,par.pindx.kP_T) = dC2P_dPparam(iwet) ;
@@ -286,7 +286,7 @@ C2Pxx = [];
 
 		% add C2Pxx for P Parameters
 	    	%C2Pxx  = zeros(nwet,nbx*nbx);
-	    	%%%% recall: C2Px(:,pindx.sigma) = dC2P_dDIP*DIPx(:,pindx.kP_T)
+	    	%%%% recall: C2Px(:,pindx.sigP) = dC2P_dDIP*DIPx(:,pindx.kP_T)
 	   	% DIPxx = par.Pxx(1:nwet,:);
 	   	% C2Pxx(:,pindx.kP_T) = dC2P_dDIP*DIPxx(:,pindx.kP_T) + d2C2P_dDIP2*DIPx(:,pindx.kP_T).^2;
 		xim = sqrt(-1)*eps^3;
