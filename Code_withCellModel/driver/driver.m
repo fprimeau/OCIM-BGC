@@ -36,7 +36,7 @@ par.nl = 2; % number of layers in the model euphotic zone (doesn't change)
 
 Gtest = on ; 
 Htest = on ;
-par.optim   = off ; 
+par.optim   = on ; 
 par.Cmodel  = on ; 
 par.Omodel  = on ; 
 par.Simodel = off ;
