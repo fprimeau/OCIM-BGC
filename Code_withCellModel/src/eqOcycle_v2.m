@@ -1246,7 +1246,7 @@ function [F, FD, Ox, Oxx, O2tstep] = O_eqn(O2, par)
                     end
 
                     %
-                else
+                else %sigC, kru, bC_T, bC, d, R_Si,rR
                     if (par.opt_O2C_T & jo == pindx.O2C_T)
                         tmp = d0(eta*kC*DOC + kappa_r*DOCr + kappa_l*DOCl + ...
                                  kappa_p*POC)*(O2C_O2C_T*dRdO.*Ox(:,ju)) + ...
