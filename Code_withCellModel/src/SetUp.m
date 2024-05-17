@@ -292,7 +292,7 @@ par.PARobs = PARobs;
 %-------------------- prepare virtual flux -------------------
 % PME part;
 % [modT,modS,pme] = pme(par) ; 
-par.pme = pme(iwet); %pme_new(iwet) ;   
+par.pme = pme; %pme_new(iwet) ;   
 junk = M3d ;
 junk(:,:,2:end) = 0 ;
 isrf = find(junk(iwet)) ;
