@@ -152,6 +152,9 @@ fprintf('\n')
 % ----- Load 24 layer Data -----
     OperName = sprintf('OCIM2_%s',TRdivVer);
     load(OperName,'output') ;
+    M3d = output.M3d;
+    grd = output.grid;
+    TR  = output.TR/spa;
     %
     fname = 'biopump_model_output_Nowicki.nc';
     NPP = ncread(fname,'NPP'); % 1 = CbPM; 2 = CAFE
