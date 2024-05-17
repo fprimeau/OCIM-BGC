@@ -9,7 +9,7 @@ off  = false   ;
 %   addpath('../../DATA/BGC_48layer/')
 % else
     addpath('../../DATA/BGC_24layer/')
-%   addpath('../../DATA/BGC_2023Nature/')
+    addpath('../../DATA/BGC_2023Nature/')
 % end
 
 if GridVer == 91 
