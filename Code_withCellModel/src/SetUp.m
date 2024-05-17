@@ -174,7 +174,7 @@ fprintf('\n')
     load PME_TS_91x180x24.mat  pme % calculated from transport operator and salt fields (alternate to running pme.m) 
     load DICant_91x180x24.mat
     load GLODAPv2_91x180x24raw.mat alkraw po4raw o2raw sio4raw % GLODAP Nutrient units = [umol/kg]
-    load co2syspar91.mat co2syspar
+    load co2syspar_91x180x24.mat co2syspar
 
     %load DOMobs_91x180x24.mat DOPobs   % old data file
     %load DOCobs_clean_91x180x24.mat    % old data file with refractory component and outlier removed
