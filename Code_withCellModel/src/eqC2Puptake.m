@@ -147,8 +147,8 @@ C2Pxx = [];
 				if (par.opt_sigP == on)
 					C2Px(:,par.pindx.lsigP) = d0(dC2P_dDIP(iwet))*DIPx(:,par.pindx.lsigP) ;
 				end
-				if (par.opt_kP_T == on)
-			        C2Px(:,par.pindx.kP_T) = d0(dC2P_dDIP(iwet))*DIPx(:,par.pindx.kP_T) ;
+				if (par.opt_Q10P == on)
+			        C2Px(:,par.pindx.lQ10P) = d0(dC2P_dDIP(iwet))*DIPx(:,par.pindx.lQ10P) ;
 				end
 				if (par.opt_kdP   == on)
 					C2Px(:,par.pindx.lkdP) = dC2P_dDIP(iwet).*DIPx(:,par.pindx.lkdP) ;
@@ -171,8 +171,8 @@ C2Pxx = [];
 				if (par.opt_sigP == on)
 					C2Px(:,par.pindx.lsigP) = dC2P_dPparam(iwet) ;
 				end
-				if (par.opt_kP_T == on)
-			        C2Px(:,par.pindx.kP_T) = dC2P_dPparam(iwet) ;
+				if (par.opt_Q10P == on)
+			        C2Px(:,par.pindx.lQ10P) = dC2P_dPparam(iwet) ;
 				end
 				if (par.opt_kdP   == on)
 					C2Px(:,par.pindx.lkdP) = dC2P_dPparam(iwet) ;
@@ -286,9 +286,9 @@ C2Pxx = [];
 
 		% add C2Pxx for P Parameters
 	    	%C2Pxx  = zeros(nwet,nbx*nbx);
-	    	%%%% recall: C2Px(:,pindx.sigP) = dC2P_dDIP*DIPx(:,pindx.kP_T)
+	    	%%%% recall: C2Px(:,pindx.sigP) = dC2P_dDIP*DIPx(:,pindx.lQ10P)
 	   	% DIPxx = par.Pxx(1:nwet,:);
-	   	% C2Pxx(:,pindx.kP_T) = dC2P_dDIP*DIPxx(:,pindx.kP_T) + d2C2P_dDIP2*DIPx(:,pindx.kP_T).^2;
+	   	% C2Pxx(:,pindx.lQ10P) = dC2P_dDIP*DIPxx(:,pindx.lQ10P) + d2C2P_dDIP2*DIPx(:,pindx.lQ10P).^2;
 		xim = sqrt(-1)*eps^3;
 		[CellOut, ~] = CellCHNOP(par,x,P0+xim,N0,T0,Irr0);
 		d2C2P_dDIPmolperL = M3d*0;
