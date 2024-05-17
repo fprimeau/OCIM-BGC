@@ -492,7 +492,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
 
         % bC_T
         if (par.opt_bC_T == on)
-            [~,Gout]   = buildPFD_48layer(par,'POC');
+            [~,Gout]   = buildPFD(par,'POC');
             PFD_bm     = Gout.PFD_bm;
             par.PFD_bm = PFD_bm;
             tmp = [Z; -PFD_bm*POC; Z;  Z; Z; Z; Z];
@@ -502,7 +502,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
         
         % bC
         if (par.opt_bC == on)
-            [~,Gout]   = buildPFD_48layer(par,'POC');
+            [~,Gout]   = buildPFD(par,'POC');
             PFD_bb     = Gout.PFD_bb;
             par.PFD_bb = PFD_bb;
             tmp = bC*[Z; -PFD_bb*POC; Z; Z; Z; Z; Z];
@@ -512,7 +512,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
 
         % d
         if (par.opt_d == on)
-            [~,Gout]  = buildPFD_48layer(par,'PIC');
+            [~,Gout]  = buildPFD(par,'PIC');
             PFD_d     = Gout.PFD_d;
             par.PFD_d = PFD_d;
             tmp = d*[Z; Z; Z; -PFD_d*PIC; Z; Z; Z];
@@ -3504,7 +3504,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
         % bC_T bC_T
         if (par.opt_bC_T)
             kk = kk + 1;
-            [~,~,Hout] = buildPFD_48layer(par,'POC');
+            [~,~,Hout] = buildPFD(par,'POC');
             PFD_bm_bm = Hout.PFD_bm_bm;
             par.PFD_bm_bm = PFD_bm_bm;
             tmp = [Z ; ...
@@ -3521,7 +3521,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
         % bC_T bC
         if (par.opt_bC_T & par.opt_bC)
             kk = kk + 1;
-            [~,~,Hout] = buildPFD_48layer(par,'POC');
+            [~,~,Hout] = buildPFD(par,'POC');
             PFD_bm_bb = Hout.PFD_bm_bb;
             par.PFD_bm_bb = PFD_bm_bb;
             tmp =  [Z ; ...
@@ -3661,7 +3661,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
         % bC bC
         if (par.opt_bC)
             kk = kk + 1;
-            [~,~,Hout] = buildPFD_48layer(par,'POC');
+            [~,~,Hout] = buildPFD(par,'POC');
             PFD_bb_bb = Hout.PFD_bb_bb;
             par.PFD_bb_bb = PFD_bb_bb;
             tmp = bC*[Z; ...
@@ -3800,7 +3800,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
         % d d
         if (par.opt_d & par.opt_d)
             kk = kk + 1;
-            [~,~,Hout] = buildPFD_48layer(par,'PIC');
+            [~,~,Hout] = buildPFD(par,'PIC');
             PFD_d_d = Hout.PFD_d_d;
             par.PFD_d_d = PFD_d_d;
             tmp = d*[Z ; ...
