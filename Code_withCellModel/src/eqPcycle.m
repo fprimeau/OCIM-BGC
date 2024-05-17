@@ -102,7 +102,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
     par.L  = L;
    
     % particle flux
-    PFD  = buildPFD_48layer(par,'POP');
+    PFD  = buildPFD(par,'POP');
     junk = M3d ;
     junk(:,:,2:end) = 0 ;
     isrf = find(junk(iwet)) ;
