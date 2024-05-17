@@ -280,6 +280,7 @@ par.Temp     = tempobs       ;
 par.Salt     = salobs        ;
 par.DSi      = Si_obs        ;
 par.po4obs   = DIP_obs       ;
+par.no3obs   = DIN_obs       ;
 par.o2raw    = o2raw         ;
 par.o2obs    = O2_obs        ;     %WOA O2 where is this used?
 par.po4raw   = po4raw        ;
