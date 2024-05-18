@@ -53,7 +53,7 @@ par.docscale = 1.0 ; % factor to weigh DOC in the objective function
 par.alkscale = 1.0 ;
 par.o2scale  = 1.0 ;
 % P model parameters
-par.opt_sigP  = on ; 
+par.opt_sigP  = off ; 
 par.opt_Q10P  = on ;
 par.opt_kdP   = on ;
 par.opt_bP_T  = on ; 
