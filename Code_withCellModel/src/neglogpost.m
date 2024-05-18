@@ -258,7 +258,7 @@ function [f, fx, fxx, data, xhat] = neglogpost(x, par)
         save(par.fname, 'data')
         x0 = real(x) ;   
         fprintf('saving xhat to %s  ...\n', par.fxhat)
-        save(par.fxhat, 'xhat','x0')  % save x0 for ResetPar
+        save(par.fxhat, 'xhat','x0')  % save x0 for ResetPar; this xhat also includes allparams (allparams not saved in PrintPar)
         clear x0;
 		
 	    % save(par.fxpar, 'par' , '-v7.3')
