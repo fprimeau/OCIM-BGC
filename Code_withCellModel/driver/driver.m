@@ -206,6 +206,7 @@ if(Gtest);
 	GHtest.fxx_cstep = NaN(nip);
 	GHtest.pindx = par.pindx;
     % display par.pindx
+    fprintf('pindx = ')
     par.pindx 
     dx = sqrt(-1)*eps.^3*eye(nip);
     for ii = 1 : nip 
