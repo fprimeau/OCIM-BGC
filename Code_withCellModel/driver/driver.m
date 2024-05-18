@@ -205,9 +205,12 @@ if(Gtest);
 	GHtest.fx_cstep = NaN([nip,1]);
 	GHtest.fxx_cstep = NaN(nip);
 	GHtest.pindx = par.pindx;
+    % display par.pindx
+    par.pindx 
     dx = sqrt(-1)*eps.^3*eye(nip);
     for ii = 1 : nip 
         x  = real(x0)+dx(:,ii);
+        iter = 11; %bypasses the ResetPar in neglogpost
         if Htest == on
             [f,fx,fxx] = neglogpost(x, par) ;
             GHtest.fx_cstep(ii) = imag(f)/eps.^3     ;
