@@ -345,8 +345,9 @@ function PrintPar(x, par);
 	end
 
     % Save in neglogpost instead?
-    x0 = x ;
+    x0 = real(x);
     if (par.optim == on)
+        fprintf('saving xhat & x0 to: %s  ...\n', par.fxhat)
         save(par.fxhat, 'x0','xhat')
     end 
 end
