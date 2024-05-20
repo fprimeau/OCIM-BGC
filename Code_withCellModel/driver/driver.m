@@ -65,7 +65,7 @@ par.opt_sigC  = on ;
 par.opt_kru   = on ;
 par.opt_krd   = on ;
 par.opt_etau  = on ;
-par.opt_etad  = off ;
+par.opt_etad  = off ; %keep off
 par.opt_bC_T  = on ;
 par.opt_bC    = on ; 
 par.opt_d     = on ;
@@ -205,6 +205,7 @@ if(Gtest);
 	GHtest.fx_cstep = NaN([nip,1]);
 	GHtest.fxx_cstep = NaN(nip);
 	GHtest.pindx = par.pindx;
+    % load(fGHtest); % continuing GHtest after out of memory crash
     % display par.pindx
     fprintf('pindx = ')
     par.pindx 
@@ -233,7 +234,7 @@ if(Gtest);
             fprintf('%i % .3e  \n',ii,diff);
             fprintf('\n');
         end 
-        fprintf('\n');                                                     % 이 부분을 바꾸던데..
+        fprintf('\n');                                                    
     end
     format shortE
 	real(fx)
@@ -256,7 +257,7 @@ elseif (par.optim)
     save(par.fname, 'data')
 else
     xsol = x0;
-    iter = 6;
+    iter = 11;
     [f,fx,fxx,data] = neglogpost(xsol,par);
     fprintf('----neglogpost complete----\n')
     %% note: skipping save for testing
