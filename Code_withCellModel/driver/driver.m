@@ -240,6 +240,16 @@ if(Gtest);
 	real(fx)
 	real(full(fxx))
     %keyboard  
+    % run model once more to save gradient and hessian in xhat without the complex step
+    fprintf('Run without compex step & Save f,fx,fxx to xhat \n')
+    [f,fx,fxx,data,xhat] = neglogpost(x0,par);
+    xhat.pindx = par.pindx;
+    xhat.f   = f   ;
+    xhat.fx  = fx  ;
+    xhat.fxx = fxx ;
+    % save results 
+    fprintf('saving optimized parameters to file: %s \n',fxhat)
+    save(fxhat, 'xhat')
 elseif (par.optim)
     [xsol,fval,exitflag] = fminunc(myfun,x0,options);
     fprintf('objective function tolerance = %5.1e \n',objfuntolerance);
