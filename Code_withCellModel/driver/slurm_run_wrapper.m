@@ -2,4 +2,4 @@
 % running this script in the slurm matlab call instead of running driver.m
 % directly should suppress the command line prompts from appearing in the
 % output file
-run driver.m
+run driver_optPonly.m
