@@ -217,72 +217,7 @@ function par = PackPar(par)
         end
         par.ncx = ncx;
     end
-    %
-    if par.Omodel == on
-        % O2C_T
-        if (par.opt_O2C_T == on)
-            nox   = nox + 1        ;
-            O2C_T = par.O2C_T      ; 
-            strt  = length(p0)+1   ;
-            p0    = [p0; O2C_T]    ;
-            par.pindx.O2C_T = strt : length(p0);
-        end 
-        % rO2C
-        if (par.opt_rO2C == on)
-            nox   = nox + 1        ;
-            rO2C  = par.rO2C       ;
-            lrO2C = log(rO2C)      ;
-            strt  = length(p0) + 1 ;
-            p0    = [p0; lrO2C]    ;
-            par.pindx.lrO2C = strt : length(p0);
-        end 
-    end 
-    if par.Simodel == on
-        % dsi
-        if (par.opt_dsi == on)
-            nsx  = nsx + 1        ;
-            dsi  = par.dsi        ;
-            ldsi = log(dsi)       ;
-            strt = length(p0) + 1 ;
-            p0   = [p0; ldsi]     ;
-            par.pindx.ldsi = strt : length(p0);
-        end
-        % at 
-        if (par.opt_at == on)
-            nsx  = nsx + 1        ;
-            at   = par.at         ;
-            lat  = log(at)        ;
-            strt = length(p0) + 1 ;
-            p0   = [p0; lat]      ;
-            par.pindx.lat = strt  : length(p0);
-        end
-        % bt
-        if (par.opt_bt == on)
-            nsx  = nsx + 1        ;
-            bt   = par.bt         ;
-            lbt  = log(bt)        ;
-            strt = length(p0) + 1 ;
-            p0   = [p0; lbt]      ;
-            par.pindx.lbt = strt  : length(p0);
-        end
-        % aa
-        if (par.opt_aa == on)
-            nsx  = nsx + 1        ;
-            aa   = par.aa         ;
-            strt = length(p0) + 1 ;
-            p0   = [p0; aa]       ;
-            par.pindx.aa = strt   : length(p0);
-        end
-        % bb
-        if (par.opt_bb == on)
-            nsx  = nsx + 1        ;
-            bb   = par.bb         ;
-            lbb  = log(bb)        ;
-            strt = length(p0) + 1 ;
-            p0   = [p0; lbb]      ;
-            par.pindx.lbb = strt  : length(p0);
-        end
-    end
+    % Cell model
     if par.Cellmodel == on
 		% Q10Photo
 		if (par.opt_Q10Photo == on)
@@ -358,6 +293,73 @@ function par = PackPar(par)
             par.pindx.tgammaDNA = strt : length(p0);
         end
 	end
+    % Oxygen model
+    if par.Omodel == on
+        % O2C_T
+        if (par.opt_O2C_T == on)
+            nox   = nox + 1        ;
+            O2C_T = par.O2C_T      ; 
+            strt  = length(p0)+1   ;
+            p0    = [p0; O2C_T]    ;
+            par.pindx.O2C_T = strt : length(p0);
+        end 
+        % rO2C
+        if (par.opt_rO2C == on)
+            nox   = nox + 1        ;
+            rO2C  = par.rO2C       ;
+            lrO2C = log(rO2C)      ;
+            strt  = length(p0) + 1 ;
+            p0    = [p0; lrO2C]    ;
+            par.pindx.lrO2C = strt : length(p0);
+        end 
+    end 
+    if par.Simodel == on
+        % dsi
+        if (par.opt_dsi == on)
+            nsx  = nsx + 1        ;
+            dsi  = par.dsi        ;
+            ldsi = log(dsi)       ;
+            strt = length(p0) + 1 ;
+            p0   = [p0; ldsi]     ;
+            par.pindx.ldsi = strt : length(p0);
+        end
+        % at 
+        if (par.opt_at == on)
+            nsx  = nsx + 1        ;
+            at   = par.at         ;
+            lat  = log(at)        ;
+            strt = length(p0) + 1 ;
+            p0   = [p0; lat]      ;
+            par.pindx.lat = strt  : length(p0);
+        end
+        % bt
+        if (par.opt_bt == on)
+            nsx  = nsx + 1        ;
+            bt   = par.bt         ;
+            lbt  = log(bt)        ;
+            strt = length(p0) + 1 ;
+            p0   = [p0; lbt]      ;
+            par.pindx.lbt = strt  : length(p0);
+        end
+        % aa
+        if (par.opt_aa == on)
+            nsx  = nsx + 1        ;
+            aa   = par.aa         ;
+            strt = length(p0) + 1 ;
+            p0   = [p0; aa]       ;
+            par.pindx.aa = strt   : length(p0);
+        end
+        % bb
+        if (par.opt_bb == on)
+            nsx  = nsx + 1        ;
+            bb   = par.bb         ;
+            lbb  = log(bb)        ;
+            strt = length(p0) + 1 ;
+            p0   = [p0; lbb]      ;
+            par.pindx.lbb = strt  : length(p0);
+        end
+    end
+    
     par.p0  = p0  ;
     par.npx = npx ; par.ncx = ncx ; 
     par.nox = nox ; par.nsx = nsx ;

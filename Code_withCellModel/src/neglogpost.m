@@ -252,11 +252,14 @@ function [f, fx, fxx, data, xhat] = neglogpost(x, par)
     %--------------------------------------------------------
     fprintf('current objective function value is %3.3e \n\n',f) 
 
-    if mod(iter, 1) == 0       
+    % Save output every (1) iterations during optimization
+    if mod(iter, 1) == 0
         fprintf('saving data to %s  ...\n', par.fname) 
         save(par.fname, 'data')
+        x0 = real(x) ;   
         fprintf('saving xhat to %s  ...\n', par.fxhat)
-        save(par.fxhat, 'xhat')
+        save(par.fxhat, 'xhat','x0')  % save x0 for ResetPar; this xhat also includes allparams (allparams not saved in PrintPar)
+        clear x0;
 		
 	    % save(par.fxpar, 'par' , '-v7.3')
     end 

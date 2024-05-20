@@ -23,6 +23,7 @@ DATA/BGC_48layer/OCIM2_CTL_He_48layer.mat
 *OCIM2_CTL_He.mat
 Code_24layer/
 Code_Merge/
+Code_withCellModel/output/
 *.xlsx
 *.out
 .vscode/

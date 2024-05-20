@@ -45,7 +45,7 @@ function [par, C2P, C2Px, C2Pxx, C2Ppxx] = eqC2Puptake(x, par, data)
 
 		fprintf('Solving Cell model ...\n') ;
 		%set negative phosphate values to smallest positive concentration.
-	    % (negative values break CellCNP code)
+	    % (negative values break CellCHNOP code)
 	    fprintf('replacing %d negative Phosphate concentrations with the minimum positive concentration \n',length(P0(P0<0)))
 		negDIPindx = (P0<0);
 	    P0(P0<0)= real(min(P0(P0>=0)));
@@ -54,7 +54,7 @@ function [par, C2P, C2Px, C2Pxx, C2Ppxx] = eqC2Puptake(x, par, data)
 		negDINindx = (N0<0);
 	    N0(N0<0)= real(min(N0(N0>=0)));
 
-		[CellOut, parBIO] = CellCNP(par,x, P0,N0,T0,Irr0);
+		[CellOut, parBIO] = CellCHNOP(par,x, P0,N0,T0,Irr0);
 		par.BIO = parBIO;
 		clear parBIO;
 		par.CellOut.C2P = M3d*0;
@@ -138,17 +138,17 @@ C2Pxx = [];
 
 		if par.npx > 0
 	        DIPx = par.Px(1:nwet,:);
-			% define C2Px(:,pindx.sigma) [for all P model parameters]
-			%Then in eqCcycle: +dDIC_dC2P* C2Px(:,pindx.sigma)  ;where dDIC_dC2P = -(I+(1-sigma)*RR)*G)
+			% define C2Px(:,pindx.sigP) [for all P model parameters]
+			%Then in eqCcycle: +dDIC_dC2P* C2Px(:,pindx.sigP)  ;where dDIC_dC2P = -(I+(1-sigP)*RR)*G)
 
 			%--------- P Model Parameters ----------------
 			if par.dynamicP == on
 				% C2P is a function of p model parameters through the DIP term
-				if (par.opt_sigma == on)
-					C2Px(:,par.pindx.lsigma) = d0(dC2P_dDIP(iwet))*DIPx(:,par.pindx.lsigma) ;
+				if (par.opt_sigP == on)
+					C2Px(:,par.pindx.lsigP) = d0(dC2P_dDIP(iwet))*DIPx(:,par.pindx.lsigP) ;
 				end
-				if (par.opt_kP_T == on)
-			        C2Px(:,par.pindx.kP_T) = d0(dC2P_dDIP(iwet))*DIPx(:,par.pindx.kP_T) ;
+				if (par.opt_Q10P == on)
+			        C2Px(:,par.pindx.lQ10P) = d0(dC2P_dDIP(iwet))*DIPx(:,par.pindx.lQ10P) ;
 				end
 				if (par.opt_kdP   == on)
 					C2Px(:,par.pindx.lkdP) = dC2P_dDIP(iwet).*DIPx(:,par.pindx.lkdP) ;
@@ -168,11 +168,11 @@ C2Pxx = [];
 			else
 				% cell model uses observed PO4, so DIP is not a function of the P model parameters.
 				dC2P_dPparam = M3d*0;
-				if (par.opt_sigma == on)
-					C2Px(:,par.pindx.lsigma) = dC2P_dPparam(iwet) ;
+				if (par.opt_sigP == on)
+					C2Px(:,par.pindx.lsigP) = dC2P_dPparam(iwet) ;
 				end
-				if (par.opt_kP_T == on)
-			        C2Px(:,par.pindx.kP_T) = dC2P_dPparam(iwet) ;
+				if (par.opt_Q10P == on)
+			        C2Px(:,par.pindx.lQ10P) = dC2P_dPparam(iwet) ;
 				end
 				if (par.opt_kdP   == on)
 					C2Px(:,par.pindx.lkdP) = dC2P_dPparam(iwet) ;
@@ -286,11 +286,11 @@ C2Pxx = [];
 
 		% add C2Pxx for P Parameters
 	    	%C2Pxx  = zeros(nwet,nbx*nbx);
-	    	%%%% recall: C2Px(:,pindx.sigma) = dC2P_dDIP*DIPx(:,pindx.kP_T)
+	    	%%%% recall: C2Px(:,pindx.sigP) = dC2P_dDIP*DIPx(:,pindx.lQ10P)
 	   	% DIPxx = par.Pxx(1:nwet,:);
-	   	% C2Pxx(:,pindx.kP_T) = dC2P_dDIP*DIPxx(:,pindx.kP_T) + d2C2P_dDIP2*DIPx(:,pindx.kP_T).^2;
+	   	% C2Pxx(:,pindx.lQ10P) = dC2P_dDIP*DIPxx(:,pindx.lQ10P) + d2C2P_dDIP2*DIPx(:,pindx.lQ10P).^2;
 		xim = sqrt(-1)*eps^3;
-		[CellOut, ~] = CellCNP(par,x,P0+xim,N0,T0,Irr0);
+		[CellOut, ~] = CellCHNOP(par,x,P0+xim,N0,T0,Irr0);
 		d2C2P_dDIPmolperL = M3d*0;
 		d2C2P_dDIPmolperL(iprod) = imag(CellOut.dC2P_dDIP)./eps^3 ; %% this might be a problem when doing complex step test because complex perturbation on DIP and on parameter
 		d2C2P_dDIPmolperL(iprod(negDIPindx)) = 0;   % seting deriv of reset (neg) P values to zero. (CellOut.dC2P_dDIP(negDIPindx) = 0;)
@@ -497,7 +497,7 @@ C2Pxx = [];
 			%second Derivatives w.r.t. Q10Photo          % change to dlQ10Photo?
 			xim = zeros(size(x));
 			xim(par.pindx.lQ10Photo) = sqrt(-1)*eps^3;
-			[CellOut, ~] = CellCNP(par,x+xim, P0,N0,T0,Irr0);
+			[CellOut, ~] = CellCHNOP(par,x+xim, P0,N0,T0,Irr0);
 
 			d2C2P_dQ10Photo2 = M3d*0;
 			d2C2P_dQ10Photo2(iprod) = imag(CellOut.dC2P_dQ10Photo)./eps^3;
@@ -597,7 +597,7 @@ C2Pxx = [];
 			%second Derivatives w.r.t. fStorage
 			xim = zeros(size(x));
 			xim(par.pindx.lfStorage) = sqrt(-1)*eps^3;
-			[CellOut, ~] = CellCNP(par,x+xim, P0,N0,T0,Irr0);
+			[CellOut, ~] = CellCHNOP(par,x+xim, P0,N0,T0,Irr0);
 
 			d2C2P_dfStorage2 = M3d*0;
 			d2C2P_dfStorage2(iprod) = imag(CellOut.dC2P_dfStorage)./eps^3;
@@ -681,7 +681,7 @@ C2Pxx = [];
 			%second Derivatives w.r.t. PLip_PCutoff
 			xim = zeros(size(x));
 			xim(par.pindx.tfRibE) = sqrt(-1)*eps^3;
-			[CellOut, ~] = CellCNP(par,x+xim, P0,N0,T0,Irr0);
+			[CellOut, ~] = CellCHNOP(par,x+xim, P0,N0,T0,Irr0);
 
 			d2C2P_dfRibE2 = M3d*0;
 			d2C2P_dfRibE2(iprod) = imag(CellOut.dC2P_dfRibE)./eps^3;
@@ -760,7 +760,7 @@ C2Pxx = [];
 			%second Derivatives w.r.t. kST0
 			xim = zeros(size(x));
 			xim(par.pindx.lkST0) = sqrt(-1)*eps^3;
-			[CellOut, ~] = CellCNP(par,x+xim, P0,N0,T0,Irr0);
+			[CellOut, ~] = CellCHNOP(par,x+xim, P0,N0,T0,Irr0);
 
 			%d2C2P_dkST02 = M3d*0;
 			%d2C2P_dkST02(iprod) = imag(CellOut.dC2P_dkST0)./eps^3;
@@ -818,7 +818,7 @@ C2Pxx = [];
 
 			xim = zeros(size(x));
 			xim(par.pindx.lPLip_PCutoff) = sqrt(-1)*eps^3;
-			[CellOut, ~] = CellCNP(par,x+xim, P0,N0,T0,Irr0);
+			[CellOut, ~] = CellCHNOP(par,x+xim, P0,N0,T0,Irr0);
 
 			%d2C2P_dPCutoff2 = M3d*0;
 			%d2C2P_dPCutoff2(iprod) = imag(CellOut.dC2P_dPCutoff)./eps^3;
@@ -868,7 +868,7 @@ C2Pxx = [];
 
 			xim = zeros(size(x));
 			xim(par.pindx.lPLip_scale) = sqrt(-1)*eps^3;
-			[CellOut, ~] = CellCNP(par,x+xim, P0,N0,T0,Irr0);
+			[CellOut, ~] = CellCHNOP(par,x+xim, P0,N0,T0,Irr0);
 
 			C2P_PLipscale_lPLipscale = M3d*0;
 			C2P_PLipscale_lPLipscale(iprod) = imag(CellOut.dC2P_dPLipscale)./eps^3;
@@ -909,7 +909,7 @@ C2Pxx = [];
 
 			xim = zeros(size(x));
 			xim(par.pindx.lPStor_rCutoff) = sqrt(-1)*eps^3;
-			[CellOut, ~] = CellCNP(par,x+xim, P0,N0,T0,Irr0);
+			[CellOut, ~] = CellCHNOP(par,x+xim, P0,N0,T0,Irr0);
 
 			C2P_rCutoff_lrCutoff = M3d*0;
 			C2P_rCutoff_lrCutoff(iprod) = imag(CellOut.dC2P_drCutoff)./eps^3;
@@ -944,7 +944,7 @@ C2Pxx = [];
 
 			xim = zeros(size(x));
 			xim(par.pindx.lPStor_scale) = sqrt(-1)*eps^3;
-			[CellOut, ~] = CellCNP(par,x+xim, P0,N0,T0,Irr0);
+			[CellOut, ~] = CellCHNOP(par,x+xim, P0,N0,T0,Irr0);
 
 			C2P_PStorscale_lPStorscale = M3d*0;
 			C2P_PStorscale_lPStorscale(iprod) = imag(CellOut.dC2P_dPStorscale)./eps^3;
@@ -973,7 +973,7 @@ C2Pxx = [];
 
 			xim = zeros(size(x));
 			xim(par.pindx.lalphaS) = sqrt(-1)*eps^3;
-			[CellOut, ~] = CellCNP(par,x+xim, P0,N0,T0,Irr0);
+			[CellOut, ~] = CellCHNOP(par,x+xim, P0,N0,T0,Irr0);
 
 			C2P_alphaS_lalphaS = M3d*0;
 			C2P_alphaS_lalphaS(iprod) = imag(CellOut.dC2P_dalphaS)./eps^3;
@@ -996,7 +996,7 @@ C2Pxx = [];
 			%second Derivatives w.r.t. gammaDNA
 			xim = zeros(size(x));
 			xim(par.pindx.tgammaDNA) = sqrt(-1)*eps^3;
-			[CellOut, ~] = CellCNP(par,x+xim, P0,N0,T0,Irr0);
+			[CellOut, ~] = CellCHNOP(par,x+xim, P0,N0,T0,Irr0);
 
 			C2P_gammaDNA_tgammaDNA = M3d*0;
 			C2P_gammaDNA_tgammaDNA(iprod) = imag(CellOut.dC2P_dgammaDNA)./eps^3;
@@ -1015,7 +1015,7 @@ if TestVer == 3 %trying to index explicitly in 2 dimensions instead of using kk
 	DIPxx = par.Pxx(1:nwet,:);
 
 	xim = sqrt(-1)*eps^3;
-	[CellOut, ~] = CellCNP(par,x,P0+xim,N0,T0,Irr0);
+	[CellOut, ~] = CellCHNOP(par,x,P0+xim,N0,T0,Irr0);
 	d2C2P_dDIPmolperL = M3d*0;
 	d2C2P_dDIPmolperL(iprod) = imag(CellOut.dC2P_dDIP)./eps^3 ;
 	d2C2P_dDIP2 = dC2P_dDIPmolperL * dDIPmolperL_dDIPmmolperm3^2 ;
@@ -1038,7 +1038,7 @@ if TestVer == 3 %trying to index explicitly in 2 dimensions instead of using kk
 		%second Derivatives w.r.t. Q10Photo          % change to dlQ10Photo?
 		xim = zeros(size(x));
 		xim(par.pindx.lQ10Photo) = sqrt(-1)*eps^3;
-		[CellOut, ~] = CellCNP(par,x+xim, P0,N0,T0,Irr0);
+		[CellOut, ~] = CellCHNOP(par,x+xim, P0,N0,T0,Irr0);
 
 		d2C2P_dQ10Photo2 = M3d*0;
 		d2C2P_dQ10Photo2(iprod) = imag(CellOut.dC2P_dQ10Photo)./eps^3;

@@ -9,7 +9,8 @@ off  = false   ;
 %   addpath('../../DATA/BGC_48layer/')
 % else
     addpath('../../DATA/BGC_24layer/')
-%   addpath('../../DATA/BGC_2023Nature/')
+    addpath('../../DATA/BGC_2023Nature/')
+    addpath('../utils/')
 % end
 
 if GridVer == 91 
@@ -152,6 +153,9 @@ fprintf('\n')
 % ----- Load 24 layer Data -----
     OperName = sprintf('OCIM2_%s',TRdivVer);
     load(OperName,'output') ;
+    M3d = output.M3d;
+    grd = output.grid;
+    TR  = output.TR/spa;
     %
     fname = 'biopump_model_output_Nowicki.nc';
     NPP = ncread(fname,'NPP'); % 1 = CbPM; 2 = CAFE
@@ -170,7 +174,7 @@ fprintf('\n')
     load PME_TS_91x180x24.mat  pme % calculated from transport operator and salt fields (alternate to running pme.m) 
     load DICant_91x180x24.mat
     load GLODAPv2_91x180x24raw.mat alkraw po4raw o2raw sio4raw % GLODAP Nutrient units = [umol/kg]
-    load co2syspar91.mat co2syspar
+    load co2syspar_91x180x24.mat co2syspar
 
     %load DOMobs_91x180x24.mat DOPobs   % old data file
     %load DOCobs_clean_91x180x24.mat    % old data file with refractory component and outlier removed
@@ -207,8 +211,8 @@ par.co2syspar = co2syspar       ;
 ilnd = find(M3d(:) == 0)    ;
 iwet = find(M3d(:))         ;
 nwet = length(iwet)         ;
-dAt  = output.grid.dAt      ;
-dVt  = output.grid.dVt      ;
+dAt  = grd.DXT3d.*grd.DYT3d;
+dVt  = dAt.*grd.DZT3d;
 ARC  = MSKS.ARC     ;
 MED  = MSKS.MED     ;
 PAC  = MSKS.PAC     ;
@@ -276,6 +280,7 @@ par.Temp     = tempobs       ;
 par.Salt     = salobs        ;
 par.DSi      = Si_obs        ;
 par.po4obs   = DIP_obs       ;
+par.no3obs   = DIN_obs       ;
 par.o2raw    = o2raw         ;
 par.o2obs    = O2_obs        ;     %WOA O2 where is this used?
 par.po4raw   = po4raw        ;
@@ -288,7 +293,7 @@ par.PARobs = PARobs;
 %-------------------- prepare virtual flux -------------------
 % PME part;
 % [modT,modS,pme] = pme(par) ; 
-par.pme = pme(iwet); %pme_new(iwet) ;   
+par.pme = pme; %pme_new(iwet) ;   
 junk = M3d ;
 junk(:,:,2:end) = 0 ;
 isrf = find(junk(iwet)) ;

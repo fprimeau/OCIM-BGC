@@ -102,7 +102,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
     par.L  = L;
    
     % particle flux
-    PFD  = buildPFD_48layer(par,'POP');
+    PFD  = buildPFD(par,'POP');
     junk = M3d ;
     junk(:,:,2:end) = 0 ;
     isrf = find(junk(iwet)) ;
@@ -194,7 +194,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
 
         % bP_T
         if (par.opt_bP_T == on)
-            [~,Gout] = buildPFD_48layer(par,'POP');
+            [~,Gout] = buildPFD(par,'POP');
             PFD_bm = Gout.PFD_bm;
             tmp =  [Z; PFD_bm*POP; Z; Z];
             RHS(:,pindx.bP_T) = -tmp;
@@ -202,7 +202,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
 
         % bP
         if (par.opt_bP == on)
-            [~,Gout] = buildPFD_48layer(par,'POP');
+            [~,Gout] = buildPFD(par,'POP');
             PFD_bb = Gout.PFD_bb;
             tmp = bP*[Z; PFD_bb*POP;  Z; Z];
             RHS(:,pindx.lbP) = -tmp;
@@ -540,7 +540,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
 
         % bP_T bP_T
         if (par.opt_bP_T == on)
-            [~,~,Hout] = buildPFD_48layer(par,'POP');
+            [~,~,Hout] = buildPFD(par,'POP');
             PFD_bm_bm = Hout.PFD_bm_bm;
             tmp = [Z; ...
                    PFD_bm_bm*POP; ...
@@ -557,7 +557,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
         
         % bP_T bP
         if (par.opt_bP_T == on & par.opt_bP == on)
-            [~,~,Hout] = buildPFD_48layer(par,'POP');
+            [~,~,Hout] = buildPFD(par,'POP');
             PFD_bm_bb = Hout.PFD_bm_bb;
             tmp = [Z; ...  % d2Jdslopedinterp
                    bP*PFD_bm_bb*POP; ...
@@ -608,7 +608,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
         
         % bP bP
         if (par.opt_bP == on)
-            [~,~,Hout] = buildPFD_48layer(par,'POP');
+            [~,~,Hout] = buildPFD(par,'POP');
             PFD_bb_bb = Hout.PFD_bb_bb;
             tmp = [Z; ... % d2Jdinterp2
                    bP*bP*PFD_bb_bb*POP; ...

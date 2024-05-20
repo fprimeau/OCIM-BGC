@@ -36,7 +36,7 @@ par.nl = 2; % number of layers in the model euphotic zone (doesn't change)
 
 Gtest = on ; 
 Htest = on ;
-par.optim   = off ; 
+par.optim   = on ; 
 par.Cmodel  = on ; 
 par.Omodel  = on ; 
 par.Simodel = off ;
@@ -53,7 +53,7 @@ par.docscale = 1.0 ; % factor to weigh DOC in the objective function
 par.alkscale = 1.0 ;
 par.o2scale  = 1.0 ;
 % P model parameters
-par.opt_sigP  = on ; 
+par.opt_sigP  = off ; 
 par.opt_Q10P  = on ;
 par.opt_kdP   = on ;
 par.opt_bP_T  = on ; 
@@ -205,9 +205,13 @@ if(Gtest);
 	GHtest.fx_cstep = NaN([nip,1]);
 	GHtest.fxx_cstep = NaN(nip);
 	GHtest.pindx = par.pindx;
+    % display par.pindx
+    fprintf('pindx = ')
+    par.pindx 
     dx = sqrt(-1)*eps.^3*eye(nip);
     for ii = 1 : nip 
         x  = real(x0)+dx(:,ii);
+        iter = 11; %bypasses the ResetPar in neglogpost
         if Htest == on
             [f,fx,fxx] = neglogpost(x, par) ;
             GHtest.fx_cstep(ii) = imag(f)/eps.^3     ;

@@ -30,8 +30,13 @@ function PrintPar(x, par);
             fprintf('kdC     is  % 3.2e \n', par.kdC)   ;
             fprintf('R_Si    is  % 3.2e \n', par.R_Si)  ;
             fprintf('rR      is  % 3.2e \n', par.rR)    ;
-            fprintf('cc      is  % 3.2e \n', par.cc)    ;
-            fprintf('dd      is  % 3.2e \n', par.dd)    ;
+            if (par.C2P_Tzmodel ==on)
+                fprintf('ccT     is  % 3.2e \n', par.ccT)   ;
+                fprintf('ddT     is  % 3.2e \n', par.ddT)   ;
+            else
+                fprintf('cc      is  % 3.2e \n', par.cc)    ;
+                fprintf('dd      is  % 3.2e \n', par.dd)    ;
+            end
         end 
         if (par.Cellmodel==on)
             fprintf('Q10Photo       is  % 3.2e \n', par.BIO.Q10Photo)   ;
@@ -65,17 +70,11 @@ function PrintPar(x, par);
 			fprintf('CDNA           is  % 3.2e \n', par.BIO.CDNA)  ;
 			fprintf('CPhospholipid  is  % 3.2e \n', par.BIO.CPhospholipid )  ;
 			fprintf('CLipid         is  % 3.2e \n', par.BIO.CLipid)  ;
-			fprintf('CRib           is  % 3.2e \n\n', par.BIO.CRib)  ;
-		elseif (par.C2P_Tzmodel ==on)
-			fprintf('ccT     is  % 3.2e \n', par.ccT)   ;
-			fprintf('ddT     is  % 3.2e \n', par.ddT)   ;
-		else
-			fprintf('cc      is  % 3.2e \n', par.cc)    ;
-            fprintf('dd      is  % 3.2e \n', par.dd)    ;
+			fprintf('CRib           is  % 3.2e \n', par.BIO.CRib)  ;
         end
         if (par.Omodel == on)
             fprintf('O2C_T   is  % 3.2e \n', par.O2C_T) ;
-            fprintf('rO2C    is  % 3.2e \n', par.rO2C)  ;
+            fprintf('rO2C    is  % 3.2e \n\n', par.rO2C)  ;
         end
         if (par.Simodel==on)
             fprintf('dsi     is  % 3.2e \n', par.dsi)   ;
@@ -229,58 +228,6 @@ function PrintPar(x, par);
         end
     end 
     % ------------------------------------------------------------
-    if (par.Omodel == on)
-        if (par.opt_O2C_T == on)
-            iO2C_T = par.pindx.O2C_T;
-            fprintf('current O2C_T   is  % 3.2e \n', x(iO2C_T));
-            xhat.O2C_T = x(iO2C_T);
-        end
-        
-        if (par.opt_rO2C == on)
-            irO2C = par.pindx.lrO2C;
-            fprintf('current rO2C    is  % 3.2e \n', exp(x(irO2C)));
-            xhat.rO2C = exp(x(irO2C));
-        end
-    end
-    % ------------------------------------------------------------
-    % dsi
-    if (par.Simodel==on)
-        if (par.opt_dsi == on)
-            idsi = par.pindx.ldsi;
-            fprintf('current dsi     is  % 3.2e \n', exp(x(idsi)));
-            xhat.dsi = exp(x(idsi));
-        end
-        
-        % at
-        if (par.opt_at == on)
-            iat = par.pindx.lat;
-            fprintf('current at      is  % 3.2e \n', exp(x(iat)));
-            xhat.at = exp(x(iat));
-        end
-        
-        % bt
-        if (par.opt_bt == on)
-            ibt = par.pindx.lbt;
-            fprintf('current bt      is  % 3.2e \n', exp(x(ibt)));
-            xhat.bt = exp(x(ibt));
-        end
-        
-        % aa
-        if (par.opt_aa == on)
-            iaa = par.pindx.aa;
-            fprintf('current aa      is  % 3.2e \n', x(iaa));
-            xhat.aa = x(iaa);
-        end
-        
-        % bb
-        if (par.opt_bb == on)
-            ibb = par.pindx.lbb;
-            fprintf('current bb      is  % 3.2e \n\n', exp(x(ibb)));
-            xhat.bb = exp(x(ibb));
-        end
-    end
-
-    % ------------------------------------------------------------
     % Cell model
     if (par.Cellmodel==on)
         if (par.opt_Q10Photo == on)
@@ -334,6 +281,59 @@ function PrintPar(x, par);
             xhat.gammaDNA = 0.5*(1+tanh(x(igammaDNA)));
         end
 	end %end cell model params
+    % ------------------------------------------------------------
+    % Oxygen model
+    if (par.Omodel == on)
+        if (par.opt_O2C_T == on)
+            iO2C_T = par.pindx.O2C_T;
+            fprintf('current O2C_T   is  % 3.2e \n', x(iO2C_T));
+            xhat.O2C_T = x(iO2C_T);
+        end
+        
+        if (par.opt_rO2C == on)
+            irO2C = par.pindx.lrO2C;
+            fprintf('current rO2C    is  % 3.2e \n', exp(x(irO2C)));
+            xhat.rO2C = exp(x(irO2C));
+        end
+    end
+    % ------------------------------------------------------------
+    % dsi
+    if (par.Simodel==on)
+        if (par.opt_dsi == on)
+            idsi = par.pindx.ldsi;
+            fprintf('current dsi     is  % 3.2e \n', exp(x(idsi)));
+            xhat.dsi = exp(x(idsi));
+        end
+        
+        % at
+        if (par.opt_at == on)
+            iat = par.pindx.lat;
+            fprintf('current at      is  % 3.2e \n', exp(x(iat)));
+            xhat.at = exp(x(iat));
+        end
+        
+        % bt
+        if (par.opt_bt == on)
+            ibt = par.pindx.lbt;
+            fprintf('current bt      is  % 3.2e \n', exp(x(ibt)));
+            xhat.bt = exp(x(ibt));
+        end
+        
+        % aa
+        if (par.opt_aa == on)
+            iaa = par.pindx.aa;
+            fprintf('current aa      is  % 3.2e \n', x(iaa));
+            xhat.aa = x(iaa);
+        end
+        
+        % bb
+        if (par.opt_bb == on)
+            ibb = par.pindx.lbb;
+            fprintf('current bb      is  % 3.2e \n\n', exp(x(ibb)));
+            xhat.bb = exp(x(ibb));
+        end
+    end
+
 	% ------------------------------------------------------------
 
     % Ensure only real part of parameter gets saved to avoid issues with
@@ -345,8 +345,9 @@ function PrintPar(x, par);
 	end
 
     % Save in neglogpost instead?
-    x0 = x ;
+    x0 = real(x);
     if (par.optim == on)
+        fprintf('saving xhat & x0 to: %s  ...\n', par.fxhat)
         save(par.fxhat, 'x0','xhat')
     end 
 end
