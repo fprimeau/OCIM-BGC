@@ -120,7 +120,7 @@ function [f,J,par] = C12eqn(X, par)
     % construct the LHS matrix for the offline model
     % disp('Preparing LHS and RHS matrix:')
     % colum 1 dFdDIC
-    Jc{1,1} = TRdiv - G_dic ; 
+    Jc{1,1} = TRdiv ; 
     Jc{2,1} = 0*I ;
     Jc{3,1} = 0*I ;
     Jc{4,1} = 0*I ;
@@ -152,7 +152,7 @@ function [f,J,par] = C12eqn(X, par)
     Jc{6,4} = 0*I ;
     Jc{7,4} = 0*I ;
     % column 5 dFdALK
-    Jc{1,5} = -G_alk;
+    Jc{1,5} = 0*I ;
     Jc{2,5} = 0*I ;
     Jc{3,5} = 0*I ;
     Jc{4,5} = 0*I ;
