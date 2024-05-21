@@ -6,23 +6,9 @@ This directory contains the model code for running OCIM-BGC using a cellular gro
 ## Development / Notes
 
 ### issues
-Error in Hessian for parameter pairs with Q10Photo and RO2C
-- Q10Photo gradient looks fine, so error is in second derivative w.r.t. Cparam, Q10Photo
-- hessian seems to work for: d, R_Si, and rR pairs with Q10Photo, but none of the other pairs with Q10Photo. Maybe the deriv of these does not depend on stoichiometry? 
-- Cxx RHS equations are identical for all cell model parameters. So error is probably not in the RHS eqns.  
-- possible cause:
-   - mismatch between order of parameter pair columns in Cxx,Oxx and neglogpost
-   - if rO2C is entered before cell model params somewhere.
-	- this would make the first cell model parameter (Q10Photo) and rO2C wrong. the rest would work
-	- Test: if RO2C works for the model with the cell model off, then this is probably the problem 
-		- Conclusion: it does.
-		- how to fix it?
-			- [ ] check order of indices in loops. order of pairs at index kk needs to match across 
-				- eqOcycle_v2
-				- neglogpost
-				- pindx
-			- [ ] in eqOcycle, all pairs with O should come at the end after all the pairs computed in eqCcycle
-         - [ ] update order of neglogpost loops to match
+[RESOLVED]: Error in Hessian for parameter pairs with Q10Photo and RO2C
+- bug found in neglogpost: missing nbx in index list for Omodel parameters, so Omodel parameter pairs were added to fxx in the wrong place. Should be fixed now. 
+   - [ ] TODO: Run GHtest with cellmodel on to check. 
 
 ----
 ### list of src files that were modified to run the Cell model
