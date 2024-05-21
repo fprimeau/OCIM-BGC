@@ -575,7 +575,7 @@ function [f, fx, fxx, data, xhat] = neglogpost(x, par)
             % -------------------------------
             % P and O model parameters
             for ju = 1:npx
-                for jo = (npx+ncx+1):(npx+ncx+nox)
+                for jo = (npx+ncx+nbx+1):(npx+ncx+nbx+nox)
                     kk = kk + 1;
                     fxx(ju, jo) = fxx(ju, jo) + ...
                         ox(io2,ju).'*Wo*ox(io2,jo) + eo.'*Wo*oxx(io2,kk);
@@ -586,7 +586,7 @@ function [f, fx, fxx, data, xhat] = neglogpost(x, par)
             % -------------------------------
             % C and O model parameters
             for ju = (npx+1):(npx+ncx)
-                for jo = (npx+ncx+1):(npx+ncx+nox)
+                for jo = (npx+ncx+nbx+1):(npx+ncx+nbx+nox)
                     kk = kk + 1;
                     fxx(ju, jo) = fxx(ju, jo) + ...
                         ox(io2,ju).'*Wo*ox(io2,jo) + eo.'*Wo*oxx(io2,kk);
