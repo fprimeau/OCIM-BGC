@@ -114,7 +114,7 @@ function [par, C13, C13x, C13xx] = eqC13cycle_v2(x, par);
     else
         fprintf('reset the global variable for the next call eqCcycle. \n')
         GC13 = real(C13) + 1e-10*randn(6*nwet,1) ;
-        [F,FD,par] = C13_eqn(C13,par) ;
+        F = C13_eqn(C13,par) ;
     end
 end
 

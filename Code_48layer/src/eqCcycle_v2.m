@@ -117,7 +117,11 @@ function [par, C, Cx, Cxx] = eqCcycle_v2(x, par)
     else
         fprintf('reset the global variable for the next call eqCycle. \n')
         GC = real(C) + 1e-8*randn(7*nwet,1) ;
-        [F,FD,par,Cx,Cxx] = C_eqn(C, par);
+        F = C_eqn(C, par) ;
+        %
+        if nargout > 3
+            [F,FD,par,Cx,Cxx] = C_eqn(C, par);
+        end
     end
 end
 

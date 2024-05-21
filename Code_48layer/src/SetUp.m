@@ -233,81 +233,27 @@ par.nppMSK = M3d*0 ;
 UMSK = M3d * 0 ;
 DMSK = M3d * 0 ;
 par.npp = repmat(npp, [1,1,par.nl]) * 0; %npp 91x180 ----> 91x180xeuphotic zone(~100m)
+[x, a, K, C] = V_NPP(par) ;
 [nx,ny,nz] = size(M3d) ;
 for jj = 1 : nx
     for ii = 1 : ny
         tmp = squeeze(M3d(jj, ii, :)) ;  %----> tmp는 각 91 by 180 field에서의 깊이 (24*1) 벡터
         idp = length(find(tmp) == 1)  ;
 
-        if ( idp <= 49 )
-            UMSK(jj,ii,1:8) = 1 ;
-            DMSK(jj,ii,9:end) = 1;
-            par.nppMSK(jj,ii,1) = 8 ;
-            par.nppMSK(jj,ii,2) = 8 ;
-            par.nppMSK(jj,ii,3) = 8 ;
-            par.nppMSK(jj,ii,4) = 8 ;
-            par.nppMSK(jj,ii,5) = 8 ;
-            par.nppMSK(jj,ii,6) = 8 ;
-            par.nppMSK(jj,ii,7) = 8 ;
-            par.nppMSK(jj,ii,8) = 8 ;
-
-            par.npp(jj,ii,1)  = (1/8) * npp(jj,ii) / grd.dzt(1) * par.p2c(jj,ii,1);
-            par.npp(jj,ii,2)  = (1/8) * npp(jj,ii) / grd.dzt(2) * par.p2c(jj,ii,2);
-            par.npp(jj,ii,3)  = (1/8) * npp(jj,ii) / grd.dzt(3) * par.p2c(jj,ii,3);
-            par.npp(jj,ii,4)  = (1/8) * npp(jj,ii) / grd.dzt(4) * par.p2c(jj,ii,4);
-            par.npp(jj,ii,5)  = (1/8) * npp(jj,ii) / grd.dzt(5) * par.p2c(jj,ii,5);
-            par.npp(jj,ii,6)  = (1/8) * npp(jj,ii) / grd.dzt(6) * par.p2c(jj,ii,6);
-            par.npp(jj,ii,7)  = (1/8) * npp(jj,ii) / grd.dzt(7) * par.p2c(jj,ii,7);
-            par.npp(jj,ii,8)  = (1/8) * npp(jj,ii) / grd.dzt(8) * par.p2c(jj,ii,8);
-
-            Pnpp(jj,ii,1)  = par.npp(jj,ii,1) / spa ;   
-            Pnpp(jj,ii,2)  = par.npp(jj,ii,2) / spa ;
-            Pnpp(jj,ii,3)  = par.npp(jj,ii,3) / spa ;   
-            Pnpp(jj,ii,4)  = par.npp(jj,ii,4) / spa ;
-            Pnpp(jj,ii,5)  = par.npp(jj,ii,5) / spa ;   
-            Pnpp(jj,ii,6)  = par.npp(jj,ii,6) / spa ;
-            Pnpp(jj,ii,7)  = par.npp(jj,ii,7) / spa ;   
-            Pnpp(jj,ii,8)  = par.npp(jj,ii,8) / spa ;
-
-            Cnpp(jj,ii,1)  = (1/8) * npp(jj,ii) / grd.dzt(1) / spa ;
-            Cnpp(jj,ii,2)  = (1/8) * npp(jj,ii) / grd.dzt(2) / spa ;
-            Cnpp(jj,ii,3)  = (1/8) * npp(jj,ii) / grd.dzt(3) / spa ;
-            Cnpp(jj,ii,4)  = (1/8) * npp(jj,ii) / grd.dzt(4) / spa ;
-            Cnpp(jj,ii,5)  = (1/8) * npp(jj,ii) / grd.dzt(5) / spa ;
-            Cnpp(jj,ii,6)  = (1/8) * npp(jj,ii) / grd.dzt(6) / spa ;
-            Cnpp(jj,ii,7)  = (1/8) * npp(jj,ii) / grd.dzt(7) / spa ;
-            Cnpp(jj,ii,8)  = (1/8) * npp(jj,ii) / grd.dzt(8) / spa ;
-                        
-            par.Lambda(jj,ii,1) = 1./(1e-6+DIP_obs(jj,ii,1)) ;
-            par.Lambda(jj,ii,2) = 1./(1e-6+DIP_obs(jj,ii,2)) ;
-            par.Lambda(jj,ii,3) = 1./(1e-6+DIP_obs(jj,ii,3)) ;
-            par.Lambda(jj,ii,4) = 1./(1e-6+DIP_obs(jj,ii,4)) ;
-            par.Lambda(jj,ii,5) = 1./(1e-6+DIP_obs(jj,ii,5)) ;
-            par.Lambda(jj,ii,6) = 1./(1e-6+DIP_obs(jj,ii,6)) ;
-            par.Lambda(jj,ii,7) = 1./(1e-6+DIP_obs(jj,ii,7)) ;
-            par.Lambda(jj,ii,8) = 1./(1e-6+DIP_obs(jj,ii,8)) ;
-        %else 
-            %UMSK(jj,ii,1:3) = 1 ;               %여기 고쳐야 함
-            %DMSK(jj,ii,4:end) = 1;              %nppMSK 필요...?
-            %par.nppMSK(jj,ii,1) = 3 ;
-            %par.nppMSK(jj,ii,2) = 3 ;
-            %par.nppMSK(jj,ii,3) = 3 ;
-
-            %par.npp(jj,ii,1)  = (1/3) .* npp(jj,ii) / grd.dzt(1) * par.p2c(jj,ii,1);
-            %par.npp(jj,ii,2)  = (1/3) .* npp(jj,ii) / grd.dzt(2) * par.p2c(jj,ii,2);
-            %par.npp(jj,ii,3)  = (1/3) .* npp(jj,ii) / grd.dzt(3) * par.p2c(jj,ii,3);%
-
-            %Pnpp(jj,ii,1)  = par.npp(jj,ii,1) / spa ;
-            %Pnpp(jj,ii,2)  = par.npp(jj,ii,2) / spa ;
-            %Pnpp(jj,ii,3)  = par.npp(jj,ii,3) / spa ;
-
-            %Cnpp(jj,ii,1)  = (1/3) * npp(jj,ii) / grd.dzt(1) / spa ;
-            %Cnpp(jj,ii,2)  = (1/3) * npp(jj,ii) / grd.dzt(2) / spa ;
-            %Cnpp(jj,ii,3)  = (1/3) * npp(jj,ii) / grd.dzt(3) / spa ;
-            
-            %par.Lambda(jj,ii,1) = 1./(1e-6+po4obs(jj,ii,1)) ; 
-            %par.Lambda(jj,ii,2) = 1./(1e-6+po4obs(jj,ii,2)) ;
-            %par.Lambda(jj,ii,3) = 1./(1e-6+po4obs(jj,ii,3)) ;
+        if ( idp <= 49 )                 %----> 필요 없는것 같은데....
+            UMSK(jj,ii,1:par.nl) = 1 ;
+            DMSK(jj,ii,par.nl+1:end) = 1;
+            %
+            for kk = 1:par.nl
+              par.nppMSK(jj,ii,kk) = par.nl ;
+              par.npp(jj,ii,kk)  = x(kk) * npp(jj,ii) / grd.dzt(kk) * par.p2c(jj,ii,kk);
+              Cnpp(jj,ii,kk) = x(kk)* npp(jj,ii) / grd.dzt(kk) /spa ;
+            end
+            %
+            for kk = 1:par.nl
+              Pnpp(jj,ii,kk)  = par.npp(jj,ii,kk) / spa ;  
+              par.Lamda(jj,ii,kk) = 1./(1e-6+DIP_obs(jj,ii,kk)) ;
+            end
         end 
     end
 end
@@ -322,3 +268,5 @@ par.UM = d0(UMSK(iwet)) ;
 par.DM = d0(DMSK(iwet)) ;
 par.WM = d0(M3d(iwet))  ;
 %---------------------------- end ---------------------------------- 
+
+
