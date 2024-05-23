@@ -12,7 +12,7 @@ format short
 % --- addpath to model code -----
 addpath('../src/')
 
-VerName = 'GHtest_alpha_sigC_'; 		% optional version name. leave as an empty character array
+VerName = 'GHtest_sigP_bC_'; 		% optional version name. leave as an empty character array
 					% or add a name ending with an underscore
 VerNum = '';		% optional version number for testing
 
@@ -53,21 +53,21 @@ par.docscale = 1.0 ; % factor to weigh DOC in the objective function
 par.alkscale = 1.0 ;
 par.o2scale  = 1.0 ;
 % P model parameters
-par.opt_sigP  = off ; 
+par.opt_sigP  = on ; 
 par.opt_Q10P  = off ;
 par.opt_kdP   = off ;
 par.opt_bP_T  = off ; 
 par.opt_bP    = off ;
-par.opt_alpha = on ;
+par.opt_alpha = off ;
 par.opt_beta  = off ;
 % C model parameter
-par.opt_sigC  = on ; 
+par.opt_sigC  = off ; 
 par.opt_kru   = off ;
 par.opt_krd   = off ;
 par.opt_etau  = off ;
 par.opt_etad  = off ; %keep off
 par.opt_bC_T  = off ;
-par.opt_bC    = off ; 
+par.opt_bC    = on ; 
 par.opt_d     = off ;
 par.opt_Q10C  = off ;
 par.opt_kdC   = off ; 

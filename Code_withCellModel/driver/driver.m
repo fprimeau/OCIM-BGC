@@ -12,12 +12,12 @@ format short
 % --- addpath to model code -----
 addpath('../src/')
 
-VerName = 'optPCO_GM15_'; 		% optional version name. leave as an empty character array
+VerName = 'optPCOCell_'; 		% optional version name. leave as an empty character array
 					% or add a name ending with an underscore
 VerNum = 'v1';		% optional version number for testing
 
 % Choose C2P function
-par.C2Pfunctiontype = 'P';
+par.C2Pfunctiontype = 'C';
 % 'P' -> PO4 function ; 'C' -> Cell model; 'T' -> Temperature function; 'R' -> constant value (Redfield)
 % 
 GridVer  = 91  ;
@@ -41,9 +41,10 @@ par.Cmodel  = on ;
 par.Omodel  = on ; 
 par.Simodel = off ;
 par.Cisotope  = off  ;
-par.LoadOpt = off ; % if load optimial parameters. 
+par.LoadOpt = on ; % if load optimial parameters. 
 % to load parameter values from a run with a different name.
-par.fxhatload = '../../output/optPonly_CTL_He_P_xhat.mat';
+%par.fxhatload = '../../output/optPonly_CTL_He_P_xhat.mat';
+par.fxhatload = '../output/optPCOCell_CTL_He_PCOCellv1_DOC1_DOP0_xhat.mat';
 par.dynamicP = off ; % if on, cell model uses modeled DIP. if off, cell model uses WOA observed DIP field.
 
 par.dopscale = 0.0 ;
@@ -81,15 +82,15 @@ par.opt_dd    = on ;
 par.opt_ccT   = off; 
 par.opt_ddT   = off;
 % Trait-based Cellular Growth Model parameters
-par.opt_Q10Photo     = off ; % opt
-par.opt_fStorage     = off ; % opt
+par.opt_Q10Photo     = on ; % opt
+par.opt_fStorage     = on ; % opt
 par.opt_fRibE 	     = off ; 
-par.opt_kST0 	     = off ; % opt
+par.opt_kST0 	     = on ; % opt
 par.opt_PLip_PCutoff = off ;
 par.opt_PLip_scale   = off ;
-par.opt_PStor_rCutoff = off; % opt
+par.opt_PStor_rCutoff = on; % opt
 par.opt_PStor_scale  = off ;
-par.opt_alphaS       = off ; % opt
+par.opt_alphaS       = on ; % opt
 par.opt_gammaDNA	 = off ;
 % O model parameters
 par.opt_O2C_T = off ;
