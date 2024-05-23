@@ -12,12 +12,12 @@ format short
 % --- addpath to model code -----
 addpath('../src/')
 
-VerName = 'GHtest_testPCOCell'; 		% optional version name. leave as an empty character array
+VerName = 'GHtest_alpha_sigC_'; 		% optional version name. leave as an empty character array
 					% or add a name ending with an underscore
 VerNum = '';		% optional version number for testing
 
 % Choose C2P function
-par.C2Pfunctiontype = 'C';
+par.C2Pfunctiontype = 'R';
 % 'P' -> PO4 function ; 'C' -> Cell model; 'T' -> Temperature function; 'R' -> constant value (Redfield)
 % 
 GridVer  = 91  ;
@@ -38,7 +38,7 @@ Gtest = on ;
 Htest = on ;
 par.optim   = on ; 
 par.Cmodel  = on ; 
-par.Omodel  = on ; 
+par.Omodel  = off ; 
 par.Simodel = off ;
 par.Cisotope  = off  ;
 par.LoadOpt = off ; % if load optimial parameters. 
@@ -53,12 +53,12 @@ par.docscale = 1.0 ; % factor to weigh DOC in the objective function
 par.alkscale = 1.0 ;
 par.o2scale  = 1.0 ;
 % P model parameters
-par.opt_sigP  = on ; 
+par.opt_sigP  = off ; 
 par.opt_Q10P  = off ;
 par.opt_kdP   = off ;
 par.opt_bP_T  = off ; 
 par.opt_bP    = off ;
-par.opt_alpha = off ;
+par.opt_alpha = on ;
 par.opt_beta  = off ;
 % C model parameter
 par.opt_sigC  = on ; 
@@ -81,7 +81,7 @@ par.opt_dd    = off ;
 par.opt_ccT   = off; 
 par.opt_ddT   = off;
 % Trait-based Cellular Growth Model parameters
-par.opt_Q10Photo     = on ; % opt
+par.opt_Q10Photo     = off ; % opt
 par.opt_fStorage     = off ; % opt
 par.opt_fRibE 	     = off ; 
 par.opt_kST0 	     = off ; % opt
@@ -92,7 +92,7 @@ par.opt_PStor_scale  = off ;
 par.opt_alphaS       = off ; % opt
 par.opt_gammaDNA	 = off ;
 % O model parameters
-par.opt_O2C_T = on ;
+par.opt_O2C_T = off ;
 par.opt_rO2C  = on ;
 % Si model parameters
 par.opt_dsi   = on  ;
