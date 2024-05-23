@@ -3,7 +3,7 @@ function [Xout,Tout,par] = time_stepper(par,t0,t1,Xin,Ctype)
   
   % Unpack the useful parameters
   spa = par.spa
-  dt = spa/12; %monthly time step
+  dt = spa/12*2; %monthly time step
   tt = t0:dt/spa:t1;
   nstep = length(tt);
   Nstep = spa/dt;
@@ -14,7 +14,7 @@ function [Xout,Tout,par] = time_stepper(par,t0,t1,Xin,Ctype)
 
   % load the atmospheric CO2 time history
   atm = importdata('atmhist.txt');
-  pco2atm = atm.data(:,5); % 그냥 atm이 아니고...?
+  pco2atm = atm.data(:,5); 
   pco2year = atm.data(:,1);
   % interp pco2atm to match model temporal resolution
   pco2atm_nstep = interp1(pco2year,pco2atm,tt);
@@ -23,6 +23,7 @@ function [Xout,Tout,par] = time_stepper(par,t0,t1,Xin,Ctype)
   [Cratio] = get_atmC_ratio(tt);
   pc13R_nstep = Cratio.pc13R_nstep;
   pc14R_nstep = Cratio.pc14R_nstep; % for global
+  par.Cratio = Cratio ;
   % pc14R = Cratio.pc14R; % for North, Tropical and South
   % obtain C14 from the data provided by Jim
   % Jratio = get_C14_jtr(tt);
@@ -96,6 +97,10 @@ function [Xout,Tout,par] = time_stepper(par,t0,t1,Xin,Ctype)
       % assign solution X12(X13,X14) to XC12 (XC13,XC14)
       if par.saveall
         eval(sprintf('Xout.%s(:,i) = %s;',vn,vn));
+        if isfield(par,'JgDIC') & isfield(par,'co2surf')
+          Xout.JgDIC(:,i) = par.JgDIC; Xout.co2surf(:,i) = par.co2surf; Xout.pco2surf(:,i) = par.pco2;
+          Xout.JgDICa(:,i) = par.JgDICa; Xout.JgDICo(:,i) = par.JgDICo; Xout.pco2atmdebug(:,i) = par.pco2atm_debug;
+        end 
       else
         ix = mod(i,Nstep);
         if ix == 0

@@ -80,7 +80,7 @@ par.opt_bb    = on  ;
 %--------------------------------------
 SetUp;
 
-output_dir = sprintf('../Results/'); 
+output_dir = sprintf('../Results/optimization/'); 
 VER = strcat(output_dir);
 fopt = 'CTL_He_48layer_PCO_firstrun';
 par.fname = strcat(VER, fopt,'.mat');
@@ -98,24 +98,28 @@ x0    = par.p0 ; % set up parameters and assign it to x0
 
 % check the optimzed data and solutions
 mf = delta1314();
-par.pco2atm = 276.8; % 
 par.c13.R13a = mf.d2r13(-6.61); % 
 par.c14.R14a = mf.D2r14(0,-6.61); % air C14/C at 1750
 
+%fractionation factors for C isotopes
+%----------------for C13----------------------
+%REF: A. Schmittner et al.: Distribution of carbon isotope ratios (δ13C) in the ocean
+par.c13.alpha_k = 0.99915; % kenetic fractionation factor 
+par.c13.alpha_g2aq = 0.998764; % gas to water fractionation factor. It negelcts the minor temperature dependency of the isotopic fractionation factor from gaseous to aqueous CO2 (5x10-6 oC). Thus, it is a constant value corresponding to a mean temperature of 15oC.
 
-% load /DFS-L/DATA/primeau/oceandata/DATA/eSST_obs_1749_2023.mat;
-% par.Temp_eSST = Temp_eSST;
-% par.Temp_eSST_tt = Temp_eSST_tt;
-% par.Temp_obs  = par.Temp; % keep a copy of WOA temp in case it is updated by temperature model
+%----------------for C14-----------------
+par.lambda14 = 1/spa*log(2)/5730; % radiocarbon decay rate (yr^(-1) to s^(-1))
+par.fc14           = 2.0 ;  %Tunable between 1.9 and 2.0
+par.c14.alpha_k    = 1 - (1 - 0.99915)*par.fc14 ; % kenetic fractionation factor
+par.c14.alpha_g2aq = 1- (1 - 0.998764)*par.fc14 ; % gas to water fractionation factor
+
 par.saveall = true;
-
 % CAUTION: check these parameters before running an experiment
 %------------------------------------------------------------------------
-par.yst        = 1750;
+par.yst        = 1850;
 par.yed        = 2022;
 par.fras       = 1.00;
 par.frpho      = 0.5 ;  %0.5
-par.fc14       = 1.9;
 % par.fkw        = 0.72; %0.72
 % load('kw_ocim_10122023.mat');
 % par.kw=kw.kmean2D_af/(100*60^2); % convert from cm/hr to m/s;
@@ -159,14 +163,14 @@ O2pool = {'O2'};
 toc
 
 % save all par and data before the transient run
-fileName  = 'SSdata_par_0.707xkw_fras=1_frpho=0.5_48layer_240428'
-directory = '../Results'
+fileName  = sprintf('SSdata_0.7070xkw_fras=%4.2f_frpho=%4.2f_fc14=%4.2f.mat',par.fras,par.frpho,par.fc14) ;
+directory = '../Results/SS_Cisotope'
 filePath  = fullfile(directory, fileName) ;
 save(filePath, 'par', 'data', '-v7.3')   ;
 
 % check the data and par for steady-state
 % drive the time stepping method for C, C13, C14, and O2
-Ctype = {'C12','C13','C14','O2'}; 
+Ctype = {'C12','C13','C14'}; 
 for m = 1:length(Ctype)
   vn = Ctype{m};
   if contains(vn,'12')
@@ -180,11 +184,14 @@ for m = 1:length(Ctype)
 end
   
 
-t0 = 1750; t1 = 2022;
+t0 = 1850; t1 = 2022;
 fprintf('Time stepping method for C isotopes and O2')
 tic
 [Xout,Tout,par] = time_stepper(par,t0,t1,Xin,Ctype);
 toc
 
-save('Transient_fras=1_frpho=0.5_240428', 'Xout', 'Tout', '-v7.3')
+Transient_outname = sprintf('Transient_0.7070xkw_fras=%4.2f_frpho=%4.2f_fc14=%4.2f.mat',par.fras,par.frpho, par.fc14) ;
+dir_transient = '../Results/Transient_Cisotope'
+filePath_transient  = fullfile(dir_transient, Transient_outname) ;
+save(filePath_transient, 'Xout', 'Tout', '-v7.3')   ;
 
