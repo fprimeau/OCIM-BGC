@@ -203,9 +203,11 @@ function [f, fx, fxx, data, xhat] = neglogpost(x, par)
     % optimizable_parameter_list = [parameter_names_P, parameter_names_Cell, parameter_names_C, parameter_names_O];
 
     % fixed parameters
-	allparams.kPIC      = par.kPIC  ;
-    allparams.kappa_p 	= par.kappa_p;
+	allparams.kPIC      = par.kPIC      ;   % PIC dissolution timescale [1/s]
+    allparams.kappa_p 	= par.kappa_p   ;
+    allparams.kappa_l 	= par.kappa_l   ;   % labile DOM remin timescale [1/s]
 	allparams.kappa_g 	= par.kappa_g   ;
+    allparams.gamma     = par.gamma     ;
     % P model parameters
 	allparams.sigP 	    = par.sigP     ;
 	allparams.Q10P		= par.Q10P      ;
