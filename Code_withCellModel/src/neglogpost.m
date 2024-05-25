@@ -9,7 +9,7 @@ function [f, fx, fxx, data, xhat] = neglogpost(x, par)
 
     % reset parameters if optimization routine
     % suggests strange parameter values ;
-    if iter>0 & iter < 10
+    if iter>0 & iter < 0 %10  %skipping Reset par
         [x, ibad] = ResetPar(x, par) ;
         if ~isempty(ibad)
             fprintf('solver suggested unrealistic parameter values. Reset x for pindx = ')
