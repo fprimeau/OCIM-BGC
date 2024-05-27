@@ -2,7 +2,7 @@
 % running this script in the slurm matlab call instead of running driver.m
 % directly should suppress the command line prompts from appearing in the
 % output file
-diary logs/optPCOCell_v1continued.out
-fprintf('Continuing optPCOCell_v1 optimization after TIMEOUT \n\n')
-run driver.m
+diary logs/optPCO_constC2P_noGH.out
+fprintf('Test optimizing without computing gradient and hessian \n\n')
+run driver_test_noGH.m
 diary off
