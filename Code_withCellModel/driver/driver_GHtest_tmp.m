@@ -17,7 +17,7 @@ VerName = 'GHtest_sigP_bC_'; 		% optional version name. leave as an empty charac
 VerNum = '';		% optional version number for testing
 
 % Choose C2P function
-par.C2Pfunctiontype = 'R';
+par.C2Pfunctiontype = 'P';
 % 'P' -> PO4 function ; 'C' -> Cell model; 'T' -> Temperature function; 'R' -> constant value (Redfield)
 % 
 GridVer  = 91  ;
