@@ -103,8 +103,13 @@ function [F, FD, Ox, Oxx, O2tstep] = O_eqn(O2, par)
     UM    = par.UM    ;
     DM    = par.DM    ;
     WM    = par.WM    ;
-    cc    = par.cc    ;
-    dd    = par.dd    ;
+   %  if (par.C2P_Tzmodel)    % not used
+   %    ccT = par.ccT;
+   %    ddT = par.ddT;
+   %  else
+   %    cc    = par.cc    ;
+   %    dd    = par.dd    ;
+   %  end
     
     % tunable parameters;
     O2C_T = par.O2C_T ; 
