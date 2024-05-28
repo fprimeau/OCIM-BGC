@@ -2,7 +2,7 @@
 % running this script in the slurm matlab call instead of running driver.m
 % directly should suppress the command line prompts from appearing in the
 % output file
-diary logs/optPCO_constC2P_noGH.out
-fprintf('Test optimizing without computing gradient and hessian \n\n')
-run driver_test_noGH.m
+diary logs/GHtest_sigC_rO2C.out
+fprintf('Test fixed rO2C gradient \n\n')
+run driver_GHtest_tmp.m
 diary off
