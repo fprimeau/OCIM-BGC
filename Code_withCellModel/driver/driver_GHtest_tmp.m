@@ -12,7 +12,7 @@ format short
 % --- addpath to model code -----
 addpath('../src/')
 
-VerName = 'GHtest_sigC_rO2C_'; 		% optional version name. leave as an empty character array
+VerName = 'GHtest_sigC_rO2C_O2CT_'; 		% optional version name. leave as an empty character array
 					% or add a name ending with an underscore
 VerNum = '';		% optional version number for testing
 
@@ -44,6 +44,8 @@ par.Cisotope  = off  ;
 par.LoadOpt = off ; % if load optimial parameters. 
 % to load parameter values from a run with a different name.
 par.fxhatload = '../../output/optPonly_CTL_He_P_xhat.mat';
+fname_initCO = 'GHtest_sigP_sigC_rO2C_CTL_He_PCO_DOC1_DOP0.mat';
+
 par.dynamicP = off ; % if on, cell model uses modeled DIP. if off, cell model uses WOA observed DIP field.
 
 par.dopscale = 0.0 ;
@@ -92,7 +94,7 @@ par.opt_PStor_scale  = off ;
 par.opt_alphaS       = off ; % opt
 par.opt_gammaDNA	 = off ;
 % O model parameters
-par.opt_O2C_T = off ;
+par.opt_O2C_T = on ;
 par.opt_rO2C  = on ;
 % Si model parameters
 par.opt_dsi   = on  ;
@@ -102,7 +104,7 @@ par.opt_aa    = on  ;
 par.opt_bb    = on  ;
 %
 %-------------load data and set up parameters---------------------
-SetUp ;                      
+SetUp ; 
 
 % save results 
 % ATTENTION: Change this directory to where you want to
@@ -160,6 +162,11 @@ if Htest ==on
 end
 par.fxhat = fxhat ;
 par.fxpar = fxpar ;
+
+
+% -------------------update initial guesses --------------
+load([output_dir fname_initCO])
+
 
 % -------------------update initial guesses --------------
 if isfile(par.fname)
