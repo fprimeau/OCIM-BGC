@@ -269,12 +269,14 @@ function [f, fx, fxx, data, xhat] = neglogpost(x, par)
     % calculate gradient
     if (nargout > 1)
         fx = zeros(length(x), 1)   ;
-        ipx  = Px(0*nwet+1:nwet,:) ;
-        opx  = Px(2*nwet+1:end ,:) ;
-        npx = par.npx              ;
-        % ---------------------------------
-        for ji = 1 : npx
-            fx(ji) = eip.'*Wip*ipx(idip,ji) + eop.'*Wop*opx(idop,ji);
+        npx = par.npx  ;
+        if npx > 0
+            ipx  = Px(0*nwet+1:nwet,:) ;
+            opx  = Px(2*nwet+1:end ,:) ;
+            % ---------------------------------
+            for ji = 1 : npx
+                fx(ji) = eip.'*Wip*ipx(idip,ji) + eop.'*Wop*opx(idop,ji);
+            end
         end
         % ---------------------------------
         if (par.Simodel == on & par.Omodel == off & par.Cmodel == off)
@@ -385,6 +387,17 @@ function [f, fx, fxx, data, xhat] = neglogpost(x, par)
             ipxx = Pxx(0*nwet+1 : 1*nwet, :) ;
             opxx = Pxx(2*nwet+1 : 3*nwet, :) ;
         end
+        if par.Cmodel == on & (par.npx + par.ncx + par.nbx > 0)
+			icxx = Cxx(0*nwet+1 : 1*nwet, :) ;
+            ocxx = Cxx(2*nwet+1 : 3*nwet, :) + Cxx(5*nwet+1 : 6*nwet, :) + Cxx(6*nwet+1 : 7*nwet, :);
+            lkxx = Cxx(4*nwet+1 : 5*nwet, :) ; 
+		end
+		if par.Omodel == on & (par.npx + par.ncx + par.nbx + par.nox > 0)
+			oxx = Oxx(1:nwet,:);
+		end
+		if par.Simodel == on & (par.npx + par.nsx > 0)
+			sxx = Sixx(1:nwet,:);
+		end
         % ----------------------------------------------------------------
         % P model parameters
         kk = 0;
@@ -396,15 +409,15 @@ function [f, fx, fxx, data, xhat] = neglogpost(x, par)
                     opx(idop,ju).'*Wop*opx(idop,jo) + eop.'*Wop*opxx(idop,kk);
                 % Simodel
                 if (par.Simodel == on) & (par.npx + par.nsx > 0)
-                    sxx = Sixx(1:nwet,:);            
+                    % sxx = Sixx(1:nwet,:);            
                     fxx(ju,jo) = fxx(ju, jo) + ...
                         sx(isil,ju).'*Ws*sx(isil,jo) + es.'*Ws*sxx(isil,kk);
                 end 
                 % Cmodel
                 if (par.Cmodel == on) & (par.npx + par.ncx + par.nbx > 0)
-                    icxx = Cxx(0*nwet+1 : 1*nwet, :) ;
-                    ocxx = Cxx(2*nwet+1 : 3*nwet, :) + Cxx(5*nwet+1 : 6*nwet, :) + Cxx(6*nwet+1 : 7*nwet, :);
-                    lkxx = Cxx(4*nwet+1 : 5*nwet, :) ; 
+                    % icxx = Cxx(0*nwet+1 : 1*nwet, :) ;
+                    % ocxx = Cxx(2*nwet+1 : 3*nwet, :) + Cxx(5*nwet+1 : 6*nwet, :) + Cxx(6*nwet+1 : 7*nwet, :);
+                    % lkxx = Cxx(4*nwet+1 : 5*nwet, :) ; 
                     fxx(ju,jo) = fxx(ju, jo) + ...
                         icx(idic,ju).'*Wic*icx(idic,jo) + eic.'*Wic*icxx(idic,kk) + ...
                         ocx(idoc,ju).'*Woc*ocx(idoc,jo) + eoc.'*Woc*ocxx(idoc,kk) + ...
@@ -412,7 +425,7 @@ function [f, fx, fxx, data, xhat] = neglogpost(x, par)
                 end
                 % Omodel
                 if (par.Omodel == on) & (par.npx + par.ncx + par.nbx + par.nox > 0)
-                    oxx = Oxx(1:nwet,:);            
+                    % oxx = Oxx(1:nwet,:);            
                     fxx(ju,jo) = fxx(ju, jo) + ...
                         ox(io2,ju).'*Wo*ox(io2,jo) + eo.'*Wo*oxx(io2,kk);
                 end 
