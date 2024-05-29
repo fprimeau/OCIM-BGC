@@ -16,7 +16,7 @@ function [f, fx, fxx, data, xhat] = neglogpost(x, par)
 		if ~isempty(ibad)
 			load(par.fxhat); % make sure to do this step before saving the reset values in fxhat
 			f = 10000;
-			fx = xhat.fx;
+			fx = xhat.fx; % need to store in xhat at end of neglogpost
 			fxx = xhat.fxx;
 			data = struct;
 			fprintf('solver suggested unrealistic parameter values for pindx = ')
@@ -251,15 +251,13 @@ function [f, fx, fxx, data, xhat] = neglogpost(x, par)
     %--------------------------------------------------------
     fprintf('current objective function value is %3.3e \n\n',f) 
 
+    % Save f in xhat every iteration
+    xhat.f = f ;    
+
     % Save output every (1) iterations during optimization
     if mod(iter, 1) == 0
         fprintf('saving data to %s  ...\n', par.fname) 
-        save(par.fname, 'data')
-        x0 = real(x) ;   
-        fprintf('saving xhat to %s  ...\n', par.fxhat)
-        save(par.fxhat, 'xhat','x0')  % save x0 for ResetPar; this xhat also includes allparams (allparams not saved in PrintPar)
-        clear x0;
-		
+        save(par.fname, 'data')      
 	    % save(par.fxpar, 'par' , '-v7.3')
     end 
     %% +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -376,6 +374,8 @@ function [f, fx, fxx, data, xhat] = neglogpost(x, par)
             end
         end 
         % ----------------------------------
+        % Save fx in xhat
+        xhat.fx = fx;
     end 
     %
     if (nargout>2)
@@ -898,6 +898,16 @@ function [f, fx, fxx, data, xhat] = neglogpost(x, par)
                 end 
             end  
         end
+
+        % Save fxx in xhat
+        xhat.fxx  = fxx;
+
     end
+
+    % Save xhat for every iteration
+    x0 = real(x);
+    fprintf('saving xhat to %s  ...\n', par.fxhat)
+    save(par.fxhat, 'xhat','x0')  % save x0 for ResetPar; this xhat also includes allparams (allparams not saved in PrintPar)
+    clear x0;
 end
 
