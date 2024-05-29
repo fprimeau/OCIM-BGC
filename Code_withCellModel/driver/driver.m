@@ -12,12 +12,12 @@ format short
 % --- addpath to model code -----
 addpath('../src/')
 
-VerName = 'optPCO_constC2P_v3_'; 		% optional version name. leave as an empty character array
+VerName = 'optPCO_GM15_'; 		% optional version name. leave as an empty character array
 					% or add a name ending with an underscore
-VerNum = '';		% optional version number for testing
+VerNum = 'v1';		% optional version number for testing
 
 % Choose C2P function
-par.C2Pfunctiontype = 'R';
+par.C2Pfunctiontype = 'P';
 % 'P' -> PO4 function ; 'C' -> Cell model; 'T' -> Temperature function; 'R' -> constant value (Redfield)
 % 
 GridVer  = 91  ;
@@ -41,10 +41,10 @@ par.Cmodel  = on ;
 par.Omodel  = on ; 
 par.Simodel = off ;
 par.Cisotope  = off  ;
-par.LoadOpt = off ; % if load optimial parameters. 
+par.LoadOpt = on ; % if load optimial parameters. 
 % to load parameter values from a run with a different name.
 %par.fxhatload = '../../output/optPonly_CTL_He_P_xhat.mat';
-par.fxhatload = '../output/optPCOCell_CTL_He_PCOCellv1_DOC1_DOP0_xhat.mat';
+par.fxhatload = '../output/optPCO_GM15_CTL_He_PCOv1_DOC1_DOP0_xhat.mat';
 par.dynamicP = off ; % if on, cell model uses modeled DIP. if off, cell model uses WOA observed DIP field.
 
 par.dopscale = 0.0 ;
@@ -76,7 +76,7 @@ par.opt_R_Si  = on ;
 par.opt_rR    = on ; 
 % --- C:P function parameters -----
 % phosphate-dependent function parameters
-par.opt_cc    = off ;
+par.opt_cc    = on ;
 par.opt_dd    = on ; 
 % temperature-dependent function parameters
 par.opt_ccT   = off ; 
