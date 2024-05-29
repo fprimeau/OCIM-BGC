@@ -12,12 +12,12 @@ format short
 % --- addpath to model code -----
 addpath('../src/')
 
-VerName = 'optPCO_GM15_'; 		% optional version name. leave as an empty character array
+VerName = 'optPCO_Tz_v2_'; 		% optional version name. leave as an empty character array
 					% or add a name ending with an underscore
-VerNum = 'v1';		% optional version number for testing
+VerNum = '';		% optional version number for testing
 
 % Choose C2P function
-par.C2Pfunctiontype = 'P';
+par.C2Pfunctiontype = 'T';
 % 'P' -> PO4 function ; 'C' -> Cell model; 'T' -> Temperature function; 'R' -> constant value (Redfield)
 % 
 GridVer  = 91  ;
@@ -41,7 +41,7 @@ par.Cmodel  = on ;
 par.Omodel  = on ; 
 par.Simodel = off ;
 par.Cisotope  = off  ;
-par.LoadOpt = on ; % if load optimial parameters. 
+par.LoadOpt = off ; % if load optimial parameters. 
 % to load parameter values from a run with a different name.
 %par.fxhatload = '../../output/optPonly_CTL_He_P_xhat.mat';
 par.fxhatload = '../output/optPCO_GM15_CTL_He_PCOv1_DOC1_DOP0_xhat.mat';
@@ -76,11 +76,11 @@ par.opt_R_Si  = on ;
 par.opt_rR    = on ; 
 % --- C:P function parameters -----
 % phosphate-dependent function parameters
-par.opt_cc    = on ;
-par.opt_dd    = on ; 
+par.opt_cc    = off ;
+par.opt_dd    = off ; 
 % temperature-dependent function parameters
-par.opt_ccT   = off ; 
-par.opt_ddT   = off ;
+par.opt_ccT   = on ; 
+par.opt_ddT   = on ;
 % Trait-based Cellular Growth Model parameters
 par.opt_Q10Photo     = on ; % opt
 par.opt_fStorage     = on ; % opt
