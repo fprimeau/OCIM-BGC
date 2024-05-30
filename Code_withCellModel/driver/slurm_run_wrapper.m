@@ -2,7 +2,7 @@
 % running this script in the slurm matlab call instead of running driver.m
 % directly should suppress the command line prompts from appearing in the
 % output file
-diary logs/optPCO_Tz_v2.out
-fprintf('Restart optPCO_Tz with new ResetPar behavior \n\n')
-run driver.m
+diary logs/GHtest_testTz.out
+fprintf('check Tz model GH, using optimized possible local minimum \n\n')
+run driver_GHtest_tmp.m
 diary off
