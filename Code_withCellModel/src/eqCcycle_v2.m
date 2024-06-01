@@ -725,8 +725,10 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
         end
         % solve
         Cx = mfactor(FD, RHS);
+        keyboard
+        %save('../output/test_ccT_Cx.mat','Cx','X','Tz','ccT','ddT')
     end
-    toc
+    toc    
 
     fprintf('Compute the hessian of the solution wrt the parameters ...\n')
     tic

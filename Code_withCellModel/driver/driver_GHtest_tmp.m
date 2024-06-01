@@ -12,7 +12,7 @@ format short
 % --- addpath to model code -----
 addpath('../src/')
 
-VerName = 'GHtest_testTz_'; 		% optional version name. leave as an empty character array
+VerName = 'GHtest_ccT_ddT_'; 		% optional version name. leave as an empty character array
 					% or add a name ending with an underscore
 VerNum = '';		% optional version number for testing
 
@@ -45,7 +45,7 @@ par.LoadOpt = on ; % if load optimial parameters.
 % to load parameter values from a run with a different name.
 par.fxhatload = '../../output/optPCO_Tz_v2_CTL_He_PCO_DOC1_DOP0.mat';
 %fname_initCO = 'GHtest_sigP_sigC_rO2C_CTL_He_PCO_DOC1_DOP0.mat';
-fname_initCO = 'optPCO_Tz_v2_CTL_He_PCO_DOC1_DOP0.mat';
+fname_initCO = 'GHtest_testTz_CTL_He_PCO_DOC1_DOP0.mat'; %'optPCO_Tz_v2_CTL_He_PCO_DOC1_DOP0.mat'; 
 par.dynamicP = off ; % if on, cell model uses modeled DIP. if off, cell model uses WOA observed DIP field.
 
 par.dopscale = 0.0 ;
@@ -57,24 +57,24 @@ par.o2scale  = 1.0 ;
 % P model parameters
 par.opt_sigP  = off ; 
 par.opt_Q10P  = off ;
-par.opt_kdP   = on ;
+par.opt_kdP   = off ;
 par.opt_bP_T  = off ; 
 par.opt_bP    = off ;
-par.opt_alpha = on ;
+par.opt_alpha = off ;
 par.opt_beta  = off ;
 % C model parameter
-par.opt_sigC  = on ; 
+par.opt_sigC  = off ; 
 par.opt_kru   = off ;
 par.opt_krd   = off ;
-par.opt_etau  = on ;
+par.opt_etau  = off ;
 par.opt_etad  = off ; %keep off
-par.opt_bC_T  = on ;
+par.opt_bC_T  = off ;
 par.opt_bC    = off ; 
 par.opt_d     = off ;
 par.opt_Q10C  = off ;
 par.opt_kdC   = off ; 
 par.opt_R_Si  = off ; 
-par.opt_rR    = on ; 
+par.opt_rR    = off ; 
 % --- C:P function parameters -----
 % phosphate-dependent function parameters
 par.opt_cc    = off ;
@@ -165,7 +165,8 @@ par.fxpar = fxpar ;
 
 
 % -------------------update initial guesses --------------
-load([output_dir fname_initCO])
+strcat(output_dir,fname_initCO)
+load(strcat(output_dir,fname_initCO) )
 
 
 % -------------------update initial guesses --------------
