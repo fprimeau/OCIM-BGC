@@ -92,6 +92,17 @@ function [par, C, Cx, Cxx] = eqCcycle_v2(x, par)
         ldd = x(par.pindx.ldd);
         par.dd = exp(ldd);
     end
+    
+    % ccT
+    if (par.opt_ccT)
+        par.ccT = x(par.pindx.ccT);
+    end
+
+    % ddT
+    if (par.opt_ddT)
+        lddT = x(par.pindx.lddT);
+        par.ddT = exp(lddT);
+    end
     %
     options.iprint = 1   ; 
     options.atol = 1e-12 ;          % reoptimized ver.  ---> -13
