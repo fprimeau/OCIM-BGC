@@ -41,10 +41,10 @@ par.Cmodel  = on ;
 par.Omodel  = on ; 
 par.Simodel = off ;
 par.Cisotope  = off  ;
-par.LoadOpt = off ; % if load optimial parameters. 
+par.LoadOpt = on ; % if load optimial parameters. 
 % to load parameter values from a run with a different name.
 %par.fxhatload = '../../output/optPonly_CTL_He_P_xhat.mat';
-par.fxhatload = '../output/optPCO_GM15_CTL_He_PCOv1_DOC1_DOP0_xhat.mat';
+%par.fxhatload = '../output/optPCO_GM15_CTL_He_PCOv1_DOC1_DOP0_xhat.mat';
 par.dynamicP = off ; % if on, cell model uses modeled DIP. if off, cell model uses WOA observed DIP field.
 
 par.dopscale = 0.0 ;

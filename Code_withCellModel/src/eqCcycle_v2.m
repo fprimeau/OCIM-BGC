@@ -92,7 +92,7 @@ function [par, C, Cx, Cxx] = eqCcycle_v2(x, par)
         ldd = x(par.pindx.ldd);
         par.dd = exp(ldd);
     end
-    
+
     % ccT
     if (par.opt_ccT)
         par.ccT = x(par.pindx.ccT);
@@ -736,7 +736,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
         end
         % solve
         Cx = mfactor(FD, RHS);
-        keyboard
+%        keyboard
         %save('../output/test_ccT_Cx.mat','Cx','X','Tz','ccT','ddT')
     end
     toc    
