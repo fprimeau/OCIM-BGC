@@ -23,6 +23,11 @@ par.Cmodel  = on ;
 par.Omodel  = on ; 
 par.Simodel = off ;
 par.LoadOpt = on ; % if load optimial par. 
+% to load parameter values from a run with a different name.
+par.fxhatload = '/DFS-L/DATA/primeau/hojons1/Nature2023_BGC_reoptimized/src_Nature_parameter_Megan/MSK91/CTL_He_PCO_Gamma0_kl12h_O5_POC2DIC_GM15_Nowicki_npp1_aveTeu_diffSig_O2C_uniEta_DICrmAnthro_2L_Pnormal_DIP1e+00_DIC1e+00_DOC1e+00_ALK1e+00_O21e+00_xhat.mat' 
+% to use different model output for initial CO guess. 
+par.fnameload = '/DFS-L/DATA/primeau/hojons1/Nature2023_BGC_reoptimized/src_Nature_parameter_Megan/MSK91/CTL_He_PCO_Gamma0_kl12h_O5_POC2DIC_GM15_Nowicki_npp1_aveTeu_diffSig_O2C_uniEta_DICrmAnthro_2L_Pnormal_DIP1e+00_DIC1e+00_DOC1e+00_ALK1e+00_O21e+00.mat' 
+par.dynamicP = off ; % if on, cell model uses modeled DIP. if off, cell model uses WOA observed DIP field.
 
 par.dopscale = 0.0 ;
 par.dipscale = 1.0 ;
@@ -108,8 +113,8 @@ fxhat     = strcat(fname,'_xhat.mat');
 par.fxhat = fxhat ; 
 
 % -------------------update initial guesses --------------
-if isfile(par.fname)
-    load(par.fname)
+if isfile(par.fnameload)
+    load(par.fnameload)
 end 
 
 %---------------- inital guesses on C and O ---------------
