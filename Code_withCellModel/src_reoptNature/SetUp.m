@@ -37,15 +37,105 @@ elseif GridVer == 91
 end 
 
 fprintf('Transport version: % s \n', TRdivVer)
+
 if par.Cmodel == on
-    fprintf('-------- C model is on -------- \n')
-    fprintf('DOP scaling factor is %2.2e \n', par.dopscale)
-    fprintf('DIP scaling factor is %2.2e \n', par.dipscale)
-    fprintf('DIC scaling factor is %2.2e \n', par.dicscale)
-    fprintf('DOC scaling factor is %2.2e \n', par.docscale)
-    fprintf('ALK scaling factor is %2.2e \n', par.alkscale)
-    fprintf('O2 scaling factor is %2.2e \n', par.o2scale)
-end
+  fprintf('-------- C model is on -------- \n')
+  fprintf('DOP scaling factor is %2.2e \n', par.dopscale)
+  fprintf('DIP scaling factor is %2.2e \n', par.dipscale)
+  fprintf('DIC scaling factor is %2.2e \n', par.dicscale)
+  fprintf('DOC scaling factor is %2.2e \n', par.docscale)
+  fprintf('ALK scaling factor is %2.2e \n', par.alkscale)
+  fprintf('O2 scaling factor is %2.2e \n', par.o2scale)
+
+  % set C2P function Type
+  fprintf('------- Stoichiometry function ------------- \n')
+  switch(par.C2Pfunctiontype)
+    case 'P'
+      par.C2P_PO4model = on;
+      par.C2P_Tzmodel = off;
+      par.Cellmodel = off;
+      par.C2P_constant = off;
+    case 'C'
+      par.Cellmodel = on;
+      par.C2P_PO4model = off;
+      par.C2P_Tzmodel = off;
+      par.C2P_constant = off;
+    case 'T'
+      par.C2P_Tzmodel = on;
+      par.C2P_PO4model = off;
+      par.Cellmodel = off;
+      par.C2P_constant = off;
+    case 'R'
+      par.C2P_constant = on;
+      par.C2P_Tzmodel = off;
+      par.C2P_PO4model = off;
+      par.Cellmodel = off;
+  end
+
+  if par.Cellmodel == on
+    fprintf('-- Cell stoichiometry model is on  \n')
+    if ~isfield(par,'dynamicP')
+      fprintf('   -- default: Cell model depends on observed nutrient fields \n')
+      par.dynamicP = off;
+    elseif par.dynamicP == on
+      fprintf('   -- Cell model depends on modelled DIP \n')
+    else
+      fprintf('   -- Cell model depends on observed nutrient fields \n')
+    end
+    % check C:P parameter flags
+    if any([par.opt_cc, par.opt_dd, par.opt_ccT, par.opt_ddT])
+      fprintf('Resetting opt_ccT, opt_ddT, opt_cc, and opt_dd to off ; cannot optimize linear C2P function parameters when cell model is on \n')
+      par.opt_ccT = off;
+      par.opt_ddT = off;
+      par.opt_cc = off;
+      par.opt_dd = off;
+    end
+
+  elseif par.C2P_Tzmodel == on
+    fprintf('-- P:C is a linear function of WOA observed Temperature (normalized) \n')
+    % check C:P parameter flags
+    if any([par.opt_cc, par.opt_dd])
+      fprintf('Resetting opt_cc and opt_dd to off ; cannot optimize cc and dd when C2P is a function of temperature \n')
+      par.opt_cc = off;
+      par.opt_dd = off;
+    end
+
+  elseif par.C2P_constant == on 
+    fprintf('--- P:C is a constant value globally  \n')
+    % check C:P parameter flags
+    if any([par.opt_ccT, par.opt_ddT, par.opt_cc])
+      fprintf('Resetting opt_cc, opt_ccT and opt_ddT to off ; only use opt_dd optimize a constant C2P value \n')
+      par.opt_ccT = off;
+      par.opt_ddT = off;
+      par.opt_cc  = off;
+    end
+
+  else
+    if ~isfield(par,'dynamicP')
+      par.dynamicP = off;
+      fprintf('-- P:C is a linear function of WOA observed phosphate  \n')
+    elseif par.dynamicP == on
+      fprintf('-- P:C is a linear function of modelled DIP  \n')
+    else
+      fprintf('-- P:C is a linear function of WOA observed phosphate \n')
+    end
+    % check C:P parameter flags
+    if any([par.opt_ccT, par.opt_ddT])
+      fprintf('Resetting opt_ccT and opt_ddT to off ; cannot optimize ccT and ddT when C2P is a function of phosphate \n')
+      par.opt_ccT = off;
+      par.opt_ddT = off;
+    end
+  end
+
+else
+  fprintf('--- Carbon cycle model is OFF ------ \n')
+  par.C2P_constant = off;
+  par.C2P_Tzmodel = off;
+  par.C2P_PO4model = off;
+  par.Cellmodel = off;
+end  % end Cmodel
+fprintf('\n')
+
 if par.Omodel == on
     fprintf('-------- O model is on -------- \n')
 end 
