@@ -5,7 +5,7 @@ spa  = 365*spd ;
 on   = true    ;
 off  = false   ;
 % addpath according to opterating system
-addpath('../DATA/')
+addpath('../../DATA/BGC_2023Nature/')
 
 if GridVer == 90
     TRdivVer = 'Tv4' ;
