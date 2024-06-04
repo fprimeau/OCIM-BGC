@@ -5,6 +5,10 @@ on   = true  ;
 off  = false ;
 format short
 % 
+% --- addpath to model code -----
+addpath('../src_reoptNature/')
+
+% --- name to identify the run output ---
 VerName = 'reoptNature_'; 		% optional version name. leave as an empty character array
 					% or add a name ending with an underscore
 VerNum = '';		% optional version number for testing
