@@ -5,6 +5,14 @@ on   = true  ;
 off  = false ;
 format short
 % 
+VerName = 'reoptNature_'; 		% optional version name. leave as an empty character array
+					% or add a name ending with an underscore
+VerNum = '';		% optional version number for testing
+
+% Choose C2P function
+par.C2Pfunctiontype = 'P';
+% 'P' -> PO4 function ; 'C' -> Cell model; 'T' -> Temperature function; 'R' -> constant value (Redfield)
+%
 GridVer  = 91  ;
 operator = 'A' ;
 % GridVer: choose from 90 and 91; Ver 90 is for a Transport
@@ -58,6 +66,21 @@ par.opt_R_Si  = on ;
 par.opt_rR    = on ; 
 par.opt_cc    = on ;
 par.opt_dd    = on ;
+% --- C:P function parameters -----
+% temperature-dependent function parameters
+par.opt_ccT   = off ; 
+par.opt_ddT   = off ;
+% Trait-based Cellular Growth Model parameters
+par.opt_Q10Photo     = off ; % opt
+par.opt_fStorage     = off ; % opt
+par.opt_fRibE 	     = off ; 
+par.opt_kST0 	     = off ; % opt
+par.opt_PLip_PCutoff = off ;
+par.opt_PLip_scale   = off ;
+par.opt_PStor_rCutoff = off; % opt
+par.opt_PStor_scale  = off ;
+par.opt_alphaS       = off ; % opt
+par.opt_gammaDNA	 = off ;
 % O model parameters
 par.opt_O2C_T = off ;
 par.opt_rO2C  = on ;
@@ -86,24 +109,34 @@ VER = strcat(output_dir,TRdivVer);
 if Gtest == on
     fname = strcat(VER,'_GHtest');
 elseif Gtest == off
-    if (par.Cmodel == off & par.Omodel == off & par.Simodel == off)
-        fname = strcat(VER,'_Pv3');
-    elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off)
-        base_name = strcat(VER,'_PCv1');
-        catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
-        fname = strcat(base_name,catDOC);
-    elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off)
-        base_name = strcat(VER,'_PCO_Gamma0_kl12h_O5_POC2DIC_GM15_Nowicki_npp1_aveTeu_diffSig_O2C_uniEta_DICrmAnthro_2L_Pnormal');
-        catDOC = sprintf('_DIP%2.0e_DIC%2.0e_DOC%2.0e_ALK%2.0e_O2%2.0e', ...
+    catDOC = sprintf('_DIP%2.0e_DIC%2.0e_DOC%2.0e_ALK%2.0e_O2%2.0e', ...
                          par.dipscale,par.dicscale,par.docscale,par.alkscale,par.o2scale);
+    if (par.Cmodel == off & par.Omodel == off & par.Simodel == off & par.Cellmodel == off)
+        fname = strcat(VER,'_P',VerNum);
+    elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off & par.Cellmodel == off)
+        base_name = strcat(VER,'_PC',VerNum);
         fname = strcat(base_name,catDOC);
-    elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on)
-        base_name = strcat(VER,'_PCSi');
-        catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
+    elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off & par.Cellmodel == off)
+        base_name = strcat(VER,'_PCO',VerNum);
+        %base_name = strcat(VER,'_PCO_Gamma0_kl12h_O5_POC2DIC_GM15_Nowicki_npp1_aveTeu_diffSig_O2C_uniEta_DICrmAnthro_2L_Pnormal');
         fname = strcat(base_name,catDOC);
-    elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on)
-        base_name = strcat(VER,'_PCOSi');
-        catDOC = sprintf('_DOC%2.0e_DOP%2.0e',par.cscale,par.pscale);
+    elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == on & par.Cellmodel == off)
+        base_name = strcat(VER,'_PCSi',VerNum);
+        fname = strcat(base_name,catDOC);
+    elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on & par.Cellmodel == off)
+        base_name = strcat(VER,'_PCOSi',VerNum);
+        fname = strcat(base_name,catDOC);
+	elseif (par.Cmodel == off & par.Omodel == off & par.Simodel == off & par.Cellmodel == on) % cell model does nothing if C model is not on, so this case =Ponly
+        base_name = strcat(VER,'_PCell',VerNum);
+        fname = strcat(base_name,catDOC);
+	elseif (par.Cmodel == on & par.Omodel == off & par.Simodel == off & par.Cellmodel == on)
+        base_name = strcat(VER,'_PCCell',VerNum);
+        fname = strcat(base_name,catDOC);
+	elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == off & par.Cellmodel == on)
+		base_name = strcat(VER,'_PCOCell',VerNum);
+		fname = strcat(base_name,catDOC);
+	elseif (par.Cmodel == on & par.Omodel == on & par.Simodel == on & par.Cellmodel == on)
+        base_name = strcat(VER,'_PCOSiCell',VerNum);
         fname = strcat(base_name,catDOC);
     end
 end
