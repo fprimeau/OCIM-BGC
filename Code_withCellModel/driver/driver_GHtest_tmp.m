@@ -12,12 +12,12 @@ format short
 % --- addpath to model code -----
 addpath('../src/')
 
-VerName = 'GHtest_sigPsigConly'; 		% optional version name. leave as an empty character array
+VerName = 'GHtest_ccT_ddT_'; 		% optional version name. leave as an empty character array
 					% or add a name ending with an underscore
 VerNum = '';		% optional version number for testing
 
 % Choose C2P function
-par.C2Pfunctiontype = 'R';
+par.C2Pfunctiontype = 'T';
 % 'P' -> PO4 function ; 'C' -> Cell model; 'T' -> Temperature function; 'R' -> constant value (Redfield)
 % 
 GridVer  = 91  ;
@@ -38,12 +38,14 @@ Gtest = on ;
 Htest = on ;
 par.optim   = on ; 
 par.Cmodel  = on ; 
-par.Omodel  = off ; 
+par.Omodel  = on ; 
 par.Simodel = off ;
 par.Cisotope  = off  ;
-par.LoadOpt = off ; % if load optimial parameters. 
+par.LoadOpt = on ; % if load optimial parameters. 
 % to load parameter values from a run with a different name.
-par.fxhatload = '../../output/optPonly_CTL_He_P_xhat.mat';
+par.fxhatload = '../../output/optPCO_Tz_v2_CTL_He_PCO_DOC1_DOP0.mat';
+%fname_initCO = 'GHtest_sigP_sigC_rO2C_CTL_He_PCO_DOC1_DOP0.mat';
+fname_initCO = 'GHtest_testTz_CTL_He_PCO_DOC1_DOP0.mat'; %'optPCO_Tz_v2_CTL_He_PCO_DOC1_DOP0.mat'; 
 par.dynamicP = off ; % if on, cell model uses modeled DIP. if off, cell model uses WOA observed DIP field.
 
 par.dopscale = 0.0 ;
@@ -53,7 +55,7 @@ par.docscale = 1.0 ; % factor to weigh DOC in the objective function
 par.alkscale = 1.0 ;
 par.o2scale  = 1.0 ;
 % P model parameters
-par.opt_sigP  = on ; 
+par.opt_sigP  = off ; 
 par.opt_Q10P  = off ;
 par.opt_kdP   = off ;
 par.opt_bP_T  = off ; 
@@ -61,7 +63,7 @@ par.opt_bP    = off ;
 par.opt_alpha = off ;
 par.opt_beta  = off ;
 % C model parameter
-par.opt_sigC  = on ; 
+par.opt_sigC  = off ; 
 par.opt_kru   = off ;
 par.opt_krd   = off ;
 par.opt_etau  = off ;
@@ -78,18 +80,18 @@ par.opt_rR    = off ;
 par.opt_cc    = off ;
 par.opt_dd    = off ; 
 % temperature-dependent function parameters
-par.opt_ccT   = off; 
-par.opt_ddT   = off;
+par.opt_ccT   = on; 
+par.opt_ddT   = on;
 % Trait-based Cellular Growth Model parameters
-par.opt_Q10Photo     = on ; % opt
-par.opt_fStorage     = on ; % opt
+par.opt_Q10Photo     = off ; % opt
+par.opt_fStorage     = off ; % opt
 par.opt_fRibE 	     = off ; 
-par.opt_kST0 	     = on ; % opt
+par.opt_kST0 	     = off ; % opt
 par.opt_PLip_PCutoff = off ;
 par.opt_PLip_scale   = off ;
-par.opt_PStor_rCutoff = on; % opt
+par.opt_PStor_rCutoff = off; % opt
 par.opt_PStor_scale  = off ;
-par.opt_alphaS       = on ; % opt
+par.opt_alphaS       = off ; % opt
 par.opt_gammaDNA	 = off ;
 % O model parameters
 par.opt_O2C_T = off ;
@@ -102,7 +104,7 @@ par.opt_aa    = on  ;
 par.opt_bb    = on  ;
 %
 %-------------load data and set up parameters---------------------
-SetUp ;                      
+SetUp ; 
 
 % save results 
 % ATTENTION: Change this directory to where you want to
@@ -160,6 +162,12 @@ if Htest ==on
 end
 par.fxhat = fxhat ;
 par.fxpar = fxpar ;
+
+
+% -------------------update initial guesses --------------
+strcat(output_dir,fname_initCO)
+load(strcat(output_dir,fname_initCO) )
+
 
 % -------------------update initial guesses --------------
 if isfile(par.fname)

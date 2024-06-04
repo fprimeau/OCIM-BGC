@@ -103,8 +103,13 @@ function [F, FD, Ox, Oxx, O2tstep] = O_eqn(O2, par)
     UM    = par.UM    ;
     DM    = par.DM    ;
     WM    = par.WM    ;
-    cc    = par.cc    ;
-    dd    = par.dd    ;
+   %  if (par.C2P_Tzmodel)    % not used
+   %    ccT = par.ccT;
+   %    ddT = par.ddT;
+   %  else
+   %    cc    = par.cc    ;
+   %    dd    = par.dd    ;
+   %  end
     
     % tunable parameters;
     O2C_T = par.O2C_T ; 
@@ -124,7 +129,8 @@ function [F, FD, Ox, Oxx, O2tstep] = O_eqn(O2, par)
     O2C = O2C_T*Tz + rO2C ; 
     C2P = par.C2P         ;
     G   = par.G           ;
-    PO2 = d0(par.Cnpp(iwet))*O2C  ;
+    Cnpp = par.Cnpp(iwet); %satellite npp (Carbon)
+    PO2 = d0(Cnpp)*O2C  ;
 
     % parobolic function for o2 consumption
     R      = 0.5 + 0.5*tanh(O2-5)    ;
@@ -246,13 +252,13 @@ function [F, FD, Ox, Oxx, O2tstep] = O_eqn(O2, par)
         % O model only parameters
         if (par.opt_O2C_T == on)
             O2C_O2C_T = d0(Tz) ; 
-            tmp = d0(eta*kC*DOC + kappa_r*DOCr + kappa_l*DOCl + kappa_p*POC)*(O2C_O2C_T*R) ; 
+            tmp = -O2C_O2C_T*Cnpp + d0(eta*kC*DOC + kappa_r*DOCr + kappa_l*DOCl + kappa_p*POC)*(O2C_O2C_T*R) ; 
             RHS(:,pindx.O2C_T) =  -tmp ;
         end
 
         if (par.opt_rO2C == on)
-            O2C_rO2C = rO2C ; 
-            tmp = d0(eta*kC*DOC + kappa_r*DOCr + kappa_l*DOCl + kappa_p*POC)*(O2C_rO2C*R) ; 
+            O2C_rO2C = rO2C ; % dO2C/dlog(rO2C)
+            tmp = -O2C_rO2C*Cnpp + d0(eta*kC*DOC + kappa_r*DOCr + kappa_l*DOCl + kappa_p*POC)*(O2C_rO2C*R) ; 
             RHS(:,pindx.lrO2C) = -tmp ;
         end
         Ox = mfactor(FD, RHS); 
@@ -1334,7 +1340,9 @@ function [F, FD, Ox, Oxx, O2tstep] = O_eqn(O2, par)
         % rO2C rO2C
         if (par.opt_rO2C == on & par.opt_rO2C == on)
             kk = kk + 1 ;
-            tmp = d0(eta*kC*DOC + kappa_r*DOCr + kappa_l*DOCl + ...
+            O2C_lrO2C_lrO2C = rO2C;  % d^2(O2C)/d(lrO2C)^2 
+            tmp = -O2C_lrO2C_lrO2C*Cnpp + ...
+                  d0(eta*kC*DOC + kappa_r*DOCr + kappa_l*DOCl + ...
                      kappa_p*POC)*(O2C_rO2C*R) + ...
                   d0(eta*kC*DOC + kappa_r*DOCr + kappa_l*DOCl + ...
                      kappa_p*POC)*(O2C_rO2C*dRdO.*Ox(:,pindx.lrO2C))*2 + ...

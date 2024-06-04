@@ -19,7 +19,7 @@ function [G, Gx, Gxx] = uptake_C(par)
 
     % Gradient
     % grad DIP
-    if par.optim == off
+    if par.optim == off | ~any([par.opt_sigP par.opt_Q10P par.opt_kdP par.opt_bP_T par.opt_bP par.opt_alpha par.opt_beta])
         Gx = [];
     elseif (par.optim & nargout > 1)
         % gradient of uptake operator
@@ -42,7 +42,7 @@ function [G, Gx, Gxx] = uptake_C(par)
     end
 
     %% ------------------------------------------------
-    if par.optim == off
+    if par.optim == off | ~any([par.opt_sigP par.opt_Q10P par.opt_kdP par.opt_bP_T par.opt_bP par.opt_alpha par.opt_beta])
         Gxx = [];
     elseif (par.optim & nargout > 2)
         kk = 0;

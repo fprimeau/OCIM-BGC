@@ -157,7 +157,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
     P = mfactor(FFp, RHS) ;
     toc
 
-    if (par.optim == off)
+    if (par.optim == off) | ~any([par.opt_sigP par.opt_Q10P par.opt_kdP par.opt_bP_T par.opt_bP par.opt_alpha par.opt_beta])
         Px = [];
     elseif (par.optim & nargout > 2)
         %
@@ -243,7 +243,7 @@ function [par,P,Px,Pxx] = eqPcycle(x, par)
         toc
     end
     %% ---------------------------------------------------------
-    if (par.optim == off)
+    if (par.optim == off) | ~any([par.opt_sigP par.opt_Q10P par.opt_kdP par.opt_bP_T par.opt_bP par.opt_alpha par.opt_beta])
         Pxx = [];
     elseif (par.optim & nargout > 3) 
         fprintf(' Compute the hessian of the solution wrt the parameters...\n')

@@ -92,6 +92,17 @@ function [par, C, Cx, Cxx] = eqCcycle_v2(x, par)
         ldd = x(par.pindx.ldd);
         par.dd = exp(ldd);
     end
+
+    % ccT
+    if (par.opt_ccT)
+        par.ccT = x(par.pindx.ccT);
+    end
+
+    % ddT
+    if (par.opt_ddT)
+        lddT = x(par.pindx.lddT);
+        par.ddT = exp(lddT);
+    end
     %
     options.iprint = 1   ; 
     options.atol = 1e-12 ;          % reoptimized ver.  ---> -13
@@ -349,7 +360,7 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
         % ---------------
         % sigP
         if (par.opt_sigP == on)
-            tmp = [-d0((1-sigC-gamma)*RR*Gx(:,pindx.lsigP))*C2P; ...
+            tmp = [-d0((1-sigC-gamma)*RR*Gx(:,pindx.lsigP))*C2P; ... %error in this line?
                    d0((1-sigC-gamma)*Gx(:,pindx.lsigP))*C2P; ...
                    d0(sigC*Gx(:,pindx.lsigP))*C2P; ...
                    d0((1-sigC-gamma)*RR*Gx(:,pindx.lsigP))*C2P; ...
@@ -725,8 +736,10 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
         end
         % solve
         Cx = mfactor(FD, RHS);
+%        keyboard
+        %save('../output/test_ccT_Cx.mat','Cx','X','Tz','ccT','ddT')
     end
-    toc
+    toc    
 
     fprintf('Compute the hessian of the solution wrt the parameters ...\n')
     tic

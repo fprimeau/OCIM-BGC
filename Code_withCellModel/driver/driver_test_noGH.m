@@ -1,7 +1,9 @@
-% driver_optC_Cell.m
+% driver_test_noGH.m
 %   Driver script to run biogeochemical model.
 %   The carbon cycle uses a trait-based celllular growth model to compute C:P.
 %   This run optimizes phosphorus, carbon, and oxygen cycle parameters
+% 
+% Modified to run fminunc without specifying the gradient and hessian
 % ------------------------------------------------------------------------
 clc; clear all; close all
 global iter
@@ -12,12 +14,12 @@ format short
 % --- addpath to model code -----
 addpath('../src/')
 
-VerName = 'optPCO_Tz_v2_'; 		% optional version name. leave as an empty character array
+VerName = 'optPCO_constC2P_noGH_'; 		% optional version name. leave as an empty character array
 					% or add a name ending with an underscore
 VerNum = '';		% optional version number for testing
 
 % Choose C2P function
-par.C2Pfunctiontype = 'T';
+par.C2Pfunctiontype = 'R';
 % 'P' -> PO4 function ; 'C' -> Cell model; 'T' -> Temperature function; 'R' -> constant value (Redfield)
 % 
 GridVer  = 91  ;
@@ -36,15 +38,14 @@ par.nl = 2; % number of layers in the model euphotic zone (doesn't change)
 
 Gtest = off ; 
 Htest = off ;
-par.optim   = on ; 
+par.optim   = off ;  % quick way to turn off GH in fminunc. optimization should still work, without explicitly calculating the gradient and hessian 
 par.Cmodel  = on ; 
 par.Omodel  = on ; 
 par.Simodel = off ;
 par.Cisotope  = off  ;
-par.LoadOpt = on ; % if load optimial parameters. 
+par.LoadOpt = off ; % if load optimial parameters. 
 % to load parameter values from a run with a different name.
-%par.fxhatload = '../../output/optPonly_CTL_He_P_xhat.mat';
-%par.fxhatload = '../output/optPCO_GM15_CTL_He_PCOv1_DOC1_DOP0_xhat.mat';
+par.fxhatload = '../../output/optPonly_CTL_He_P_xhat.mat';
 par.dynamicP = off ; % if on, cell model uses modeled DIP. if off, cell model uses WOA observed DIP field.
 
 par.dopscale = 0.0 ;
@@ -77,10 +78,10 @@ par.opt_rR    = on ;
 % --- C:P function parameters -----
 % phosphate-dependent function parameters
 par.opt_cc    = off ;
-par.opt_dd    = off ; 
+par.opt_dd    = on ; 
 % temperature-dependent function parameters
-par.opt_ccT   = on ; 
-par.opt_ddT   = on ;
+par.opt_ccT   = off; 
+par.opt_ddT   = off;
 % Trait-based Cellular Growth Model parameters
 par.opt_Q10Photo     = on ; % opt
 par.opt_fStorage     = on ; % opt
@@ -186,11 +187,10 @@ par = PackPar(par) ;
 %-------------------set up fminunc -------------------------
 x0    = par.p0 ;
 myfun = @(x) neglogpost(x, par);
-objfuntolerance = 5e-11; %5e-12;
+objfuntolerance = 1e-10; %5e-11; %5e-12;
 options = optimoptions(@fminunc                  , ...
-                       'Algorithm','trust-region', ...
-                       'GradObj','on'            , ...
-                       'Hessian','on'            , ...
+                       'GradObj','off'            , ...
+                       'Hessian','off'            , ...
                        'Display','iter'          , ...
                        'MaxFunEvals',2000        , ...
                        'MaxIter',2000            , ...
@@ -201,57 +201,9 @@ options = optimoptions(@fminunc                  , ...
                        'PrecondBandWidth',Inf)   ;
 %
 nip = length(x0);
-if(Gtest);
-    fprintf('derivative test \n')
-	GHtest.fx_cstep = NaN([nip,1]);
-	GHtest.fxx_cstep = NaN(nip);
-	GHtest.pindx = par.pindx;
-    % load(fGHtest); % continuing GHtest after out of memory crash
-    % display par.pindx
-    fprintf('pindx = ')
-    par.pindx 
-    dx = sqrt(-1)*eps.^3*eye(nip);
-    for ii = 1 : nip 
-        x  = real(x0)+dx(:,ii);
-        iter = 11; %bypasses the ResetPar in neglogpost
-        if Htest == on
-            [f,fx,fxx] = neglogpost(x, par) ;
-            GHtest.fx_cstep(ii) = imag(f)/eps.^3     ;
-			GHtest.fxx_cstep(:,ii) = imag(fx)/eps.^3 ;
-			%save complex step gradient and hessian
-			fprintf('saving GHtest to file: %s \n',fGHtest)
-			save(fGHtest,'GHtest')
-
-            % print relative errors
-            diff = (real(fx(ii)) - imag(f)/eps.^3)/(imag(f)/eps.^3);
-            fprintf('gradient relative error (%i): % .3e  \n',ii,diff);
-            diffx = (real(fxx(:,ii))-imag(fx)/eps.^3)./(imag(fx)/eps.^3+eps.^3);
-            for jj = 1:length(fx)
-                fprintf('% .3e  ', diffx(jj));
-            end
-        else
-            [f,fx] = neglogpost(x, par) ;
-            diff = (real(fx(ii)) - imag(f)/eps.^3)/(imag(f)/eps.^3) ;
-            fprintf('%i % .3e  \n',ii,diff);
-            fprintf('\n');
-        end 
-        fprintf('\n');                                                    
-    end
-    format shortE
-	real(fx)
-	real(full(fxx))
-    %keyboard  
-    % run model once more to save gradient and hessian in xhat without the complex step
-    fprintf('Run without compex step & Save f,fx,fxx to xhat \n')
-    [f,fx,fxx,data,xhat] = neglogpost(x0,par);
-    xhat.pindx = par.pindx;
-    xhat.f   = f   ;
-    xhat.fx  = fx  ;
-    xhat.fxx = fxx ;
-    % save results 
-    fprintf('saving optimized parameters to file: %s \n',fxhat)
-    save(fxhat, 'xhat')
-elseif (par.optim)
+%if(Gtest);
+%elseif (par.optim)
+% run optimization even when par.optim = off; 
     [xsol,fval,exitflag] = fminunc(myfun,x0,options);
     fprintf('objective function tolerance = %5.1e \n',objfuntolerance);
     fprintf('----fminunc complete----\n')
@@ -266,14 +218,14 @@ elseif (par.optim)
     fprintf('saving model solution to file: %s \n',par.fname)
     save(fxhat, 'xhat')
     save(par.fname, 'data')
-else
-    xsol = x0;
-    iter = 11;
-    [f,fx,fxx,data] = neglogpost(xsol,par);
-    fprintf('----neglogpost complete----\n')
-    %% note: skipping save for testing
-    %fprintf('saving model solution to file: %s \n',par.fname)
-    %save(par.fname, 'data')
-end
+% else
+%     xsol = x0;
+%     iter = 11;
+%     [f,fx,fxx,data] = neglogpost(xsol,par);
+%     fprintf('----neglogpost complete----\n')
+%     %% note: skipping save for testing
+%     %fprintf('saving model solution to file: %s \n',par.fname)
+%     %save(par.fname, 'data')
+% end
 fprintf('-------------- end! ---------------\n');
 quit

@@ -9,25 +9,22 @@ function [f, fx, fxx, data, xhat] = neglogpost(x, par)
 
     % reset parameters if optimization routine
     % suggests strange parameter values ;
-    if iter>0 & iter < 10
+    if iter>0 & iter < 10  %skipping Reset par
         [x, ibad] = ResetPar(x, par) ;
-        if ~isempty(ibad)
-            fprintf('solver suggested unrealistic parameter values. Reset x for pindx = ')
+        % Do not execute code if solver suggests very bad values
+        % (instead of replacing bad parameter value and solving)
+		if ~isempty(ibad)
+			load(par.fxhat); % make sure to do this step before saving the reset values in fxhat
+			f = 10000;
+			fx = xhat.fx; % need to store in xhat at end of neglogpost
+			fxx = xhat.fxx;
+			data = struct;
+			fprintf('solver suggested unrealistic parameter values for pindx = ')
             fprintf('%d ... ',ibad)
             fprintf('\n')
-        end
-        % SUGGEST CHANGE:
-        % Do not execute code if solver suggests very bad values
-        % instead of replacing parameter value and solving,
-		% if ~isempty(ibad)
-		% 	load(par.fxhat); % do this step before saving the reset values in fxhat
-		% 	f = 10000;
-		% 	fx = xhat.fx;
-		% 	fxx = xhat.fxx;
-		% 	data = struct;
-		% 	fprintf('solver suggested unrealistic parameter values. exiting neglogpost... \n')
-		% 	return
-		% end
+            fprintf('Exiting neglogpost... \n')
+			return
+		end
     end
     % print and save current parameters to a file par.fxhat
     if iter > 0
@@ -203,9 +200,11 @@ function [f, fx, fxx, data, xhat] = neglogpost(x, par)
     % optimizable_parameter_list = [parameter_names_P, parameter_names_Cell, parameter_names_C, parameter_names_O];
 
     % fixed parameters
-	allparams.kPIC      = par.kPIC  ;
-    allparams.kappa_p 	= par.kappa_p;
+	allparams.kPIC      = par.kPIC      ;   % PIC dissolution timescale [1/s]
+    allparams.kappa_p 	= par.kappa_p   ;
+    allparams.kappa_l 	= par.kappa_l   ;   % labile DOM remin timescale [1/s]
 	allparams.kappa_g 	= par.kappa_g   ;
+    allparams.gamma     = par.gamma     ;
     % P model parameters
 	allparams.sigP 	    = par.sigP     ;
 	allparams.Q10P		= par.Q10P      ;
@@ -252,27 +251,27 @@ function [f, fx, fxx, data, xhat] = neglogpost(x, par)
     %--------------------------------------------------------
     fprintf('current objective function value is %3.3e \n\n',f) 
 
+    % Save f in xhat every iteration
+    xhat.f = f ;    
+
     % Save output every (1) iterations during optimization
     if mod(iter, 1) == 0
         fprintf('saving data to %s  ...\n', par.fname) 
-        save(par.fname, 'data')
-        x0 = real(x) ;   
-        fprintf('saving xhat to %s  ...\n', par.fxhat)
-        save(par.fxhat, 'xhat','x0')  % save x0 for ResetPar; this xhat also includes allparams (allparams not saved in PrintPar)
-        clear x0;
-		
+        save(par.fname, 'data')      
 	    % save(par.fxpar, 'par' , '-v7.3')
     end 
     %% +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     % calculate gradient
     if (nargout > 1)
         fx = zeros(length(x), 1)   ;
-        ipx  = Px(0*nwet+1:nwet,:) ;
-        opx  = Px(2*nwet+1:end ,:) ;
-        npx = par.npx              ;
-        % ---------------------------------
-        for ji = 1 : npx
-            fx(ji) = eip.'*Wip*ipx(idip,ji) + eop.'*Wop*opx(idop,ji);
+        npx = par.npx  ;
+        if npx > 0
+            ipx  = Px(0*nwet+1:nwet,:) ;
+            opx  = Px(2*nwet+1:end ,:) ;
+            % ---------------------------------
+            for ji = 1 : npx
+                fx(ji) = eip.'*Wip*ipx(idip,ji) + eop.'*Wop*opx(idop,ji);
+            end
         end
         % ---------------------------------
         if (par.Simodel == on & par.Omodel == off & par.Cmodel == off)
@@ -375,6 +374,8 @@ function [f, fx, fxx, data, xhat] = neglogpost(x, par)
             end
         end 
         % ----------------------------------
+        % Save fx in xhat
+        xhat.fx = fx;
     end 
     %
     if (nargout>2)
@@ -383,6 +384,17 @@ function [f, fx, fxx, data, xhat] = neglogpost(x, par)
             ipxx = Pxx(0*nwet+1 : 1*nwet, :) ;
             opxx = Pxx(2*nwet+1 : 3*nwet, :) ;
         end
+        if par.Cmodel == on & (par.npx + par.ncx + par.nbx > 0)
+			icxx = Cxx(0*nwet+1 : 1*nwet, :) ;
+            ocxx = Cxx(2*nwet+1 : 3*nwet, :) + Cxx(5*nwet+1 : 6*nwet, :) + Cxx(6*nwet+1 : 7*nwet, :);
+            lkxx = Cxx(4*nwet+1 : 5*nwet, :) ; 
+		end
+		if par.Omodel == on & (par.npx + par.ncx + par.nbx + par.nox > 0)
+			oxx = Oxx(1:nwet,:);
+		end
+		if par.Simodel == on & (par.npx + par.nsx > 0)
+			sxx = Sixx(1:nwet,:);
+		end
         % ----------------------------------------------------------------
         % P model parameters
         kk = 0;
@@ -394,15 +406,15 @@ function [f, fx, fxx, data, xhat] = neglogpost(x, par)
                     opx(idop,ju).'*Wop*opx(idop,jo) + eop.'*Wop*opxx(idop,kk);
                 % Simodel
                 if (par.Simodel == on) & (par.npx + par.nsx > 0)
-                    sxx = Sixx(1:nwet,:);            
+                    % sxx = Sixx(1:nwet,:);            
                     fxx(ju,jo) = fxx(ju, jo) + ...
                         sx(isil,ju).'*Ws*sx(isil,jo) + es.'*Ws*sxx(isil,kk);
                 end 
                 % Cmodel
                 if (par.Cmodel == on) & (par.npx + par.ncx + par.nbx > 0)
-                    icxx = Cxx(0*nwet+1 : 1*nwet, :) ;
-                    ocxx = Cxx(2*nwet+1 : 3*nwet, :) + Cxx(5*nwet+1 : 6*nwet, :) + Cxx(6*nwet+1 : 7*nwet, :);
-                    lkxx = Cxx(4*nwet+1 : 5*nwet, :) ; 
+                    % icxx = Cxx(0*nwet+1 : 1*nwet, :) ;
+                    % ocxx = Cxx(2*nwet+1 : 3*nwet, :) + Cxx(5*nwet+1 : 6*nwet, :) + Cxx(6*nwet+1 : 7*nwet, :);
+                    % lkxx = Cxx(4*nwet+1 : 5*nwet, :) ; 
                     fxx(ju,jo) = fxx(ju, jo) + ...
                         icx(idic,ju).'*Wic*icx(idic,jo) + eic.'*Wic*icxx(idic,kk) + ...
                         ocx(idoc,ju).'*Woc*ocx(idoc,jo) + eoc.'*Woc*ocxx(idoc,kk) + ...
@@ -410,7 +422,7 @@ function [f, fx, fxx, data, xhat] = neglogpost(x, par)
                 end
                 % Omodel
                 if (par.Omodel == on) & (par.npx + par.ncx + par.nbx + par.nox > 0)
-                    oxx = Oxx(1:nwet,:);            
+                    % oxx = Oxx(1:nwet,:);            
                     fxx(ju,jo) = fxx(ju, jo) + ...
                         ox(io2,ju).'*Wo*ox(io2,jo) + eo.'*Wo*oxx(io2,kk);
                 end 
@@ -886,6 +898,16 @@ function [f, fx, fxx, data, xhat] = neglogpost(x, par)
                 end 
             end  
         end
+
+        % Save fxx in xhat
+        xhat.fxx  = fxx;
+
     end
+
+    % Save xhat for every iteration
+    x0 = real(x);
+    fprintf('saving xhat to %s  ...\n', par.fxhat)
+    save(par.fxhat, 'xhat','x0')  % save x0 for ResetPar; this xhat also includes allparams (allparams not saved in PrintPar)
+    clear x0;
 end
 
