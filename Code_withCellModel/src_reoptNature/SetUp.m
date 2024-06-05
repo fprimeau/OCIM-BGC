@@ -6,6 +6,7 @@ on   = true    ;
 off  = false   ;
 % addpath according to opterating system
 addpath('../../DATA/BGC_2023Nature/')
+addpath('../utils/')
 
 if GridVer == 90
     TRdivVer = 'Tv4' ;
