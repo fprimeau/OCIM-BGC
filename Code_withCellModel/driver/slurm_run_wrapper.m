@@ -2,7 +2,7 @@
 % running this script in the slurm matlab call instead of running driver.m
 % directly should suppress the command line prompts from appearing in the
 % output file
-diary logs/reoptNature.out
+diary logs/reoptNature_GM15_PCO.out
 %fprintf('----------------------------------- \n\n')
 date_start = datetime('now');
 fprintf('Start Date: %s\n',date_start)

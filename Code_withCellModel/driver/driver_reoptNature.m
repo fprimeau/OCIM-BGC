@@ -9,7 +9,7 @@ format short
 addpath('../src_reoptNature/')
 
 % --- name to identify the run output ---
-VerName = 'reoptNature_'; 		% optional version name. leave as an empty character array
+VerName = 'reoptNature_GM15_'; 		% optional version name. leave as an empty character array
 					% or add a name ending with an underscore
 VerNum = '';		% optional version number for testing
 
@@ -101,14 +101,15 @@ SetUp ;
 % save results 
 % ATTENTION: Change this direcrtory to where you wanna
 % save your output files
-output_dir = sprintf('MSK%2d/',GridVer); 
+%output_dir = sprintf('MSK%2d/',GridVer); 
+output_dir = sprintf('../output/'); 
 
 if ~isdir(output_dir)
     command = strcat('mkdir', " ", output_dir) ;
     system(command) ;
 end
 
-VER = strcat(output_dir,TRdivVer);
+VER = strcat(output_dir,VerName,TRdivVer);
 % Creat output file names based on which model(s) is(are) optimized
 if Gtest == on
     fname = strcat(VER,'_GHtest');
