@@ -4,6 +4,7 @@
 % output file
 diary logs/reoptNature_GM15_PCO.out
 %fprintf('----------------------------------- \n\n')
+dbstop if error
 date_start = datetime('now');
 fprintf('Start Date: %s\n',date_start)
 fprintf('Reoptimizing the Nature paper (Wang et al., 2023) using parameters from hojongs previous run and only BGC_2023Nature input data \n\n')
