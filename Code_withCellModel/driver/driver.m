@@ -12,12 +12,12 @@ format short
 % --- addpath to model code -----
 addpath('../src/')
 
-VerName = 'optPCO_Tz_v2_'; 		% optional version name. leave as an empty character array
+VerName = 'optPCO_Cell_v2_'; 		% optional version name. leave as an empty character array
 					% or add a name ending with an underscore
 VerNum = '';		% optional version number for testing
 
 % Choose C2P function
-par.C2Pfunctiontype = 'T';
+par.C2Pfunctiontype = 'C';
 % 'P' -> PO4 function ; 'C' -> Cell model; 'T' -> Temperature function; 'R' -> constant value (Redfield)
 % 
 GridVer  = 91  ;
@@ -47,6 +47,8 @@ par.LoadOpt = on ; % if load optimial parameters.
 %par.fxhatload = '../output/optPCO_GM15_CTL_He_PCOv1_DOC1_DOP0_xhat.mat';
 % par.fxhatload = '/DFS-L/DATA/primeau/hojons1/Nature2023_BGC_reoptimized/src_Nature_parameter_Megan/MSK91/CTL_He_PCO_Gamma0_kl12h_O5_POC2DIC_GM15_Nowicki_npp1_aveTeu_diffSig_O2C_uniEta_DICrmAnthro_2L_Pnormal_DIP1e+00_DIC1e+00_DOC1e+00_ALK1e+00_O21e+00_xhat.mat' 
 par.dynamicP = off ; % if on, cell model uses modeled DIP. if off, cell model uses WOA observed DIP field.
+
+par.fnameload = '/DFS-L/DATA/primeau/hojons1/Nature2023_BGC_reoptimized/src_Nature_parameter_Megan/MSK91/CTL_He_PCO_Gamma0_kl12h_O5_POC2DIC_GM15_Nowicki_npp1_aveTeu_diffSig_O2C_uniEta_DICrmAnthro_2L_Pnormal_DIP1e+00_DIC1e+00_DOC1e+00_ALK1e+00_O21e+00.mat' ;
 
 par.dopscale = 0.0 ;
 par.dipscale = 1.0 ;
@@ -80,8 +82,8 @@ par.opt_rR    = on ;
 par.opt_cc    = off ;
 par.opt_dd    = off ; 
 % temperature-dependent function parameters
-par.opt_ccT   = on ; 
-par.opt_ddT   = on ;
+par.opt_ccT   = off ; 
+par.opt_ddT   = off ;
 % Trait-based Cellular Growth Model parameters
 par.opt_Q10Photo     = on ; % opt
 par.opt_fStorage     = on ; % opt
@@ -162,6 +164,11 @@ if Htest ==on
 end
 par.fxhat = fxhat ;
 par.fxpar = fxpar ;
+
+% -------------------update initial guesses --------------
+if exists(par.fnameload) & isfile(par.fnameload)
+    load(par.fnameload)
+end 
 
 % -------------------update initial guesses --------------
 if isfile(par.fname)
