@@ -166,7 +166,7 @@ par.fxhat = fxhat ;
 par.fxpar = fxpar ;
 
 % -------------------update initial guesses --------------
-if exists(par.fnameload) & isfile(par.fnameload)
+if isfile(par.fnameload)
     load(par.fnameload)
 end 
 
