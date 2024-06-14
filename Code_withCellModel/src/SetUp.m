@@ -162,20 +162,20 @@ fprintf('\n')
     npp = NPP(:,:,1); % mmol/m2/yr 
     load M3d91x180x24.mat MSKS
     % WOA13 data
-      load Sobs_91x180x24.mat Sobs    % Salinity obs for PME and Fsea2air
+      % load Sobs_91x180x24.mat Sobs    % Salinity obs for PME and Fsea2air
       % load po4obs_91x180x24.mat       % WOA PO4 climatological obs [units: umol/kg]
       % load no3obs_91x180x24.mat       % WOA NO3 clim obs [units: umol/kg]
-      load tempobs_91x180x24.mat
+      % load tempobs_91x180x24.mat
       % load Siobs_91x180x24.mat Siobs  % not needed for cell model
     % WOA18 data
-    % load TS_WOA_91x180x24.mat tempobs salobs % WOA temperature & salinity
+    load TS_WOA_91x180x24.mat tempobs salobs % WOA temperature & salinity
     load O2_Nut_WOA_91x180x24.mat  O2_obs Si_obs DIN_obs DIP_obs % WOA O2 Si DIN DIP observations
 
     load PME_TS_91x180x24.mat  pme % calculated from transport operator and salt fields (alternate to running pme.m) 
     load DICant_91x180x24.mat
     load GLODAPv2_91x180x24raw.mat alkraw po4raw o2raw sio4raw % GLODAP Nutrient units = [umol/kg]
-    % load co2syspar_91x180x24.mat co2syspar % created in make_datafile_24layer/make_co2syspar.m
-    load co2syspar91.mat co2syspar % file from 2023 Nature
+    load co2syspar_91x180x24.mat co2syspar % created in make_datafile_24layer/make_co2syspar.m
+    % load co2syspar91.mat co2syspar % file from 2023 Nature
 
     %load DOMobs_91x180x24.mat DOPobs   % old data file
     %load DOCobs_clean_91x180x24.mat    % old data file with refractory component and outlier removed
@@ -278,7 +278,7 @@ po4raw(po4raw(:)<0.05)   = nan    ; % Remove DIP data below detection limit;
 %end                                       ----> NPP field에 영향을 주려나?
  
 par.Temp     = tempobs       ;
-par.Salt     = Sobs     ; %salobs        ;
+par.Salt     = salobs        ; % Sobs     ;
 par.DSi      = Si_obs        ;
 par.po4obs   = DIP_obs       ;
 par.no3obs   = DIN_obs       ;
