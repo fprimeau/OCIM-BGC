@@ -175,6 +175,7 @@ fprintf('\n')
       %DIN_obs = no3obs; clear no3obs;
       load tempobs_91x180x24.mat
       load Siobs_91x180x24.mat Siobs  % not needed for cell model
+        Si_obs = Siobs; clear Siobs; 
     % WOA18 data
     % load TS_WOA_91x180x24.mat tempobs salobs % WOA temperature & salinity
     load O2_Nut_WOA_91x180x24.mat DIN_obs ; %O2_obs Si_obs DIN_obs DIP_obs % WOA O2 Si DIN DIP observations
