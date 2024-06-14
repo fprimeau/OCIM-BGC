@@ -171,13 +171,13 @@ fprintf('\n')
       salobs = Sobs ; clear Sobs;
       load po4obs_91x180x24.mat       % WOA PO4 climatological obs [units: umol/kg]
       DIP_obs = po4obs;  clear po4obs;
-      load no3obs_91x180x24.mat       % WOA NO3 clim obs [units: umol/kg]
-      DIN_obs = no3obs; clear no3obs;
+      %load no3obs_91x180x24.mat       % WOA NO3 clim obs [units: umol/kg]
+      %DIN_obs = no3obs; clear no3obs;
       load tempobs_91x180x24.mat
       load Siobs_91x180x24.mat Siobs  % not needed for cell model
     % WOA18 data
     % load TS_WOA_91x180x24.mat tempobs salobs % WOA temperature & salinity
-    % load O2_Nut_WOA_91x180x24.mat O2_obs Si_obs DIN_obs DIP_obs % WOA O2 Si DIN DIP observations
+    load O2_Nut_WOA_91x180x24.mat DIN_obs ; %O2_obs Si_obs DIN_obs DIP_obs % WOA O2 Si DIN DIP observations
 
     load PME_TS_91x180x24.mat pme % calculated from transport operator and salt fields (alternate to running pme.m) 
     load DICant_91x180x24.mat
