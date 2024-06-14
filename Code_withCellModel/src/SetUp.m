@@ -246,9 +246,9 @@ dicraw(imed)  = nan ;
 po4raw(imed)  = nan ; 
 o2raw(imed)   = nan ;
 % keep arctic observations
-% docraw(iarc)  = nan ;    
-% alkraw(iarc)  = nan ;
-% dicraw(iarc)  = nan ;
+docraw(iarc)  = nan ;    
+alkraw(iarc)  = nan ;
+dicraw(iarc)  = nan ;
 % po4raw(iarc)  = nan ;
 % o2raw(iarc)   = nan ;
 
@@ -263,19 +263,19 @@ o2raw(imed)   = nan ;
 %   idea: we may want to remove outliers from minimization, but then keep all data 
 %   when assessing how well the model fits the obs
 docraw = rmOutliers(docraw, M3d) ;
-% po4raw = rmOutliers(po4raw, M3d) ;
-% dicraw = rmOutliers(dicraw, M3d) ;
-% alkraw = rmOutliers(alkraw, M3d) ;
-% o2raw  = rmOutliers(o2raw, M3d)  ;
+po4raw = rmOutliers(po4raw, M3d) ;
+dicraw = rmOutliers(dicraw, M3d) ;
+alkraw = rmOutliers(alkraw, M3d) ;
+o2raw  = rmOutliers(o2raw, M3d)  ;
 
 tempobs(tempobs(:)<-2.0) = -2.0   ; % Reset extreme cold temps to a minimum temperature threshold of -2C (seawater freezing point) 
 DIP_obs(DIP_obs(:)<0.05) = 0.05   ;
 po4raw(po4raw(:)<0.05)   = nan    ; % Remove DIP data below detection limit; 
 
-%for ji = 1:24
-%    p2d = po4obs(:,:,ji);
-%    po4obs(:,:,ji) = smoothit(grd,M3d,p2d,3,1e5);   % 이게 필요한 이유...?
-%end                                       ----> NPP field에 영향을 주려나?
+for ji = 1:24
+   p2d = po4obs(:,:,ji);
+   po4obs(:,:,ji) = smoothit(grd,M3d,p2d,3,1e5);   % 이게 필요한 이유...?
+end                                      %  ----> NPP field에 영향을 주려나?
  
 par.Temp     = tempobs       ;
 par.Salt     = salobs        ; % Sobs     ;
@@ -307,10 +307,10 @@ par.sALKbar = sum(par.alkraw((iwet(isrf(salk)))).* ...
                   dVt(iwet(isrf(salk))))./sum(dVt(iwet(isrf(salk))));
 
 %-------------------- normalize temperature --------------------
-%for ji = 1:24
-%    t2d = par.Temp(:,:,ji); 
-%    par.Temp(:,:,ji) = smoothit(grd,M3d,t2d,3,1e5);        % smoothit ---> inpaint_nan하면 안돼?
-%end                                                        % 일단 빼고 해보기.
+for ji = 1:24
+   t2d = par.Temp(:,:,ji); 
+   par.Temp(:,:,ji) = smoothit(grd,M3d,t2d,3,1e5);        % smoothit ---> inpaint_nan하면 안돼?
+end                                                        % 일단 빼고 해보기.
 
 vT = par.Temp(iwet) ;                                     
 % add + 1.0 to prevent from getting infinit kP or kC 
