@@ -273,8 +273,8 @@ DIP_obs(DIP_obs(:)<0.05) = 0.05   ;
 po4raw(po4raw(:)<0.05)   = nan    ; % Remove DIP data below detection limit; 
 
 for ji = 1:24
-   p2d = po4obs(:,:,ji);
-   po4obs(:,:,ji) = smoothit(grd,M3d,p2d,3,1e5);   % 이게 필요한 이유...?
+   p2d = DIP_obs(:,:,ji);
+   DIP_obs(:,:,ji) = smoothit(grd,M3d,p2d,3,1e5);   % 이게 필요한 이유...?
 end                                      %  ----> NPP field에 영향을 주려나?
  
 par.Temp     = tempobs       ;
