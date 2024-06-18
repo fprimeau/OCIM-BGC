@@ -12,12 +12,12 @@ format short
 % --- addpath to model code -----
 addpath('../src/')
 
-VerName = 'optPCO_Cell_SetUpv2_N23in_'; 		% optional version name. leave as an empty character array
+VerName = 'optPCO_GM15_SetUpv2_N23in_'; 		% optional version name. leave as an empty character array
 					% or add a name ending with an underscore
 VerNum = '';		% optional version number for testing
 
 % Choose C2P function
-par.C2Pfunctiontype = 'C';
+par.C2Pfunctiontype = 'P';
 % 'P' -> PO4 function ; 'C' -> Cell model; 'T' -> Temperature function; 'R' -> constant value (Redfield)
 % 
 GridVer  = 91  ;
@@ -81,8 +81,8 @@ par.opt_R_Si  = on ;
 par.opt_rR    = on ; 
 % --- C:P function parameters -----
 % phosphate-dependent function parameters
-par.opt_cc    = off ;
-par.opt_dd    = off ; 
+par.opt_cc    = on ;
+par.opt_dd    = on ; 
 % temperature-dependent function parameters
 par.opt_ccT   = off ; 
 par.opt_ddT   = off ;
