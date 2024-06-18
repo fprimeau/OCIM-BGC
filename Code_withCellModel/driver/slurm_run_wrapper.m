@@ -2,7 +2,7 @@
 % running this script in the slurm matlab call instead of running driver.m
 % directly should suppress the command line prompts from appearing in the
 % output file
-diary logs/optPCO_GM15_N23in_nosmooth.out
+diary logs/optPCO_Tz_N23in_nosmooth.out
 %fprintf('----------------------------------- \n\n')
 dbstop if error
 date_start = datetime('now');
