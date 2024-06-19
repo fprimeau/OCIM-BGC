@@ -431,7 +431,7 @@ function  [x, ibad] = ResetPar(x, par);
             if (mean(O2C1) < fs*mean(O2C0) | mean(O2C1) > fb*mean(O2C0)) 
                 x(irO2C)  = log( exp(x0(irO2C))*(0.1*rand + 0.95) );
                 x(iO2C_T) = x0(iO2C_T) + (0.02*rand - 0.01);
-                ibad = [ibad, iO2C_T, iO2C];
+                ibad = [ibad, iO2C_T, irO2C];
             end
         end
 
@@ -441,7 +441,7 @@ function  [x, ibad] = ResetPar(x, par);
             xold  = exp(x0(irO2C)) ;
             if (xnew > fb*xold | xnew < fs*xold);
                 x(irO2C) = log( exp(x0(irO2C))*(0.1*rand + 0.95) );
-                ibad = [ibad, iO2C];
+                ibad = [ibad, irO2C];
             end
         end
     end
