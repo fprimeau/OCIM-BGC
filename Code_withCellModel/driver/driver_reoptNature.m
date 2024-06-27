@@ -214,6 +214,10 @@ if(Gtest);
     end
     keyboard 
 else
+    % save SetUp fields
+    fprintf('saving initial SetUp par structure to file: %s \n',par.fxpar)
+    save(par.fxpar, 'par', '-v7.3')
+    % optimize parameters
     [xhat,fval,exitflag] = fminunc(myfun,x0,options);
     [f,fx,fxx,data] = neglogpost(xhat,par);
     load(fxhat)
@@ -225,4 +229,3 @@ else
     save(par.fname, 'data')
 end
 fprintf('-------------- end! ---------------\n');
-quit
