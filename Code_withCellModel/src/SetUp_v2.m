@@ -333,9 +333,10 @@ par.aveT   = nanmean(Tz3d(:,:,1:3),3) ;                    % tsnanmean하고 큰
                                                              % nanmean으로 수정
                                                              % 1-3번째 layer의 T평균? 
 
-% aveT: PFD에 쓰임. vertical하게는 동일.
-% vT: eqPcylce, eqCcycle에서 Q10의 tf에 쓰임.
-% Tz: aveT에 쓰일때말고는 모르겠음. 1e-8을 왜하는지? ---> eqOcycle에서는 다시 10^8 곱해서 사용.
+% aveT: average of normalized T in top 3 layers. used in buildPFD to define a temperature dependent powerlaw exponent. power law assumes Temp is vertically uniform. 
+%       % why normalized temp?
+% vT: vectorized temperature. used in eqPcycle, eqCcycle, eqOcycle: for Q10 exponent for kC and kP
+% Tz: normalized temperature. used in in eqCcycle or C2P_Tzmodel & in eqOcycle for O2C
                                                          
 
 %-------------------- correct WOA o2 concentration --------------------
