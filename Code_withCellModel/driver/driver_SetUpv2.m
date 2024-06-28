@@ -268,7 +268,9 @@ elseif (par.optim)
     % optimize parameters
     [xsol,fval,exitflag] = fminunc(myfun,x0,options);
     fprintf('objective function tolerance = %5.1e \n',objfuntolerance);
-    fprintf('----fminunc complete----\n')
+    fprintf('----fminunc complete----\n\n')
+    % set final run iteration count to trigger save par in neglogpost
+    % iter = 10000; 
     [f,fx,fxx,data,xhat] = neglogpost(xsol,par);
     fprintf('----neglogpost solved for final parameter values----\n')
     xhat.pindx = par.pindx;

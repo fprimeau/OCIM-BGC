@@ -164,6 +164,12 @@ function [f, fx, fxx, data, xhat] = neglogpost(x, par)
         data.DOC  = DOC  ;  data.PIC  = PIC ;
         data.ALK  = ALK  ;  data.DOCr = DOCr ;
         data.DOCl = DOCl ;
+        try
+            data.C2P = M3d+nan ; data.C2P(iwet) = par.C2P; 
+        catch ME
+            fprintf('error in %s (line %d): %s \n', ME.stack(1).name,ME.stack(1).line,ME.message);
+            fprintf('Unable to store C2P in data struct. \n');
+        end
         % DIC error
         DOC = DOC + DOCr + DOCl; % sum of labile and refractory DOC ;
         eic = DIC(iwet(idic)) - par.dicraw(iwet(idic)) ;
