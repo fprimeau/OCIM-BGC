@@ -281,10 +281,10 @@ tempobs(tempobs(:)<-2.0) = -2.0   ; % Reset extreme cold temps to a minimum temp
 DIP_obs(DIP_obs(:)<0.05) = 0.05   ;
 po4raw(po4raw(:)<0.05)   = nan    ; % Remove DIP data below detection limit; 
 
-for ji = 1:24
-   p2d = DIP_obs(:,:,ji);
-   DIP_obs(:,:,ji) = smoothit(grd,M3d,p2d,3,1e5);   % 이게 필요한 이유...?
-end                                      %  ----> NPP field에 영향을 주려나?
+% for ji = 1:24
+%    p2d = DIP_obs(:,:,ji);
+%    DIP_obs(:,:,ji) = smoothit(grd,M3d,p2d,3,1e5);   % 이게 필요한 이유...?
+% end                                      %  ----> NPP field에 영향을 주려나?
  
 par.Temp     = tempobs       ;
 par.Salt     = salobs        ; % Sobs     ;
@@ -398,8 +398,8 @@ par.DICbar = sum(par.dicraw(iwet(idic)).*dVt(iwet(idic)))/sum(dVt(iwet(idic))) ;
 
 %-------------------- prepare NPP for the model ----------------------
 % remove this P:C unit conversion. a constant stoichiometric scaling is implicit in alpha
-%par.p2c = 0.006 + 0.0069*DIP_obs ;         
-par.p2c = (1/117) * M3d ;                % 이건 아마 redfield ratio인듯?
+par.p2c = 0.006 + 0.0069*DIP_obs ;         
+% par.p2c = (1/117) * M3d ;                % 이건 아마 redfield ratio인듯?
 inan = find(isnan(npp(:)) | npp(:) < 0) ;
 npp(inan)  = 0  ;
 
