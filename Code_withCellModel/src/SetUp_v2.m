@@ -316,10 +316,10 @@ par.sALKbar = sum(par.alkraw((iwet(isrf(salk)))).* ...
                   dVt(iwet(isrf(salk))))./sum(dVt(iwet(isrf(salk))));
 
 %-------------------- normalize temperature --------------------
-% for ji = 1:24
-%    t2d = par.Temp(:,:,ji); 
-%    par.Temp(:,:,ji) = smoothit(grd,M3d,t2d,3,1e5);        % smoothit ---> inpaint_nan하면 안돼?
-% end                                                        % 일단 빼고 해보기.
+for ji = 1:24
+   t2d = par.Temp(:,:,ji); 
+   par.Temp(:,:,ji) = smoothit(grd,M3d,t2d,3,1e5);        % smoothit ---> inpaint_nan하면 안돼?
+end                                                        % 일단 빼고 해보기.
 
 vT = par.Temp(iwet) ;                                     
 % add + 1.0 to prevent from getting infinit kP or kC 
@@ -398,8 +398,8 @@ par.DICbar = sum(par.dicraw(iwet(idic)).*dVt(iwet(idic)))/sum(dVt(iwet(idic))) ;
 
 %-------------------- prepare NPP for the model ----------------------
 % remove this P:C unit conversion. a constant stoichiometric scaling is implicit in alpha
-par.p2c = 0.006 + 0.0069*DIP_obs ;         
-% par.p2c = (1/117) * M3d ;                % 이건 아마 redfield ratio인듯?
+%par.p2c = 0.006 + 0.0069*DIP_obs ;         
+par.p2c = (1/117) * M3d ;                % 이건 아마 redfield ratio인듯?
 inan = find(isnan(npp(:)) | npp(:) < 0) ;
 npp(inan)  = 0  ;
 

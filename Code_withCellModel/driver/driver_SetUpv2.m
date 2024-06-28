@@ -12,7 +12,7 @@ format short
 % --- addpath to model code -----
 addpath('../src/')
 
-VerName = 'optPCO_GM15_SetUpv2_N23in_test1_'; 		% optional version name. leave as an empty character array
+VerName = 'optPCO_GM15_SetUpv2_N23in_testNPP_'; 		% optional version name. leave as an empty character array
 					% or add a name ending with an underscore
 VerNum = '';		% optional version number for testing
 
