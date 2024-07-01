@@ -397,6 +397,7 @@ par.DICbar = sum(par.dicraw(iwet(idic)).*dVt(iwet(idic)))/sum(dVt(iwet(idic))) ;
 % 	clear PAR
 
 %-------------------- prepare NPP for the model ----------------------
+% NPP unit (Nowicki) = (mmolC/m^2/yr)
 % remove this P:C unit conversion. a constant stoichiometric scaling is implicit in alpha
 par.p2c = 0.006 + 0.0069*DIP_obs ;         
 % par.p2c = (1/117) * M3d ;                % 이건 아마 redfield ratio인듯?
@@ -424,16 +425,16 @@ for jj = 1 : nx
             par.nppMSK(jj,ii,1) = 2 ;
             par.nppMSK(jj,ii,2) = 2 ;
 
-            par.npp(jj,ii,1)  = (1/2) * npp(jj,ii) / grd.dzt(1) * par.p2c(jj,ii,1);
+            par.npp(jj,ii,1)  = (1/2) * npp(jj,ii) / grd.dzt(1) * par.p2c(jj,ii,1);   % unit: (mmolP/m^3/yr)
             par.npp(jj,ii,2)  = (1/2) * npp(jj,ii) / grd.dzt(2) * par.p2c(jj,ii,2);
 
-            Pnpp(jj,ii,1)  = par.npp(jj,ii,1) / spa ;
+            Pnpp(jj,ii,1)  = par.npp(jj,ii,1) / spa ;                 % unit: (mmolP/m^3/s)
             Pnpp(jj,ii,2)  = par.npp(jj,ii,2) / spa ;
 
-            Cnpp(jj,ii,1)  = (1/2) * npp(jj,ii) / grd.dzt(1) / spa ;
+            Cnpp(jj,ii,1)  = (1/2) * npp(jj,ii) / grd.dzt(1) / spa ;  % unit: (mmolC/m^3/s)
             Cnpp(jj,ii,2)  = (1/2) * npp(jj,ii) / grd.dzt(2) / spa ;
                         
-            par.Lambda(jj,ii,1) = 1./(1e-6+DIP_obs(jj,ii,1)) ;
+            par.Lambda(jj,ii,1) = 1./(1e-6+DIP_obs(jj,ii,1)) ;      % unit: [1/(mmolP/m^3)]
             par.Lambda(jj,ii,2) = 1./(1e-6+DIP_obs(jj,ii,2)) ;
         else 
             UMSK(jj,ii,1:3) = 1 ;
@@ -462,7 +463,7 @@ for jj = 1 : nx
 end
 
 [par.Pnpp, par.Cnpp] = deal(M3d*0) ;
-par.Pnpp(:,:,1:par.nl) = Pnpp;
+par.Pnpp(:,:,1:par.nl) = Pnpp; % unused
 par.Cnpp(:,:,1:par.nl) = Cnpp;
 
 UMSK(ilnd) = nan ;

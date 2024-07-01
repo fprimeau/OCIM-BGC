@@ -169,7 +169,7 @@ fprintf('\n')
       % load Siobs_91x180x24.mat Siobs  % not needed for cell model
     % WOA18 data
     load TS_WOA_91x180x24.mat tempobs salobs % WOA temperature & salinity
-    load O2_Nut_WOA_91x180x24.mat  O2_obs Si_obs DIN_obs DIP_obs % WOA O2 Si DIN DIP observations
+    load O2_Nut_WOA_91x180x24.mat  O2_obs Si_obs DIN_obs DIP_obs % WOA O2 Si DIN DIP observations [umol/kg]
 
     load PME_TS_91x180x24.mat  pme % calculated from transport operator and salt fields (alternate to running pme.m) 
     load DICant_91x180x24.mat
@@ -388,6 +388,7 @@ par.DICbar = sum(par.dicraw(iwet(idic)).*dVt(iwet(idic)))/sum(dVt(iwet(idic))) ;
 % 	clear PAR
 
 %-------------------- prepare NPP for the model ----------------------
+% NPP unit (Nowicki) = (mmolC/m^2/yr)
 % remove this P:C unit conversion. a constant stoichiometric scaling is implicit in alpha
 % par.p2c = 0.006 + 0.0069*DIP_obs ;         
 par.p2c = (1/117) * M3d ;                % 이건 아마 redfield ratio인듯?
@@ -415,13 +416,13 @@ for jj = 1 : nx
             par.nppMSK(jj,ii,1) = 2 ;
             par.nppMSK(jj,ii,2) = 2 ;
 
-            par.npp(jj,ii,1)  = (1/2) * npp(jj,ii) / grd.dzt(1) * par.p2c(jj,ii,1);
+            par.npp(jj,ii,1)  = (1/2) * npp(jj,ii) / grd.dzt(1) * par.p2c(jj,ii,1);   % unit: (mmolP/m^3/yr)
             par.npp(jj,ii,2)  = (1/2) * npp(jj,ii) / grd.dzt(2) * par.p2c(jj,ii,2);
 
-            Pnpp(jj,ii,1)  = par.npp(jj,ii,1) / spa ;
+            Pnpp(jj,ii,1)  = par.npp(jj,ii,1) / spa ;                 % unit: (mmolP/m^3/s)
             Pnpp(jj,ii,2)  = par.npp(jj,ii,2) / spa ;
 
-            Cnpp(jj,ii,1)  = (1/2) * npp(jj,ii) / grd.dzt(1) / spa ;
+            Cnpp(jj,ii,1)  = (1/2) * npp(jj,ii) / grd.dzt(1) / spa ;  % unit: (mmolC/m^3/s)
             Cnpp(jj,ii,2)  = (1/2) * npp(jj,ii) / grd.dzt(2) / spa ;
                         
             par.Lambda(jj,ii,1) = 1./(1e-6+DIP_obs(jj,ii,1)) ;
