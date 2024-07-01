@@ -28,7 +28,15 @@ SaveToDir = '../../../../DATASETS/BGC_24layer/';
 O2_WOA   = ncread('woa18_all_o00_01.nc', 'o_an');
 Si_WOA   = ncread('woa18_all_i00_01.nc', 'i_an');
 DIN_WOA  = ncread('woa18_all_n00_01.nc', 'n_an');
-DIP_WOA  = ncread('woa18_all_p00_01.nc', 'p_an');
+DIP_WOA  = ncread('woa18_all_p00_01.nc', 'p_an');   % unit: ['micromoles_per_kilogram']
+% rho_WOA  = ncread('woa18_decav_I00_01.nc','I_an');  % sea_water_sigma; range: [0.9 - 53.1] unit: ['kilograms_per_cubic_meter']
+% % convert sea_water_sigma to in situ density?
+
+% % Convert from umol/kg to mmol/m3; 
+% DIP_WOA = DIP_WOA.*rho_WOA.*1e-3 ;
+% DIN_WOA = DIN_WOA.*rho_WOA.*1e-3 ;
+% O2_WOA  = O2_WOA.*rho_WOA.*1e-3  ;
+% Di_WOA  = Si_WOA.*rho_WOA.*1e-3  ;
 
 O2_latitude    = ncread('woa18_all_o00_01.nc', 'lat');
 Si_latitude    = ncread('woa18_all_i00_01.nc', 'lat');
