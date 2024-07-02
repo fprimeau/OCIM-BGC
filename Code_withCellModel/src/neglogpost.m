@@ -58,7 +58,7 @@ function [f, fx, fxx, data, xhat] = neglogpost(x, par)
     DIP  = M3d+nan  ;  DIP(iwet)  = P(1+0*nwet:1*nwet) ;
     POP  = M3d+nan  ;  POP(iwet)  = P(1+1*nwet:2*nwet) ;
     DOP  = M3d+nan  ;  DOP(iwet)  = P(1+2*nwet:3*nwet) ;
-    DOPl = M3d+nan  ;  DOPl(iwet) = P(1+2*nwet:3*nwet) ;
+    DOPl = M3d+nan  ;  DOPl(iwet) = P(1+3*nwet:4*nwet) ;
     %toc 
     par.Px   = Px  ;
     par.Pxx  = Pxx ;
