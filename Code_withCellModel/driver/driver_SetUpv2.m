@@ -107,6 +107,10 @@ par.opt_bt    = on  ;
 par.opt_aa    = on  ;
 par.opt_bb    = on  ;
 %
+par.SetUp_options.smoothP = 0;
+par.SetUp_options.smoothT = 0;
+par.SetUp_options.NPPp2c_type = 0; % Function to convert satellite Cnpp to Pnpp
+% 0 = GM15 original; 1 = constant (1/117); 2 = Cellmodel GBC2024 optim; 
 %-------------load data and set up parameters---------------------
 SetUp_v2 ;                      
 

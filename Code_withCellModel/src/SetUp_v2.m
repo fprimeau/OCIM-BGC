@@ -281,10 +281,15 @@ tempobs(tempobs(:)<-2.0) = -2.0   ; % Reset extreme cold temps to a minimum temp
 DIP_obs(DIP_obs(:)<0.05) = 0.05   ;
 po4raw(po4raw(:)<0.05)   = nan    ; % Remove DIP data below detection limit; 
 
-% for ji = 1:24
-%    p2d = DIP_obs(:,:,ji);
-%    DIP_obs(:,:,ji) = smoothit(grd,M3d,p2d,3,1e5);   % 이게 필요한 이유...?
-% end                                      %  ----> NPP field에 영향을 주려나?
+if isfield(par,'SetUp_options') & par.SetUp_options.smoothP == 1
+  fprintf('Smooth WOA DIP... \n')
+  for ji = 1:24
+     p2d = DIP_obs(:,:,ji);
+     DIP_obs(:,:,ji) = smoothit(grd,M3d,p2d,3,1e5);   % 이게 필요한 이유...?
+  end                                      %  ----> NPP field에 영향을 주려나?
+else
+  fprintf('Do not smooth WOA DIP... \n')
+end                                   %  ----> NPP field에 영향을 주려나?
  
 par.Temp     = tempobs       ;
 par.Salt     = salobs        ; % Sobs     ;
@@ -316,10 +321,15 @@ par.sALKbar = sum(par.alkraw((iwet(isrf(salk)))).* ...
                   dVt(iwet(isrf(salk))))./sum(dVt(iwet(isrf(salk))));
 
 %-------------------- normalize temperature --------------------
-for ji = 1:24
-   t2d = par.Temp(:,:,ji); 
-   par.Temp(:,:,ji) = smoothit(grd,M3d,t2d,3,1e5);        % smoothit ---> inpaint_nan하면 안돼?
-end                                                        % 일단 빼고 해보기.
+if isfield(par,'SetUp_options') & par.SetUp_options.smoothT == 1
+  fprintf('Smooth WOA Temp... \n')
+  for ji = 1:24
+     t2d = par.Temp(:,:,ji); 
+     par.Temp(:,:,ji) = smoothit(grd,M3d,t2d,3,1e5);        % smoothit ---> inpaint_nan하면 안돼?
+  end                                                        % 일단 빼고 해보기.
+else
+  fprintf('Do not smooth WOA Temp... \n')
+end
 
 vT = par.Temp(iwet) ;                                     
 % add + 1.0 to prevent from getting infinit kP or kC 
@@ -399,8 +409,16 @@ par.DICbar = sum(par.dicraw(iwet(idic)).*dVt(iwet(idic)))/sum(dVt(iwet(idic))) ;
 %-------------------- prepare NPP for the model ----------------------
 % NPP unit (Nowicki) = (mmolC/m^2/yr)
 % remove this P:C unit conversion. a constant stoichiometric scaling is implicit in alpha
-par.p2c = 0.006 + 0.0069*DIP_obs ;         
-% par.p2c = (1/117) * M3d ;                % 이건 아마 redfield ratio인듯?
+if ~isfield(par,'SetUp_options') | par.SetUp_options.NPPpp2c_type == 0
+  fprintf('Sat NPP p2c conversion: GM15 \n')
+  par.p2c = 0.006 + 0.0069*DIP_obs ;         
+elseif par.SetUp_options.NPPpp2c_type == 1
+  fprintf('Sat NPP p2c conversion: 1/117 \n')
+  par.p2c = (1/117) * M3d ;                
+elseif par.SetUp_options.NPPp2c_type == 2
+  load('../../DATA/BGC_24layer/C2Puptake_CellModel_opt_GBC2024.mat','C2Puptake')
+  par.p2c = 1./C2Puptake;
+end
 inan = find(isnan(npp(:)) | npp(:) < 0) ;
 npp(inan)  = 0  ;
 
