@@ -80,6 +80,12 @@ if par.Cmodel == on
       par.C2P_Tzmodel = off;
       par.C2P_PO4model = off;
       par.Cellmodel = off;
+    case 'L'
+      par.C2P_constant = off;
+      par.C2P_Tzmodel = off;
+      par.C2P_PO4model = off;
+      par.C2P_Cellmodel = off;
+      par.C2P_loadprescribed = on;
   end
 
   if par.Cellmodel == on
@@ -119,6 +125,23 @@ if par.Cmodel == on
       par.opt_ddT = off;
       par.opt_cc  = off;
     end
+
+  elseif isfield(par,'C2P_prescribed') & par.C2P_loadprescribed == on
+    fprintf('P:C pattern is prescribed. loaded from file: %s \n',par.fc2pload)
+    % check C:P parameter flags
+    if any([par.opt_cc, par.opt_dd, par.opt_ccT, par.opt_ddT])
+      fprintf('Resetting opt_ccT, opt_ddT, opt_cc, and opt_dd to off ; cannot optimize linear C2P function parameters when using prescribed c2p \n')
+      par.opt_ccT = off;
+      par.opt_ddT = off;
+      par.opt_cc = off;
+      par.opt_dd = off;
+    end
+    % load C2P map
+    fprintf('C:P is optimal Cell Model C:P from Sullivan et al 2024 (GBC) \n')
+    % par.fc2pload = '../../DATA/BGC_24layer/C2Puptake_CellModel_opt_GBC2024.mat';
+    load(par.fc2pload,'C2Puptake')
+    par.C2Pprescribed = C2Puptake;
+    par.p2c = 1./C2Puptake;
 
   else
     if ~isfield(par,'dynamicP')
@@ -179,6 +202,7 @@ fprintf('\n')
     % WOA18 data
     % load TS_WOA_91x180x24.mat tempobs salobs % WOA temperature & salinity
     load O2_Nut_WOA_91x180x24.mat DIN_obs ; %O2_obs Si_obs DIN_obs DIP_obs % WOA O2 Si DIN DIP observations
+        DIN_obs = DIN_obs*1.025; %[mmol/m^3]
 
     load PME_TS_91x180x24.mat pme % calculated from transport operator and salt fields (alternate to running pme.m) 
     load DICant_91x180x24.mat
