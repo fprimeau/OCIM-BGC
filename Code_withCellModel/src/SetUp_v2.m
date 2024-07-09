@@ -409,10 +409,10 @@ par.DICbar = sum(par.dicraw(iwet(idic)).*dVt(iwet(idic)))/sum(dVt(iwet(idic))) ;
 %-------------------- prepare NPP for the model ----------------------
 % NPP unit (Nowicki) = (mmolC/m^2/yr)
 % remove this P:C unit conversion. a constant stoichiometric scaling is implicit in alpha
-if ~isfield(par,'SetUp_options') | par.SetUp_options.NPPpp2c_type == 0
+if ~isfield(par,'SetUp_options') | par.SetUp_options.NPPp2c_type == 0
   fprintf('Sat NPP p2c conversion: GM15 \n')
   par.p2c = 0.006 + 0.0069*DIP_obs ;         
-elseif par.SetUp_options.NPPpp2c_type == 1
+elseif par.SetUp_options.NPPp2c_type == 1
   fprintf('Sat NPP p2c conversion: 1/117 \n')
   par.p2c = (1/117) * M3d ;                
 elseif par.SetUp_options.NPPp2c_type == 2
@@ -423,7 +423,7 @@ elseif par.SetUp_options.NPPp2c_type == 3
   fprintf('Sat NPP p2c conversion: Nature 2023 optimal C:P parameters : ')
   %fxhatload = '/DFS-L/DATA/primeau/hojons1/Nature2023_BGC_reoptimized/src_Nature_parameter_Megan/MSK91/CTL_He_PCO_Gamma0_kl12h_O5_POC2DIC_GM15_Nowicki_npp1_aveTeu_diffSig_O2C_uniEta_DICrmAnthro_2L_Pnormal_DIP1e+00_DIC1e+00_DOC1e+00_ALK1e+00_O21e+00_xhat.mat' 
   tmp = load('/DFS-L/DATA/primeau/hojons1/Nature2023_BGC_reoptimized/src_Nature_parameter_Megan/MSK91/CTL_He_PCO_Gamma0_kl12h_O5_POC2DIC_GM15_Nowicki_npp1_aveTeu_diffSig_O2C_uniEta_DICrmAnthro_2L_Pnormal_DIP1e+00_DIC1e+00_DOC1e+00_ALK1e+00_O21e+00_xhat.mat','xhat')
-  frintf('cc = %.3e ; dd = %.3e \n', tmp.xhat.cc, tmp.xhat.dd)
+  fprintf('cc = %.3e ; dd = %.3e \n', tmp.xhat.cc, tmp.xhat.dd)
   par.p2c = 1./(tmp.xhat.cc * DIP_obs + tmp.xhat.dd);
 
 end

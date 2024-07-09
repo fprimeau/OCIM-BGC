@@ -3,7 +3,7 @@
 %   The carbon cycle uses a trait-based celllular growth model to compute C:P.
 %   This run optimizes phosphorus, carbon, and oxygen cycle parameters
 % ------------------------------------------------------------------------
-clc; clear all; close all
+% clc; clear all; close all
 global iter
 iter = 0 ;
 on   = true  ; off  = false ;
@@ -12,7 +12,7 @@ format short
 % --- addpath to model code -----
 addpath('../src/')
 
-VerName = 'optPCO_GM15_SetUpv2_N23in_testPnosmooth_'; 		% optional version name. leave as an empty character array
+VerName = 'optPCO_GM15_SetUpv2_N23in_testNPPp2c_Nature_ccdd_'; 		% optional version name. leave as an empty character array
 					% or add a name ending with an underscore
 VerNum = '';		% optional version number for testing
 
@@ -109,8 +109,8 @@ par.opt_bb    = on  ;
 %
 par.SetUp_options.smoothP = 0;
 par.SetUp_options.smoothT = 0;
-par.SetUp_options.NPPp2c_type = 0; % Function to convert satellite Cnpp to Pnpp
-% 0 = GM15 original; 1 = constant (1/117); 2 = Cellmodel GBC2024 optim; 
+par.SetUp_options.NPPp2c_type = 3; % Function to convert satellite Cnpp to Pnpp
+% 0 = GM15 original; 1 = constant (1/117); 2 = Cellmodel GBC2024 optim; 3 = reoptNature fxhatload cc&dd parameters
 %-------------load data and set up parameters---------------------
 SetUp_v2 ;                      
 
