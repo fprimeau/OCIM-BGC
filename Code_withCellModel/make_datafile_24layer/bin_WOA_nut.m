@@ -35,7 +35,7 @@ sigma_WOA = ncread('woa18_decav_I00_01.nc','I_an'); % unit: ['kilograms_per_cubi
 %     range(sea_water_sigma): [0.9, 53.1]
 rho_WOA   = sigma_WOA + 1000;   
 
-% Convert nutrient units from umol/kg to mmol/m3; 
+% Convert nutrient units from umol/kg to mmol/m3; %alternately, make rho_WOA = 1024; 
 DIP_WOA = DIP_WOA.*rho_WOA.*1e-3 ;
 DIN_WOA = DIN_WOA.*rho_WOA.*1e-3 ;
 O2_WOA  = O2_WOA.*rho_WOA.*1e-3  ;
