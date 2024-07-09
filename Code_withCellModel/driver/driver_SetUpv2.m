@@ -12,13 +12,16 @@ format short
 % --- addpath to model code -----
 addpath('../src/')
 
-VerName = 'optPCO_GM15_SetUpv2_N23in_testNPPp2c_Nature_ccdd_'; 		% optional version name. leave as an empty character array
+%VerName = 'optPCO_GM15_SetUpv2_N23in_testNPPp2c_Nature_ccdd_'; 		% optional version name. leave as an empty character array
+VerName = 'optPCO_Cell_prescribe_C2P_N23in_NPPp2c_CellModel_optGBC2024_'; 		% optional version name. leave as an empty character array
 					% or add a name ending with an underscore
 VerNum = '';		% optional version number for testing
 
 % Choose C2P function
 par.C2Pfunctiontype = 'P';
 % 'P' -> PO4 function ; 'C' -> Cell model; 'T' -> Temperature function; 'R' -> constant value (Redfield)
+% 'L' -> load spatial pattern from a file. 
+par.fc2pload = '../../DATA/BGC_24layer/C2Puptake_CellModel_opt_GBC2024.mat';
 % 
 GridVer  = 91  ;
 operator = 'A' ;
