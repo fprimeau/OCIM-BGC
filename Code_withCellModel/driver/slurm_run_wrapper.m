@@ -2,6 +2,7 @@
 % running this script in the slurm matlab call instead of running driver.m
 % directly should suppress the command line prompts from appearing in the
 % output file
+clear all; close all; clc;
 diary logs/optPCO_GM15_N23in_testNPPp2c_Nature_ccdd.out
 %fprintf('----------------------------------- \n\n')
 dbstop if error
