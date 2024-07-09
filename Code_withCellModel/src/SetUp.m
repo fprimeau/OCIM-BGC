@@ -170,6 +170,8 @@ fprintf('\n')
     % WOA18 data
     load TS_WOA_91x180x24.mat tempobs salobs % WOA temperature & salinity
     load O2_Nut_WOA_91x180x24.mat  O2_obs Si_obs DIN_obs DIP_obs % WOA O2 Si DIN DIP observations [umol/kg]
+        % multiply by seawater density to convert from umol/kg to mmol/m3;
+        O2_obs = O2_obs*1.025; Si_obs = Si_obs*1.025; DIN_obs = DIN_obs*1.025; DIP_obs = DIP_obs*1.025; 
 
     load PME_TS_91x180x24.mat  pme % calculated from transport operator and salt fields (alternate to running pme.m) 
     load DICant_91x180x24.mat
