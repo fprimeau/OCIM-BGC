@@ -416,9 +416,18 @@ elseif par.SetUp_options.NPPpp2c_type == 1
   fprintf('Sat NPP p2c conversion: 1/117 \n')
   par.p2c = (1/117) * M3d ;                
 elseif par.SetUp_options.NPPp2c_type == 2
+  fprintf('Sat NPP p2c conversion: optimal Cell Model C:P from Sullivan et al 2024 (GBC) \n')
   load('../../DATA/BGC_24layer/C2Puptake_CellModel_opt_GBC2024.mat','C2Puptake')
   par.p2c = 1./C2Puptake;
+elseif par.SetUp_options.NPPp2c_type == 3
+  fprintf('Sat NPP p2c conversion: Nature 2023 optimal C:P parameters : ')
+  %fxhatload = '/DFS-L/DATA/primeau/hojons1/Nature2023_BGC_reoptimized/src_Nature_parameter_Megan/MSK91/CTL_He_PCO_Gamma0_kl12h_O5_POC2DIC_GM15_Nowicki_npp1_aveTeu_diffSig_O2C_uniEta_DICrmAnthro_2L_Pnormal_DIP1e+00_DIC1e+00_DOC1e+00_ALK1e+00_O21e+00_xhat.mat' 
+  tmp = load('/DFS-L/DATA/primeau/hojons1/Nature2023_BGC_reoptimized/src_Nature_parameter_Megan/MSK91/CTL_He_PCO_Gamma0_kl12h_O5_POC2DIC_GM15_Nowicki_npp1_aveTeu_diffSig_O2C_uniEta_DICrmAnthro_2L_Pnormal_DIP1e+00_DIC1e+00_DOC1e+00_ALK1e+00_O21e+00_xhat.mat','xhat')
+  frintf('cc = %.3e ; dd = %.3e \n', tmp.xhat.cc, tmp.xhat.dd)
+  par.p2c = 1./(tmp.xhat.cc * DIP_obs + tmp.xhat.dd);
+
 end
+
 inan = find(isnan(npp(:)) | npp(:) < 0) ;
 npp(inan)  = 0  ;
 
