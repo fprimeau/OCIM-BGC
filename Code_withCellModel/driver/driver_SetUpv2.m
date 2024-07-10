@@ -18,7 +18,7 @@ VerName = 'optPCO_Cell_prescribe_C2P_N23in_NPPp2c_CellModel_optGBC2024_'; 		% op
 VerNum = '';		% optional version number for testing
 
 % Choose C2P function
-par.C2Pfunctiontype = 'P';
+par.C2Pfunctiontype = 'L';
 % 'P' -> PO4 function ; 'C' -> Cell model; 'T' -> Temperature function; 'R' -> constant value (Redfield)
 % 'L' -> load spatial pattern from a file. 
 par.fc2pload = '../../DATA/BGC_24layer/C2Puptake_CellModel_opt_GBC2024.mat';
@@ -112,7 +112,7 @@ par.opt_bb    = on  ;
 %
 par.SetUp_options.smoothP = 0;
 par.SetUp_options.smoothT = 0;
-par.SetUp_options.NPPp2c_type = 3; % Function to convert satellite Cnpp to Pnpp
+par.SetUp_options.NPPp2c_type = 2; % Function to convert satellite Cnpp to Pnpp
 % 0 = GM15 original; 1 = constant (1/117); 2 = Cellmodel GBC2024 optim; 3 = reoptNature fxhatload cc&dd parameters
 %-------------load data and set up parameters---------------------
 SetUp_v2 ;                      
