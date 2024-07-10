@@ -84,7 +84,7 @@ if par.Cmodel == on
       par.C2P_constant = off;
       par.C2P_Tzmodel = off;
       par.C2P_PO4model = off;
-      par.C2P_Cellmodel = off;
+      par.Cellmodel = off;
       par.C2P_loadprescribed = on;
   end
 
