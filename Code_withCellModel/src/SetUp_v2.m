@@ -126,7 +126,7 @@ if par.Cmodel == on
       par.opt_cc  = off;
     end
 
-  elseif isfield(par,'C2P_prescribed') & par.C2P_loadprescribed == on
+  elseif isfield(par,'C2P_loadprescribed') & par.C2P_loadprescribed == on
     fprintf('P:C pattern is prescribed. loaded from file: %s \n',par.fc2pload)
     % check C:P parameter flags
     if any([par.opt_cc, par.opt_dd, par.opt_ccT, par.opt_ddT])
