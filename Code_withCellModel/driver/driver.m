@@ -3,7 +3,7 @@
 %   The carbon cycle uses a trait-based celllular growth model to compute C:P.
 %   This run optimizes phosphorus, carbon, and oxygen cycle parameters
 % ------------------------------------------------------------------------
-clc; clear all; close all
+%clc; clear all; close all
 global iter
 iter = 0 ;
 on   = true  ; off  = false ;
@@ -12,12 +12,12 @@ format short
 % --- addpath to model code -----
 addpath('../src/')
 
-VerName = 'optPCO_Cell_v2_'; 		% optional version name. leave as an empty character array
+VerName = 'optPCO_GM15_v2_WOA18_smoooth_rmoutliers_NPPc2p117_'; 		% optional version name. leave as an empty character array
 					% or add a name ending with an underscore
 VerNum = '';		% optional version number for testing
 
 % Choose C2P function
-par.C2Pfunctiontype = 'C';
+par.C2Pfunctiontype = 'P';
 % 'P' -> PO4 function ; 'C' -> Cell model; 'T' -> Temperature function; 'R' -> constant value (Redfield)
 % 
 GridVer  = 91  ;
@@ -45,7 +45,7 @@ par.LoadOpt = on ; % if load optimial parameters.
 % to load parameter values from a run with a different name.
 %par.fxhatload = '../../output/optPonly_CTL_He_P_xhat.mat';
 %par.fxhatload = '../output/optPCO_GM15_CTL_He_PCOv1_DOC1_DOP0_xhat.mat';
-% par.fxhatload = '/DFS-L/DATA/primeau/hojons1/Nature2023_BGC_reoptimized/src_Nature_parameter_Megan/MSK91/CTL_He_PCO_Gamma0_kl12h_O5_POC2DIC_GM15_Nowicki_npp1_aveTeu_diffSig_O2C_uniEta_DICrmAnthro_2L_Pnormal_DIP1e+00_DIC1e+00_DOC1e+00_ALK1e+00_O21e+00_xhat.mat' 
+par.fxhatload = '/DFS-L/DATA/primeau/hojons1/Nature2023_BGC_reoptimized/src_Nature_parameter_Megan/MSK91/CTL_He_PCO_Gamma0_kl12h_O5_POC2DIC_GM15_Nowicki_npp1_aveTeu_diffSig_O2C_uniEta_DICrmAnthro_2L_Pnormal_DIP1e+00_DIC1e+00_DOC1e+00_ALK1e+00_O21e+00_xhat.mat' 
 par.dynamicP = off ; % if on, cell model uses modeled DIP. if off, cell model uses WOA observed DIP field.
 
 par.fnameload = '/DFS-L/DATA/primeau/hojons1/Nature2023_BGC_reoptimized/src_Nature_parameter_Megan/MSK91/CTL_He_PCO_Gamma0_kl12h_O5_POC2DIC_GM15_Nowicki_npp1_aveTeu_diffSig_O2C_uniEta_DICrmAnthro_2L_Pnormal_DIP1e+00_DIC1e+00_DOC1e+00_ALK1e+00_O21e+00.mat' ;
@@ -79,8 +79,8 @@ par.opt_R_Si  = on ;
 par.opt_rR    = on ; 
 % --- C:P function parameters -----
 % phosphate-dependent function parameters
-par.opt_cc    = off ;
-par.opt_dd    = off ; 
+par.opt_cc    = on ;
+par.opt_dd    = on ; 
 % temperature-dependent function parameters
 par.opt_ccT   = off ; 
 par.opt_ddT   = off ;
