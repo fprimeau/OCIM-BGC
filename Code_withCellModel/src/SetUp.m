@@ -393,7 +393,8 @@ par.DICbar = sum(par.dicraw(iwet(idic)).*dVt(iwet(idic)))/sum(dVt(iwet(idic))) ;
 %-------------------- prepare NPP for the model ----------------------
 % NPP unit (Nowicki) = (mmolC/m^2/yr)
 % remove this P:C unit conversion. a constant stoichiometric scaling is implicit in alpha
-% par.p2c = 0.006 + 0.0069*DIP_obs ;         
+% par.p2c = 0.006 + 0.0069*DIP_obs ;        
+fprintf('Sat NPP p2c conversion: 1/117 \n') 
 par.p2c = (1/117) * M3d ;                % 이건 아마 redfield ratio인듯?
 inan = find(isnan(npp(:)) | npp(:) < 0) ;
 npp(inan)  = 0  ;
