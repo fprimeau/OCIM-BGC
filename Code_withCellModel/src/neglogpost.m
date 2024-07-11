@@ -1,6 +1,10 @@
 function [f, fx, fxx, data, xhat] = neglogpost(x, par)
     global iter
     on = true; off = false;
+
+    fprintf('\ncurrent time is:      %s\n',datetime('now')) ;
+    fprintf('current iteration is: %d \n',iter) ;
+
     % print and save current parameter values to
     % a file that is used to reset parameters ;
     if iter == 0
@@ -14,7 +18,7 @@ function [f, fx, fxx, data, xhat] = neglogpost(x, par)
         % Do not execute code if solver suggests very bad values
         % (instead of replacing bad parameter value and solving)
 		if ~isempty(ibad)
-			load(par.fxhat); % make sure to do this step before saving the reset values in fxhat
+			load(par.fxhat); % do this step before saving the reset values in fxhat
 			f = 10000;
 			fx = xhat.fx; % need to store in xhat at end of neglogpost
 			fxx = xhat.fxx;
@@ -30,7 +34,7 @@ function [f, fx, fxx, data, xhat] = neglogpost(x, par)
     if iter > 0
         PrintPar(x, par) ;    
     end
-    fprintf('current iteration is %d \n',iter) ;
+    % increment iteration counter
     iter = iter + 1  ;
 
     nx   = length(x) ; % number of parameters
