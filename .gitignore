@@ -21,6 +21,7 @@ DATA/BGC_48layer/.Initial_COfield_91x180x48.mat.swp
 DATA/BGC_48layer/NPP_climatology.mat
 DATA/BGC_48layer/OCIM2_CTL_He_48layer.mat
 *OCIM2_CTL_He.mat
+DATA/BGC_24layer/C2Puptake_CellModel_opt_GBC2024.mat
 Code_24layer/
 Code_Merge/
 Code_withCellModel/output/

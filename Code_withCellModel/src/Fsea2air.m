@@ -226,8 +226,13 @@ function [co2,k0,Gout] = eqco2(dic,alk,arg1)
     % alk  = arg1.alk   ;
     salt    = arg1.salt  ;
     temp    = arg1.temp  ;
-    presin  = arg1.presin  ;
-    presout = arg1.presout ;
+    if isfield(arg1,'presin')
+        presin  = arg1.presin  ;
+        presout = arg1.presout ;
+    else
+        presin  = arg1.pres  ;
+        presout = arg1.pres  ;
+    end
     si      = arg1.si    ;
     po4     = arg1.po4   ;
     

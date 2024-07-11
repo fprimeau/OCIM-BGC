@@ -161,10 +161,10 @@ function par = SetPar(par)
 			par.ddT = 1.67e-02; 	% intercept for P:C as a linear function of Temperature
 	    end
 	else
-        if exist('xhat') & isfield(xhat,'cc')
+        if (par.C2P_constant)
+			par.cc = 0.0 ;  % slope for P:C as a linear function of DIP. when cc=0, P:C is a constant
+        elseif exist('xhat') & isfield(xhat,'cc')
             par.cc = xhat.cc  ;
-        elseif (par.C2P_constant)
-			par.cc = 0.0 ;		    % slope for P:C as a linear function of DIP. when cc=0, P:C is a constant
         else
             par.cc = 8.38e-4 ;      % slope for P:C as a linear function of DIP (Galbraith & Martiny(2015) value = 6.9e-3)
         end 

@@ -192,7 +192,9 @@ function [F,FD,par,Cx,Cxx] = C_eqn(X, par)
 	elseif (par.C2P_Tzmodel)
         %Tz01 = par.Tz.*1.0e8 ; % par.Tz has been modified to be temperature scaled between zero and 1. rescaling is no longer needed.
 		C2P = 1./(ccT*Tz + ddT);
-	else
+    elseif isfield(par,'C2P_loadprescribed') & par.C2P_loadprescribed
+        C2P = par.C2Pprescribed(iwet);
+    else
 		C2P = 1./(cc*PO4 + dd);
 	end
     par.C2P = C2P  ;        % Note: size(par.C2P) =  [191169 , 1]

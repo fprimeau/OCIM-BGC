@@ -169,12 +169,16 @@ fprintf('\n')
       % load Siobs_91x180x24.mat Siobs  % not needed for cell model
     % WOA18 data
     load TS_WOA_91x180x24.mat tempobs salobs % WOA temperature & salinity
-    load O2_Nut_WOA_91x180x24.mat  O2_obs Si_obs DIN_obs DIP_obs % WOA O2 Si DIN DIP observations
+    load O2_Nut_WOA_91x180x24.mat  O2_obs Si_obs DIN_obs DIP_obs % WOA O2 Si DIN DIP observations [umol/kg]
+        % multiply by seawater density to convert from umol/kg to mmol/m3;
+        O2_obs = O2_obs*1.025; Si_obs = Si_obs*1.025; DIN_obs = DIN_obs*1.025; DIP_obs = DIP_obs*1.025; 
+        fprintf('Load WOA18 obs for DIP, DIP, O2 and Si; multiply by constant seawater density 1.025 to convert units to mmol/m3 \n')
 
     load PME_TS_91x180x24.mat  pme % calculated from transport operator and salt fields (alternate to running pme.m) 
     load DICant_91x180x24.mat
     load GLODAPv2_91x180x24raw.mat alkraw po4raw o2raw sio4raw % GLODAP Nutrient units = [umol/kg]
-    load co2syspar_91x180x24.mat co2syspar
+    load co2syspar_91x180x24.mat co2syspar % created in make_datafile_24layer/make_co2syspar.m
+    % load co2syspar91.mat co2syspar % file from 2023 Nature
 
     %load DOMobs_91x180x24.mat DOPobs   % old data file
     %load DOCobs_clean_91x180x24.mat    % old data file with refractory component and outlier removed
@@ -245,9 +249,9 @@ dicraw(imed)  = nan ;
 po4raw(imed)  = nan ; 
 o2raw(imed)   = nan ;
 % keep arctic observations
-% docraw(iarc)  = nan ;    
-% alkraw(iarc)  = nan ;
-% dicraw(iarc)  = nan ;
+docraw(iarc)  = nan ;    
+alkraw(iarc)  = nan ;
+dicraw(iarc)  = nan ;
 % po4raw(iarc)  = nan ;
 % o2raw(iarc)   = nan ;
 
@@ -262,22 +266,22 @@ o2raw(imed)   = nan ;
 %   idea: we may want to remove outliers from minimization, but then keep all data 
 %   when assessing how well the model fits the obs
 docraw = rmOutliers(docraw, M3d) ;
-% po4raw = rmOutliers(po4raw, M3d) ;
-% dicraw = rmOutliers(dicraw, M3d) ;
-% alkraw = rmOutliers(alkraw, M3d) ;
-% o2raw  = rmOutliers(o2raw, M3d)  ;
+po4raw = rmOutliers(po4raw, M3d) ;
+dicraw = rmOutliers(dicraw, M3d) ;
+alkraw = rmOutliers(alkraw, M3d) ;
+o2raw  = rmOutliers(o2raw, M3d)  ;
 
 tempobs(tempobs(:)<-2.0) = -2.0   ; % Reset extreme cold temps to a minimum temperature threshold of -2C (seawater freezing point) 
 DIP_obs(DIP_obs(:)<0.05) = 0.05   ;
 po4raw(po4raw(:)<0.05)   = nan    ; % Remove DIP data below detection limit; 
 
-%for ji = 1:24
-%    p2d = po4obs(:,:,ji);
-%    po4obs(:,:,ji) = smoothit(grd,M3d,p2d,3,1e5);   % 이게 필요한 이유...?
-%end                                       ----> NPP field에 영향을 주려나?
+for ji = 1:24
+   p2d = DIP_obs(:,:,ji);
+   DIP_obs(:,:,ji) = smoothit(grd,M3d,p2d,3,1e5);   % 이게 필요한 이유...?
+end                                      %  ----> NPP field에 영향을 주려나?
  
 par.Temp     = tempobs       ;
-par.Salt     = salobs        ;
+par.Salt     = salobs        ; % Sobs     ;
 par.DSi      = Si_obs        ;
 par.po4obs   = DIP_obs       ;
 par.no3obs   = DIN_obs       ;
@@ -306,10 +310,10 @@ par.sALKbar = sum(par.alkraw((iwet(isrf(salk)))).* ...
                   dVt(iwet(isrf(salk))))./sum(dVt(iwet(isrf(salk))));
 
 %-------------------- normalize temperature --------------------
-%for ji = 1:24
-%    t2d = par.Temp(:,:,ji); 
-%    par.Temp(:,:,ji) = smoothit(grd,M3d,t2d,3,1e5);        % smoothit ---> inpaint_nan하면 안돼?
-%end                                                        % 일단 빼고 해보기.
+for ji = 1:24
+   t2d = par.Temp(:,:,ji); 
+   par.Temp(:,:,ji) = smoothit(grd,M3d,t2d,3,1e5);        % smoothit ---> inpaint_nan하면 안돼?
+end                                                        % 일단 빼고 해보기.
 
 vT = par.Temp(iwet) ;                                     
 % add + 1.0 to prevent from getting infinit kP or kC 
@@ -323,9 +327,10 @@ par.aveT   = nanmean(Tz3d(:,:,1:3),3) ;                    % tsnanmean하고 큰
                                                              % nanmean으로 수정
                                                              % 1-3번째 layer의 T평균? 
 
-% aveT: PFD에 쓰임. vertical하게는 동일.
-% vT: eqPcylce, eqCcycle에서 Q10의 tf에 쓰임.
-% Tz: aveT에 쓰일때말고는 모르겠음. 1e-8을 왜하는지? ---> eqOcycle에서는 다시 10^8 곱해서 사용.
+% aveT: average of normalized T in top 3 layers. used in buildPFD to define a temperature dependent powerlaw exponent. power law assumes Temp is vertically uniform. 
+%       % why normalized temp?
+% vT: vectorized temperature. used in eqPcycle, eqCcycle, eqOcycle: for Q10 exponent for kC and kP
+% Tz: normalized temperature. used in in eqCcycle or C2P_Tzmodel & in eqOcycle for O2C
                                                          
 
 %-------------------- correct WOA o2 concentration --------------------
@@ -386,8 +391,10 @@ par.DICbar = sum(par.dicraw(iwet(idic)).*dVt(iwet(idic)))/sum(dVt(iwet(idic))) ;
 % 	clear PAR
 
 %-------------------- prepare NPP for the model ----------------------
+% NPP unit (Nowicki) = (mmolC/m^2/yr)
 % remove this P:C unit conversion. a constant stoichiometric scaling is implicit in alpha
-% par.p2c = 0.006 + 0.0069*DIP_obs ;         
+% par.p2c = 0.006 + 0.0069*DIP_obs ;        
+fprintf('Sat NPP p2c conversion: 1/117 \n') 
 par.p2c = (1/117) * M3d ;                % 이건 아마 redfield ratio인듯?
 inan = find(isnan(npp(:)) | npp(:) < 0) ;
 npp(inan)  = 0  ;
@@ -413,13 +420,13 @@ for jj = 1 : nx
             par.nppMSK(jj,ii,1) = 2 ;
             par.nppMSK(jj,ii,2) = 2 ;
 
-            par.npp(jj,ii,1)  = (1/2) * npp(jj,ii) / grd.dzt(1) * par.p2c(jj,ii,1);
+            par.npp(jj,ii,1)  = (1/2) * npp(jj,ii) / grd.dzt(1) * par.p2c(jj,ii,1);   % unit: (mmolP/m^3/yr)
             par.npp(jj,ii,2)  = (1/2) * npp(jj,ii) / grd.dzt(2) * par.p2c(jj,ii,2);
 
-            Pnpp(jj,ii,1)  = par.npp(jj,ii,1) / spa ;
+            Pnpp(jj,ii,1)  = par.npp(jj,ii,1) / spa ;                 % unit: (mmolP/m^3/s)
             Pnpp(jj,ii,2)  = par.npp(jj,ii,2) / spa ;
 
-            Cnpp(jj,ii,1)  = (1/2) * npp(jj,ii) / grd.dzt(1) / spa ;
+            Cnpp(jj,ii,1)  = (1/2) * npp(jj,ii) / grd.dzt(1) / spa ;  % unit: (mmolC/m^3/s)
             Cnpp(jj,ii,2)  = (1/2) * npp(jj,ii) / grd.dzt(2) / spa ;
                         
             par.Lambda(jj,ii,1) = 1./(1e-6+DIP_obs(jj,ii,1)) ;

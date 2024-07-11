@@ -3,7 +3,7 @@
 %   The carbon cycle uses a trait-based celllular growth model to compute C:P.
 %   This run optimizes phosphorus, carbon, and oxygen cycle parameters
 % ------------------------------------------------------------------------
-clc; clear all; close all
+%clc; clear all; close all
 global iter
 iter = 0 ;
 on   = true  ; off  = false ;
@@ -12,7 +12,7 @@ format short
 % --- addpath to model code -----
 addpath('../src/')
 
-VerName = 'optPCO_Tz_v2_'; 		% optional version name. leave as an empty character array
+VerName = 'optPCO_Tz_WOA18_smoooth_rmoutliers_NPPc2p117_'; 		% optional version name. leave as an empty character array
 					% or add a name ending with an underscore
 VerNum = '';		% optional version number for testing
 
@@ -45,7 +45,10 @@ par.LoadOpt = on ; % if load optimial parameters.
 % to load parameter values from a run with a different name.
 %par.fxhatload = '../../output/optPonly_CTL_He_P_xhat.mat';
 %par.fxhatload = '../output/optPCO_GM15_CTL_He_PCOv1_DOC1_DOP0_xhat.mat';
+par.fxhatload = '/DFS-L/DATA/primeau/hojons1/Nature2023_BGC_reoptimized/src_Nature_parameter_Megan/MSK91/CTL_He_PCO_Gamma0_kl12h_O5_POC2DIC_GM15_Nowicki_npp1_aveTeu_diffSig_O2C_uniEta_DICrmAnthro_2L_Pnormal_DIP1e+00_DIC1e+00_DOC1e+00_ALK1e+00_O21e+00_xhat.mat' 
 par.dynamicP = off ; % if on, cell model uses modeled DIP. if off, cell model uses WOA observed DIP field.
+
+par.fnameload = '/DFS-L/DATA/primeau/hojons1/Nature2023_BGC_reoptimized/src_Nature_parameter_Megan/MSK91/CTL_He_PCO_Gamma0_kl12h_O5_POC2DIC_GM15_Nowicki_npp1_aveTeu_diffSig_O2C_uniEta_DICrmAnthro_2L_Pnormal_DIP1e+00_DIC1e+00_DOC1e+00_ALK1e+00_O21e+00.mat' ;
 
 par.dopscale = 0.0 ;
 par.dipscale = 1.0 ;
@@ -163,6 +166,11 @@ par.fxhat = fxhat ;
 par.fxpar = fxpar ;
 
 % -------------------update initial guesses --------------
+if isfile(par.fnameload)
+    load(par.fnameload)
+end 
+
+% -------------------update initial guesses --------------
 if isfile(par.fname)
     load(par.fname)
 end 
@@ -252,6 +260,10 @@ if(Gtest);
     fprintf('saving optimized parameters to file: %s \n',fxhat)
     save(fxhat, 'xhat')
 elseif (par.optim)
+    % save SetUp fields
+    fprintf('saving initial SetUp par structure to file: %s \n',par.fxpar)
+    save(par.fxpar, 'par', '-v7.3')
+    % optimize parameters
     [xsol,fval,exitflag] = fminunc(myfun,x0,options);
     fprintf('objective function tolerance = %5.1e \n',objfuntolerance);
     fprintf('----fminunc complete----\n')
@@ -276,4 +288,3 @@ else
     %save(par.fname, 'data')
 end
 fprintf('-------------- end! ---------------\n');
-quit

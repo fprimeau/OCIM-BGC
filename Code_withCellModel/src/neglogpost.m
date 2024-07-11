@@ -1,6 +1,10 @@
 function [f, fx, fxx, data, xhat] = neglogpost(x, par)
     global iter
     on = true; off = false;
+
+    fprintf('\ncurrent time is:      %s\n',datetime('now')) ;
+    fprintf('current iteration is: %d \n',iter) ;
+
     % print and save current parameter values to
     % a file that is used to reset parameters ;
     if iter == 0
@@ -14,7 +18,7 @@ function [f, fx, fxx, data, xhat] = neglogpost(x, par)
         % Do not execute code if solver suggests very bad values
         % (instead of replacing bad parameter value and solving)
 		if ~isempty(ibad)
-			load(par.fxhat); % make sure to do this step before saving the reset values in fxhat
+			load(par.fxhat); % do this step before saving the reset values in fxhat
 			f = 10000;
 			fx = xhat.fx; % need to store in xhat at end of neglogpost
 			fxx = xhat.fxx;
@@ -30,7 +34,7 @@ function [f, fx, fxx, data, xhat] = neglogpost(x, par)
     if iter > 0
         PrintPar(x, par) ;    
     end
-    fprintf('current iteration is %d \n',iter) ;
+    % increment iteration counter
     iter = iter + 1  ;
 
     nx   = length(x) ; % number of parameters
@@ -58,7 +62,7 @@ function [f, fx, fxx, data, xhat] = neglogpost(x, par)
     DIP  = M3d+nan  ;  DIP(iwet)  = P(1+0*nwet:1*nwet) ;
     POP  = M3d+nan  ;  POP(iwet)  = P(1+1*nwet:2*nwet) ;
     DOP  = M3d+nan  ;  DOP(iwet)  = P(1+2*nwet:3*nwet) ;
-    DOPl = M3d+nan  ;  DOPl(iwet) = P(1+2*nwet:3*nwet) ;
+    DOPl = M3d+nan  ;  DOPl(iwet) = P(1+3*nwet:4*nwet) ;
     %toc 
     par.Px   = Px  ;
     par.Pxx  = Pxx ;
@@ -164,6 +168,12 @@ function [f, fx, fxx, data, xhat] = neglogpost(x, par)
         data.DOC  = DOC  ;  data.PIC  = PIC ;
         data.ALK  = ALK  ;  data.DOCr = DOCr ;
         data.DOCl = DOCl ;
+        try
+            data.C2P = M3d+nan ; data.C2P(iwet) = par.C2P; 
+        catch ME
+            fprintf('error in %s (line %d): %s \n', ME.stack(1).name,ME.stack(1).line,ME.message);
+            fprintf('Unable to store C2P in data struct. \n');
+        end
         % DIC error
         DOC = DOC + DOCr + DOCl; % sum of labile and refractory DOC ;
         eic = DIC(iwet(idic)) - par.dicraw(iwet(idic)) ;
