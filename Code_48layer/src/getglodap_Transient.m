@@ -9,7 +9,7 @@ function data = getglodap_Transient(t0,tf)
     % build an operator to map OCIM data to where
     % GLODAP data available
     
-    load /DFS-L/DATA/primeau/hojons1/OCIM-BGC/DATA/BGC_2023Nature/OCIM2_CTL_He.mat output % call the M3d and output
+    load /DFS-L/DATA/primeau/hojons1/OCIM-BGC/DATA/BGC_48layer/OCIM2_CTL_He_48layer.mat output % call the M3d and output
     M3d = output.M3d  ;
     grd = output.grid ;
     iwet = find(M3d==1); 
@@ -20,7 +20,7 @@ function data = getglodap_Transient(t0,tf)
     
     dpath= '/DFS-L/DATA/primeau/hojons1/OCIM-BGC/Observation_rawdata/GLODAP/';
     fpath=sprintf('%s/GLODAPv2_2023_Merged_Master_File.mat',dpath);
-    load(fpath,'G2latitude','G2longitude','G2pressure','G2year','G2pressure','G2year','G2month','G2depth','G2c13','G2c13f','G2c14','G2c14err','G2c14f');
+    load(fpath,'G2latitude','G2longitude','G2pressure','G2year','G2month','G2depth','G2tco2','G2tco2f','G2c13','G2c13f','G2c14','G2c14err','G2c14f');
     
     lat=G2latitude;
     lon=G2longitude;
@@ -34,6 +34,8 @@ function data = getglodap_Transient(t0,tf)
     
     
     disp(sprintf('extracting C13(permil) and C14(permil) from %i to %i',t0,tf));
+    dic  = G2tco2   ;
+    dicf = G2tco2f  ;
     c13  = G2c13     ;
     c13f = G2c13f    ;
     c14  = G2c14     ;
@@ -41,9 +43,14 @@ function data = getglodap_Transient(t0,tf)
     %o2   = G2oxygen  ;
     %o2f  = G2oxygenf ;
     
+    dicerr = max(0.005*dic, 10);
     c13err = max(0.1*c13,0.05); % NOT CORRECT
     c14err = G2c14err ;
     %o2err  = max(0.005*c13,1); % NOT CORRECT
+    %
+    idatdic = find( ( dic ~= -9999 ) & ( depth >= 0 ) & ( dicf==2 ) & ( year >= t0 ) & ( year <= tf) );
+    dic = dic(idatdic);
+    dicerr = dicerr(idatdic);
     %
     idatc13 = find( ( c13 ~= -9999 ) & ( depth >= 0 ) & ( c13f==2 ) & ( year >= t0 ) & ( year <= tf) );
     c13 = c13(idatc13);
@@ -58,11 +65,21 @@ function data = getglodap_Transient(t0,tf)
     %o2err = o2err(idato2);
     
     %
+    londic = lon(idatdic);
+    latdic = lat(idatdic);
+    zdic = depth(idatdic);
+    yrdic = year(idatdic);
+    modic = month(idatdic);
+    modic = floor((modic-1)/2) + 1 ; % for the 2-month time-step.
+    idxdic = yrdic * 6 + modic;  % you can adjust depending on the time interval
+    IDdic = unique(idxdic); 
+    %
     lonc13 = lon(idatc13);
     latc13 = lat(idatc13);
     zc13 = depth(idatc13);
     yrc13 = year(idatc13);
     moc13 = month(idatc13);
+    moc13 = floor((moc13-1)/2) + 1 ;
     idxc13 = yrc13 * 6 + moc13;  % you can adjust depending on the time interval
     IDc13 = unique(idxc13); 
     %
@@ -71,6 +88,7 @@ function data = getglodap_Transient(t0,tf)
     zc14 = depth(idatc14);
     yrc14 = year(idatc14);
     moc14 = month(idatc14);
+    moc14 = floor((moc14-1)/2) + 1 ;
     idxc14 = yrc14 * 6 + moc14;  % you can adjust depending on the time interval
     IDc14 = unique(idxc14); 
     %
@@ -84,6 +102,18 @@ function data = getglodap_Transient(t0,tf)
 
     
     % bin to grd (year,month)
+    %----------for dic--------------------------
+    for i = 1:length(IDdic)
+        iddic = find( idxdic == IDdic(i) );
+        
+        [mu,vard,n] = bin3d(londic(iddic), latdic(iddic), zdic(iddic), dic(iddic), dicerr(iddic), grd.XT3d, grd.YT3d, grd.ZT3d);  
+        
+        data.dic(:,i)    = mu(iwet);
+        data.vardic(:,i) = vard(iwet);
+        data.ndic(:,i)   = n(iwet);
+    end
+    data.dicid = IDdic;
+    data.dicz  = zdic;
     %----------for C13--------------------------
     for i = 1:length(IDc13)
         idc13 = find( idxc13 == IDc13(i) );
@@ -122,11 +152,30 @@ function data = getglodap_Transient(t0,tf)
     %data.o2z  = zo2;
  
     %% create operator to compare the monthly GLODAPv2 data and model result
+    %----------for DIC-------------------
+    id1_dic = data.dicid;
+    idd1 = [];
+    for i = t0:tf
+        for j = 1:6
+            idd1 = [idd1; i*6 + j];
+        end
+    end
+    l1_dic = length(id1_dic);
+    l2 = length(idd1);
+    H_dic = sparse(l1_dic,l2); 
+    for i = 1:l1_dic
+        j = find(idd1 == id1_dic(i));
+        H_dic(i,j) = 1;
+    end  
+    H1_dic = kron(H_dic,speye(nwet));
     %----------for C13-------------------
     id1_c13 = data.c13id;
-    II1 = ones(6,1); % months
-    II2 = ones(tf-t0+1,1); % years 
-    idd1 = kron(II1,[t0:tf]'*6) + kron([1:6]',II2);
+    idd1 = [];
+    for i = t0:tf
+        for j = 1:6
+            idd1 = [idd1; i*6 + j];
+        end
+    end
     l1_c13 = length(id1_c13);
     l2 = length(idd1);
     H_c13 = sparse(l1_c13,l2); 
@@ -137,9 +186,12 @@ function data = getglodap_Transient(t0,tf)
     H1_c13 = kron(H_c13,speye(nwet)); 
     %----------for C14-------------------
     id1_c14 = data.c14id;
-    II1 = ones(6,1); % months
-    II2 = ones(tf-t0+1,1); % years 
-    idd1 = kron(II1,[t0:tf]'*6) + kron([1:6]',II2);
+    idd1 = [];
+    for i = t0:tf
+        for j = 1:6
+            idd1 = [idd1; i*6 + j];
+        end
+    end
     l1_c14 = length(id1_c14);
     l2 = length(idd1);
     H_c14 = sparse(l1_c14,l2); 
@@ -164,6 +216,11 @@ function data = getglodap_Transient(t0,tf)
 
 
     % step2: find grd
+    dic = data.dic;
+    d0 = @(x) spdiags(x(:),[0],length(x(:)),length(x(:)));
+    H2_dic = d0(dic(:)~=-9.999);
+    ikeep_dic = find(dic(:)~=-9.999);
+    H2_dic = H2_dic(:,ikeep_dic)'; 
     %----------for C13--------------
     c13 = data.c13;
     d0 = @(x) spdiags(x(:),[0],length(x(:)),length(x(:)));
@@ -184,6 +241,8 @@ function data = getglodap_Transient(t0,tf)
     %H2_o2 = H2_o2(:,ikeep_o2)'; 
    
     %
+    data.dich1   = H1_dic;
+    data.dich2   = H2_dic;
     data.dic13h1 = H1_c13;
     data.dic13h2 = H2_c13;
     data.dic14h1 = H1_c14;

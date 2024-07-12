@@ -10,7 +10,7 @@ function data = getOC_Transient(t0,tf)
     % GLODAP data available
     
     addpath('../../Observation_rawdata/')
-    load /DFS-L/DATA/primeau/hojons1/OCIM-BGC/DATA/BGC_2023Nature/OCIM2_CTL_He.mat output % call the M3d and output
+    load /DFS-L/DATA/primeau/hojons1/OCIM-BGC/DATA/BGC_48layer/OCIM2_CTL_He_48layer.mat output % call the M3d and output
     M3d = output.M3d  ;
     grd = output.grid ;
     
@@ -43,6 +43,27 @@ function data = getOC_Transient(t0,tf)
     ineg=find(londoc<0);
     londoc(ineg)=360+londoc(ineg);
 
+    % load additional isotope data from Hojong's compiliation-----
+    % References are in the excel data file.
+    disp('now loading DOC13 and DOC14 data from mannually compiled excel files');
+    dataTable_compil = readtable('DOCisotope_compilation_Hojong.xlsx', 'Sheet', 'Sheet1', 'VariableNamingRule', 'preserve');
+    dataTable_compil(1,:) = [];
+    lon_compil      = table2array(dataTable_compil(:,5)); %0oE to 360oE. 
+    lat_compil      = table2array(dataTable_compil(:,4));
+    dep_compil      = table2array(dataTable_compil(:,6)); %
+    doc13_compil    = table2array(dataTable_compil(:,7)); %permil
+    doc14_compil    = table2array(dataTable_compil(:,8)); %permil
+    yeardoc_compil  = table2array(dataTable_compil(:,2));
+    monthdoc_compil = table2array(dataTable_compil(:,3));
+
+    %-------------combined DOC13 and DOC14 data from two diffent references-----------------
+    latdoc = [latdoc; lat_compil] ;
+    londoc = [londoc; lon_compil] ;
+    depthdoc = [depthdoc; dep_compil] ;
+    yeardoc = [yeardoc; yeardoc_compil] ;
+    monthdoc = [monthdoc; monthdoc_compil] ;
+    doc13 = [doc13; doc13_compil] ;
+    doc14 = [doc14; doc14_compil] ;
 
     % load the po13C data
     disp('now loading poc13 data from Verwega et al. (2021)');
@@ -68,11 +89,11 @@ function data = getOC_Transient(t0,tf)
     doc14err =  doc14*0.02; % NOT CORRECT
     poc13err =  poc13*0.02; % NOT CORRECT
     %
-    idatdoc13 = find( ( doc13 ~= -999 ) & ( depthdoc >= 0 ) & ( yeardoc >= t0 ) & ( yeardoc <= tf) );
+    idatdoc13 = find( ~isnan(doc13) & ( doc13 ~= -999 ) & ( depthdoc >= 0 ) & ( yeardoc >= t0 ) & ( yeardoc <= tf) );
     doc13    = doc13(idatdoc13);
     doc13err = doc13err(idatdoc13);
     %    
-    idatdoc14 = find( ( doc14 ~= -999 ) & ( depthdoc >= 0 ) & ( yeardoc >= t0 ) & ( yeardoc <= tf) );
+    idatdoc14 = find( ~isnan(doc14) & ( doc14 ~= -999 ) & ( depthdoc >= 0 ) & ( yeardoc >= t0 ) & ( yeardoc <= tf) );
     doc14     = doc14(idatdoc14);
     doc14err  = doc14err(idatdoc14);
     %    
@@ -86,6 +107,7 @@ function data = getOC_Transient(t0,tf)
     zdoc13   = depthdoc(idatdoc13);
     yrdoc13  = yeardoc(idatdoc13);
     modoc13  = monthdoc(idatdoc13);
+    modoc13 = floor((modoc13-1)/2) + 1 ; % for the 2-month time-step. It makes Jan-Feb to 1, Mar-Apr to 2, ... Nov-Dec to 6.
     idxdoc13 = yrdoc13 * 6 + modoc13;    % you can adjust depending on the time interval
     IDdoc13  = unique(idxdoc13); 
     %
@@ -94,6 +116,7 @@ function data = getOC_Transient(t0,tf)
     zdoc14   = depthdoc(idatdoc14);
     yrdoc14  = yeardoc(idatdoc14);
     modoc14  = monthdoc(idatdoc14);
+    modoc14 = floor((modoc14-1)/2) + 1 ;
     idxdoc14 = yrdoc14 * 6 + modoc14;  % you can adjust depending on the time interval
     IDdoc14  = unique(idxdoc14); 
     %
@@ -102,6 +125,7 @@ function data = getOC_Transient(t0,tf)
     zpoc13   = depthpoc(idatpoc13);
     yrpoc13  = yearpoc(idatpoc13);
     mopoc13  = monthpoc(idatpoc13);
+    mopoc13 = floor((mopoc13-1)/2) + 1 ;
     idxpoc13 = yrpoc13 * 6 + mopoc13;  % you can adjust depending on the time interval
     IDpoc13  = unique(idxpoc13); 
 
@@ -147,9 +171,12 @@ function data = getOC_Transient(t0,tf)
     %% create operator to compare the monthly GLODAPv2 data and model result
     %----------for DOC13-------------------
     id1_doc13 = data.doc13id;
-    II1 = ones(6,1); % months
-    II2 = ones(tf-t0+1,1); % years 
-    idd1 = kron(II1,[t0:tf]'*6) + kron([1:6]',II2);
+    idd1 = [];
+    for i = t0:tf
+        for j = 1:6
+            idd1 = [idd1; i*6 + j];
+        end
+    end
     l1_doc13 = length(id1_doc13);
     l2 = length(idd1);
     H_doc13 = sparse(l1_doc13,l2); 
@@ -160,9 +187,12 @@ function data = getOC_Transient(t0,tf)
     H1_doc13 = kron(H_doc13,speye(nwet)); 
     %----------for DOC14-------------------
     id1_doc14 = data.doc14id;
-    II1 = ones(6,1); % months
-    II2 = ones(tf-t0+1,1); % years 
-    idd1 = kron(II1,[t0:tf]'*6) + kron([1:6]',II2);
+    idd1 = [];
+    for i = t0:tf
+        for j = 1:6
+            idd1 = [idd1; i*6 + j];
+        end
+    end
     l1_doc14 = length(id1_doc14);
     l2 = length(idd1);
     H_doc14 = sparse(l1_doc14,l2); 
@@ -173,9 +203,12 @@ function data = getOC_Transient(t0,tf)
     H1_doc14 = kron(H_doc14,speye(nwet));
     %----------for POC13-------------------
     id1_poc13 = data.poc13id;
-    II1 = ones(6,1); % months
-    II2 = ones(tf-t0+1,1); % years 
-    idd1 = kron(II1,[t0:tf]'*6) + kron([1:6]',II2);
+    idd1 = [];
+    for i = t0:tf
+        for j = 1:6
+            idd1 = [idd1; i*6 + j];
+        end
+    end
     l1_poc13 = length(id1_poc13);
     l2 = length(idd1);
     H_poc13 = sparse(l1_poc13,l2); 
