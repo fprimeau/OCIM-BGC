@@ -85,7 +85,6 @@ VER = strcat(output_dir);
 fopt = 'CTL_He_48layer_PCO_firstrun';
 par.fname = strcat(VER, fopt,'.mat');
 par.fxhat = strcat(VER, fopt, '_xhat.mat');
-par.optim = off;
 
 %--------------------- prepare parameters ------------------
 % load optimal parameters and data from a file or set them to default values 
@@ -113,7 +112,7 @@ par.fc14           = 2.0 ;  %Tunable between 1.9 and 2.0
 par.c14.alpha_k    = 1 - (1 - 0.99915)*par.fc14 ; % kenetic fractionation factor
 par.c14.alpha_g2aq = 1- (1 - 0.998764)*par.fc14 ; % gas to water fractionation factor
 
-par.saveall = true;
+par.saveall = false;
 % CAUTION: check these parameters before running an experiment
 %------------------------------------------------------------------------
 par.yst        = 1850;
@@ -163,13 +162,14 @@ O2pool = {'O2'};
 toc
 
 % save all par and data before the transient run
-fileName  = sprintf('SSdata_0.7070xkw_fras=%4.2f_frpho=%4.2f_fc14=%4.2f.mat',par.fras,par.frpho,par.fc14) ;
+fileName  = sprintf('SSdata_0.9000xkw_1month_fras=%4.2f_frpho=%4.2f_fc14=%4.2f.mat',par.fras,par.frpho,par.fc14) ;
 directory = '../Results/SS_Cisotope'
 filePath  = fullfile(directory, fileName) ;
 save(filePath, 'par', 'data', '-v7.3')   ;
 
 % check the data and par for steady-state
 % drive the time stepping method for C, C13, C14, and O2
+%
 Ctype = {'C12','C13','C14'}; 
 for m = 1:length(Ctype)
   vn = Ctype{m};
@@ -190,8 +190,12 @@ tic
 [Xout,Tout,par] = time_stepper(par,t0,t1,Xin,Ctype);
 toc
 
-Transient_outname = sprintf('Transient_0.7070xkw_fras=%4.2f_frpho=%4.2f_fc14=%4.2f.mat',par.fras,par.frpho, par.fc14) ;
-dir_transient = '../Results/Transient_Cisotope'
-filePath_transient  = fullfile(dir_transient, Transient_outname) ;
-save(filePath_transient, 'Xout', 'Tout', '-v7.3')   ;
+if par.saveall
+  Transient_outname = sprintf('Transient_0.9000xkw_1month_fras=%4.2f_frpho=%4.2f_fc14=%4.2f.mat',par.fras,par.frpho, par.fc14) ;
+  dir_transient = '../Results/Transient_Cisotope'
+  filePath_transient  = fullfile(dir_transient, Transient_outname) ;
+  save(filePath_transient, 'Xout', 'Tout', '-v7.3')   ;
+end
+
+
 

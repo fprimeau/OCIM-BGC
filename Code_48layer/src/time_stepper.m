@@ -3,7 +3,7 @@ function [Xout,Tout,par] = time_stepper(par,t0,t1,Xin,Ctype)
   
   % Unpack the useful parameters
   spa = par.spa
-  dt = spa/12*2; %monthly time step
+  dt = spa/12; %monthly time step
   tt = t0:dt/spa:t1;
   nstep = length(tt);
   Nstep = spa/dt;
@@ -68,6 +68,12 @@ function [Xout,Tout,par] = time_stepper(par,t0,t1,Xin,Ctype)
 
   t = t0;
   Tout(1) = t;
+  fprintf('Before time stepping method (Steady-state solutions in pre-industrial era)...\n');
+  fprintf('...Time: %4.2f, AtmCO2: %4.2f,R13a: %7.6g, R14a: %7.6g, avgDIC13: %7.6g, avgDIC14: %7.6g\n', ...
+    t,max(par.pco2atm(:)), max(par.c13.R13a),max(par.c14.R14a(:)),mean(C13(1:nwet)),mean(C14(1:nwet)));
+
+
+  fprintf('run the time stepping method \n)');
   for i = 2:nstep
     par.pco2atm = pco2atm_nstep(i);
     par.c13.R13a = pc13R_nstep(i);
@@ -81,10 +87,7 @@ function [Xout,Tout,par] = time_stepper(par,t0,t1,Xin,Ctype)
     % par.SST_obs = TT_nstep(:,:,i);
     % Caution: the above variables are updated every time step
 
-    fprintf('...Time: %4.2f, AtmCO2: %4.2f,R13a: %7.6g, R14a: %7.6g, %s: %7.6g\n',...
-                t,max(par.pco2atm(:)), max(par.c13.R13a),max(par.c14.R14a(:)),...
-                vn,eval(sprintf('mean(%s(1:nwet))',vn)));
-
+    
     % time stepping C12, C13,C14, and O2
     for m = 1:length(Ctype)
       vn = Ctype{m};
@@ -122,15 +125,6 @@ function [Xout,Tout,par] = time_stepper(par,t0,t1,Xin,Ctype)
       % end
     end
 
-    
-    if ~par.saveall
-      if mod(i,Nstep) == 0
-       % outname = sprintf('%smodel_%s_%i.mat',par.output_dir,strjoin(Ctype,'_'),i/Nstep);
-         outname = sprintf('Cisotope_model_48layer_%s_%i.mat',strjoin(Ctype,'_'),240426);
-        save(outname,'Xout', 'Tout', '-v7.3');
-        sprintf('saving file')
-      end
-    end
     % [f12,J12,par] = C12eqn(X12,par);
     % X12 = mfactor(FB12,A12*X12+dt*f12);
     % X12 = mfactor(FA12,B12*X12-dt*f12);
@@ -143,6 +137,25 @@ function [Xout,Tout,par] = time_stepper(par,t0,t1,Xin,Ctype)
     % save the solution
     % Xout12(:,i) = X12;
     Tout(i) = t;
+
+    
+    fprintf('...Time: %4.2f, AtmCO2: %4.2f,R13a: %7.6g, R14a: %7.6g, avgDIC13: %7.6g, avgDIC14: %7.6g\n', ...
+                t,max(par.pco2atm(:)), max(par.c13.R13a),max(par.c14.R14a(:)),mean(C13(1:nwet)),mean(C14(1:nwet)));
+         
+    %
+    if ~par.saveall
+      if mod(i,Nstep) == 0
+       outname = sprintf('Transient_0.9000xkw_1month_fras=%4.2f_frpho=%4.2f_fc14=%4.2f_%i.mat',par.fras,par.frpho, par.fc14,i/Nstep);
+       outdir = '../Results/Transient_Cisotope/0.6700xkw'
+        if ~isdir(outdir)
+          command = strcat('mkdir', " ", outdir) ;
+          system(command) ;
+        end
+       outPath = fullfile(outdir, outname) ;
+       save(outPath, 'Xout', 'Tout', '-v7.3') ;
+       sprintf('saving file')
+      end
+    end
 
   end % nstep
   Xout.pc13R_nstep = pc13R_nstep;
