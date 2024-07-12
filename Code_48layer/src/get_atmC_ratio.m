@@ -13,9 +13,9 @@ function [Cratio] = get_atmC_ratio(varargin)
  
   %fprintf('get ratios from \x03b4 value...\n');
   R13a = d2r13(atmdata(:,5)); % 
-  R14aN = D2r14(atmdata(:,2),R13a);
-  R14aT = D2r14(atmdata(:,3),R13a);
-  R14aS = D2r14(atmdata(:,4),R13a);
+  R14aN = D2r14(atmdata(:,2),atmdata(:,5));
+  R14aT = D2r14(atmdata(:,3),atmdata(:,5));
+  R14aS = D2r14(atmdata(:,4),atmdata(:,5));
 
   Cratio.R13a = R13a;
   Cratio.R14aN = R14aN;
