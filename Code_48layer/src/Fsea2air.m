@@ -78,7 +78,7 @@ function vout = Fsea2air(par, Gtype)
         %tmp(iwet(isrf)) = KCO2.*(co2sat - co2surf)*par.permil ;
         %vout.JgDIC = tmp(iwet) ; % umole/kg/s to mmol/m^3/s
        
-        par.pc13atm = pco2atm*par.c13.R13a;
+        par.pc13atm = (pco2atm*par.c13.R13a)/(1+par.c13.R13a);
         pc13atm  = par.pc13atm     ;    % convert delta c13 to c13 uatm;
         c13sat = zeros(length(iwet),1);
         c13sat(isrf) = k0.*pc13atm ;           % c13 satuation concentration
@@ -127,7 +127,7 @@ function vout = Fsea2air(par, Gtype)
         %tmp(iwet(isrf)) = KCO2.*(co2sat - co2surf)*par.permil ;
         %vout.JgDIC = tmp(iwet) ; % umole/kg/s to mmol/m^3/s
        
-        par.pc14atm = par.pco2atm*par.c14.R14a;
+        par.pc14atm = (pco2atm*par.c14.R14a)/(1+par.c13.R13a);
         pc14atm  = par.pc14atm     ;    % convert delta c14 to c14 uatm;
         %c13surf  = par.DIC13(isrf) ;    % ocean surface c14 concentration  
         c14sat = zeros(length(iwet),1);
